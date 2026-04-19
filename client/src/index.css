@@ -1,0 +1,105 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f5f5f5;
+  color: #111;
+  font-size: 15px;
+}
+
+a { color: #555; }
+
+/* Auth screens */
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card h2 { font-size: 1.25rem; font-weight: 600; }
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus { border-color: #888; }
+
+button {
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button:hover { background: #333; }
+
+.btn-outline {
+  background: transparent;
+  color: #111;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+}
+
+.btn-outline:hover { background: #f0f0f0; }
+
+.error { color: #c0392b; font-size: 13px; }
+.hint { font-size: 13px; color: #666; text-align: center; }
+
+/* Users page */
+.page { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h2 { font-size: 1.25rem; font-weight: 600; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #fafafa;
+  font-weight: 500;
+  color: #555;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+tr + tr td { border-top: 1px solid #f0f0f0; }
