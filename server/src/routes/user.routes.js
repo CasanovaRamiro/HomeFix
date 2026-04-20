@@ -4,12 +4,12 @@ import { listUsers } from '../services/user.service.js'
 
 const router = Router()
 
-router.get('/', requireAuth, async (_req, res) => {
+router.get('/', requireAuth, async (_req, res, next) => {
   try {
     const users = await listUsers()
     res.json(users)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    next(err)
   }
 })
 
