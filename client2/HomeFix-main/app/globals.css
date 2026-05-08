@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* HomeFix Brand Theme
+ * Azul Marino Oscuro: #13243B - Confianza, Estructura, Fundacion
+ * Verde Esmeralda: #10B981 - Modernidad, Accion, Solucion
+ * Typography: Montserrat (Bold titulos, SemiBold subtitulos, Regular cuerpo)
+ */
+
+:root {
+  /* Light professional background - Clean white with slight blue tint */
+  --background: 0 0% 100%;
+  --foreground: 214 32% 15%;
+  
+  /* Cards - Pure white for clean look */
+  --card: 0 0% 100%;
+  --card-foreground: 214 32% 15%;
+  
+  /* Popover */
+  --popover: 0 0% 100%;
+  --popover-foreground: 214 32% 15%;
+  
+  /* Primary - Azul Marino Oscuro #13243B */
+  --primary: 214 32% 15%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary - Light gray */
+  --secondary: 210 14% 97%;
+  --secondary-foreground: 214 32% 15%;
+  
+  /* Muted - Medium gray for secondary text */
+  --muted: 214 15% 92%;
+  --muted-foreground: 214 20% 50%;
+  
+  /* Accent - Verde Esmeralda #10B981 */
+  --accent: 160 84% 39%;
+  --accent-foreground: 0 0% 100%;
+  
+  /* Destructive */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Borders - Light gray */
+  --border: 210 14% 90%;
+  --input: 210 14% 95%;
+  --ring: 160 84% 39%;
+  
+  /* Charts */
+  --chart-1: 214 32% 15%;
+  --chart-2: 160 84% 39%;
+  --chart-3: 214 40% 50%;
+  --chart-4: 160 60% 55%;
+  --chart-5: 214 30% 70%;
+  
+  --radius: 0.5rem;
+  
+  /* Sidebar */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 214 32% 15%;
+  --sidebar-primary: 214 32% 15%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 160 84% 39%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 210 14% 90%;
+  --sidebar-ring: 160 84% 39%;
+}
+
+.dark {
+  --background: 214 52% 10%;
+  --foreground: 210 20% 98%;
+  --card: 214 52% 13%;
+  --card-foreground: 210 20% 98%;
+  --popover: 214 52% 13%;
+  --popover-foreground: 210 20% 98%;
+  --primary: 160 84% 45%;
+  --primary-foreground: 214 52% 10%;
+  --secondary: 214 40% 18%;
+  --secondary-foreground: 210 20% 98%;
+  --muted: 214 35% 20%;
+  --muted-foreground: 210 15% 65%;
+  --accent: 160 84% 45%;
+  --accent-foreground: 214 52% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 40% 20%;
+  --input: 214 40% 20%;
+  --ring: 160 84% 45%;
+  --chart-1: 160 84% 45%;
+  --chart-2: 214 52% 50%;
+  --chart-3: 160 60% 55%;
+  --chart-4: 214 40% 60%;
+  --chart-5: 160 50% 65%;
+  --sidebar: 214 52% 13%;
+  --sidebar-foreground: 210 20% 98%;
+  --sidebar-primary: 160 84% 45%;
+  --sidebar-primary-foreground: 214 52% 10%;
+  --sidebar-accent: 214 40% 18%;
+  --sidebar-accent-foreground: 210 20% 98%;
+  --sidebar-border: 214 40% 20%;
+  --sidebar-ring: 160 84% 45%;
+}
+
+@theme inline {
+  --font-sans: var(--font-montserrat), 'Montserrat', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
