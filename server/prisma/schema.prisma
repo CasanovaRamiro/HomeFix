@@ -25,6 +25,7 @@ model User {
   phone     String?
   role      Role     @default(CLIENTE)
   createdAt DateTime @default(now())
+  
 
   // Relaciones de especialización
   workerProfile WorkerProfile?

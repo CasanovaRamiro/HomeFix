@@ -9,8 +9,6 @@
 */
 -- AlterTable
 ALTER TABLE `user` DROP COLUMN `address`,
-    DROP COLUMN `lastname`,
-    DROP COLUMN `locality`,
     MODIFY `role` ENUM('CLIENTE', 'TRABAJADOR', 'ADMIN') NOT NULL DEFAULT 'CLIENTE';
 
 -- CreateTable
