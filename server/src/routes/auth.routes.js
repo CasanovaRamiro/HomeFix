@@ -1,26 +1,9 @@
-import { Router } from 'express'
-import { register, login } from '../services/auth.service.js'
+import e, { Router } from 'express'
+import { register } from '../controllers/auth.controller.js'
+import { validateRegister } from '../middleware/auth.middleware.js'
 
 const router = Router()
 
-router.post('/register', async (req, res, next) => {
-  try {
-    const result = await register(req.body)
-    res.status(201).json(result)
-  } catch (err) {
-    err.status = 400
-    next(err)
-  }
-})
+router.post('/register', validateRegister, register)
 
-router.post('/login', async (req, res, next) => {
-  try {
-    const result = await login(req.body)
-    res.json(result)
-  } catch (err) {
-    err.status = 401
-    next(err)
-  }
-})
-
-export default router
+export default router;

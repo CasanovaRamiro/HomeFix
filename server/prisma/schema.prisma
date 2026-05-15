@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
+// Generador y Datasource
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,12 +8,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. Definición del Enum para los roles
+enum Role {
+  CLIENTE
+  TRABAJADOR
+  ADMIN
+}
+
+// 2. Tabla Base (Usuario)
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String
+  lastname  String
   password  String
   phone     String?
-  role      String  @default("user")
+  role      Role     @default(CLIENTE)
   createdAt DateTime @default(now())
+
+  // Relaciones de especialización
+  workerProfile WorkerProfile?
+  clientProfile ClientProfile?
+  adminProfile  AdminProfile?
+}
+
+// 3. Perfil de Trabajador
+model WorkerProfile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  specialty  String? // Ej: Plomero, Electricista
+  isVerified Boolean @default(false)
+  bio        String? @db.Text
+  // Aquí puedes agregar más campos específicos de trabajo en el futuro
+}
+
+// 4. Perfil de Cliente
+model ClientProfile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Por ahora vacío o con campos básicos, escalable a futuro
+  address String?
+}
+
+// 5. Perfil de Administrador
+model AdminProfile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  level Int @default(1) // Por si luego tienes super-admins
 }

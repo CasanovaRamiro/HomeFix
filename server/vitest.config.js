@@ -5,8 +5,8 @@ export default defineConfig({
     include: ['test/**/*.test.js'],
     environment: 'node',
     env: {
-      DATABASE_URL: 'mysql://ofix:ofix123@localhost:3306/ofix_test',
+      DATABASE_URL: 'mysql://root:root@localhost:3306/homefix_test',
       JWT_SECRET: 'test-secret',
-    },
+    }
   },
 })

@@ -1,3 +1,11 @@
-import { findAll } from '../data/user.data.js'
+import prisma from '../lib/prisma.js'
 
-export const listUsers = () => findAll()
+export const listUsers = async () => {
+  return prisma.user.findMany({
+    include: {
+      clientProfile: true,
+      workerProfile: true,
+      adminProfile: true
+    }
+  })
+}

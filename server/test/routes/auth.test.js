@@ -1,65 +1,77 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import request from 'supertest'
 import { app } from '../../src/index.js'
-import { cleanDb } from '../helpers/db.js'
+import { cleanDb, prisma } from '../helpers/db.js'
 
-beforeEach(() => cleanDb())
-
-describe('POST /auth/register', () => {
-  it('creates a user and returns a token', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-
-    expect(res.status).toBe(201)
-    expect(res.body).toHaveProperty('token')
-    expect(res.body.user.email).toBe('jane@test.com')
-    expect(res.body.user).not.toHaveProperty('password')
-  })
-
-  it('returns 400 when email is already taken', async () => {
-    await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-
-    const res = await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-
-    expect(res.status).toBe(400)
-    expect(res.body).toHaveProperty('error')
-  })
-})
-
-describe('POST /auth/login', () => {
+describe('Auth register client', () => {
   beforeEach(async () => {
-    await request(app)
+    await cleanDb()
+  })
+
+  const validClient = {
+    name: 'Marta',
+    lastname: 'Ocampo',
+    email: 'marta@ocampo.com',
+    password: 'MartaOcampo123!',
+    phone: '1123456789',
+    role: 'CLIENTE'
+  }
+
+  it('registers a new client successfully', async () => {
+    const res = await request(app)
       .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-  })
+      .send(validClient)
 
-  it('returns a token on valid credentials', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'jane@test.com', password: 'secret123' })
-
-    expect(res.status).toBe(200)
+    expect(res.statusCode).toBe(201)
     expect(res.body).toHaveProperty('token')
+
+    expect(res.body.user).not.toHaveProperty('password')
+    expect(res.body.user.email).toBe(validClient.email)
+    
+    const userInDb = await prisma.user.findUnique({ where: { email: validClient.email },
+    include : { clientProfile: true } 
   })
 
-  it('returns 401 on wrong password', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'jane@test.com', password: 'wrongpassword' })
+    expect(userInDb).not.toBeNull()
+    expect(userInDb.role).toBe('CLIENTE')
 
-    expect(res.status).toBe(401)
+    expect(userInDb.clientProfile).not.toBeNull()
+    expect(userInDb.clientProfile.userId).toBe(userInDb.id)
   })
 
-  it('returns 401 for unknown email', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'nobody@test.com', password: 'secret123' })
+  it('fails to register with an existing email', async () => {
+    await prisma.user.create({
+      data: {
+        name: 'Existing',
+        lastname: 'User',
+        email: 'marta@ocampo.com',
+        password: 'MartaOcampo123!',
+        role: 'CLIENTE'
+      }
+    })
 
-    expect(res.status).toBe(401)
+    const res = await request(app)
+      .post('/auth/register')
+      .send(validClient)
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('fails if required fields are missing', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ incomplete: 'user' })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('fails if password is weak', async () => {
+   const weakUser = { ...validClient, password: '123' }
+
+    const res = await request(app)
+      .post('/auth/register')
+      .send(weakUser)
+
+    expect(res.statusCode).toBe(400)
   })
 })

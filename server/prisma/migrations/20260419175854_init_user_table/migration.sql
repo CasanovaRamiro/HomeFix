@@ -1,10 +1,13 @@
 -- CreateTable
 CREATE TABLE `User` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `email` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `lastname` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `phone` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NULL,
+    `locality` VARCHAR(191) NULL,
     `password` VARCHAR(191) NOT NULL,
-    `phone` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `User_email_key`(`email`),
