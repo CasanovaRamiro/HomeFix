@@ -3,7 +3,10 @@ import request from 'supertest'
 import { app } from '../../src/index.js'
 import { cleanDb } from '../helpers/db.js'
 
-beforeEach(() => cleanDb())
+// CORRECCIÓN: Esperar explícitamente a que la base de datos termine de limpiarse
+beforeEach(async () => {
+  await cleanDb()
+})
 
 describe('POST /auth/register', () => {
   it('creates a user and returns a token', async () => {
@@ -32,7 +35,9 @@ describe('POST /auth/register', () => {
 })
 
 describe('POST /auth/login', () => {
+  // CORRECCIÓN: Agregamos cleanDb() aquí también para asegurar limpieza total antes de registrar para el login
   beforeEach(async () => {
+    await cleanDb()
     await request(app)
       .post('/auth/register')
       .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
