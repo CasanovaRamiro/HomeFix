@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD para HomeFix
 
 on:
   push:
@@ -88,3 +88,20 @@ jobs:
       - name: Run tests
         working-directory: server
         run: npm test
+
+  # =================================================================
+  # --- NUEVA ETAPA: DESPLIEGUE CONTINUO (CD) ---
+  # =================================================================
+  deploy:
+    needs: [build, test] # Requiere que build y test terminen con éxito
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push' # Solo despliega al unificar en develop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ejecutar comandos de despliegue
+        run: |
+          echo "Conectando con el servidor de producción..."
+          # Acá se configuran los comandos finales de subida
