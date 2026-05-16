@@ -24,7 +24,7 @@ export default function Register() {
   return (
     <div className="center">
       <form className="card" onSubmit={handleSubmit}>
-        <h2>Register</h2>
+        <h2>User Register</h2>
         {error && <p className="error">{error}</p>}
         <input type="text" placeholder="Name" value={form.name} onChange={set('name')} required />
         <input type="email" placeholder="Email" value={form.email} onChange={set('email')} required />

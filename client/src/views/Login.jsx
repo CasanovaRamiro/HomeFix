@@ -24,7 +24,7 @@ export default function Login() {
   return (
     <div className="center">
       <form className="card" onSubmit={handleSubmit}>
-        <h2>Login</h2>
+        <h2>User Login</h2>
         {error && <p className="error">{error}</p>}
         <input type="email" placeholder="Email" value={form.email} onChange={set('email')} required />
         <input type="password" placeholder="Password" value={form.password} onChange={set('password')} required />
