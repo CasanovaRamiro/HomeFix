@@ -12,7 +12,7 @@ const mockUser = {
   id: 1,
   name: 'Jane',
   email: 'jane@test.com',
-  phone: null,
+  phone: null as string | null,
   role: 'user',
   createdAt: new Date(),
 }
@@ -21,8 +21,8 @@ describe('auth.service - register', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns a token and user when registration succeeds', async () => {
-    userData.findByEmail.mockResolvedValue(null)
-    userData.createUser.mockResolvedValue(mockUser)
+    vi.mocked(userData.findByEmail).mockResolvedValue(null)
+    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
 
     const result = await register({ name: 'Jane', email: 'jane@test.com', password: 'secret' })
 
@@ -31,7 +31,7 @@ describe('auth.service - register', () => {
   })
 
   it('throws if the email is already taken', async () => {
-    userData.findByEmail.mockResolvedValue(mockUser)
+    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed' })
 
     await expect(
       register({ name: 'Jane', email: 'jane@test.com', password: 'secret' })
@@ -43,7 +43,7 @@ describe('auth.service - login', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('throws if the user does not exist', async () => {
-    userData.findByEmail.mockResolvedValue(null)
+    vi.mocked(userData.findByEmail).mockResolvedValue(null)
 
     await expect(
       login({ email: 'nobody@test.com', password: 'secret' })
@@ -51,7 +51,7 @@ describe('auth.service - login', () => {
   })
 
   it('throws if the password is wrong', async () => {
-    userData.findByEmail.mockResolvedValue({ ...mockUser, password: 'hashed_password' })
+    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed_password' })
 
     await expect(
       login({ email: 'jane@test.com', password: 'wrongpassword' })
