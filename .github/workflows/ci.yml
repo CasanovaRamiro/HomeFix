@@ -22,8 +22,16 @@ jobs:
         working-directory: client
         run: rm -f package-lock.json && npm install
 
-      - name: Lint
+      - name: Lint client
         working-directory: client
+        run: npm run lint
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Lint server
+        working-directory: server
         run: npm run lint
 
   build:
@@ -80,6 +88,10 @@ jobs:
       - name: Install server dependencies
         working-directory: server
         run: npm ci
+
+      - name: Type check server
+        working-directory: server
+        run: npm run typecheck
 
       - name: Apply migrations to test DB
         working-directory: server
