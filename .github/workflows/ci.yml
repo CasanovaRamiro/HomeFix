@@ -50,8 +50,16 @@ jobs:
         working-directory: client
         run: rm -f package-lock.json && npm install
 
-      - name: Build
+      - name: Build client
         working-directory: client
+        run: npm run build
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Build server
+        working-directory: server
         run: npm run build
 
   test:
