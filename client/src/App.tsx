@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './views/Login'
 import Register from './views/Register'
 import Users from './views/Users'
 
-const PrivateRoute = ({ children }) =>
+const PrivateRoute = ({ children }: { children: ReactNode }) =>
   localStorage.getItem('token') ? children : <Navigate to="/login" replace />
 
 export default function App() {
