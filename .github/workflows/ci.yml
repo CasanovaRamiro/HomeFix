@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [develop]
   pull_request:
-    branches: [develop]
 
 jobs:
   lint:
@@ -13,26 +11,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            client/pnpm-lock.yaml
+            server/pnpm-lock.yaml
 
       - name: Install client dependencies
         working-directory: client
-        run: rm -f package-lock.json && npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint client
         working-directory: client
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Install server dependencies
         working-directory: server
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint server
         working-directory: server
-        run: npm run lint
+        run: pnpm run lint
 
   build:
     needs: lint
@@ -41,26 +48,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            client/pnpm-lock.yaml
+            server/pnpm-lock.yaml
 
       - name: Install client dependencies
         working-directory: client
-        run: rm -f package-lock.json && npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build client
         working-directory: client
-        run: npm run build
+        run: pnpm run build
 
       - name: Install server dependencies
         working-directory: server
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build server
         working-directory: server
-        run: npm run build
+        run: pnpm run build
 
   test:
     needs: lint
@@ -86,25 +102,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: server/package-lock.json
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
 
       - name: Install server dependencies
         working-directory: server
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Type check server
         working-directory: server
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Apply migrations to test DB
         working-directory: server
-        run: npm run db:migrate:test
+        run: pnpm run db:migrate:test
 
       - name: Run tests
         working-directory: server
-        run: npm test
+        run: pnpm test
