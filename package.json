@@ -2,8 +2,8 @@
   "name": "ofix",
   "private": true,
   "scripts": {
-    "build": "npm run build --prefix client",
-    "lint": "npm run lint --prefix client",
-    "test": "npm test --prefix server"
+    "build": "pnpm --prefix client run build",
+    "lint": "pnpm --prefix client run lint",
+    "test": "pnpm --prefix server run test"
   }
 }

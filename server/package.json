@@ -27,6 +27,9 @@
     "express": "~5.2.1",
     "jsonwebtoken": "~9.0.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "esbuild", "prisma"]
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "eslint": "^9.0.0",
