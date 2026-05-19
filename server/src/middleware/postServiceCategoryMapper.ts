@@ -1,16 +1,6 @@
-interface PostInput {
-  categoryIds: number[];
-  [key: string]: any;
-}
+import { PostInput } from "../types/postInput.js";
+import { MappedPostData } from "../types/mappedPostData.js";
 
-interface MappedPostData {
-  categories: {
-    create: Array<{
-      category: { connect: { id: number } };
-    }>;
-  };
-  [key: string]: any;
-}
 
 export const postServiceCategoryMapper = (input: PostInput): MappedPostData => {
   const { categoryIds, ...rest } = input;

@@ -1,13 +1,4 @@
-interface PostInput {
-  id: number
-  userId: number
-  description: string
-  startDate: Date
-  endDate: Date
-  address: string
-  categoryIds: number[]
-  title: string
-}
+import { PostInput } from "../types/postInput.js"
 
 export const postServiceValidator = (input: PostInput): void => {
   if (!input.categoryIds || input.categoryIds.length === 0) {
