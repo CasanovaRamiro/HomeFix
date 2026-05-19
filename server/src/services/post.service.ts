@@ -1,4 +1,6 @@
 import { create as createPostData } from "../data/post.data.js";
+import {postServiceValidator} from "../middleware/postServiceValidator.js";
+import {postServiceCategoryMapper} from "../middleware/postServiceCategoryMapper.js";
 
 interface PostInput {
   id: number;
@@ -12,35 +14,18 @@ interface PostInput {
 }
 
 export const post = async (input: PostInput) => {
+
+  postServiceValidator(input);
+
+  const mappedData = postServiceCategoryMapper(input);
+
   const { categoryIds, ...postData } = input;
 
-  if (categoryIds.length === 0) {
-    throw new Error("At least one category must be selected");
-  }
-  if (!postData.startDate) {
-    throw new Error("startDate is required");
-  }
-  if (!postData.title) {
-    throw new Error("title is required");
-  }
-  if (!postData.description) {
-    throw new Error("description is required");
-  }
-  if (!postData.address) {
-    throw new Error("address is required");
-  }
 
   const createdPost = await createPostData({
     ...postData,
-    categories: {
-      create: categoryIds.map((categoryId) => ({
-        category: { connect: { id: categoryId } },
-      })),
-    },
+    categories: mappedData.categories,
   });
 
-  return {
-    ...createdPost,
-    categoryIds,
-  };
+  return createdPost;
 };
