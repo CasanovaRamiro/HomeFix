@@ -1,32 +1,27 @@
 import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   { ignores: ['dist'] },
+
+  // Source + test: full type-aware linting with project reference
   {
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommendedTypeChecked,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
     ],
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.ts', 'test/**/*.ts'],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
       parserOptions: {
-        project: ['./tsconfig.app.json', './tsconfig.node.json'],
+        project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
-      // ── Unused vars: allow _prefix and PascalCase ──────────────────────
+      // ── Unused vars: allow _prefix convention ──────────────────────────
       '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^[A-Z_]',
+        varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
       }],
 
@@ -71,6 +66,22 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-definitions': 'off',
       '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/array-type': 'off',
+    },
+  },
+
+  // Root config files (vitest.config.ts etc): basic linting, no type project needed
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['*.ts', '*.js'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/ban-ts-comment': ['error', {
+        'ts-expect-error': 'allow-with-description',
+        'ts-ignore': true,
+        'ts-nocheck': true,
+        'ts-check': false,
+        minimumDescriptionLength: 15,
+      }],
     },
   },
 )

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, prisma } from '../helpers/db.js'
 import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
@@ -14,7 +13,7 @@ describe('findByEmail', () => {
     const user = await findByEmail('jane@test.com')
 
     expect(user).not.toBeNull()
-    expect(user.email).toBe('jane@test.com')
+    expect(user!.email).toBe('jane@test.com')
   })
 
   it('returns null when the email does not exist', async () => {

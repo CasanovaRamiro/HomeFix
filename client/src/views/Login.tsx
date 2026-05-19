@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import type { FormEvent, ChangeEvent } from 'react'
 import api from '../services/api'
 
 export default function Login() {
@@ -7,17 +8,19 @@ export default function Login() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
+  const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [field]: e.target.value })
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     try {
-      const { data } = await api.post('/auth/login', form)
+      const { data } = await api.post<{ token: string }>('/auth/login', form)
       localStorage.setItem('token', data.token)
       navigate('/users')
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed')
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? 'Login failed')
     }
   }
 
