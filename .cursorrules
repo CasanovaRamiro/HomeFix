@@ -1,0 +1,31 @@
+# HomeFix Project Rules
+
+The full project architecture, conventions, backend structure, and AI guidelines are defined in `AGENTS.md` at the project root.
+
+## Critical Instructions for the IDE
+
+1. Always analyze existing project patterns before generating code.
+
+2. Focus primarily on the `server/` folder unless explicitly requested otherwise.
+
+3. Follow the required backend flow:
+```txt
+Route → Controller → Service → Prisma
+```
+
+4. Never access Prisma directly from controllers.
+
+5. TypeScript is mandatory:
+- Avoid `any`
+- Use explicit and reusable types
+- Reuse existing interfaces and DTOs
+
+6. Reuse existing dependencies before adding new libraries.
+
+7. Keep controllers thin and move business logic to services.
+
+8. Follow existing Prisma query patterns and avoid unnecessary database queries.
+
+9. Do not rewrite unrelated files or perform large refactors without context.
+
+10. Keep solutions simple, maintainable, and realistic for an MVP-level project.
