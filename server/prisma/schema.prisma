@@ -13,11 +13,66 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  phone     String?
-  role      String  @default("user")
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  surname      String
+  email        String   @unique
+  password     String
+  nationalId   String   @unique @map("national_id") // Corregido a nationalId
+  profilePicture        String?        @map("profile_picture") 
+  role         String   @default("user")
+  active       Boolean  @default(true)
+  deleted      Boolean  @default(false)
+  phone        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  nationalIdTypeId Int  @map("national_id_type_id") // Antes dniTypeId
+  addressId        Int  @map("address_id")
+  nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
+  address          Address        @relation(fields: [addressId], references: [id])
+
+  @@map("user")
 }
+
+
+model Publication {
+  id              Int      @id @default(autoincrement())
+  description     String
+  date            DateTime @default(now()) 
+  status          String
+  fromStartJob    DateTime @map("from_start_job")
+  untilFinishJob  DateTime @map("until_finish_job")
+  typePublication String   @map("type_publication")
+  userId          Int      @map("fk_id_user")
+  photo           String
+
+
+  @@map("publication") 
+}
+
+model NationalIdType { 
+  id          Int    @id @default(autoincrement()) 
+  description String
+  users       User[]
+
+  @@map("national_id_type") 
+}
+
+
+
+
+model Address {
+  id        Int      @id @default(autoincrement()) @map("address_id")
+  street    String   @map("street")
+  number    String   @map("number")
+  city      String   @map("city")
+  state     String   @map("state")
+  users     User[]
+
+  @@map("address")
+}
+
+
+
+                
+
