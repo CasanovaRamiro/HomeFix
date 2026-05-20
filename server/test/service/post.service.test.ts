@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { create } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
+import { PostInput } from "../../src/types/postInput.js";
 
 vi.mock("../../src/data/post.data.js", () => ({
   create: vi.fn(),
@@ -8,7 +9,10 @@ vi.mock("../../src/data/post.data.js", () => ({
 
 beforeEach(() => vi.clearAllMocks());
 
-const validPostData = {
+
+describe("post.service - createPost", () => {
+
+  const validPostData:PostInput = {
   id: 1,
   userId: 1,
   title: "Tubo roto en cocina",
@@ -17,9 +21,9 @@ const validPostData = {
   endDate: new Date("2026-06-30"),
   address: "Calle Principal 123, Apt 4B",
   status: "Active",
-  categoryIds: [1, 2],
+  categoryId: 1,
 };
-describe("post.service - createPost", () => {
+
   it("should create a post successfully", async () => {
     vi.mocked(create).mockResolvedValue(validPostData);
 
@@ -36,21 +40,7 @@ describe("post.service - createPost", () => {
       endDate: new Date("2026-06-30"),
       address: "Calle Principal 123, Apt 4B",
       status: "Active",
-      categories: {
-        create: [
-          {
-            category: {
-              connect: { id: 1 },
-            },
-          },
-          {
-            category: {
-              connect: { id: 2 },
-            },
-          },
-        ],
-      },
-    });
+    },1);
 
     expect(result).toEqual(validPostData);
   });

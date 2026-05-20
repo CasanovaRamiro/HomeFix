@@ -1,12 +1,8 @@
 import { PostInput } from "../types/postInput.js"
 
 export const postServiceValidator = (input: PostInput): void => {
-  if (!input.categoryIds || input.categoryIds.length === 0) {
+  if (!input.categoryId) {
     throw new Error('At least one category must be selected')
-  }
-
-  if (!input.startDate) {
-    throw new Error('startDate is required')
   }
 
   if (!input.title || input.title.trim() === '') {

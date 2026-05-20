@@ -5,6 +5,7 @@ export interface PostInput {
   startDate: Date
   endDate: Date
   address: string
-  categoryIds: number[]
+  categoryId:number
+  status: string
   title: string
 }
