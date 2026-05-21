@@ -20,4 +20,36 @@ model User {
   phone     String?
   role      String  @default("user")
   createdAt DateTime @default(now())
+  posts     Post[]
+}
+
+model Post {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  title       String
+  description String
+  address     String
+  status      String             @default("Active")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  categories  PostCategory[]
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts PostCategory[]
+}
+
+model PostCategory {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  categoryId Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
 }
