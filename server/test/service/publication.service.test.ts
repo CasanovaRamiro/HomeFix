@@ -63,25 +63,24 @@ describe('publication.service - listAvailableByCategory', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns publications when the category has results', async () => {
-   const mockElectricistas = mockPublications.filter(p => p.status === 'disponible')
+   const mockElectricistas = mockPublications.filter(p => p.status === 'disponible' && p.typePublication === 'Electricista' )
     vi.mocked(publicationData.findAvailableByCategory).mockResolvedValue(mockElectricistas)
 
     const result = await listAvailableByCategory('Electricista')
 
     expect(result).toEqual(mockElectricistas)
-    expect(result).toHaveLength(3) 
+    expect(result).toHaveLength(2) 
     expect(result[0].typePublication).toBe('Electricista')
   })
 
 
 
-  it('returns publications when the category has results', async () => {
-   const mockElectricistas = mockPublications
+  it('returns an empty array when the category has no matches', async () => {
     vi.mocked(publicationData.findAvailableByCategory).mockResolvedValue([])
 
     const result = await listAvailableByCategory('Jardinero')
 
-    expect(result).toHaveLength(0) 
+    expect(result).toHaveLength(0)
   })
 
 

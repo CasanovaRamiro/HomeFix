@@ -1,6 +1,16 @@
 import prisma from '../lib/prisma.js'
 import type { Prisma } from '@prisma/client'
 
+interface CreateUserInput {
+  name: string
+  email: string
+  password: string
+  phone?: string
+  surname?: string
+  nationalId?: string
+  role?: string
+}
+
 const publicFields = {
   id: true,
   name: true,
