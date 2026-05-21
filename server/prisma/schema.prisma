@@ -11,7 +11,7 @@ datasource db {
 }
 
 model DniType {
-  id          Int     @id @default(autoincrement())
+  id          String  @id @default(uuid())
   description String
   users       User[]
 
@@ -19,7 +19,7 @@ model DniType {
 }
 
 model Address {
-  id       Int     @id @default(autoincrement())
+  id       String  @id @default(uuid())
   street   String
   number   String
   city     String
@@ -30,7 +30,7 @@ model Address {
 }
 
 model ValidationLevel {
-  id          Int              @id @default(autoincrement())
+  id          String           @id @default(uuid())
   description String
   users       UserValidation[]
 
@@ -38,7 +38,7 @@ model ValidationLevel {
 }
 
 model Category {
-  id           Int                   @id @default(autoincrement())
+  id           String                @id @default(uuid())
   description  String
   users        UserCategory[]
   publications PublicationCategory[]
@@ -47,7 +47,7 @@ model Category {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   firstName String
   lastName  String
   email     String   @unique
@@ -59,8 +59,8 @@ model User {
   deleted   Boolean  @default(false)
   phone     String?
   createdAt DateTime @default(now())
-  dniTypeId Int
-  addressId Int
+  dniTypeId String
+  addressId String
 
   dniType  DniType @relation(fields: [dniTypeId], references: [id])
   address  Address @relation(fields: [addressId], references: [id])
@@ -78,9 +78,9 @@ model User {
 }
 
 model UserValidation {
-  id                Int             @id @default(autoincrement())
-  userId            Int
-  validationLevelId Int
+  id                String          @id @default(uuid())
+  userId            String
+  validationLevelId String
   user              User            @relation(fields: [userId], references: [id])
   validationLevel   ValidationLevel @relation(fields: [validationLevelId], references: [id])
 
@@ -88,9 +88,9 @@ model UserValidation {
 }
 
 model UserCategory {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  categoryId Int
+  id         String   @id @default(uuid())
+  userId     String
+  categoryId String
   user       User     @relation(fields: [userId], references: [id])
   category   Category @relation(fields: [categoryId], references: [id])
 
@@ -98,7 +98,7 @@ model UserCategory {
 }
 
 model Publication {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   description String
   date        DateTime
   photo       String?
@@ -106,7 +106,7 @@ model Publication {
   startDate   DateTime
   endDate     DateTime
   type        String
-  userId      Int
+  userId      String
   user        User     @relation(fields: [userId], references: [id])
 
   requests   Request[]
@@ -116,9 +116,9 @@ model Publication {
 }
 
 model PublicationCategory {
-  id            Int         @id @default(autoincrement())
-  categoryId    Int
-  publicationId Int
+  id            String      @id @default(uuid())
+  categoryId    String
+  publicationId String
   category      Category    @relation(fields: [categoryId], references: [id])
   publication   Publication @relation(fields: [publicationId], references: [id])
 
@@ -126,9 +126,9 @@ model PublicationCategory {
 }
 
 model Request {
-  id            Int         @id @default(autoincrement())
-  workerUserId  Int
-  publicationId Int
+  id            String      @id @default(uuid())
+  workerUserId  String
+  publicationId String
   status        String
   worker        User        @relation(fields: [workerUserId], references: [id])
   publication   Publication @relation(fields: [publicationId], references: [id])
@@ -140,10 +140,10 @@ model Request {
 }
 
 model Conversation {
-  id          Int     @id @default(autoincrement())
-  requestId   Int     @unique
-  initiatorId Int
-  receiverId  Int
+  id          String  @id @default(uuid())
+  requestId   String  @unique
+  initiatorId String
+  receiverId  String
   description String? @db.Text
 
   request   Request @relation(fields: [requestId], references: [id])
@@ -154,10 +154,10 @@ model Conversation {
 }
 
 model Review {
-  id          Int     @id @default(autoincrement())
-  requestId   Int
-  reviewerId  Int
-  workerId    Int
+  id          String  @id @default(uuid())
+  requestId   String
+  reviewerId  String
+  workerId    String
   description String? @db.Text
   rating      Float
   mediaUrls   String? @db.Text
