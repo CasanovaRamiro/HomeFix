@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:test": "DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma migrate deploy",
     "db:generate": "prisma generate",
+    "db:seed": "prisma db seed",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -19,6 +20,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "~5.22.0",
     "bcryptjs": "~3.0.3",

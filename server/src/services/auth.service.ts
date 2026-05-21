@@ -14,15 +14,15 @@ interface LoginInput {
   password: string
 }
 
-const signToken = (id: number): string =>
-  jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: '7d' })
+const signToken = (id: number, role: string): string =>
+  jwt.sign({ id, role }, process.env.JWT_SECRET!, { expiresIn: '7d' })
 
 export const register = async ({ name, email, password, phone }: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw new Error('Email already in use')
   const hashed = await bcrypt.hash(password, 10)
   const user = await createUser({ name, email, password: hashed, phone })
-  return { token: signToken(user.id), user }
+  return { token: signToken(user.id, user.role), user }
 }
 
 export const login = async ({ email, password }: LoginInput) => {
@@ -31,5 +31,5 @@ export const login = async ({ email, password }: LoginInput) => {
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) throw new Error('Invalid credentials')
   const { password: _, ...safeUser } = user
-  return { token: signToken(safeUser.id), user: safeUser }
+  return { token: signToken(safeUser.id, safeUser.role), user: safeUser }
 }

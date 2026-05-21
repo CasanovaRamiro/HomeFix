@@ -6,6 +6,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
+import publicationRoutes from './routes/publication.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 
 export const app = express()
@@ -17,6 +18,7 @@ app.use(express.json())
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
+app.use('/publications', publicationRoutes)
 
 app.use(errorHandler)
 

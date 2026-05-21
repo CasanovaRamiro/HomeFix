@@ -17,7 +17,7 @@ export default function Login() {
     try {
       const { data } = await api.post<{ token: string }>('/auth/login', form)
       localStorage.setItem('token', data.token)
-      navigate('/users')
+      navigate('/trabajador/trabajos')
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? 'Login failed')
