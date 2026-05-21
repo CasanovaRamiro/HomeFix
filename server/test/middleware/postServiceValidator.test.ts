@@ -3,14 +3,12 @@ import { postServiceValidator } from "../../src/middleware/postServiceValidator.
 import { PostInput } from "../../src/types/postInput.js";
 
 const validPostData:PostInput = {
-  id: 1,
   userId: 1,
   title: "Tubo roto en cocina",
   description: "El tubo bajo el lavaplatos está roto",
   startDate: new Date("2026-06-01"),
   endDate: new Date("2026-06-30"),
   address: "Calle Principal 123, Apt 4B",
-  status: "Active",
   categoryId: 1,
 };
 
@@ -49,5 +47,15 @@ describe("postServiceValidator", () => {
         address: "",
       }),
     ).toThrow("address is required");
+  });
+
+  it('should fail when endDate is before startDate', () => {
+    expect(() =>
+      postServiceValidator({
+        ...validPostData,
+        startDate: new Date("2026-06-30"),
+        endDate: new Date("2026-06-01"),
+      }),
+    ).toThrow("endDate must be after startDate");
   });
 });

@@ -4,12 +4,12 @@ import { post } from '../services/post.service.js'
 
 const router = Router()
 
-router.post('/', requireAuth, async (req, res) => {
+router.post('/create', requireAuth, async (req, res) => {
     try {
         const result = await post(req.body);
         res.status(201).json(result);
     } catch (error) {
-        res.status(400).json({ message: 'Invalid post data' })
+        res.status(400).json({ message: error })
     }
 })
 

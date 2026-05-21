@@ -10,17 +10,26 @@ const postFields = {
   startDate: true,
   endDate: true,
   address: true,
-  status: true
+  status: true,
 } satisfies Prisma.PostSelect;
 
-export const create = (
-  data: Omit<PostInput, 'categoryId'> & { userId: number },
-  categoryId: number
-) => prisma.post.create({ 
+export const createPost = (
+  data: PostInput,
+) =>
+  prisma.post.create({
+    data: {
+      userId: data.userId,
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      address: data.address,
 
-  data: {
-    ...data,
-    categories: {create: {categoryId}}
-  },
-  select: postFields
- });
+      categories: {
+        create: {
+          categoryId: data.categoryId,
+        },
+      },
+    },
+    select: postFields,
+  });

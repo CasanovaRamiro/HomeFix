@@ -16,5 +16,9 @@ export const postServiceValidator = (input: PostInput): void => {
   if (!input.address || input.address.trim() === '') {
     throw new Error('address is required')
   }
+
+  if (input.endDate <= input.startDate) {
+    throw new Error('endDate must be after startDate')
+  }
 }
 
