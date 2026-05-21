@@ -1,6 +1,10 @@
 import { PostInput } from "../types/postInput.js"
 
 export const postServiceValidator = (input: PostInput): void => {
+
+  const start = new Date(input.startDate);
+  const end = new Date(input.endDate);
+
   if (!input.categoryId) {
     throw new Error('At least one category must be selected')
   }
@@ -17,7 +21,7 @@ export const postServiceValidator = (input: PostInput): void => {
     throw new Error('address is required')
   }
 
-  if (input.endDate <= input.startDate) {
+  if (end <= start) {
     throw new Error('endDate must be after startDate')
   }
 }

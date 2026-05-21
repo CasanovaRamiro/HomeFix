@@ -21,8 +21,8 @@ beforeEach(async () => {
 const createValidPost = (): PostInput => ({
   userId,
   description: "Test description",
-  startDate: new Date("2026-06-01"),
-  endDate: new Date("2026-06-15"),
+  startDate: new Date("2026-06-01T00:00:00.000Z"),
+  endDate: new Date("2026-06-15T00:00:00.000Z"),
   address: "123 Test St",
   categoryId,
   title: "Test Post",
