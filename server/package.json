@@ -10,8 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:test": "set DATABASE_URL=mysql://root:root@localhost:3306/ofix_test&& prisma migrate deploy",
-    "db:generate": "prisma generate",
+    "db:migrate:test": "cross-env DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest"
   },
