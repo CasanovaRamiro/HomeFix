@@ -1,4 +1,8 @@
-const required = ['DATABASE_URL', 'JWT_SECRET']
+const required = [
+  'DATABASE_URL',
+  'AUTH0_AUDIENCE',
+  'AUTH0_ISSUER_BASE_URL',
+]
 
 export const validateEnv = (): void => {
   const missing = required.filter((key) => !process.env[key])

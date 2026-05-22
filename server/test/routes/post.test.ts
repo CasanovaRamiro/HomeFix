@@ -1,9 +1,20 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import request from "supertest";
-import { app } from "../../src/index.js";
 import { cleanDb, createUser, createCategory } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
-import { getTestToken } from "../helpers/auth.js";
+
+vi.mock("../../src/middleware/auth0.middleware.js", () => ({
+  jwtCheck: (req: { headers: { authorization?: string } }, res: { status: (code: number) => { json: (body: { error: string }) => void } }, next: () => void) => {
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+      next();
+      return;
+    }
+
+    res.status(401).json({ error: "Unauthorized" });
+  },
+}));
+
+import { app } from "../../src/index.js";
 
 let token: string;
 let userId: number;
@@ -15,7 +26,7 @@ beforeEach(async () => {
   const category = await createCategory("Test Category");
   userId = user.id;
   categoryId = category.id;
-  token = getTestToken(userId);
+  token = "test-auth0-token";
 });
 
 const createValidPost = (): PostInput => ({

@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:test": "DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma migrate deploy",
+    "db:migrate:test": "set DATABASE_URL=mysql://root:root@localhost:3306/ofix_test&& prisma migrate deploy",
     "db:generate": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -25,6 +25,7 @@
     "cors": "~2.8.6",
     "dotenv": "~17.4.2",
     "express": "~5.2.1",
+    "express-oauth2-jwt-bearer": "^1.9.0",
     "jsonwebtoken": "~9.0.3"
   },
   "pnpm": {
