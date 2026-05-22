@@ -11,19 +11,22 @@ import {
   type PublicationStatus,
 } from '../types/publication.types.js'
 
-const assertPositiveId = (id: number, label: string) => {
+// Se agrega ': void' porque esta función solo valida y no retorna ningún valor
+const assertPositiveId = (id: number, label: string): void => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new Error(`${label} must be a positive integer`)
   }
 }
 
-const assertValidStatus = (status: string) => {
+// Se agrega ': void' por la misma razón
+const assertValidStatus = (status: string): void => {
   if (!PUBLICATION_STATUS_VALUES.includes(status as PublicationStatus)) {
     throw new Error(`Invalid status. Allowed: ${PUBLICATION_STATUS_VALUES.join(', ')}`)
   }
 }
 
-export const listAvailableByCategory = async (category: string) => {
+// Retorna una Promesa que resuelve a un Array de Publicaciones
+export const listAvailableByCategory = async (category: string): Promise<Publication[]> => {
   if (!category?.trim()) {
     throw new Error('Category is required')
   }
@@ -33,7 +36,8 @@ export const listAvailableByCategory = async (category: string) => {
 export const listAllAvailable = async (): Promise<Publication[]> =>
   findAllAvailable()
 
-export const getPublicationById = async (id: number) => {
+// Retorna una Promesa que resuelve a una Publicación
+export const getPublicationById = async (id: number): Promise<Publication> => {
   assertPositiveId(id, 'Publication id')
   const publication = await findById(id)
   if (!publication) {
@@ -42,15 +46,17 @@ export const getPublicationById = async (id: number) => {
   return publication
 }
 
-export const listPublicationsByUser = async (userId: number) => {
+// Retorna una Promesa que resuelve a un Array de Publicaciones
+export const listPublicationsByUser = async (userId: number): Promise<Publication[]> => {
   assertPositiveId(userId, 'User id')
   return findByUserId(userId)
 }
 
+// Retorna una Promesa que resuelve a un Array de Publicaciones
 export const listPublicationsByUserAndStatus = async (
   userId: number,
   status: string
-) => {
+): Promise<Publication[]> => {
   assertPositiveId(userId, 'User id')
   assertValidStatus(status)
   return findByUserIdAndStatus(userId, status)
