@@ -1,4 +1,4 @@
-const required = ['DATABASE_URL', 'JWT_SECRET']
+const required = ['DATABASE_URL', 'JWT_SECRET', 'GEMINI_API_KEY']
 
 export const validateEnv = (): void => {
   const missing = required.filter((key) => !process.env[key])
