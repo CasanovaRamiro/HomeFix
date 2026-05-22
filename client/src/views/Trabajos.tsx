@@ -3,12 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DEFAULT_WORKER_CATEGORY,
   WORKER_CATEGORY_KEY,
-  publicationToTrabajo,
-} from '../lib/publication'
-import { fetchAvailablePublications } from '../services/publications'
-import type { TrabajoView } from '../types/publication'
+  postToTrabajo,
+} from '../lib/post'
+import { fetchAvailablePosts } from '../services/posts'
+import type { TrabajoView } from '../types/post'
 
 const POSTULACIONES_KEY = 'homefix_postulaciones_trabajador'
+// Hardcodeamos las categorías conocidas de tu seed para los chips estilo Backloggd
+const CATEGORIAS_DISPONIBLES = ['', 'Electricista', 'Plomero']
 
 export default function Trabajos() {
   const navigate = useNavigate()
@@ -26,6 +28,9 @@ export default function Trabajos() {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  
+  // Nuevo estado para controlar el ordenamiento solicitado por la HU
+  const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
 
   const loadPostulaciones = useCallback(() => {
     try {
@@ -44,8 +49,8 @@ export default function Trabajos() {
     setLoading(true)
     setError('')
     try {
-      const { data } = await fetchAvailablePublications(category)
-      const mapped = data.map(publicationToTrabajo)
+      const { data } = await fetchAvailablePosts(category)
+      const mapped = data.map(postToTrabajo)
       setTrabajos(mapped)
       const idParam = searchParams.get('id')
       if (idParam) {
@@ -75,15 +80,31 @@ export default function Trabajos() {
     loadTrabajos()
   }, [category, loadTrabajos])
 
-  const filtrados = useMemo(() => {
+  // Procesamos filtros y ordenamiento en cadena de forma eficiente
+  const filtradosYOrdenados = useMemo(() => {
+    let resultado = [...trabajos]
+    
+    // 1. Filtrado por palabra clave
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return trabajos
-    return trabajos.filter(
-      (t) =>
-        t.titulo.toLowerCase().includes(q) ||
-        t.descripcion.toLowerCase().includes(q)
-    )
-  }, [trabajos, searchQuery])
+    if (q) {
+      resultado = resultado.filter(
+        (t) =>
+          t.titulo.toLowerCase().includes(q) ||
+          t.descripcion.toLowerCase().includes(q)
+      )
+    }
+
+    // 2. Ordenamiento dinámico solicitado por las especificaciones
+    resultado.sort((a, b) => {
+      // Reemplazar barras por guiones para asegurar parseo ISO consistente en navegadores
+      const dateA = new Date(a.fechaPublicacion.split('/').reverse().join('-')).getTime()
+      const dateB = new Date(b.fechaPublicacion.split('/').reverse().join('-')).getTime()
+      
+      return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
+    })
+
+    return resultado
+  }, [trabajos, searchQuery, sortBy])
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -116,7 +137,7 @@ export default function Trabajos() {
     }, 1500)
   }
 
-  return (
+return (
     <div className="trabajos-page">
       <header className="trabajos-hero">
         <div className="trabajos-hero-inner">
@@ -129,7 +150,7 @@ export default function Trabajos() {
               'Cargando…'
             ) : (
               <>
-                <strong>{filtrados.length}</strong>{' '}
+                <strong>{filtradosYOrdenados.length}</strong>{' '}
                 {category.trim() ? (
                   <>
                     trabajos de <strong>{category}</strong>
@@ -140,31 +161,50 @@ export default function Trabajos() {
               </>
             )}
           </p>
-          <div className="trabajos-hero-actions">
-            <label className="trabajos-category-label">
-              Filtrar rubro
+          
+          {/* NUEVA BARRA UNIFICADA DE ACCIONES SUPERIOR */}
+          <div className="trabajos-hero-actions-row">
+            
+            {/* 1. Chips de Rubros */}
+            <div className="backloggd-chips-container">
+              <span className="chips-label">Filtrar rubro:</span>
+              <div className="backloggd-chips">
+                {CATEGORIAS_DISPONIBLES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`chip ${category === cat ? 'active' : ''}`}
+                    onClick={() => setCategory(cat)}
+                  >
+                    {cat === '' ? 'Todos' : cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Buscador por Palabra Clave (Mediano y Centrado) */}
+            <div className="search-wrapper-inline">
+              <span className="search-label">Buscar:</span>
               <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Todos los rubros"
+                type="search"
+                placeholder="Palabra clave..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </label>
-            <button type="button" className="btn-outline" onClick={logout}>
-              Salir
-            </button>
+            </div>
+
+            {/* 3. Botón Salir alineado al final */}
+            <div className="logout-wrapper-inline">
+              <button type="button" className="btn-outline" onClick={logout}>
+                Salir
+              </button>
+            </div>
+
           </div>
         </div>
       </header>
 
-      <section className="trabajos-filters">
-        <input
-          type="search"
-          placeholder="Buscar por palabra clave..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </section>
+  
 
       {error && (
         <p className="error trabajos-error">{error}</p>
@@ -173,14 +213,14 @@ export default function Trabajos() {
       <div className="trabajos-layout">
         <div className="trabajos-list">
           {loading && <p className="trabajos-muted">Cargando trabajos...</p>}
-          {!loading && filtrados.length === 0 && (
+          {!loading && filtradosYOrdenados.length === 0 && (
             <div className="trabajos-empty card">
               <h3>No hay trabajos disponibles</h3>
-              <p>No encontramos publicaciones activas para este rubro o busqueda.</p>
+              <p>No encontramos trabajos activos para este rubro o búsqueda.</p>
             </div>
           )}
           {!loading &&
-            filtrados.map((trabajo) => (
+            filtradosYOrdenados.map((trabajo) => (
               <article
                 key={trabajo.id}
                 className={`trabajo-card card ${selected?.id === trabajo.id ? 'is-selected' : ''} ${yaPostulado(trabajo.id) ? 'is-applied' : ''}`}

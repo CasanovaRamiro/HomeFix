@@ -1,6 +1,5 @@
 import prisma from "../lib/prisma.js";
 import type { Prisma } from "@prisma/client";
-import { PostInput } from "../types/postInput.js";
 
 const postFields = {
   id: true,
@@ -11,26 +10,41 @@ const postFields = {
   endDate: true,
   address: true,
   status: true,
-} satisfies Prisma.PostSelect;
-
-export const createPost = (
-  data: PostInput,
-) =>
-  prisma.post.create({
-    data: {
-      userId: data.userId,
-      title: data.title,
-      description: data.description,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      address: data.address,
-
-      categories: {
-        create: {
-          categoryId: data.categoryId,
+  createdAt: true,
+  image: true,
+  categories: {
+    select: {
+      category: {
+        select: {
+          id: true,
+          name: true,
         },
       },
     },
+  },
+} satisfies Prisma.PostSelect;
+
+export type PostWithCategories = Prisma.PostGetPayload<{ select: typeof postFields }>;
+
+const availablePostWhere = (category?: string): Prisma.PostWhereInput => ({
+  status: "Active",
+  ...(category?.trim()
+    ? {
+        categories: {
+          some: {
+            category: {
+              name: category.trim(),
+            },
+          },
+        },
+      }
+    : {}),
+});
+
+export const findAvailablePosts = (category?: string): Promise<PostWithCategories[]> =>
+  prisma.post.findMany({
+    where: availablePostWhere(category),
+    orderBy: { createdAt: "desc" },
     select: postFields,
   });
 
