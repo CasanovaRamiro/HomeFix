@@ -6,7 +6,6 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
-import publicationRoutes from './routes/publication.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import postRoutes from './routes/post.routes.js'
 
