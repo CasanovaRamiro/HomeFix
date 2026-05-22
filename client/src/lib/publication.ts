@@ -3,11 +3,8 @@ import type { Publication, TrabajoView } from '../types/publication'
 export const WORKER_CATEGORY_KEY = 'workerCategory'
 export const DEFAULT_WORKER_CATEGORY = ''
 
-export const titleFromDescription = (description: string, maxLen = 56): string => {
-  const line = description.split('\n')[0].trim()
-  if (line.length <= maxLen) return line
-  return `${line.slice(0, maxLen).trimEnd()}...`
-}
+export const titleFromDescription = (description: string): string =>
+  description.split('\n')[0].trim()
 
 export const formatPublicationDate = (value: string): string => {
   const d = new Date(value)
