@@ -139,5 +139,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .claude/
 
-# MockMVP1
-client2/
+.idea/
+client/package-lock.json
+package-lock.json
