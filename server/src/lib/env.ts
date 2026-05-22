@@ -2,6 +2,7 @@ const required = [
   'DATABASE_URL',
   'AUTH0_AUDIENCE',
   'AUTH0_ISSUER_BASE_URL',
+  'GEMINI_API_KEY'
 ]
 
 export const validateEnv = (): void => {
