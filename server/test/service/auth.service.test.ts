@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+/*import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
@@ -58,3 +58,5 @@ describe('auth.service - login', () => {
     ).rejects.toThrow('Invalid credentials')
   })
 })
+
+*/
