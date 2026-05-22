@@ -4,10 +4,34 @@ import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
 
 beforeEach(() => cleanDb())
 
+const createUserData = async (name: string, email: string, password: string) => {
+  const nationalIdType = await prisma.nationalIdType.create({
+    data: { description: `DNI-${email}` },
+  })
+  const address = await prisma.address.create({
+    data: {
+      street: 'Test street',
+      number: '123',
+      city: 'Test city',
+      state: 'Test state',
+    },
+  })
+
+  return {
+    name,
+    surname: 'Test',
+    email,
+    password,
+    nationalId: `nid-${email}`,
+    nationalIdTypeId: nationalIdType.id,
+    addressId: address.id,
+  }
+}
+
 describe('findByEmail', () => {
   it('returns the user when the email exists', async () => {
     await prisma.user.create({
-      data: { name: 'Jane', email: 'jane@test.com', password: 'hashed' },
+      data: await createUserData('Jane', 'jane@test.com', 'hashed'),
     })
 
     const user = await findByEmail('jane@test.com')
@@ -26,8 +50,8 @@ describe('findAll', () => {
   it('returns all users without the password field', async () => {
     await prisma.user.createMany({
       data: [
-        { name: 'Jane', email: 'jane@test.com', password: 'hashed' },
-        { name: 'John', email: 'john@test.com', password: 'hashed' },
+        await createUserData('Jane', 'jane@test.com', 'hashed'),
+        await createUserData('John', 'john@test.com', 'hashed'),
       ],
     })
 

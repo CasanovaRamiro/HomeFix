@@ -1,17 +1,23 @@
-import { createPost, findPostById, findPostsByUser,updatePostStatus } from "../data/post.data.js";
+import { createPost, findPostById, findPostsByUser,updatePostStatus, findAvailablePosts} from "../data/post.data.js";
 import { postServiceValidator } from "../middleware/postServiceValidator.js";
 import { PostInput } from "../types/postInput.js";
 
-export const post = async (input: PostInput) => {
-  postServiceValidator(input);
+const assertPositiveId = (id: number, label: string): void => {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error(`${label} must be a positive integer`);
+  }
+};
 
-  const createdPost = await createPost({
-    ...input,
-    startDate: new Date(input.startDate),
-    endDate: new Date(input.endDate),
-  });
+export const listAvailablePosts = async (category?: string) =>
+  findAvailablePosts(category);
 
-  return createdPost;
+export const getPostById = async (id: number) => {
+  assertPositiveId(id, "Post id");
+  const found = await findPostById(id);
+  if (!found) {
+    throw new Error("Post not found");
+  }
+  return found;
 };
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
