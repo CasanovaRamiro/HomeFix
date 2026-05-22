@@ -8,5 +8,6 @@ export default defineConfig({
       DATABASE_URL: 'mysql://ofix:ofix123@localhost:3306/ofix_test',
       JWT_SECRET: 'test-secret',
     },
+    fileParallelism: false,
   },
 })

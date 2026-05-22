@@ -18,14 +18,14 @@ model User {
   surname      String
   email        String   @unique
   password     String
-  nationalId   String   @unique @map("national_id") // Corregido a nationalId
+  nationalId   String   @unique @map("national_id") // este seria el dni. aclaro por las dudas
   profilePicture        String?        @map("profile_picture") 
   role         String   @default("user")
   active       Boolean  @default(true)
   deleted      Boolean  @default(false)
   phone        String?
   createdAt    DateTime @default(now()) @map("created_at")
-  
+  posts     Post[]
   nationalIdTypeId Int  @map("national_id_type_id") // Antes dniTypeId
   addressId        Int  @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
@@ -34,21 +34,41 @@ model User {
   @@map("user")
 }
 
-
-model Publication {
-  id              Int      @id @default(autoincrement())
-  description     String
-  date            DateTime @default(now()) 
-  status          String
-  fromStartJob    DateTime @map("from_start_job")
-  untilFinishJob  DateTime @map("until_finish_job")
-  typePublication String   @map("type_publication")
-  userId          Int      @map("fk_id_user")
-  photo           String
-
-
-  @@map("publication") 
+model Post {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  title       String
+  description String
+  address     String
+  status      String             @default("Active")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  image       String
+  categories  PostCategory[]
 }
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts PostCategory[]
+}
+
+model PostCategory {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  categoryId Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+
+}
+
+
+
 
 model NationalIdType { 
   id          Int    @id @default(autoincrement()) 
