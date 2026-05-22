@@ -10,161 +10,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model DniType {
-  id          String  @id @default(uuid())
-  description String
-  users       User[]
-
-  @@map("dni_type")
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  phone     String?
+  role      String  @default("user")
+  createdAt DateTime @default(now())
+  posts     Post[]
 }
 
-model Address {
-  id       String  @id @default(uuid())
-  street   String
-  number   String
-  city     String
-  province String
-  users    User[]
-
-  @@map("address")
-}
-
-model ValidationLevel {
-  id          String           @id @default(uuid())
+model Post {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  title       String
   description String
-  users       UserValidation[]
-
-  @@map("validation_level")
+  address     String
+  status      String             @default("Active")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  categories  PostCategory[]
 }
 
 model Category {
-  id           String                @id @default(uuid())
-  description  String
-  users        UserCategory[]
-  publications PublicationCategory[]
-
-  @@map("category")
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts PostCategory[]
 }
 
-model User {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  email     String   @unique
-  password  String
-  dni       String   @unique
-  photo     String?
-  role      String   @default("user")
-  active    Boolean  @default(true)
-  deleted   Boolean  @default(false)
-  phone     String?
-  createdAt DateTime @default(now())
-  dniTypeId String
-  addressId String
+model PostCategory {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  categoryId Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  dniType  DniType @relation(fields: [dniTypeId], references: [id])
-  address  Address @relation(fields: [addressId], references: [id])
-
-  publications           Publication[]
-  requests               Request[]
-  categories             UserCategory[]
-  validations            UserValidation[]
-  reviewsGiven           Review[]       @relation("ReviewerRelation")
-  reviewsReceived        Review[]       @relation("WorkerRelation")
-  conversationsInitiated Conversation[] @relation("InitiatorRelation")
-  conversationsReceived  Conversation[] @relation("ReceiverRelation")
-
-  @@map("user")
-}
-
-model UserValidation {
-  id                String          @id @default(uuid())
-  userId            String
-  validationLevelId String
-  user              User            @relation(fields: [userId], references: [id])
-  validationLevel   ValidationLevel @relation(fields: [validationLevelId], references: [id])
-
-  @@map("user_validation")
-}
-
-model UserCategory {
-  id         String   @id @default(uuid())
-  userId     String
-  categoryId String
-  user       User     @relation(fields: [userId], references: [id])
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  @@map("user_category")
-}
-
-model Publication {
-  id          String   @id @default(uuid())
-  description String
-  date        DateTime
-  photo       String?
-  status      String
-  startDate   DateTime
-  endDate     DateTime
-  type        String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-
-  requests   Request[]
-  categories PublicationCategory[]
-
-  @@map("publication")
-}
-
-model PublicationCategory {
-  id            String      @id @default(uuid())
-  categoryId    String
-  publicationId String
-  category      Category    @relation(fields: [categoryId], references: [id])
-  publication   Publication @relation(fields: [publicationId], references: [id])
-
-  @@map("publication_category")
-}
-
-model Request {
-  id            String      @id @default(uuid())
-  workerUserId  String
-  publicationId String
-  status        String
-  worker        User        @relation(fields: [workerUserId], references: [id])
-  publication   Publication @relation(fields: [publicationId], references: [id])
-
-  conversation Conversation?
-  reviews      Review[]
-
-  @@map("request")
-}
-
-model Conversation {
-  id          String  @id @default(uuid())
-  requestId   String  @unique
-  initiatorId String
-  receiverId  String
-  description String? @db.Text
-
-  request   Request @relation(fields: [requestId], references: [id])
-  initiator User    @relation("InitiatorRelation", fields: [initiatorId], references: [id])
-  receiver  User    @relation("ReceiverRelation", fields: [receiverId], references: [id])
-
-  @@map("conversation")
-}
-
-model Review {
-  id          String  @id @default(uuid())
-  requestId   String
-  reviewerId  String
-  workerId    String
-  description String? @db.Text
-  rating      Float
-  mediaUrls   String? @db.Text
-
-  request  Request @relation(fields: [requestId], references: [id])
-  reviewer User    @relation("ReviewerRelation", fields: [reviewerId], references: [id])
-  worker   User    @relation("WorkerRelation", fields: [workerId], references: [id])
-
-  @@map("review")
+  @@unique([postId, categoryId])
 }
