@@ -1,5 +1,4 @@
 import prisma from "../lib/prisma.js";
-import type { Prisma } from "@prisma/client";
 
 const postFields = {
   id: true,
@@ -22,11 +21,28 @@ const postFields = {
       },
     },
   },
-} satisfies Prisma.PostSelect;
+} as const;
 
-export type PostWithCategories = Prisma.PostGetPayload<{ select: typeof postFields }>;
+export interface PostWithCategories {
+  id: number
+  userId: number
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  status: string
+  createdAt: Date
+  image: string
+  categories: {
+    category: {
+      id: number
+      name: string
+    }
+  }[]
+}
 
-const availablePostWhere = (category?: string): Prisma.PostWhereInput => ({
+const availablePostWhere = (category?: string) => ({
   status: "Active",
   ...(category?.trim()
     ? {

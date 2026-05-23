@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DEFAULT_WORKER_CATEGORY,
@@ -6,33 +6,30 @@ import {
   postToTrabajo,
 } from '../lib/post'
 import { fetchAvailablePosts } from '../services/posts'
-import type { TrabajoView } from '../types/post'
+import type { Post, TrabajoView } from '../types/post'
 
 const POSTULACIONES_KEY = 'homefix_postulaciones_trabajador'
-// Hardcodeamos las categorías conocidas de tu seed para los chips estilo Backloggd
 const CATEGORIAS_DISPONIBLES = ['', 'Electricista', 'Plomero']
 
-export default function Trabajos() {
+export default function Trabajos(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [category, setCategory] = useState(
+  const [category, setCategory] = useState<string>(
     () => localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
   )
   const [trabajos, setTrabajos] = useState<TrabajoView[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [selected, setSelected] = useState<TrabajoView | null>(null)
   const [postulacionesIds, setPostulacionesIds] = useState<number[]>([])
-  const [showModal, setShowModal] = useState(false)
-  const [mensaje, setMensaje] = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const [enviado, setEnviado] = useState(false)
-  
-  // Nuevo estado para controlar el ordenamiento solicitado por la HU
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [mensaje, setMensaje] = useState<string>('')
+  const [enviando, setEnviando] = useState<boolean>(false)
+  const [enviado, setEnviado] = useState<boolean>(false)
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
 
-  const loadPostulaciones = useCallback(() => {
+  const loadPostulaciones = useCallback((): void => {
     try {
       const stored = JSON.parse(localStorage.getItem(POSTULACIONES_KEY) ?? '[]') as {
         trabajoId: string | number
@@ -45,15 +42,17 @@ export default function Trabajos() {
     }
   }, [])
 
-  const loadTrabajos = useCallback(async () => {
+  const loadTrabajos = useCallback(async (): Promise<void> => {
     setLoading(true)
     setError('')
     try {
       const { data } = await fetchAvailablePosts(category)
-      const mapped = data.map(postToTrabajo)
+      // Tipamos explícitamente el mapa para evitar advertencias de tipo 'any'
+      const mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
       setTrabajos(mapped)
+      
       const idParam = searchParams.get('id')
-      if (idParam) {
+      if (idParam !== null && idParam !== '') {
         const found = mapped.find((t) => t.id === Number(idParam))
         if (found) setSelected(found)
       }
@@ -61,7 +60,7 @@ export default function Trabajos() {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
       if (axiosErr.response?.status === 401) {
         localStorage.removeItem('token')
-        navigate('/login')
+        void navigate('/login')
         return
       }
       setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
@@ -77,16 +76,14 @@ export default function Trabajos() {
 
   useEffect(() => {
     localStorage.setItem(WORKER_CATEGORY_KEY, category)
-    loadTrabajos()
+    void loadTrabajos() // El operador void le avisa al linter que manejamos la promesa flotante intencionalmente
   }, [category, loadTrabajos])
 
-  // Procesamos filtros y ordenamiento en cadena de forma eficiente
-  const filtradosYOrdenados = useMemo(() => {
+  const filtradosYOrdenados = useMemo((): TrabajoView[] => {
     let resultado = [...trabajos]
     
-    // 1. Filtrado por palabra clave
     const q = searchQuery.trim().toLowerCase()
-    if (q) {
+    if (q !== '') {
       resultado = resultado.filter(
         (t) =>
           t.titulo.toLowerCase().includes(q) ||
@@ -94,9 +91,7 @@ export default function Trabajos() {
       )
     }
 
-    // 2. Ordenamiento dinámico solicitado por las especificaciones
     resultado.sort((a, b) => {
-      // Reemplazar barras por guiones para asegurar parseo ISO consistente en navegadores
       const dateA = new Date(a.fechaPublicacion.split('/').reverse().join('-')).getTime()
       const dateB = new Date(b.fechaPublicacion.split('/').reverse().join('-')).getTime()
       
@@ -106,14 +101,14 @@ export default function Trabajos() {
     return resultado
   }, [trabajos, searchQuery, sortBy])
 
-  const logout = () => {
+  const logout = (): void => {
     localStorage.removeItem('token')
-    navigate('/login')
+    void navigate('/login')
   }
 
-  const yaPostulado = (id: number) => postulacionesIds.includes(id)
+  const yaPostulado = (id: number): boolean => postulacionesIds.includes(id)
 
-  const handlePostular = () => {
+  const handlePostular = (): void => {
     if (!selected) return
     setEnviando(true)
     const entry = {
@@ -125,7 +120,7 @@ export default function Trabajos() {
       estado: 'pendiente',
       fechaPostulacion: new Date().toISOString().split('T')[0],
     }
-    const prev = JSON.parse(localStorage.getItem(POSTULACIONES_KEY) ?? '[]')
+    const prev = JSON.parse(localStorage.getItem(POSTULACIONES_KEY) ?? '[]') as unknown[]
     localStorage.setItem(POSTULACIONES_KEY, JSON.stringify([entry, ...prev]))
     setPostulacionesIds((ids) => [...ids, selected.id])
     setEnviado(true)
@@ -137,7 +132,7 @@ export default function Trabajos() {
     }, 1500)
   }
 
-return (
+  return (
     <div className="trabajos-page">
       <header className="trabajos-hero">
         <div className="trabajos-hero-inner">
@@ -151,7 +146,7 @@ return (
             ) : (
               <>
                 <strong>{filtradosYOrdenados.length}</strong>{' '}
-                {category.trim() ? (
+                {category.trim() !== '' ? (
                   <>
                     trabajos de <strong>{category}</strong>
                   </>
@@ -162,10 +157,7 @@ return (
             )}
           </p>
           
-          {/* NUEVA BARRA UNIFICADA DE ACCIONES SUPERIOR */}
           <div className="trabajos-hero-actions-row">
-            
-            {/* 1. Chips de Rubros */}
             <div className="backloggd-chips-container">
               <span className="chips-label">Filtrar rubro:</span>
               <div className="backloggd-chips">
@@ -182,7 +174,6 @@ return (
               </div>
             </div>
 
-            {/* 2. Buscador por Palabra Clave (Mediano y Centrado) */}
             <div className="search-wrapper-inline">
               <span className="search-label">Buscar:</span>
               <input
@@ -193,20 +184,29 @@ return (
               />
             </div>
 
-            {/* 3. Botón Salir alineado al final */}
+            <div className="search-wrapper-inline">
+              <span className="search-label">Orden:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'reciente' | 'antiguo')}
+              >
+                <option value="reciente">Mas recientes</option>
+                <option value="antiguo">Mas antiguos</option>
+              </select>
+            </div>
+
             <div className="logout-wrapper-inline">
               <button type="button" className="btn-outline" onClick={logout}>
                 Salir
               </button>
             </div>
-
           </div>
         </div>
       </header>
 
-  
+     
 
-      {error && (
+      {error !== '' && (
         <p className="error trabajos-error">{error}</p>
       )}
 
@@ -251,7 +251,7 @@ return (
         </div>
 
         <aside className="trabajos-detail">
-          {selected ? (
+          {selected !== null ? (
             <div className="card trabajos-detail-card">
               <div className="trabajos-detail-head">
                 <h2>Detalle del trabajo</h2>
@@ -264,7 +264,7 @@ return (
                   x
                 </button>
               </div>
-              {selected.photo && (
+              {selected.photo !== null && selected.photo !== undefined && selected.photo !== '' && (
                 <img
                   src={selected.photo}
                   alt=""
@@ -304,7 +304,7 @@ return (
         </aside>
       </div>
 
-      {showModal && selected && (
+      {showModal && selected !== null && (
         <div className="modal-overlay" role="presentation" onClick={() => !enviando && setShowModal(false)}>
           <div
             className="card modal-card"

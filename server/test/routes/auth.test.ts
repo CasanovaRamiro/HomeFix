@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from '@jest/globals'
 import request from 'supertest'
 import { app } from '../../src/index.js'
 import { cleanDb } from '../helpers/db.js'
