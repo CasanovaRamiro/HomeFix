@@ -1,11 +1,11 @@
-export interface PostCategory {
+export interface PostCategoryDTO {
   category: {
     id: number
     name: string
   }
 }
 
-export interface Post {
+export interface PostDTO {
   id: number
   userId: number
   title: string
@@ -16,8 +16,11 @@ export interface Post {
   status: string
   createdAt: string
   image: string
-  categories: PostCategory[]
+  categories: PostCategoryDTO[]
 }
+
+export type Post = PostDTO
+export type PostCategory = PostCategoryDTO
 
 export interface TrabajoView {
   id: number

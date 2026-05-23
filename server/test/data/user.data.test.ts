@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from '@jest/globals'
 import { cleanDb, prisma } from '../helpers/db.js'
 import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
 
@@ -58,7 +58,7 @@ describe('findAll', () => {
     const users = await findAll()
 
     expect(users).toHaveLength(2)
-    users.forEach((u) => expect(u).not.toHaveProperty('password'))
+    users.forEach((u: unknown) => expect(u).not.toHaveProperty('password'))
   })
 })
 
