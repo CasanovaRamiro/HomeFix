@@ -95,6 +95,7 @@ describe("findPostsByUserId", () => {
 
     expect(posts).toHaveLength(2);
     expect(posts[0].title).toBe("Second Post");
+    expect(posts[0].categories[0].category.name).toBe("Test Category");
   });
 
   it("should filter by Active and Paused statuses", async () => {

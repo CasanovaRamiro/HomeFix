@@ -12,6 +12,16 @@ const postFields = {
   address: true,
   status: true,
   createdAt: true,
+  categories: {
+    select: {
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
 } satisfies Prisma.PostSelect;
 
 export const findPostsByUserId = (userId: number, statuses?: string[]) =>

@@ -30,6 +30,7 @@ describe("post.service - createPost", () => {
     address: "Calle Principal 123, Apt 4B",
     status: "Active",
     createdAt: new Date("2026-05-20"),
+    categories: [{ category: { id: 1, name: "Plomería" } }],
   };
 
   it("should create a post and return a PostResponseDto", async () => {
@@ -53,14 +54,15 @@ describe("post.service - createPost", () => {
       address: "Calle Principal 123, Apt 4B",
       status: "Active",
       createdAt: new Date("2026-05-20").toISOString(),
+      categories: [{ id: 1, name: "Plomería" }],
     });
   });
 });
 
 describe("post.service - listMyPosts", () => {
   const postsMock = [
-    { id: 1, userId: 1, title: "Post 1", description: "desc", status: "Active", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-20") },
-    { id: 2, userId: 1, title: "Post 2", description: "desc", status: "Paused", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-21") },
+    { id: 1, userId: 1, title: "Post 1", description: "desc", status: "Active", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-20"), categories: [{ category: { id: 1, name: "Plomería" } }] },
+    { id: 2, userId: 1, title: "Post 2", description: "desc", status: "Paused", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-21"), categories: [{ category: { id: 2, name: "Electricidad" } }] },
   ];
 
   it("should call findPostsByUserId with userId and ['Active', 'Paused']", async () => {
@@ -84,6 +86,7 @@ describe("post.service - listMyPosts", () => {
       address: "addr",
       status: "Active",
       createdAt: new Date("2026-05-20").toISOString(),
+      categories: [{ id: 1, name: "Plomería" }],
     });
     expect(result[1]).toEqual({
       id: 2,
@@ -92,6 +95,7 @@ describe("post.service - listMyPosts", () => {
       address: "addr",
       status: "Paused",
       createdAt: new Date("2026-05-21").toISOString(),
+      categories: [{ id: 2, name: "Electricidad" }],
     });
   });
 });

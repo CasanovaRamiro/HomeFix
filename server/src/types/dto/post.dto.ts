@@ -1,3 +1,8 @@
+export interface CategoryInfo {
+  id: number
+  name: string
+}
+
 export interface PostResponseDto {
   id: number
   title: string
@@ -7,6 +12,7 @@ export interface PostResponseDto {
   address: string
   status: string
   createdAt: string
+  categories: CategoryInfo[]
 }
 
 export interface PostListItemDto {
@@ -16,4 +22,5 @@ export interface PostListItemDto {
   address: string
   status: string
   createdAt: string
+  categories: CategoryInfo[]
 }

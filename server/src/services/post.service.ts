@@ -1,7 +1,10 @@
 import { createPost, findPostsByUserId } from "../data/post.data.js";
 import { postServiceValidator } from "../middleware/postServiceValidator.js";
 import { PostInput } from "../types/postInput.js";
-import type { PostResponseDto, PostListItemDto } from "../types/dto/post.dto.js";
+import type { PostResponseDto, PostListItemDto, CategoryInfo } from "../types/dto/post.dto.js";
+
+const mapCategories = (categories: { category: { id: number; name: string } }[]): CategoryInfo[] =>
+  categories.map(pc => pc.category)
 
 const toPostListItem = (post: {
   id: number
@@ -10,6 +13,7 @@ const toPostListItem = (post: {
   address: string
   status: string
   createdAt: Date
+  categories: { category: { id: number; name: string } }[]
 }): PostListItemDto => ({
   id: post.id,
   title: post.title,
@@ -17,6 +21,7 @@ const toPostListItem = (post: {
   address: post.address,
   status: post.status,
   createdAt: post.createdAt.toISOString(),
+  categories: mapCategories(post.categories),
 })
 
 const toPostResponse = (post: {
@@ -28,6 +33,7 @@ const toPostResponse = (post: {
   address: string
   status: string
   createdAt: Date
+  categories: { category: { id: number; name: string } }[]
 }): PostResponseDto => ({
   id: post.id,
   title: post.title,
@@ -37,6 +43,7 @@ const toPostResponse = (post: {
   address: post.address,
   status: post.status,
   createdAt: post.createdAt.toISOString(),
+  categories: mapCategories(post.categories),
 })
 
 export const listMyPosts = async (userId: number): Promise<PostListItemDto[]> => {
