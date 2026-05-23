@@ -75,5 +75,3 @@ ALTER TABLE `user` ADD CONSTRAINT `user_address_id_fkey` FOREIGN KEY (`address_i
 -- AddForeignKey
 ALTER TABLE `photo` ADD CONSTRAINT `photo_publication_id_fkey` FOREIGN KEY (`publication_id`) REFERENCES `publication`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
--- RenameIndex
-ALTER TABLE `user` RENAME INDEX `User_email_key` TO `user_email_key`;
