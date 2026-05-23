@@ -32,27 +32,35 @@ describe("post.service - createPost", () => {
     createdAt: new Date("2026-05-20"),
   };
 
-  it("should create a post successfully", async () => {
+  it("should create a post and return a PostResponseDto", async () => {
     vi.mocked(createPost).mockResolvedValue(createdPostMock);
 
     const result = await postService.post(inputData);
 
     expect(createPost).toHaveBeenCalledTimes(1);
-
     expect(createPost).toHaveBeenCalledWith({
       ...inputData,
       startDate: new Date(inputData.startDate),
       endDate: new Date(inputData.endDate),
     });
 
-    expect(result).toEqual(createdPostMock);
+    expect(result).toEqual({
+      id: 1,
+      title: "Tubo roto en cocina",
+      description: "El tubo bajo el lavaplatos está roto",
+      startDate: new Date("2026-06-01").toISOString(),
+      endDate: new Date("2026-06-15").toISOString(),
+      address: "Calle Principal 123, Apt 4B",
+      status: "Active",
+      createdAt: new Date("2026-05-20").toISOString(),
+    });
   });
 });
 
 describe("post.service - listMyPosts", () => {
   const postsMock = [
-    { id: 1, userId: 1, title: "Post 1", description: "desc", status: "Active", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date() },
-    { id: 2, userId: 1, title: "Post 2", description: "desc", status: "Paused", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date() },
+    { id: 1, userId: 1, title: "Post 1", description: "desc", status: "Active", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-20") },
+    { id: 2, userId: 1, title: "Post 2", description: "desc", status: "Paused", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date("2026-05-21") },
   ];
 
   it("should call findPostsByUserId with userId and ['Active', 'Paused']", async () => {
@@ -64,11 +72,26 @@ describe("post.service - listMyPosts", () => {
     expect(result).toHaveLength(2);
   });
 
-  it("should return the result from the data layer", async () => {
+  it("should return PostListItemDto array (no userId, dates as strings)", async () => {
     vi.mocked(findPostsByUserId).mockResolvedValue(postsMock);
 
     const result = await postService.listMyPosts(1);
 
-    expect(result).toEqual(postsMock);
+    expect(result[0]).toEqual({
+      id: 1,
+      title: "Post 1",
+      description: "desc",
+      address: "addr",
+      status: "Active",
+      createdAt: new Date("2026-05-20").toISOString(),
+    });
+    expect(result[1]).toEqual({
+      id: 2,
+      title: "Post 2",
+      description: "desc",
+      address: "addr",
+      status: "Paused",
+      createdAt: new Date("2026-05-21").toISOString(),
+    });
   });
 });
