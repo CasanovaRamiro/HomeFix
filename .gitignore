@@ -142,3 +142,7 @@ vite.config.ts.timestamp-*
 .idea/
 client/package-lock.json
 package-lock.json
+
+
+#Config vite BD user test
+vitest.config.ts

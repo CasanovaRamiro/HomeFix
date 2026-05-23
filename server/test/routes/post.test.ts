@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../../src/index.js";
-import { cleanDb, createUser, createCategory } from "../helpers/db.js";
+import { cleanDb, createUser, createCategory, prisma } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
 import { getTestToken } from "../helpers/auth.js";
 
@@ -54,4 +54,50 @@ describe("POST /posts/create", () => {
     expect(res.status).toBe(401);
   });
 
+});
+
+describe("GET /posts/mine", () => {
+  beforeEach(async () => {
+    await cleanDb();
+    await prisma.user.create({
+      data: { id: 1, email: "test@test.com", name: "Test", password: "hashed" },
+    });
+  });
+
+  it("should return 200 with the user's Active posts", async () => {
+    await prisma.post.create({
+      data: { userId: 1, title: "Active Post", description: "desc", startDate: new Date(), endDate: new Date(), address: "addr", status: "Active" },
+    });
+    await prisma.post.create({
+      data: { userId: 1, title: "Paused Post", description: "desc", startDate: new Date(), endDate: new Date(), address: "addr", status: "Paused" },
+    });
+
+    const res = await request(app).get("/posts/mine");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0].title).toBe("Paused Post");
+  });
+
+  it("should only return Active and Paused posts (exclude other statuses)", async () => {
+    await prisma.post.create({
+      data: { userId: 1, title: "Active Post", description: "desc", startDate: new Date(), endDate: new Date(), address: "addr", status: "Active" },
+    });
+    await prisma.post.create({
+      data: { userId: 1, title: "Cancelled Post", description: "desc", startDate: new Date(), endDate: new Date(), address: "addr", status: "Cancelled" },
+    });
+
+    const res = await request(app).get("/posts/mine");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe("Active Post");
+  });
+
+  it("should return 200 with empty array when user has no posts", async () => {
+    const res = await request(app).get("/posts/mine");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
 });

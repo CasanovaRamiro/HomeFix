@@ -11,7 +11,15 @@ const postFields = {
   endDate: true,
   address: true,
   status: true,
+  createdAt: true,
 } satisfies Prisma.PostSelect;
+
+export const findPostsByUserId = (userId: number, statuses?: string[]) =>
+  prisma.post.findMany({
+    where: { userId, ...(statuses && { status: { in: statuses } }) },
+    select: postFields,
+    orderBy: { createdAt: 'desc' },
+  })
 
 export const createPost = (
   data: PostInput,

@@ -1,8 +1,19 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/auth.middleware.js'
-import { post } from '../services/post.service.js'
+import { post, listMyPosts } from '../services/post.service.js'
 
 const router = Router()
+
+const HARDCODED_USER_ID = 1
+
+router.get('/mine', async (_req, res, next) => {
+  try {
+    const posts = await listMyPosts(HARDCODED_USER_ID)
+    res.json(posts)
+  } catch (err) {
+    next(err)
+  }
+})
 
 router.post('/create', requireAuth, async (req, res, next) => {
   try {

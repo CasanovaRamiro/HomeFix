@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost } from "../../src/data/post.data.js";
+import { createPost, findPostsByUserId } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import { PostInput } from "../../src/types/postInput.js";
 
 vi.mock("../../src/data/post.data.js", () => ({
   createPost: vi.fn(),
+  findPostsByUserId: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -28,6 +29,7 @@ describe("post.service - createPost", () => {
     endDate: new Date("2026-06-15"),
     address: "Calle Principal 123, Apt 4B",
     status: "Active",
+    createdAt: new Date("2026-05-20"),
   };
 
   it("should create a post successfully", async () => {
@@ -44,5 +46,29 @@ describe("post.service - createPost", () => {
     });
 
     expect(result).toEqual(createdPostMock);
+  });
+});
+
+describe("post.service - listMyPosts", () => {
+  const postsMock = [
+    { id: 1, userId: 1, title: "Post 1", description: "desc", status: "Active", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date() },
+    { id: 2, userId: 1, title: "Post 2", description: "desc", status: "Paused", startDate: new Date(), endDate: new Date(), address: "addr", createdAt: new Date() },
+  ];
+
+  it("should call findPostsByUserId with userId and ['Active', 'Paused']", async () => {
+    vi.mocked(findPostsByUserId).mockResolvedValue(postsMock);
+
+    const result = await postService.listMyPosts(1);
+
+    expect(findPostsByUserId).toHaveBeenCalledWith(1, ["Active", "Paused"]);
+    expect(result).toHaveLength(2);
+  });
+
+  it("should return the result from the data layer", async () => {
+    vi.mocked(findPostsByUserId).mockResolvedValue(postsMock);
+
+    const result = await postService.listMyPosts(1);
+
+    expect(result).toEqual(postsMock);
   });
 });
