@@ -11,5 +11,13 @@
     "test": "pnpm --prefix server run test && pnpm --prefix client run test",
     "test-be": "pnpm --prefix server run test",
     "test-fe": "pnpm --prefix client run test"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "unrs-resolver",
+      "prisma",
+      "@prisma/engines",
+      "esbuild"
+    ]
   }
 }
