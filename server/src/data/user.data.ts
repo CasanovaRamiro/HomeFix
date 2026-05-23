@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma.js'
-import type { Prisma } from '@prisma/client'
 
 interface CreateUserInput {
   name: string
@@ -18,7 +17,7 @@ const publicFields = {
   phone: true,
   role: true,
   createdAt: true,
-} satisfies Prisma.UserSelect
+} as const
 
 export const findByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email } })
