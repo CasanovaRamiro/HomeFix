@@ -23,10 +23,6 @@ app.use('/auth', authRoutes)
 app.use('/users', jwtCheck, userRoutes)
 app.use('/posts', jwtCheck, postRoutes)
 
-app.get('/authorized', jwtCheck, (_req, res) => {
-  res.send('Secured Resource')
-})
-
 app.use(errorHandler)
 
 if (process.env.NODE_ENV !== 'test') {
