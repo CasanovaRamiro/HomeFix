@@ -1,0 +1,30 @@
+import { Router } from 'express'
+import { requireAuth } from '../middleware/auth.middleware.js'
+import { listWorkers, getWorker } from '../services/worker.service.js'
+
+const router = Router()
+
+router.get('/', requireAuth, async (_req, res, next) => {
+  try {
+    const workers = await listWorkers()
+    res.json(workers)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id as string, 10)
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'Invalid worker id' })
+      return
+    }
+    const worker = await getWorker(id)
+    res.json(worker)
+  } catch (err) {
+    next(err)
+  }
+})
+
+export default router

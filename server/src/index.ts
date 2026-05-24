@@ -6,6 +6,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
+import workerRoutes from './routes/worker.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import postRoutes from './routes/post.routes.js'
 
@@ -19,6 +20,8 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/posts', postRoutes)
+app.use('/workers', workerRoutes)
+
 app.use(errorHandler)
 
 if (process.env.NODE_ENV !== 'test') {
