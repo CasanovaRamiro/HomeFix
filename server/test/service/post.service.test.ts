@@ -49,52 +49,27 @@ describe("post.service - createPost", () => {
 });
 
 describe("post.service - getUserPosts", () => {
-  const rawPostMock = {
-    id: 1,
-    userId: 1,
-    title: "Test Post",
-    description: "Test description",
-    status: "Active",
-    createdAt: new Date("2026-05-01"),
-    updatedAt: new Date("2026-05-01"),
-    address: "123 Test St",
-    startDate: new Date("2026-06-01"),
-    endDate: new Date("2026-06-15"),
-    categories: [
-      {
-        id: 1,
-        postId: 1,
-        categoryId: 1,
-        category: { id: 1, name: "Plumbing" },
-      },
-    ],
-  };
+  const userPostsMock = [
+    {
+      id: 1,
+      title: "Test Post",
+      description: "Test description",
+      status: "Active",
+      createdAt: new Date("2026-05-01"),
+      address: "123 Test St",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      categories: [{ id: 1, name: "Plumbing" }],
+    },
+  ];
 
-  it("should return flattened posts for a valid userId", async () => {
-    vi.mocked(findPostsByUser).mockResolvedValue([rawPostMock]);
+  it("should return posts for a valid userId", async () => {
+    vi.mocked(findPostsByUser).mockResolvedValue(userPostsMock);
 
     const result = await postService.getUserPosts(1);
 
     expect(findPostsByUser).toHaveBeenCalledWith(1);
-    expect(result).toEqual([
-      {
-        id: 1,
-        title: "Test Post",
-        description: "Test description",
-        status: "Active",
-        createdAt: rawPostMock.createdAt,
-        address: "123 Test St",
-        startDate: rawPostMock.startDate,
-        endDate: rawPostMock.endDate,
-        categories: [{ id: 1, name: "Plumbing" }],
-      },
-    ]);
-  });
-
-  it("should throw when userId is not a positive integer", async () => {
-    await expect(postService.getUserPosts(0)).rejects.toThrow("Invalid userId");
-    await expect(postService.getUserPosts(-1)).rejects.toThrow("Invalid userId");
-    await expect(postService.getUserPosts(1.5)).rejects.toThrow("Invalid userId");
+    expect(result).toEqual(userPostsMock);
   });
 
   it("should return empty array when no posts found", async () => {

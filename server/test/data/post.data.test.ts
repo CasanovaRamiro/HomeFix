@@ -128,7 +128,7 @@ describe("findPostsByUser", () => {
     await createPost(createValidPost());
     const posts = await findPostsByUser(userId);
     expect(posts[0].categories).toBeDefined();
-    expect(posts[0].categories[0].category.name).toBe("Test Category");
+    expect(posts[0].categories).toEqual([{ id: expect.any(Number), name: "Test Category" }]);
   });
 
   it("should order posts by createdAt descending", async () => {

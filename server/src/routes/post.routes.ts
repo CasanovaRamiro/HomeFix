@@ -18,6 +18,12 @@ router.post('/create', requireAuth, async (req, res, next) => {
 router.post("/user-posts", async (req, res, next) => {
   try {
     const { userId } = req.body;
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      res.status(400).json({ error: "Invalid userId" });
+      return;
+    }
+
     const posts = await getUserPosts(userId);
     res.json(posts);
   } catch (error) {
