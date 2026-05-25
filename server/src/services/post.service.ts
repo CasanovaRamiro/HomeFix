@@ -1,4 +1,4 @@
-import { createPost } from "../data/post.data.js";
+import { createPost, findPostsByUser } from "../data/post.data.js";
 import { postServiceValidator } from "../middleware/postServiceValidator.js";
 import { PostInput } from "../types/postInput.js";
 
@@ -13,3 +13,5 @@ export const post = async (input: PostInput) => {
 
   return createdPost;
 };
+
+export const getUserPosts = (userId: number) => findPostsByUser(userId);

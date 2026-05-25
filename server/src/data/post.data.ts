@@ -33,3 +33,38 @@ export const createPost = (
     },
     select: postFields,
   });
+
+export type UserPostSummary = {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: Date;
+  address: string;
+  startDate: Date;
+  endDate: Date;
+  categories: { id: number; name: string }[];
+};
+
+export const findPostsByUser = async (userId: number): Promise<UserPostSummary[]> => {
+  const posts = await prisma.post.findMany({
+    where: { userId, status: { in: ["Active", "Paused"] } },
+    include: { categories: { include: { category: true } } },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+
+  return posts.map((post) => ({
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    status: post.status,
+    createdAt: post.createdAt,
+    address: post.address,
+    startDate: post.startDate,
+    endDate: post.endDate,
+    categories: post.categories.map((pc) => ({
+      id: pc.category.id,
+      name: pc.category.name,
+    })),
+  }));
+};

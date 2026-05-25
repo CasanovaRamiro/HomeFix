@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost } from "../../src/data/post.data.js";
+import { createPost, findPostsByUser } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import { PostInput } from "../../src/types/postInput.js";
 
 vi.mock("../../src/data/post.data.js", () => ({
   createPost: vi.fn(),
+  findPostsByUser: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -44,5 +45,37 @@ describe("post.service - createPost", () => {
     });
 
     expect(result).toEqual(createdPostMock);
+  });
+});
+
+describe("post.service - getUserPosts", () => {
+  const userPostsMock = [
+    {
+      id: 1,
+      title: "Test Post",
+      description: "Test description",
+      status: "Active",
+      createdAt: new Date("2026-05-01"),
+      address: "123 Test St",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      categories: [{ id: 1, name: "Plumbing" }],
+    },
+  ];
+
+  it("should return posts for a valid userId", async () => {
+    vi.mocked(findPostsByUser).mockResolvedValue(userPostsMock);
+
+    const result = await postService.getUserPosts(1);
+
+    expect(findPostsByUser).toHaveBeenCalledWith(1);
+    expect(result).toEqual(userPostsMock);
+  });
+
+  it("should return empty array when no posts found", async () => {
+    vi.mocked(findPostsByUser).mockResolvedValue([]);
+
+    const result = await postService.getUserPosts(1);
+    expect(result).toEqual([]);
   });
 });
