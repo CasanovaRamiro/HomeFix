@@ -55,13 +55,13 @@ export default function WorkerHeader({ worker }: Props) {
         {/* Name + badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>{worker.name}</h2>
-          <span style={{
+          {/* <span style={{
             background: '#D1FAE5', color: '#059669',
             fontSize: 12, fontWeight: 600,
             padding: '3px 10px', borderRadius: 999,
           }}>
             Verificado
-          </span>
+          </span> */}
         </div>
 
         {/* Role */}
