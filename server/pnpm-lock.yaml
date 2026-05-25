@@ -24,7 +24,7 @@ importers:
         specifier: ~5.2.1
         version: 5.2.1
       express-oauth2-jwt-bearer:
-        specifier: ^1.9.0
+        specifier: ~1.9.0
         version: 1.9.0
       jsonwebtoken:
         specifier: ~9.0.3
@@ -52,7 +52,7 @@ importers:
         specifier: ^6.0.2
         version: 6.0.3
       cross-env:
-        specifier: ^10.1.0
+        specifier: ~10.1.0
         version: 10.1.0
       eslint:
         specifier: ^9.0.0
