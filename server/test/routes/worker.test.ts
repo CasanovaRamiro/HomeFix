@@ -106,3 +106,81 @@ describe('GET /workers/:id', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('GET /workers/:id/reviews', () => {
+  it('returns reviews for a worker', async () => {
+    const worker = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+    const client = await prisma.user.create({
+      data: { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: 'user' },
+    })
+    const post = await prisma.post.create({
+      data: {
+        userId: client.id,
+        title: 'Fix pipes',
+        description: 'Need a plumber',
+        address: '123 Main St',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-02'),
+      },
+    })
+    const application = await prisma.jobApplication.create({
+      data: { workerId: worker.id, postId: post.id },
+    })
+    await prisma.workerReview.create({
+      data: {
+        jobApplicationId: application.id,
+        reviewerId: client.id,
+        workerId: worker.id,
+        description: 'Great work!',
+        rating: 5,
+      },
+    })
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}/reviews`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].rating).toBe(5)
+    expect(res.body[0].description).toBe('Great work!')
+    expect(res.body[0].reviewer.name).toBe('Carlos')
+    expect(res.body[0].jobApplication.post.title).toBe('Fix pipes')
+  })
+
+  it('returns an empty array when the worker has no reviews', async () => {
+    const worker = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}/reviews`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([])
+  })
+
+  it('returns 404 when the worker does not exist', async () => {
+    const res = await request(app)
+      .get('/workers/9999/reviews')
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 400 when id is not a number', async () => {
+    const res = await request(app)
+      .get('/workers/abc/reviews')
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request(app).get('/workers/1/reviews')
+    expect(res.status).toBe(401)
+  })
+})

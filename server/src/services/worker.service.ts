@@ -1,4 +1,5 @@
 import { findAllWorkers, findWorkerById } from '../data/worker.data.js'
+import { findReviewsByWorkerId } from '../data/review.data.js'
 
 export const listWorkers = (): ReturnType<typeof findAllWorkers> => findAllWorkers()
 
@@ -9,4 +10,9 @@ export const getWorker = async (id: number): Promise<NonNullable<Awaited<ReturnT
     throw err
   }
   return worker
+}
+
+export const getWorkerReviews = async (id: number): ReturnType<typeof findReviewsByWorkerId> => {
+  await getWorker(id)
+  return findReviewsByWorkerId(id)
 }
