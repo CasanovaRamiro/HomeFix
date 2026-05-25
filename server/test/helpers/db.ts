@@ -4,6 +4,7 @@ export { prisma };
 
 export const cleanDb = async () => {
   await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`;
+  await prisma.userCategory.deleteMany();
   await prisma.postCategory.deleteMany();
   await prisma.post.deleteMany();
   await prisma.category.deleteMany();

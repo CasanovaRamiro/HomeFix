@@ -65,6 +65,26 @@ describe('GET /workers/:id', () => {
     expect(res.body.email).toBe('ana@test.com')
     expect(res.body.role).toBe('worker')
     expect(res.body).not.toHaveProperty('password')
+    expect(res.body).toHaveProperty('categories')
+    expect(Array.isArray(res.body.categories)).toBe(true)
+  })
+
+  it('returns the categories assigned to the worker', async () => {
+    const worker = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+    const category = await prisma.category.create({ data: { name: 'Plumbing' } })
+    await prisma.userCategory.create({
+      data: { userId: worker.id, categoryId: category.id },
+    })
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.categories).toHaveLength(1)
+    expect(res.body.categories[0].category.name).toBe('Plumbing')
   })
 
   it('returns 400 when id is not a number', async () => {

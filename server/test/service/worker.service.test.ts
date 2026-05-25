@@ -15,6 +15,9 @@ const mockWorker = {
   phone: null as string | null,
   role: 'worker',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
+  categories: [
+    { category: { id: 1, name: 'Plumbing' } },
+  ],
 }
 
 beforeEach(() => vi.clearAllMocks())

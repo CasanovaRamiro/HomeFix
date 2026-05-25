@@ -41,6 +41,31 @@ describe('findWorkerById', () => {
 
     expect(worker).not.toHaveProperty('password')
   })
+
+  it('returns categories when the worker has some assigned', async () => {
+    const created = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+    const category = await prisma.category.create({ data: { name: 'Plumbing' } })
+    await prisma.userCategory.create({
+      data: { userId: created.id, categoryId: category.id },
+    })
+
+    const worker = await findWorkerById(created.id)
+
+    expect(worker!.categories).toHaveLength(1)
+    expect(worker!.categories[0].category.name).toBe('Plumbing')
+  })
+
+  it('returns an empty categories array when the worker has none', async () => {
+    const created = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+
+    const worker = await findWorkerById(created.id)
+
+    expect(worker!.categories).toHaveLength(0)
+  })
 })
 
 describe('findAllWorkers', () => {
@@ -77,5 +102,20 @@ describe('findAllWorkers', () => {
     const workers = await findAllWorkers()
 
     workers.forEach((w) => expect(w).not.toHaveProperty('password'))
+  })
+
+  it('returns categories for each worker', async () => {
+    const worker = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+    const category = await prisma.category.create({ data: { name: 'Electrical' } })
+    await prisma.userCategory.create({
+      data: { userId: worker.id, categoryId: category.id },
+    })
+
+    const workers = await findAllWorkers()
+
+    expect(workers[0].categories).toHaveLength(1)
+    expect(workers[0].categories[0].category.name).toBe('Electrical')
   })
 })

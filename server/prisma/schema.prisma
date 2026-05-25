@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  phone     String?
-  role      String  @default("user")
-  createdAt DateTime @default(now())
-  posts     Post[]
+  id         Int            @id @default(autoincrement())
+  email      String         @unique
+  name       String
+  password   String
+  phone      String?
+  role       String         @default("user")
+  createdAt  DateTime       @default(now())
+  posts      Post[]
+  categories UserCategory[]
 }
 
 model Post {
@@ -37,9 +38,10 @@ model Post {
 }
 
 model Category {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
+  id    Int            @id @default(autoincrement())
+  name  String         @unique
   posts PostCategory[]
+  users UserCategory[]
 }
 
 model PostCategory {
@@ -50,4 +52,14 @@ model PostCategory {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([postId, categoryId])
+}
+
+model UserCategory {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  categoryId Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
 }

@@ -8,6 +8,13 @@ const workerFields = {
   phone: true,
   role: true,
   createdAt: true,
+  categories: {
+    select: {
+      category: {
+        select: { id: true, name: true },
+      },
+    },
+  },
 } satisfies Prisma.UserSelect
 
 type WorkerResult = Prisma.UserGetPayload<{ select: typeof workerFields }>
