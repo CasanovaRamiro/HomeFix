@@ -13,6 +13,8 @@ const postFields = {
   status: true,
 } satisfies Prisma.PostSelect;
 
+type PostResult = Prisma.PostGetPayload<{ select: typeof postFields }>
+
 export const createPost = (
   data: PostInput,
 ) =>
@@ -31,5 +33,20 @@ export const createPost = (
         },
       },
     },
+    select: postFields,
+  })
+
+
+export const findPostById = (id: number): Promise<PostResult | null> =>
+  prisma.post.findUnique({
+    where: { id },
+    select: postFields,
+  })
+
+
+export const updatePostStatus = (id: number, status: string): Promise<PostResult> =>
+  prisma.post.update({
+    where: { id },
+    data: { status },
     select: postFields,
   });
