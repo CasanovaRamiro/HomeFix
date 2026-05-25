@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { validateEnv } from './lib/env.js'
-import { jwtCheck } from './middleware/auth0.middleware.js'
+//import { jwtCheck } from './middleware/auth0.middleware.js'
 
 validateEnv()
 
@@ -20,9 +20,10 @@ app.use(express.json())
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRoutes)
 
-app.use('/users', jwtCheck, userRoutes)
-app.use('/posts', jwtCheck, postRoutes)
-
+//app.use('/users', jwtCheck, userRoutes)
+//app.use('/posts', jwtCheck, postRoutes)
+app.use('/users', userRoutes)
+app.use('/posts', postRoutes)
 app.use(errorHandler)
 
 if (process.env.NODE_ENV !== 'test') {

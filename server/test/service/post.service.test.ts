@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostsByUser } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import { PostInput } from "../../src/types/postInput.js";
 
 vi.mock("../../src/data/post.data.js", () => ({
   createPost: vi.fn(),
   findPostsByUser: vi.fn(),
+  findPostById: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -45,6 +46,43 @@ describe("post.service - createPost", () => {
     });
 
     expect(result).toEqual(createdPostMock);
+  });
+});
+
+describe("post.service - getPostById", () => {
+  const postDetailMock = {
+    id: 1,
+    userId: 1,
+    title: "Tubo roto en cocina",
+    description: "Descripcion detallada",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    address: "Calle Principal 123",
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    categories: [
+      {
+        category: { id: 1, name: "Plomeria" },
+      },
+    ],
+  };
+
+  it("should return a post by id", async () => {
+    vi.mocked(findPostById).mockResolvedValue(postDetailMock);
+
+    const result = await postService.getPostById(1);
+
+    expect(findPostById).toHaveBeenCalledWith(1);
+    expect(result).toEqual(postDetailMock);
+  });
+
+  it("should return null when post does not exist", async () => {
+    vi.mocked(findPostById).mockResolvedValue(null);
+
+    const result = await postService.getPostById(9999);
+
+    expect(findPostById).toHaveBeenCalledWith(9999);
+    expect(result).toBeNull();
   });
 });
 
