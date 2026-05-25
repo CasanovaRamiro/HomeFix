@@ -10,7 +10,7 @@ export default function WorkerActions() {
         </svg>
       </div>
 
-      {/* Buttons */}
+      {/* Buttons — temporarily hidden until chat and scheduling features are implemented
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button
           style={{
@@ -42,6 +42,7 @@ export default function WorkerActions() {
           Agendar Cita
         </button>
       </div>
+      */}
 
     </div>
   )
