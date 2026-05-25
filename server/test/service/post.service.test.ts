@@ -68,7 +68,7 @@ describe("post.service - getUserPosts", () => {
         category: { id: 1, name: "Plumbing" },
       },
     ],
-  } as any;
+  };
 
   it("should return flattened posts for a valid userId", async () => {
     vi.mocked(findPostsByUser).mockResolvedValue([rawPostMock]);
