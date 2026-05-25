@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, type Worker } from '../services/api'
+import { getWorker, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 import WorkerHeader from '../components/worker/WorkerHeader'
 import WorkerAbout from '../components/worker/WorkerAbout'
@@ -13,6 +13,8 @@ export default function WorkerProfile() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [worker, setWorker] = useState<Worker | null>(null)
+  const [reviews, setReviews] = useState<WorkerReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,6 +25,18 @@ export default function WorkerProfile() {
       .catch(() => setError('No se encontró el trabajador.'))
       .finally(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    getWorkerReviews(Number(id))
+      .then(setReviews)
+      .catch(() => setReviews([]))
+      .finally(() => setReviewsLoading(false))
+  }, [id])
+
+  const avgRating = reviews.length
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    : 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: 'system-ui, sans-serif' }}>
@@ -61,9 +75,9 @@ export default function WorkerProfile() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <WorkerHeader worker={worker} />
             <WorkerActions />
-            <WorkerStats />
+            <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
             <WorkerAbout worker={worker} />
-            <WorkerReviews />
+            <WorkerReviews reviews={reviews} loading={reviewsLoading} />
           </div>
         )}
 
@@ -72,11 +86,11 @@ export default function WorkerProfile() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <WorkerHeader worker={worker} />
               <WorkerAbout worker={worker} />
-              <WorkerReviews />
+              <WorkerReviews reviews={reviews} loading={reviewsLoading} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <WorkerActions />
-              <WorkerStats />
+              <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
             </div>
           </div>
         )}

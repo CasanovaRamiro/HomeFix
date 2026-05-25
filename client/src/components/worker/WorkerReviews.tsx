@@ -1,34 +1,9 @@
-interface Review {
-  id: number
-  author: string
-  rating: number
-  date: string
-  text: string
-}
+import type { WorkerReview } from '../../services/api'
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: 1,
-    author: 'María González',
-    rating: 5,
-    date: 'marzo 2026',
-    text: 'Excelente profesional. Llegó puntual, resolvió el problema rápidamente y dejó todo limpio. Lo recomiendo sin dudas.',
-  },
-  {
-    id: 2,
-    author: 'Roberto Sánchez',
-    rating: 4,
-    date: 'febrero 2026',
-    text: 'Muy buen trabajo. El resultado fue exactamente lo que esperaba. Tiene mucho conocimiento del oficio y explica bien lo que hace.',
-  },
-  {
-    id: 3,
-    author: 'Laura Fernández',
-    rating: 5,
-    date: 'enero 2026',
-    text: 'Increíble la atención y la calidad del trabajo. Ya lo contraté dos veces y siempre quedé conforme. Sin duda volvería a contratarlo.',
-  },
-]
+interface Props {
+  reviews: WorkerReview[]
+  loading: boolean
+}
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -64,8 +39,14 @@ function Avatar({ name }: { name: string }) {
   )
 }
 
-export default function WorkerReviews() {
-  const avg = (MOCK_REVIEWS.reduce((s, r) => s + r.rating, 0) / MOCK_REVIEWS.length).toFixed(1)
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+}
+
+export default function WorkerReviews({ reviews, loading }: Props) {
+  const avg = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
 
   return (
     <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 28 }}>
@@ -73,38 +54,51 @@ export default function WorkerReviews() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: 0 }}>Reseñas</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Stars rating={Math.round(Number(avg))} />
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{avg}</span>
-          <span style={{ fontSize: 13, color: '#9CA3AF' }}>({MOCK_REVIEWS.length})</span>
-        </div>
+        {avg && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Stars rating={Math.round(Number(avg))} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{avg}</span>
+            <span style={{ fontSize: 13, color: '#9CA3AF' }}>({reviews.length})</span>
+          </div>
+        )}
       </div>
 
+      {/* States */}
+      {loading && (
+        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Cargando reseñas...</p>
+      )}
+
+      {!loading && reviews.length === 0 && (
+        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Este trabajador aún no tiene reseñas.</p>
+      )}
+
       {/* Review list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {MOCK_REVIEWS.map((review, i) => (
-          <div
-            key={review.id}
-            style={{
-              paddingTop: i === 0 ? 0 : 20,
-              paddingBottom: 20,
-              borderBottom: i < MOCK_REVIEWS.length - 1 ? '1px solid #F3F4F6' : 'none',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <Avatar name={review.author} />
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 2px' }}>{review.author}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Stars rating={review.rating} />
-                  <span style={{ fontSize: 12, color: '#9CA3AF' }}>{review.date}</span>
+      {!loading && reviews.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {reviews.map((review, i) => (
+            <div
+              key={review.id}
+              style={{
+                paddingTop: i === 0 ? 0 : 20,
+                paddingBottom: 20,
+                borderBottom: i < reviews.length - 1 ? '1px solid #F3F4F6' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <Avatar name={review.reviewer.name} />
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 2px' }}>{review.reviewer.name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Stars rating={review.rating} />
+                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>{formatDate(review.createdAt)}</span>
+                  </div>
                 </div>
               </div>
+              <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, margin: 0 }}>{review.description}</p>
             </div>
-            <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, margin: 0 }}>{review.text}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
     </div>
   )

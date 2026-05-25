@@ -1,11 +1,16 @@
-const rows = [
-  { label: 'Trabajos Completados', value: '—', icon: '💼' },
-  { label: 'Calificación',         value: '—', icon: '⭐' },
-  { label: 'Tasa de Respuesta',    value: '—', icon: '✅' },
-  { label: 'Tiempo de Respuesta',  value: '—', icon: '⏱' },
-]
+interface Props {
+  reviewCount: number
+  avgRating: number
+}
 
-export default function WorkerStats() {
+export default function WorkerStats({ reviewCount, avgRating }: Props) {
+  const rows = [
+    { label: 'Trabajos Completados', value: reviewCount > 0 ? String(reviewCount) : '—', icon: '💼' },
+    { label: 'Calificación',         value: avgRating > 0 ? avgRating.toFixed(1) : '—',  icon: '⭐' },
+    { label: 'Tasa de Respuesta',    value: '—', icon: '✅' },
+    { label: 'Tiempo de Respuesta',  value: '—', icon: '⏱' },
+  ]
+
   return (
     <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
       <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: '0 0 20px' }}>Estadísticas</h3>
