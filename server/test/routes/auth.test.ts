@@ -1,65 +1,43 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
-import { app } from '../../src/index.js'
 import { cleanDb } from '../helpers/db.js'
+
+vi.mock('../../src/middleware/auth0.middleware.js', async () => {
+  const mock = await import('../helpers/auth0Mock.js')
+  return { jwtCheck: mock.jwtCheck }
+})
+
+import { app } from '../../src/index.js'
 
 beforeEach(() => cleanDb())
 
-describe('POST /auth/register', () => {
-  it('creates a user and returns a token', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-
-    expect(res.status).toBe(201)
-    expect(res.body).toHaveProperty('token')
-    expect(res.body.user.email).toBe('jane@test.com')
-    expect(res.body.user).not.toHaveProperty('password')
+describe('GET /auth/me', () => {
+  it('returns 401 when token is missing', async () => {
+    const res = await request(app).get('/auth/me')
+    expect(res.status).toBe(401)
   })
 
-  it('returns 400 when email is already taken', async () => {
-    await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-
+  it('returns 200 and syncs user when token is present', async () => {
     const res = await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
+      .get('/auth/me')
+      .set('Authorization', 'Bearer test-auth0-token')
 
-    expect(res.status).toBe(400)
-    expect(res.body).toHaveProperty('error')
+    expect(res.status).toBe(200)
+    expect(res.body.email).toBe('test@test.com')
+    expect(res.body).toHaveProperty('id')
   })
 })
 
-describe('POST /auth/login', () => {
-  beforeEach(async () => {
-    await request(app)
-      .post('/auth/register')
-      .send({ name: 'Jane', email: 'jane@test.com', password: 'secret123' })
-  })
+it('does not create duplicated user on second visit', async () => {
+  const first = await request(app)
+    .get('/auth/me')
+    .set('Authorization', 'Bearer test-auth0-token')
 
-  it('returns a token on valid credentials', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'jane@test.com', password: 'secret123' })
+  const second = await request(app)
+    .get('/auth/me')
+    .set('Authorization', 'Bearer test-auth0-token')
 
-    expect(res.status).toBe(200)
-    expect(res.body).toHaveProperty('token')
-  })
-
-  it('returns 401 on wrong password', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'jane@test.com', password: 'wrongpassword' })
-
-    expect(res.status).toBe(401)
-  })
-
-  it('returns 401 for unknown email', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({ email: 'nobody@test.com', password: 'secret123' })
-
-    expect(res.status).toBe(401)
-  })
+  expect(first.status).toBe(200)
+  expect(second.status).toBe(200)
+  expect(second.body.id).toBe(first.body.id)
 })
