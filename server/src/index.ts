@@ -8,6 +8,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
+import workerRoutes from './routes/worker.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import postRoutes from './routes/post.routes.js'
 
@@ -22,6 +23,7 @@ app.use('/auth', authRoutes)
 
 app.use('/users', jwtCheck, userRoutes)
 app.use('/posts', jwtCheck, postRoutes)
+app.use('/workers', jwtCheck, workerRoutes)
 
 app.use(errorHandler)
 

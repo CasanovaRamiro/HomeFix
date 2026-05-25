@@ -13,6 +13,7 @@ const mockUser = {
   name: 'Jane',
   email: 'jane@test.com',
   phone: null as string | null,
+  bio: null as string | null,
   role: 'user',
   createdAt: new Date(),
 }
