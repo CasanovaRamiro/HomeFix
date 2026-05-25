@@ -1,15 +1,28 @@
-@import "tailwindcss";
+:root {
+  --primary: #13243B;
+  --primary-light: #1a2f4a;
+  --accent: #10B981;
+  --accent-hover: #059669;
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --border: #e8e8e8;
+  --text: #111111;
+  --text-muted: #6B7280;
+  --danger: #ef4444;
+  --radius: 8px;
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: system-ui, sans-serif;
-  background: #f5f5f5;
-  color: #111;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
   font-size: 15px;
 }
 
-a { color: #555; }
+a { color: var(--primary); }
+a:hover { color: var(--accent); }
 
 /* Auth screens */
 .center {
@@ -20,9 +33,9 @@ a { color: #555; }
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 2rem;
   width: 100%;
   max-width: 360px;
@@ -43,11 +56,11 @@ input {
   transition: border-color 0.15s;
 }
 
-input:focus { border-color: #888; }
+input:focus { border-color: var(--primary); }
 
 button {
   padding: 10px;
-  background: #111;
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -56,19 +69,19 @@ button {
   transition: background 0.15s;
 }
 
-button:hover { background: #333; }
+button:hover { background: var(--primary-light); }
 
 .btn-outline {
   background: transparent;
-  color: #111;
-  border: 1px solid #ddd;
+  color: var(--primary);
+  border: 1px solid var(--border);
   padding: 8px 16px;
 }
 
 .btn-outline:hover { background: #f0f0f0; }
 
-.error { color: #c0392b; font-size: 13px; }
-.hint { font-size: 13px; color: #666; text-align: center; }
+.error { color: var(--danger); font-size: 13px; }
+.hint { font-size: 13px; color: var(--text-muted); text-align: center; }
 
 /* Users page */
 .page { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
@@ -85,9 +98,9 @@ button:hover { background: #333; }
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -100,8 +113,169 @@ th, td {
 th {
   background: #fafafa;
   font-weight: 500;
-  color: #555;
-  border-bottom: 1px solid #e0e0e0;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
 }
 
 tr + tr td { border-top: 1px solid #f0f0f0; }
+
+/* Post Detail Header */
+.post-header {
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  padding: 2rem 20rem;
+  min-height: 120px;
+  
+  align-items: center;
+  justify-content: space-between;
+}
+.post-header h1 { font-size: 1.7rem; font-weight: 600; }
+.post-header a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.85;
+}
+.post-header a:hover { opacity: 1; }
+
+/* Post Detail */
+.post-detail { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
+
+.post-detail .info-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-detail .info-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; }
+
+.post-detail .info-row {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.post-detail .info-row strong { color: var(--text); }
+
+.post-detail .desc {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 1rem 0;
+  white-space: pre-wrap;
+}
+
+.post-detail .categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0.75rem 0;
+}
+
+.post-detail .section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.post-detail .post-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.post-detail .post-actions button { font-size: 13px; padding: 6px 16px; }
+.post-detail .post-actions .btn-edit { background: var(--primary); }
+.post-detail .post-actions .btn-pause { background: #f59e0b; }
+.post-detail .post-actions .btn-pause:hover { background: #d97706; }
+.post-detail .post-actions .btn-cancel { background: var(--danger); }
+.post-detail .post-actions .btn-cancel:hover { background: #dc2626; }
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-primary { background: var(--primary); color: #fff; }
+.badge-accent { background: var(--accent); color: #fff; }
+.badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.badge-danger { background: var(--danger); color: #fff; }
+.badge-warning { background: #f59e0b; color: #fff; }
+
+/* Star Rating */
+.star-rating { display: inline-flex; align-items: center; gap: 2px; }
+.star-rating .star { color: #f59e0b; font-size: 14px; }
+.star-rating .star.empty { color: #d1d5db; }
+.star-rating .num { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+
+/* Applicant Card */
+.applicant-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.applicant-card .avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.applicant-card .info { flex: 1; min-width: 200px; }
+.applicant-card .info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.applicant-card .info .meta { font-size: 13px; color: var(--text-muted); }
+.applicant-card .info .stats { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.applicant-card .actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.applicant-card .actions button {
+  padding: 6px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Loading */
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+.spinner::after {
+  content: '';
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

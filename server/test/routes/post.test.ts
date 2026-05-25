@@ -23,6 +23,8 @@ beforeEach(async () => {
   token = 'test-auth0-token'
 })
 
+let postId: number
+
 const createValidPost = (): PostInput => ({
   userId,
   description: 'Test description',
@@ -31,6 +33,48 @@ const createValidPost = (): PostInput => ({
   address: '123 Test St',
   categoryId,
   title: 'Test Post',
+})
+
+describe('GET /posts/:id', () => {
+  beforeEach(async () => {
+    const res = await request(app)
+      .post('/posts/create')
+      .set('Authorization', `Bearer ${token}`)
+      .send(createValidPost())
+    postId = res.body.id
+  })
+
+  it('should return a post with categories', async () => {
+    const res = await request(app)
+      .get(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Test Post')
+    expect(res.body.categories).toHaveLength(1)
+    expect(res.body.categories[0].category.name).toBe('Test Category')
+  })
+
+  it('should contain description and address fields', async () => {
+    const res = await request(app)
+      .get(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body.description).toBe('Test description')
+    expect(res.body.address).toBe('123 Test St')
+  })
+
+  it('should return 404 for non-existent post', async () => {
+    const res = await request(app)
+      .get('/posts/9999')
+      .set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Post not found')
+  })
+
+  it('should return 401 for unauthorized access', async () => {
+    const res = await request(app).get(`/posts/${postId}`)
+    expect(res.status).toBe(401)
+  })
 })
 
 describe('POST /posts/create', () => {
