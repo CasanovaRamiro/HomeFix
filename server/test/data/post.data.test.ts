@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { cleanDb, createCategory, prisma } from "../helpers/db.js";
-import { createUser } from "../../src/data/user.data.js";
+import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
 import { createPost } from "../../src/data/post.data.js";
 
@@ -9,11 +8,7 @@ let categoryId: number;
 
 beforeEach(async () => {
   await cleanDb();
-  const user = await createUser({
-    email: "test@test.com",
-    name: "Test",
-    password: "hashed",
-  });
+  const user = await createUser("test@test.com", "Test", "hashed");
   const category = await createCategory("Test Category");
   userId = user.id;
   categoryId = category.id;
