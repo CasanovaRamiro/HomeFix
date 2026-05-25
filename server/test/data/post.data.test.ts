@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, prisma } from "../helpers/db.js";
 import { createUser } from "../../src/data/user.data.js";
 import { PostInput } from "../../src/types/postInput.js";
-import { createPost, findPostsByUser } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser } from "../../src/data/post.data.js";
 
 let userId: number;
 let categoryId: number;
@@ -27,6 +27,30 @@ const createValidPost = (): PostInput => ({
   address: "123 Test St",
   categoryId,
   title: "Test Post",
+});
+
+describe("findPostById", () => {
+  it("should return a post with categories", async () => {
+    const post = await createPost(createValidPost());
+    const result = await findPostById(post.id);
+
+    expect(result).not.toBeNull();
+    expect(result!.title).toBe("Test Post");
+    expect(result!.categories).toHaveLength(1);
+    expect(result!.categories[0].category.name).toBe("Test Category");
+  });
+
+  it("should return null for non-existent post", async () => {
+    const result = await findPostById(9999);
+    expect(result).toBeNull();
+  });
+
+  it("should return createdAt field", async () => {
+    const post = await createPost(createValidPost());
+    const result = await findPostById(post.id);
+    expect(result).not.toBeNull();
+    expect(result!.createdAt).toBeInstanceOf(Date);
+  });
 });
 
 describe("createPost", () => {

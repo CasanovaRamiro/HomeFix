@@ -34,6 +34,22 @@ export const createPost = (
     select: postFields,
   });
 
+export const findPostById = (id: number) =>
+  prisma.post.findUnique({
+    where: { id },
+    select: {
+      ...postFields,
+      createdAt: true,
+      categories: {
+        select: {
+          category: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+  });
+
 export type UserPostSummary = {
   id: number;
   title: string;
