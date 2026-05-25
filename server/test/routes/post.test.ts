@@ -16,7 +16,7 @@ let categoryId: number
 
 beforeEach(async () => {
   await cleanDb()
-  const user = await createUser('test@test.com', 'Test', 'hashed')
+  const user = await createUser({ email: 'test@test.com', name: 'Test', password: 'hashed' })
   const category = await createCategory('Test Category')
   userId = user.id
   categoryId = category.id
