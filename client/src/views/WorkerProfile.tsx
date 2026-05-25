@@ -62,7 +62,7 @@ export default function WorkerProfile() {
             <WorkerHeader worker={worker} />
             <WorkerActions />
             <WorkerStats />
-            <WorkerAbout />
+            <WorkerAbout worker={worker} />
             <WorkerReviews />
           </div>
         )}
@@ -71,7 +71,7 @@ export default function WorkerProfile() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, alignItems: 'start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <WorkerHeader worker={worker} />
-              <WorkerAbout />
+              <WorkerAbout worker={worker} />
               <WorkerReviews />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

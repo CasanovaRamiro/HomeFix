@@ -13,6 +13,7 @@ const mockWorker = {
   name: 'Ana',
   email: 'ana@test.com',
   phone: null as string | null,
+  bio: null as string | null,
   role: 'worker',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [

@@ -66,6 +66,26 @@ describe('findWorkerById', () => {
 
     expect(worker!.categories).toHaveLength(0)
   })
+
+  it('returns bio as null when not set', async () => {
+    const created = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+    })
+
+    const worker = await findWorkerById(created.id)
+
+    expect(worker!.bio).toBeNull()
+  })
+
+  it('returns the correct bio when set', async () => {
+    const created = await prisma.user.create({
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker', bio: 'Experienced plumber.' },
+    })
+
+    const worker = await findWorkerById(created.id)
+
+    expect(worker!.bio).toBe('Experienced plumber.')
+  })
 })
 
 describe('findAllWorkers', () => {

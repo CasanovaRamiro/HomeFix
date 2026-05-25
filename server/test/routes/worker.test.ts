@@ -67,6 +67,7 @@ describe('GET /workers/:id', () => {
     expect(res.body).not.toHaveProperty('password')
     expect(res.body).toHaveProperty('categories')
     expect(Array.isArray(res.body.categories)).toBe(true)
+    expect(res.body).toHaveProperty('bio')
   })
 
   it('returns the categories assigned to the worker', async () => {

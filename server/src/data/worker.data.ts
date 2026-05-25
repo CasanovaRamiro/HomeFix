@@ -6,6 +6,7 @@ const workerFields = {
   name: true,
   email: true,
   phone: true,
+  bio: true,
   role: true,
   createdAt: true,
   categories: {

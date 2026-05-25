@@ -14,13 +14,19 @@ export const getWorkers = (): Promise<Worker[]> =>
 export const getWorker = (id: number): Promise<Worker> =>
   api.get<Worker>(`/workers/${id}`).then((r) => r.data)
 
+export interface WorkerCategory {
+  category: { id: number; name: string }
+}
+
 export interface Worker {
   id: number
   name: string
   email: string
   phone: string | null
+  bio: string | null
   role: string
   createdAt: string
+  categories: WorkerCategory[]
 }
 
 export default api

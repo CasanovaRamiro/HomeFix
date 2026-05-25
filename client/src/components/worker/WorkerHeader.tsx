@@ -65,9 +65,25 @@ export default function WorkerHeader({ worker }: Props) {
         </div>
 
         {/* Role */}
-        <p style={{ color: '#6B7280', fontSize: 15, margin: '0 0 20px', textTransform: 'capitalize' }}>
+        <p style={{ color: '#6B7280', fontSize: 15, margin: '0 0 12px', textTransform: 'capitalize' }}>
           {worker.role}
         </p>
+
+        {/* Categories */}
+        {worker.categories.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+            {worker.categories.map(({ category }) => (
+              <span key={category.id} style={{
+                background: '#EFF6FF', color: '#1D4ED8',
+                fontSize: 12, fontWeight: 600,
+                padding: '4px 12px', borderRadius: 999,
+                border: '1px solid #BFDBFE',
+              }}>
+                {category.name}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Divider */}
         <div style={{ borderTop: '1px solid #F3F4F6', marginBottom: 20 }} />
