@@ -14,7 +14,7 @@ router.get('/', async (_req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id as string, 10)
+    const id = parseInt(req.params.id, 10)
     if (isNaN(id)) {
       res.status(400).json({ message: 'Invalid worker id' })
       return
