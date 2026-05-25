@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../../src/index.js";
-import { cleanDb, createUser, createCategory } from "../helpers/db.js";
+import { cleanDb, createUser, createCategory, prisma } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
 import { getTestToken } from "../helpers/auth.js";
 
@@ -54,4 +54,55 @@ describe("POST /posts/create", () => {
     expect(res.status).toBe(401);
   });
 
+});
+
+describe("POST /posts/user-posts", () => {
+  it("should return posts for a valid userId", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Dashboard Post",
+        description: "For dashboard",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        address: "456 Test Ave",
+        status: "Active",
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const res = await request(app)
+      .post("/posts/user-posts")
+      .send({ userId });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe("Dashboard Post");
+    expect(res.body[0].categories).toEqual([{ id: expect.any(Number), name: "Test Category" }]);
+  });
+
+  it("should return empty array when no posts match", async () => {
+    const res = await request(app)
+      .post("/posts/user-posts")
+      .send({ userId: 9999 });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("should return 400 when userId is missing", async () => {
+    const res = await request(app)
+      .post("/posts/user-posts")
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 when userId is not a number", async () => {
+    const res = await request(app)
+      .post("/posts/user-posts")
+      .send({ userId: "abc" });
+
+    expect(res.status).toBe(400);
+  });
 });

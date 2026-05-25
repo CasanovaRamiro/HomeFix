@@ -33,3 +33,17 @@ export const createPost = (
     },
     select: postFields,
   });
+
+export const findPostsByUser = (userId: number) =>
+  prisma.post.findMany({
+    where: {
+      userId,
+      status: { in: ["Active", "Paused"] },
+    },
+    include: {
+      categories: {
+        include: { category: true },
+      },
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
