@@ -12,6 +12,7 @@ import workerRoutes from './routes/worker.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import postRoutes from './routes/post.routes.js'
 import aiRoutes from './routes/ai.routes.js'
+import categoryRoutes from './routes/category.routes.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3000
@@ -26,6 +27,7 @@ app.use('/users', jwtCheck, userRoutes)
 app.use('/posts', jwtCheck, postRoutes)
 app.use('/workers', jwtCheck, workerRoutes)
 app.use('/ai', aiRoutes)
+app.use('/categories', categoryRoutes)
 
 app.use(errorHandler)
 
