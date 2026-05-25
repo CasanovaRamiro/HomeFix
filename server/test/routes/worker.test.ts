@@ -1,18 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+vi.mock('../../src/middleware/auth0.middleware.js', async () => {
+  const mock = await import('../helpers/auth0Mock.js')
+  return { jwtCheck: mock.jwtCheck }
+})
+
 import request from 'supertest'
 import { app } from '../../src/index.js'
 import { cleanDb, prisma } from '../helpers/db.js'
-import { getTestToken } from '../helpers/auth.js'
 
-let token: string
-
-beforeEach(async () => {
-  await cleanDb()
-  const user = await prisma.user.create({
-    data: { name: 'Regular User', email: 'user@test.com', password: 'hashed', role: 'user' },
-  })
-  token = getTestToken(user.id)
-})
+beforeEach(() => cleanDb())
 
 describe('GET /workers', () => {
   it('returns all workers when authenticated', async () => {
@@ -25,7 +22,7 @@ describe('GET /workers', () => {
 
     const res = await request(app)
       .get('/workers')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(2)
@@ -39,7 +36,7 @@ describe('GET /workers', () => {
 
     const res = await request(app)
       .get('/workers')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
@@ -59,7 +56,7 @@ describe('GET /workers/:id', () => {
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(200)
     expect(res.body.email).toBe('ana@test.com')
@@ -81,7 +78,7 @@ describe('GET /workers/:id', () => {
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(200)
     expect(res.body.categories).toHaveLength(1)
@@ -91,7 +88,7 @@ describe('GET /workers/:id', () => {
   it('returns 400 when id is not a number', async () => {
     const res = await request(app)
       .get('/workers/abc')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(400)
   })
@@ -99,7 +96,7 @@ describe('GET /workers/:id', () => {
   it('returns 404 when the worker does not exist', async () => {
     const res = await request(app)
       .get('/workers/9999')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(404)
   })

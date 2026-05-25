@@ -1,10 +1,9 @@
 import { Router } from 'express'
-import { requireAuth } from '../middleware/auth.middleware.js'
 import { listWorkers, getWorker } from '../services/worker.service.js'
 
 const router = Router()
 
-router.get('/', requireAuth, async (_req, res, next) => {
+router.get('/', async (_req, res, next) => {
   try {
     const workers = await listWorkers()
     res.json(workers)
@@ -13,7 +12,7 @@ router.get('/', requireAuth, async (_req, res, next) => {
   }
 })
 
-router.get('/:id', requireAuth, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
     const id = parseInt(req.params.id as string, 10)
     if (isNaN(id)) {
