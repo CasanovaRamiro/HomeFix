@@ -1,10 +1,10 @@
 import { Router } from 'express'
-import { requireAuth } from '../middleware/auth.middleware.js'
 import { post, getUserPosts } from '../services/post.service.js'
+import { syncAuth0User } from '../services/auth.service.js'
 
 const router = Router()
 
-router.post('/create', requireAuth, async (req, res, next) => {
+router.post('/create', async (req, res, next) => {
   try {
     const result = await post(req.body);
     res.status(201).json(result);
@@ -17,14 +17,21 @@ router.post('/create', requireAuth, async (req, res, next) => {
 
 router.post("/user-posts", async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    const claims = req.auth?.payload as {
+      sub?: string
+      email?: string
+      name?: string
+      nickname?: string
+      phone_number?: string
+    } | undefined
 
-    if (!Number.isInteger(userId) || userId <= 0) {
-      res.status(400).json({ error: "Invalid userId" });
+    if (!claims?.sub) {
+      res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
-    const posts = await getUserPosts(userId);
+    const user = await syncAuth0User(claims);
+    const posts = await getUserPosts(user.id);
     res.json(posts);
   } catch (error) {
     const err = error as Error & { status?: number };
