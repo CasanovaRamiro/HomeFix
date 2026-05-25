@@ -1,12 +1,8 @@
+import api from './api'
+
 export interface AiMessage {
   role: 'user' | 'model'
   text: string
-  imageBase64?: string
-  mimeType?: string
-}
-
-export interface AiSuggestRequest {
-  messages: AiMessage[]
 }
 
 export interface AiQuestionResponse {
@@ -31,3 +27,8 @@ export interface AiSuggestionResponse {
 }
 
 export type AiResponse = AiQuestionResponse | AiSuggestionResponse
+
+export async function sendMessage(messages: AiMessage[]): Promise<AiResponse> {
+  const { data } = await api.post<AiResponse>('/ai/suggest', { messages })
+  return data
+}

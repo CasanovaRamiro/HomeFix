@@ -3,55 +3,84 @@ import type { AiSuggestRequest, AiResponse } from '../types/aiSuggestion.js'
 import prisma from '../lib/prisma.js'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+const HISTORY_LIMIT = 6
+const CACHE_TTL = 5 * 60 * 1000
+
+let categoriesCache: { id: number; name: string }[] | null = null
+let categoriesCacheAt = 0
+
+async function getCachedCategories() {
+  if (categoriesCache && Date.now() - categoriesCacheAt < CACHE_TTL) {
+    return categoriesCache
+  }
+  categoriesCache = await prisma.category.findMany()
+  categoriesCacheAt = Date.now()
+  return categoriesCache
+}
 
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
-  const categories = await prisma.category.findMany()
+  const categories = await getCachedCategories()
   const categoryList = categories.map(c => `${c.id}: ${c.name}`).join('\n')
 
-  const systemInstructions = `
-Eres un asistente para HomeFix, plataforma de servicios del hogar.
-Ayudas al usuario a publicar un pedido de servicio conversando con él.
+const systemInstructions = `
+Sos un asistente de HomeFix, plataforma de servicios del hogar.
+Ayudas al cliente a diagnosticar su problema y recomendarle la categoria de profesional adecuada.
 
 Categorias disponibles:
 ${categoryList}
 
-Habla de forma natural y hace UNA pregunta por vez. Cuando tengas toda la info
-necesaria, responde con type "suggestion".
+FLUJO:
+1. Primera respuesta: presentate brevemente y hace SOLO 1 pregunta sobre el problema.
+2. Segui preguntando hasta que puedas inferir la categoria. Maximo 5 preguntas.
+3. Una vez que tengas suficiente informacion, responde con "suggestion".
 
-RESPONDE SOLO CON JSON VALIDO (sin markdown, sin texto extra):
+REGLAS:
+- Respuestas cortas (maximo 2 oraciones).
+- No preguntes detalles tecnicos irrelevantes.
+- No preguntes por fechas ni direccion, el usuario las completa despues en un formulario.
+- En possibleIssue: lenguaje simple, sin certeza absoluta.
+  Usa: "Posiblemente...", "Probablemente...", "Esto podria deberse a..."
+- Sin markdown. SOLO JSON valido. Sin texto extra.
 
-Si falta info: {"type": "question", "text": "Tu pregunta aqui"}
-Si ya tenes todo: {"type": "suggestion", "data": {
-  "suggestedTitle": "...",
-  "suggestedCategoryId": number,
-  "suggestedCategoryName": "...",
-  "startDate": "ISO string" | null,
-  "endDate": "ISO string" | null,
-  "address": "..." | null,
-  "confidence": "high" | "medium" | "low"
-}}
+FORMATO PREGUNTA:
+{"type":"question","text":"..."}
 
-Niveles de confianza:
-- high: todos los campos se infieren claramente
-- medium: algunos campos con incertidumbre
-- low: falta mucha informacion
+FORMATO SUGGESTION:
+{
+  "type":"suggestion",
+  "data":{
+    "suggestedTitle":"...",
+    "suggestedCategoryId": number,
+    "suggestedCategoryName":"...",
+    "possibleIssue":"...",
+    "startDate":"ISO string",
+    "endDate":"ISO string",
+    "address":"...",
+    "confidence":"high" | "medium" | "low"
+  }
+}
+
+confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
 `
 
-  const contents = input.messages.map(msg => ({
-    role: msg.role,
-    parts: [
-      ...(msg.text ? [{ text: msg.text }] : []),
-      ...(msg.imageBase64 && msg.mimeType
-        ? [{
-            inlineData: {
-              data: msg.imageBase64.replace(/^data:image\/\w+;base64,/, ''),
-              mimeType: msg.mimeType,
-            },
-          }]
-        : []),
-    ],
-  }))
+  const contents = input.messages
+    .slice(-HISTORY_LIMIT)
+    .map(msg => ({
+      role: msg.role,
+      parts: [
+        ...(msg.text ? [{ text: msg.text }] : []),
+        ...(msg.imageBase64 && msg.mimeType
+          ? [{
+              inlineData: {
+                data: msg.imageBase64.replace(/^data:image\/\w+;base64,/, ''),
+                mimeType: msg.mimeType,
+              },
+            }]
+          : []),
+      ],
+    }))
 
   const result = await model.generateContent({
     systemInstruction: { role: 'user', parts: [{ text: systemInstructions }] },
@@ -70,6 +99,9 @@ Niveles de confianza:
       response.data.suggestedCategoryId = categories[0]?.id ?? 1
       response.data.suggestedCategoryName = categories[0]?.name ?? 'General'
     }
+    response.data.startDate = null
+    response.data.endDate = null
+    response.data.address = null
   }
 
   return response
