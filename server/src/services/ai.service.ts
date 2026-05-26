@@ -3,7 +3,7 @@ import type { AiSuggestRequest, AiResponse } from '../types/aiSuggestion.js'
 import prisma from '../lib/prisma.js'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
 
 const HISTORY_LIMIT = 6
 const CACHE_TTL = 5 * 60 * 1000
@@ -20,9 +20,18 @@ async function getCachedCategories() {
   return categoriesCache
 }
 
+export const clearCategoryCache = () => {
+  categoriesCache = null
+  categoriesCacheAt = 0
+}
+
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
   const categories = await getCachedCategories()
   const categoryList = categories.map(c => `${c.id}: ${c.name}`).join('\n')
+
+  if(input.messages.length === 0) {
+    throw new Error('Se requiere al menos un mensaje para generar una sugerencia')
+  }
 
 const systemInstructions = `
 Sos un asistente de HomeFix, plataforma de servicios del hogar.
@@ -88,10 +97,15 @@ confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
   })
 
   const text = result.response.text()
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('Respuesta invalida de la IA')
+  const cleaned = text.trim()
 
-  const response = JSON.parse(jsonMatch[0]) as AiResponse
+  let response: AiResponse
+
+  try{
+    response = JSON.parse(cleaned) as AiResponse
+  } catch {
+    throw new Error('Respuesta invalida de la IA')
+  }
 
   if (response.type === 'suggestion') {
     const valid = categories.find(c => c.id === response.data.suggestedCategoryId)
