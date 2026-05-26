@@ -3,8 +3,8 @@ import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
 import { createPost, findPostById, findPostsByUser } from "../../src/data/post.data.js";
 
-let userId: number;
-let categoryId: number;
+let userId: string;
+let categoryId: string;
 
 beforeEach(async () => {
   await cleanDb();
@@ -36,7 +36,7 @@ describe("findPostById", () => {
   });
 
   it("should return null for non-existent post", async () => {
-    const result = await findPostById(9999);
+    const result = await findPostById('non-existent-id');
     expect(result).toBeNull();
   });
 
@@ -85,7 +85,7 @@ describe("createPost", () => {
     await expect(
       createPost({
         ...createValidPost(),
-        categoryId: 9999,
+        categoryId: 'non-existent-id',
       }),
     ).rejects.toThrow();
   });
@@ -94,7 +94,7 @@ describe("createPost", () => {
     await expect(
       createPost({
         ...createValidPost(),
-        userId: 9999,
+        userId: 'non-existent-id',
       }),
     ).rejects.toThrow();
   });
@@ -139,7 +139,7 @@ describe("findPostsByUser", () => {
   });
 
   it("should return empty array when user has no posts", async () => {
-    const posts = await findPostsByUser(9999);
+    const posts = await findPostsByUser('non-existent-id');
     expect(posts).toEqual([]);
   });
 
@@ -147,7 +147,7 @@ describe("findPostsByUser", () => {
     await createPost(createValidPost());
     const posts = await findPostsByUser(userId);
     expect(posts[0].categories).toBeDefined();
-    expect(posts[0].categories).toEqual([{ id: expect.any(Number), name: "Test Category" }]);
+    expect(posts[0].categories).toEqual([{ id: expect.any(String), name: "Test Category" }]);
   });
 
   it("should order posts by createdAt descending", async () => {

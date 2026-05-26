@@ -3,13 +3,13 @@ import { postServiceValidator } from "../../src/middleware/postServiceValidator.
 import { PostInput } from "../../src/types/postInput.js";
 
 const validPostData:PostInput = {
-  userId: 1,
+  userId: 'uuid-user-1',
   title: "Tubo roto en cocina",
   description: "El tubo bajo el lavaplatos está roto",
   startDate: new Date("2026-06-01T00:00:00.000Z"),
   endDate: new Date("2026-06-15T00:00:00.000Z"),
   address: "Calle Principal 123, Apt 4B",
-  categoryId: 1,
+  categoryId: 'uuid-category-1',
 };
 
 describe("postServiceValidator", () => {
@@ -17,7 +17,7 @@ describe("postServiceValidator", () => {
     expect(() =>
       postServiceValidator({
         ...validPostData,
-        categoryId: null as unknown as number,
+        categoryId: null as unknown as string,
       }),
     ).toThrow("At least one category must be selected");
   });

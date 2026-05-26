@@ -17,7 +17,7 @@ router.post('/create', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const result = await getPostById(Number(req.params.id));
+    const result = await getPostById(req.params.id);
     if (!result) return res.status(404).json({ error: 'Post not found' });
     res.json(result);
   } catch (error) {

@@ -9,7 +9,7 @@ import * as userData from '../../src/data/user.data.js'
 import { syncAuth0User } from '../../src/services/auth.service.js'
 
 const mockUser = {
-  id: 1,
+  id: 'uuid-jane',
   name: 'Jane',
   email: 'jane@test.com',
   phone: null as string | null,

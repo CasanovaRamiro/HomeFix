@@ -20,7 +20,7 @@ const reviewFields = {
 
 type ReviewResult = Prisma.WorkerReviewGetPayload<{ select: typeof reviewFields }>
 
-export const findReviewsByWorkerId = (workerId: number): Promise<ReviewResult[]> =>
+export const findReviewsByWorkerId = (workerId: string): Promise<ReviewResult[]> =>
   prisma.workerReview.findMany({
     where: { workerId },
     select: reviewFields,

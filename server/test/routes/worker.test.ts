@@ -85,12 +85,12 @@ describe('GET /workers/:id', () => {
     expect(res.body.categories[0].category.name).toBe('Plumbing')
   })
 
-  it('returns 400 when id is not a number', async () => {
+  it('returns 404 when the worker id does not exist', async () => {
     const res = await request(app)
-      .get('/workers/abc')
+      .get('/workers/non-existent-uuid')
       .set('Authorization', 'Bearer test-auth0-token')
 
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(404)
   })
 
   it('returns 404 when the worker does not exist', async () => {
@@ -171,12 +171,12 @@ describe('GET /workers/:id/reviews', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 400 when id is not a number', async () => {
+  it('returns 404 when the worker id does not exist', async () => {
     const res = await request(app)
-      .get('/workers/abc/reviews')
+      .get('/workers/non-existent-uuid/reviews')
       .set('Authorization', 'Bearer test-auth0-token')
 
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(404)
   })
 
   it('returns 401 when no token is provided', async () => {

@@ -13,17 +13,17 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("post.service - createPost", () => {
   const inputData: PostInput = {
-    userId: 1,
+    userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
     description: "El tubo bajo el lavaplatos está roto",
     startDate: new Date("2026-06-01T00:00:00.000Z"),
     endDate: new Date("2026-06-15T00:00:00.000Z"),
     address: "Calle Principal 123, Apt 4B",
-    categoryId: 1,
+    categoryId: 'uuid-category-1',
   };
   const createdPostMock = {
-    id: 1,
-    userId: 1,
+    id: 'uuid-post-1',
+    userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
     description: "El tubo bajo el lavaplatos está roto",
     startDate: new Date("2026-06-01"),
@@ -51,8 +51,8 @@ describe("post.service - createPost", () => {
 
 describe("post.service - getPostById", () => {
   const postDetailMock = {
-    id: 1,
-    userId: 1,
+    id: 'uuid-post-1',
+    userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
     description: "Descripcion detallada",
     startDate: new Date("2026-06-01"),
@@ -62,7 +62,7 @@ describe("post.service - getPostById", () => {
     createdAt: new Date("2026-05-25"),
     categories: [
       {
-        category: { id: 1, name: "Plomeria" },
+        category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
   };
@@ -70,18 +70,18 @@ describe("post.service - getPostById", () => {
   it("should return a post by id", async () => {
     vi.mocked(findPostById).mockResolvedValue(postDetailMock);
 
-    const result = await postService.getPostById(1);
+    const result = await postService.getPostById('uuid-post-1');
 
-    expect(findPostById).toHaveBeenCalledWith(1);
+    expect(findPostById).toHaveBeenCalledWith('uuid-post-1');
     expect(result).toEqual(postDetailMock);
   });
 
   it("should return null when post does not exist", async () => {
     vi.mocked(findPostById).mockResolvedValue(null);
 
-    const result = await postService.getPostById(9999);
+    const result = await postService.getPostById('non-existent-id');
 
-    expect(findPostById).toHaveBeenCalledWith(9999);
+    expect(findPostById).toHaveBeenCalledWith('non-existent-id');
     expect(result).toBeNull();
   });
 });
@@ -89,7 +89,7 @@ describe("post.service - getPostById", () => {
 describe("post.service - getUserPosts", () => {
   const userPostsMock = [
     {
-      id: 1,
+      id: 'uuid-post-1',
       title: "Test Post",
       description: "Test description",
       status: "Active",
@@ -97,23 +97,23 @@ describe("post.service - getUserPosts", () => {
       address: "123 Test St",
       startDate: new Date("2026-06-01"),
       endDate: new Date("2026-06-15"),
-      categories: [{ id: 1, name: "Plumbing" }],
+      categories: [{ id: 'uuid-category-1', name: "Plumbing" }],
     },
   ];
 
   it("should return posts for a valid userId", async () => {
     vi.mocked(findPostsByUser).mockResolvedValue(userPostsMock);
 
-    const result = await postService.getUserPosts(1);
+    const result = await postService.getUserPosts('uuid-user-1');
 
-    expect(findPostsByUser).toHaveBeenCalledWith(1);
+    expect(findPostsByUser).toHaveBeenCalledWith('uuid-user-1');
     expect(result).toEqual(userPostsMock);
   });
 
   it("should return empty array when no posts found", async () => {
     vi.mocked(findPostsByUser).mockResolvedValue([]);
 
-    const result = await postService.getUserPosts(1);
+    const result = await postService.getUserPosts('uuid-user-1');
     expect(result).toEqual([]);
   });
 });

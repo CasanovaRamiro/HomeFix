@@ -20,7 +20,7 @@ const workerFields = {
 
 type WorkerResult = Prisma.UserGetPayload<{ select: typeof workerFields }>
 
-export const findWorkerById = (id: number): Promise<WorkerResult | null> =>
+export const findWorkerById = (id: string): Promise<WorkerResult | null> =>
   prisma.user.findFirst({
     where: { id, role: 'worker' },
     select: workerFields,

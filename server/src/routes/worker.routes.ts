@@ -14,12 +14,7 @@ router.get('/', async (_req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-      res.status(400).json({ message: 'Invalid worker id' })
-      return
-    }
-    const worker = await getWorker(id)
+    const worker = await getWorker(req.params.id)
     res.json(worker)
   } catch (err) {
     next(err)
@@ -28,12 +23,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.get('/:id/reviews', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id, 10)
-    if (isNaN(id)) {
-      res.status(400).json({ message: 'Invalid worker id' })
-      return
-    }
-    const reviews = await getWorkerReviews(id)
+    const reviews = await getWorkerReviews(req.params.id)
     res.json(reviews)
   } catch (err) {
     next(err)

@@ -28,7 +28,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns null when the id does not exist', async () => {
-    const worker = await findWorkerById(9999)
+    const worker = await findWorkerById('non-existent-id')
     expect(worker).toBeNull()
   })
 

@@ -14,6 +14,6 @@ export const post = async (input: PostInput) => {
   return createdPost;
 };
 
-export const getUserPosts = (userId: number) => findPostsByUser(userId);
+export const getUserPosts = (userId: string) => findPostsByUser(userId);
 
-export const getPostById = (id: number) => findPostById(id);
+export const getPostById = (id: string) => findPostById(id);

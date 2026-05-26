@@ -34,7 +34,7 @@ export const createPost = (
     select: postFields,
   });
 
-export const findPostById = (id: number) =>
+export const findPostById = (id: string) =>
   prisma.post.findUnique({
     where: { id },
     select: {
@@ -51,7 +51,7 @@ export const findPostById = (id: number) =>
   });
 
 export type UserPostSummary = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   status: string;
@@ -59,10 +59,10 @@ export type UserPostSummary = {
   address: string;
   startDate: Date;
   endDate: Date;
-  categories: { id: number; name: string }[];
+  categories: { id: string; name: string }[];
 };
 
-export const findPostsByUser = async (userId: number): Promise<UserPostSummary[]> => {
+export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
   const posts = await prisma.post.findMany({
     where: { userId, status: { in: ["Active", "Paused"] } },
     include: { categories: { include: { category: true } } },

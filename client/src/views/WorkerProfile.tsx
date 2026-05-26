@@ -20,7 +20,7 @@ export default function WorkerProfile() {
 
   useEffect(() => {
     if (!id) return
-    getWorker(Number(id))
+    getWorker(id)
       .then(setWorker)
       .catch(() => setError('No se encontró el trabajador.'))
       .finally(() => setLoading(false))
@@ -28,7 +28,7 @@ export default function WorkerProfile() {
 
   useEffect(() => {
     if (!id) return
-    getWorkerReviews(Number(id))
+    getWorkerReviews(id)
       .then(setReviews)
       .catch(() => setReviews([]))
       .finally(() => setReviewsLoading(false))
