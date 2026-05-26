@@ -11,8 +11,8 @@ vi.mock('../../src/middleware/auth0.middleware.js', async () => {
 import { app } from '../../src/index.js'
 
 let token: string
-let userId: number
-let categoryId: number
+let userId: string
+let categoryId: string
 
 beforeEach(async () => {
   await cleanDb()
@@ -23,7 +23,7 @@ beforeEach(async () => {
   token = 'test-auth0-token'
 })
 
-let postId: number
+let postId: string
 
 const createValidPost = (): PostInput => ({
   userId,
@@ -127,7 +127,7 @@ describe('POST /posts/user-posts', () => {
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
     expect(res.body[0].title).toBe('Dashboard Post')
-    expect(res.body[0].categories).toEqual([{ id: expect.any(Number), name: 'Test Category' }])
+    expect(res.body[0].categories).toEqual([{ id: expect.any(String), name: 'Test Category' }])
   })
 
   it('should return empty array when authenticated user has no posts', async () => {

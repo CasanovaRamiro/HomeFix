@@ -7,12 +7,12 @@ import ApplicantCard from '../components/ApplicantCard'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 interface Category {
-  category: { id: number; name: string }
+  category: { id: string; name: string }
 }
 
 interface PostDetail {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   description: string
   startDate: string

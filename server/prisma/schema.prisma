@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id              Int              @id @default(autoincrement())
+  id              String           @id @default(uuid())
   email           String           @unique
   name            String
   password        String
@@ -27,8 +27,8 @@ model User {
 }
 
 model Post {
-  id              Int              @id @default(autoincrement())
-  userId          Int
+  id              String           @id @default(uuid())
+  userId          String
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   startDate       DateTime
   endDate         DateTime
@@ -43,16 +43,16 @@ model Post {
 }
 
 model Category {
-  id    Int            @id @default(autoincrement())
+  id    String         @id @default(uuid())
   name  String         @unique
   posts PostCategory[]
   users UserCategory[]
 }
 
 model PostCategory {
-  id         Int      @id @default(autoincrement())
-  postId     Int
-  categoryId Int
+  id         String   @id @default(uuid())
+  postId     String
+  categoryId String
   post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -60,9 +60,9 @@ model PostCategory {
 }
 
 model UserCategory {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  categoryId Int
+  id         String   @id @default(uuid())
+  userId     String
+  categoryId String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -70,9 +70,9 @@ model UserCategory {
 }
 
 model JobApplication {
-  id        Int           @id @default(autoincrement())
-  workerId  Int
-  postId    Int
+  id        String        @id @default(uuid())
+  workerId  String
+  postId    String
   status    String        @default("pending")
   createdAt DateTime      @default(now())
   worker    User          @relation("WorkerApplications", fields: [workerId], references: [id], onDelete: Cascade)
@@ -81,10 +81,10 @@ model JobApplication {
 }
 
 model WorkerReview {
-  id               Int            @id @default(autoincrement())
-  jobApplicationId Int            @unique
-  reviewerId       Int
-  workerId         Int
+  id               String         @id @default(uuid())
+  jobApplicationId String         @unique
+  reviewerId       String
+  workerId         String
   description      String         @db.Text
   rating           Int
   mediaUrls        String?        @db.Text

@@ -1,9 +1,9 @@
 export interface PostInput {
-  userId: number
+  userId: string
   title: string
   description: string
   startDate: Date
   endDate: Date
   address: string
-  categoryId: number
+  categoryId: string
 }

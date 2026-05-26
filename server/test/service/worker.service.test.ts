@@ -9,7 +9,7 @@ import * as workerData from '../../src/data/worker.data.js'
 import { listWorkers, getWorker } from '../../src/services/worker.service.js'
 
 const mockWorker = {
-  id: 1,
+  id: 'uuid-worker-1',
   name: 'Ana',
   email: 'ana@test.com',
   phone: null as string | null,
@@ -17,7 +17,7 @@ const mockWorker = {
   role: 'worker',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [
-    { category: { id: 1, name: 'Plumbing' } },
+    { category: { id: 'uuid-category-1', name: 'Plumbing' } },
   ],
 }
 
@@ -47,15 +47,15 @@ describe('worker.service - getWorker', () => {
   it('returns the worker when found', async () => {
     vi.mocked(workerData.findWorkerById).mockResolvedValue(mockWorker)
 
-    const result = await getWorker(1)
+    const result = await getWorker('uuid-worker-1')
 
-    expect(workerData.findWorkerById).toHaveBeenCalledWith(1)
+    expect(workerData.findWorkerById).toHaveBeenCalledWith('uuid-worker-1')
     expect(result).toEqual(mockWorker)
   })
 
   it('throws when the worker does not exist', async () => {
     vi.mocked(workerData.findWorkerById).mockResolvedValue(null)
 
-    await expect(getWorker(9999)).rejects.toThrow('Worker not found')
+    await expect(getWorker('non-existent-id')).rejects.toThrow('Worker not found')
   })
 })

@@ -1,12 +1,12 @@
 import Badge from './Badge'
 
 interface Category {
-  category: { id: number; name: string }
+  category: { id: string; name: string }
 }
 
 interface PostDetail {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   description: string
   startDate: string
