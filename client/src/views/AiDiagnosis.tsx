@@ -3,7 +3,7 @@ import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle } from 'lucide-r
 import { useTheme } from '../hooks/useTheme'
 import { useCreatePost } from '../hooks/useCreatePost'
 import { useDiagnosisChat } from '../hooks/useDiagnosisChat'
-import SubmitButton from '../components/SubmitButton'
+import SubmitButton from '../components/ui/SubmitButton'
 
 export default function AiDiagnosis() {
   const navigate = useNavigate()

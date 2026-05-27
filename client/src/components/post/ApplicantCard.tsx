@@ -1,6 +1,8 @@
-import StarRating from './StarRating'
+import { useNavigate } from 'react-router-dom'
+import StarRating from '../ui/StarRating'
 
 interface Applicant {
+  id: string
   name: string
   category: string
   address: string
@@ -14,6 +16,7 @@ interface ApplicantCardProps {
 }
 
 export default function ApplicantCard({ applicant }: ApplicantCardProps) {
+  const navigate = useNavigate()
   const initials = applicant.name.split(' ').map((n) => n[0]).join('')
 
   return (
@@ -28,7 +31,7 @@ export default function ApplicantCard({ applicant }: ApplicantCardProps) {
         </div>
       </div>
       <div className="actions">
-        <button>Ver perfil</button>
+        <button onClick={() => navigate(`/worker/${applicant.id}`)}>Ver perfil</button>
         <button className="btn-outline">Chatear</button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Props {
   loading?: boolean
