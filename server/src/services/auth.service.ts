@@ -19,6 +19,11 @@ interface RegisterInput {
   address?: string
 }
 
+interface LoginInput {
+  email?: string
+  password?: string
+}
+
 const createHttpError = (status: number, message: string) => {
   const error = new Error(message) as Error & { status?: number }
   error.status = status
@@ -39,16 +44,34 @@ interface Auth0SignupResponse {
   email_verified: boolean
 }
 
+interface Auth0TokenResponse {
+  access_token: string
+  id_token?: string
+  token_type: string
+  expires_in: number
+}
+
+interface Auth0UserInfoResponse {
+  sub?: string
+  email?: string
+  name?: string
+  nickname?: string
+  phone_number?: string
+}
+
+const getIssuerBaseUrl = () => {
+  const issuer = process.env.AUTH0_ISSUER_BASE_URL
+  if (!issuer) throw createHttpError(500, 'AUTH0_ISSUER_BASE_URL is not configured')
+  return issuer.replace(/\/$/, '')
+}
+
 const createAuth0User = async (payload: {
   email: string
   password: string
   name: string
   lastName?: string
 }) => {
-  const issuer = process.env.AUTH0_ISSUER_BASE_URL
-  if (!issuer) throw createHttpError(500, 'AUTH0_ISSUER_BASE_URL is not configured')
-
-  const response = await fetch(`${issuer.replace(/\/$/, '')}/dbconnections/signup`, {
+  const response = await fetch(`${getIssuerBaseUrl()}/dbconnections/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -79,6 +102,47 @@ const createAuth0User = async (payload: {
     email: data.email,
     emailVerified: data.email_verified,
   }
+}
+
+const loginWithAuth0 = async (email: string, password: string) => {
+  const audience = process.env.AUTH0_AUDIENCE
+  if (!audience) throw createHttpError(500, 'AUTH0_AUDIENCE is not configured')
+
+  const response = await fetch(`${getIssuerBaseUrl()}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'http://auth0.com/oauth/grant-type/password-realm',
+      client_id: getRequiredEnv('AUTH0_CLIENT_ID'),
+      username: email,
+      password,
+      audience,
+      realm: getRequiredEnv('AUTH0_DB_CONNECTION'),
+      scope: 'openid profile email',
+    }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
+      throw createHttpError(401, 'Invalid email or password')
+    }
+    throw createHttpError(502, 'Failed to authenticate with Auth0')
+  }
+
+  return (await response.json()) as Auth0TokenResponse
+}
+
+const getAuth0UserInfo = async (accessToken: string) => {
+  const response = await fetch(`${getIssuerBaseUrl()}/userinfo`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!response.ok) {
+    throw createHttpError(502, 'Failed to fetch user profile from Auth0')
+  }
+
+  return (await response.json()) as Auth0UserInfoResponse
 }
 
 export const registerUser = async (input: RegisterInput) => {
@@ -115,6 +179,51 @@ export const registerUser = async (input: RegisterInput) => {
     email: auth0User.email,
     emailVerified: auth0User.emailVerified,
     message: 'User registered successfully',
+  }
+}
+
+export const loginUser = async (input: LoginInput) => {
+  const email = input.email?.trim().toLowerCase()
+  const password = input.password
+
+  if (!email) throw createHttpError(400, 'Email is required')
+  if (!password) throw createHttpError(400, 'Password is required')
+
+  const tokenData = await loginWithAuth0(email, password)
+  const profile = await getAuth0UserInfo(tokenData.access_token)
+
+  const profileEmail = profile.email?.toLowerCase() ?? email
+  const existing = await findByEmail(profileEmail)
+  const user = existing
+    ? {
+        id: existing.id,
+        name: existing.name,
+        email: existing.email,
+        phone: existing.phone,
+        role: existing.role,
+        createdAt: existing.createdAt,
+      }
+    : await createUser({
+        email: profileEmail,
+        name: profile.name ?? profile.nickname ?? profile.sub ?? profileEmail,
+        password: managedPassword,
+        phone: profile.phone_number,
+      })
+  if (!user) throw createHttpError(500, 'Could not resolve user')
+
+  return {
+    accessToken: tokenData.access_token,
+    idToken: tokenData.id_token,
+    tokenType: tokenData.token_type,
+    expiresIn: tokenData.expires_in,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      createdAt: user.createdAt,
+    },
   }
 }
 

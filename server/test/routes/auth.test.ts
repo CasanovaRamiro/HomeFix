@@ -75,6 +75,38 @@ describe('POST /auth/register', () => {
   })
 })
 
+describe('POST /auth/login', () => {
+  it('returns 200 and token data when credentials are valid', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: 'access-token',
+          id_token: 'id-token',
+          token_type: 'Bearer',
+          expires_in: 86400,
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          sub: 'auth0|1',
+          email: 'test@test.com',
+          name: 'Test User',
+        }),
+      } as Response)
+
+    const res = await request(app).post('/auth/login').send({
+      email: 'test@test.com',
+      password: 'password123',
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.body.accessToken).toBe('access-token')
+    expect(res.body.user.email).toBe('test@test.com')
+  })
+})
+
 it('does not create duplicated user on second visit', async () => {
   const first = await request(app)
     .get('/auth/me')
