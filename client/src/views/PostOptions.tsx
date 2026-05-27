@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Bot, FileText } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
-import OptionCard from '../components/OptionCard'
+import OptionCard from '../components/post/OptionCard'
 
 export default function PostOptions() {
   const navigate = useNavigate()

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../services/api'
-import PageHeader from '../components/PageHeader'
-import PostCard from '../components/PostCard'
-import ApplicantCard from '../components/ApplicantCard'
-import LoadingSpinner from '../components/LoadingSpinner'
+import PageHeader from '../components/ui/PageHeader'
+import PostCard from '../components/post/PostCard'
+import ApplicantCard from '../components/post/ApplicantCard'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
 
 interface Category {
   category: { id: string; name: string }
@@ -25,6 +25,7 @@ interface PostDetail {
 
 const MOCK_APPLICANTS = [
   {
+    id: '1',
     name: 'Juan Pérez',
     category: 'Plomero',
     address: 'San Isidro',
@@ -33,6 +34,7 @@ const MOCK_APPLICANTS = [
     jobCount: 159,
   },
   {
+    id: '1',
     name: 'Luis Fernández',
     category: 'Plomero',
     address: 'Miraflores',
