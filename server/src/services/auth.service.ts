@@ -171,6 +171,7 @@ export const registerUser = async (input: RegisterInput) => {
   const passwordError = validatePassword(password)
   if (passwordError) throw createHttpError(400, passwordError)
 
+export const register = async ({ name, email, password, nationalId, phone }: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 

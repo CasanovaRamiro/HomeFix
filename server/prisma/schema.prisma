@@ -126,7 +126,7 @@ model PostImage {
 }
 
 model NationalIdType { 
-  id          Int    @id @default(autoincrement()) 
+  id          String @id @default(uuid()) 
   description String
   users       User[]
 
@@ -137,11 +137,11 @@ model NationalIdType {
 
 
 model Address {
-  id        Int      @id @default(autoincrement()) @map("address_id")
-  street    String   @map("street")
-  number    String   @map("number")
-  city      String   @map("city")
-  state     String   @map("state")
+  id        String   @id @default(uuid()) @map("address_id")
+  street    String
+  number    String
+  city      String
+  state     String
   users     User[]
 
   @@map("address")

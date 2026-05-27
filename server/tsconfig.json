@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "include": ["src", "test", "prisma"]
 }

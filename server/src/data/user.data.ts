@@ -6,7 +6,7 @@ interface CreateUserInput {
   password: string
   phone?: string
   surname?: string
-  nationalId?: string
+  nationalId: string
   role?: string
 }
 

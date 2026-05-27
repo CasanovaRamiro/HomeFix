@@ -1,17 +1,19 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import request from 'supertest'
 import type { PostWithCategories } from '../../src/data/post.data.js'
 
-const listAvailablePostsMock = jest.fn<(category?: string) => Promise<PostWithCategories[]>>()
-const getPostByIdMock = jest.fn<(id: number) => Promise<PostWithCategories>>()
+const { listAvailablePostsMock, getPostByIdMock } = vi.hoisted(() => ({
+  listAvailablePostsMock: vi.fn<(category?: string) => Promise<PostWithCategories[]>>(),
+  getPostByIdMock: vi.fn<(id: number) => Promise<PostWithCategories>>(),
+}))
 
-jest.unstable_mockModule('../../src/middleware/auth.middleware.js', () => ({
+vi.mock('../../src/middleware/auth.middleware.js', () => ({
   requireAuth: (_req: Request, _res: Response, next: NextFunction) => next(),
   requireWorkerAuth: (_req: Request, _res: Response, next: NextFunction) => next(),
 }))
 
-jest.unstable_mockModule('../../src/services/post.service.js', () => ({
+vi.mock('../../src/services/post.service.js', () => ({
   listAvailablePosts: listAvailablePostsMock,
   getPostById: getPostByIdMock,
 }))
@@ -48,7 +50,7 @@ const mockPost: PostWithCategories = {
 
 describe('post.routes', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('GET /posts/available', () => {
