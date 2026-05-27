@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { suggestPost,clearCategoryCache } from "../../src/services/ai.service.js";
-import prisma from "../../src/lib/prisma.js";
 import { AiMessage } from "../../src/types/aiSuggestion.js";
+
+const mockFindMany = vi.hoisted(() => vi.fn());
 
 vi.mock("../../src/lib/prisma.js", () => ({
   default: {
     category: {
-      findMany: vi.fn(),
+      findMany: mockFindMany,
     },
   },
 }));
@@ -25,7 +26,7 @@ describe("AI Suggestion Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearCategoryCache();
-    vi.mocked(prisma.category.findMany).mockResolvedValue([
+    mockFindMany.mockResolvedValue([
       { id: 1, name: "Plomeria" },
       { id: 2, name: "Electricidad" },
     ]);
@@ -450,7 +451,7 @@ describe("AI Suggestion Service", () => {
     });
 
     it("should propagate database errors", async () => {
-      vi.mocked(prisma.category.findMany).mockRejectedValue(
+      mockFindMany.mockRejectedValue(
         new Error("DB Error"),
       );
 
@@ -478,7 +479,7 @@ describe("AI Suggestion Service", () => {
         messages: [{ role: "user", text: "Hola otra vez" }],
       });
 
-      expect(prisma.category.findMany).toHaveBeenCalledTimes(1);
+      expect(mockFindMany).toHaveBeenCalledTimes(1);
     });
 
     it("should refresh expired cache", async () => {
@@ -494,7 +495,7 @@ describe("AI Suggestion Service", () => {
         messages: [{ role: "user", text: "Hola" }],
       });
 
-      expect(prisma.category.findMany).toHaveBeenCalledTimes(1);
+      expect(mockFindMany).toHaveBeenCalledTimes(1);
       
       vi.advanceTimersByTime(5 * 60 * 1000 + 1);
 
@@ -502,7 +503,7 @@ describe("AI Suggestion Service", () => {
         messages: [{ role: "user", text: "Hola de nuevo" }],
       });
 
-      expect(prisma.category.findMany).toHaveBeenCalledTimes(2);
+      expect(mockFindMany).toHaveBeenCalledTimes(2);
 
       vi.useRealTimers();
     });
