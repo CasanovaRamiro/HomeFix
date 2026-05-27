@@ -1,8 +1,8 @@
-/*import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
-  createUser: vi.fn(),
+  createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId: string; phone?: string }) => Promise<{ id: number; name: string; email: string; phone: string | null; role: string }>>(),
 }))
 
 import * as userData from '../../src/data/user.data.js'
@@ -17,6 +17,14 @@ const mockUser = {
   bio: null as string | null,
   role: 'user',
   createdAt: new Date(),
+  nationalId: 'DNI-12345678',
+  surname: 'Test',
+  password: 'hashed',
+  profilePicture: null as string | null,
+  active: true,
+  deleted: false,
+  nationalIdTypeId: 'uuid-national-id-type',
+  addressId: 'uuid-address',
 }
 
 describe('auth.service - syncAuth0User', () => {
@@ -49,10 +57,12 @@ describe('auth.service - syncAuth0User', () => {
     expect(result.email).toBe('jane@test.com')
   })
 
-  it('throws when sub claim is missing', async () => {
-    await expect(syncAuth0User({ email: 'jane@test.com' })).rejects.toThrow(
-      'Invalid Auth0 token: missing sub claim'
-    )
+  it('throws if the email is already taken', async () => {
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
+
+    await expect(
+      register({ name: 'Jane', email: 'jane@test.com', password: 'secret', nationalId: 'DNI-12345678' })
+    ).rejects.toThrow('Email already in use')
   })
 })
 
@@ -148,5 +158,3 @@ describe('auth.service - loginUser', () => {
     })
   })
 })
-
-*/

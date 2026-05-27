@@ -6,7 +6,7 @@ interface CreateUserInput {
   password: string
   phone?: string
   surname?: string
-  nationalId?: string
+  nationalId: string
   role?: string
 }
 
@@ -39,7 +39,7 @@ export const createUser = async (data: CreateUserInput) => {
     password: data.password,
     phone: data.phone,
     role: data.role ?? 'user',
-    nationalId: data.nationalId ?? `tmp-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    nationalId: data.nationalId,
     nationalIdType: { connect: { id: nationalIdType.id } },
     address: {
       create: {

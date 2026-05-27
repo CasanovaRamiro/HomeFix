@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Post } from '../types/post'
 
-const fetchAvailablePostsMock = jest.fn<(category?: string) => Promise<{ data: Post[] }>>()
+const { fetchAvailablePostsMock } = vi.hoisted(() => ({
+  fetchAvailablePostsMock: vi.fn<(category?: string) => Promise<{ data: Post[] }>>(),
+}))
 
-jest.unstable_mockModule('../services/posts', () => ({
+vi.mock('../services/posts', () => ({
   fetchAvailablePosts: fetchAvailablePostsMock,
 }))
 
@@ -54,7 +56,7 @@ const renderTrabajos = (initialRoute = '/trabajador/trabajos'): ReturnType<typeo
 describe('Trabajos', () => {
   beforeEach(() => {
     localStorage.clear()
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     fetchAvailablePostsMock.mockResolvedValue({ data: posts })
   })
 

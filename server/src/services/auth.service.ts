@@ -158,29 +158,12 @@ export const registerUser = async (input: RegisterInput) => {
   if (!password) throw createHttpError(400, 'Password is required')
   if (password.length < 8) throw createHttpError(400, 'Password must be at least 8 characters')
 
+export const register = async ({ name, email, password, nationalId, phone }: RegisterInput) => {
   const existing = await findByEmail(email)
-  if (existing) throw createHttpError(409, 'Email already registered')
-
-  const auth0User = await createAuth0User({
-    email,
-    password,
-    name,
-    lastName,
-  })
-
-  const user = await createUser({
-    name: lastName ? `${name} ${lastName}` : name,
-    email,
-    password: managedPassword,
-    phone,
-  })
-
-  return {
-    userId: user.id,
-    email: auth0User.email,
-    emailVerified: auth0User.emailVerified,
-    message: 'User registered successfully',
-  }
+  if (existing) throw new Error('Email already in use')
+  const hashed = await bcrypt.hash(password, 10)
+  const user = await createUser({ name, email, password: hashed, nationalId, phone })
+  return { token: signToken(user.id, user.role), user }
 }
 
 export const loginUser = async (input: LoginInput) => {
