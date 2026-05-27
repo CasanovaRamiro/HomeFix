@@ -52,13 +52,23 @@ function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
   const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
-    setCargando(true)
-    api.get<PostDetalle>(`/posts/${p.postId}`)
-      .then((res) => { setDetalle(res.data); setCargando(false) })
-      .catch(() => {
+    let mounted = true
+    ;(async () => {
+      if (!mounted) return
+      try {
+        setCargando(true)
+        const res = await api.get<PostDetalle>(`/posts/${p.postId}`)
+        if (!mounted) return
+        setDetalle(res.data)
+      } catch {
+        if (!mounted) return
         setDetalle({ descripcion: '', categorias: [], imagenes: [], telefono: '', fecha_fin: '' })
+      } finally {
+        if (!mounted) return
         setCargando(false)
-      })
+      }
+    })()
+    return () => { mounted = false }
   }, [p.postId])
 
   const primerImagen = detalle?.imagenes?.[0]
@@ -189,8 +199,10 @@ export default function MisPostulaciones() {
   }, [])
 
   useEffect(() => {
-    fetchPostulaciones()
-    const interval = setInterval(fetchPostulaciones, 20_000)
+    void (async () => {
+      await fetchPostulaciones()
+    })()
+    const interval = setInterval(() => { void fetchPostulaciones() }, 20_000)
     return () => clearInterval(interval)
   }, [fetchPostulaciones])
 

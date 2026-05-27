@@ -48,7 +48,12 @@ export default function PostDetail() {
       await api.post('/api/postulaciones', { postId: post.id })
       setApplied(true)
     } catch (err: any) {
-      const msg = err?.response?.data?.error || 'Error al postularte'
+      let msg = 'Error al postularte'
+      if (err && typeof err === 'object') {
+        const maybe = err as { response?: { data?: { error?: unknown } } }
+        const candidate = maybe.response?.data?.error
+        if (typeof candidate === 'string') msg = candidate
+      }
       setError(msg)
     } finally {
       setApplying(false)
