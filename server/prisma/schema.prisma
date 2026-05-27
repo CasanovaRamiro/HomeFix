@@ -21,6 +21,7 @@ model User {
   role      String  @default("user")
   createdAt DateTime @default(now())
   posts     Post[]
+  postulaciones Postulacion[] @relation("PostulacionTrabajador")
 }
 
 model Post {
@@ -36,6 +37,22 @@ model Post {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   categories  PostCategory[]
+  images      PostImage[]
+  postulaciones Postulacion[]
+}
+
+model Postulacion {
+  id           Int      @id @default(autoincrement())
+  trabajadorId Int
+  postId       Int
+  estado       String   @default("Pendiente")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  trabajador   User     @relation("PostulacionTrabajador", fields: [trabajadorId], references: [id], onDelete: Cascade)
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([trabajadorId, postId])
 }
 
 model Category {
@@ -52,4 +69,11 @@ model PostCategory {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([postId, categoryId])
+}
+
+model PostImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  postId Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

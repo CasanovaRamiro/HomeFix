@@ -13,9 +13,18 @@ const postFields = {
   status: true,
 } satisfies Prisma.PostSelect;
 
-export const createPost = (
-  data: PostInput,
-) =>
+const postListInclude = {
+  user: { select: { id: true, name: true } },
+  categories: { include: { category: { select: { id: true, name: true } } } },
+} satisfies Prisma.PostInclude;
+
+const postDetailInclude = {
+  user: { select: { id: true, name: true, phone: true } },
+  categories: { include: { category: { select: { id: true, name: true } } } },
+  images: { select: { id: true, url: true } },
+} satisfies Prisma.PostInclude;
+
+export const createPost = (data: PostInput) =>
   prisma.post.create({
     data: {
       userId: data.userId,
@@ -24,12 +33,22 @@ export const createPost = (
       startDate: data.startDate,
       endDate: data.endDate,
       address: data.address,
-
       categories: {
-        create: {
-          categoryId: data.categoryId,
-        },
+        create: { categoryId: data.categoryId },
       },
     },
     select: postFields,
+  });
+
+export const findAllActivePosts = () =>
+  prisma.post.findMany({
+    where: { status: "Active" },
+    include: postListInclude,
+    orderBy: { createdAt: "desc" },
+  });
+
+export const findPostById = (id: number) =>
+  prisma.post.findUnique({
+    where: { id },
+    include: postDetailInclude,
   });

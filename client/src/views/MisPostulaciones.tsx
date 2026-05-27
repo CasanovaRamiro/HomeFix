@@ -64,7 +64,7 @@ function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
   const primerImagen = detalle?.imagenes?.[0]
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+    <div className="flex flex-col h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
       {/* Header: Título + Badge */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <h3 className="text-lg font-bold text-slate-900">{p.titulo}</h3>
@@ -74,7 +74,7 @@ function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
       </div>
 
       {/* Main content: Left (info) + Right (image) */}
-      <div className="flex gap-6 mb-4">
+      <div className="flex gap-6 mb-4 flex-grow">
         {/* Left: Cliente, fechas, ubicación, descripción, categorías */}
         <div className="flex-1 min-w-0">
           {/* Cliente */}
@@ -138,11 +138,11 @@ function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
         )}
       </div>
 
-      {/* Footer: Contact button */}
+      {/* Footer: Contact button (always at bottom) */}
       {detalle?.telefono && p.estado === 'Aceptada' && (
         <a
           href={`tel:${detalle.telefono}`}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+          className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
         >
           <Phone className="h-4 w-4" />
           Contactar cliente

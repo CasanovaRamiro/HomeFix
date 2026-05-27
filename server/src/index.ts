@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
 import { errorHandler } from './middleware/error.middleware.js'
 import postRoutes from './routes/post.routes.js'
+import postulacionRoutes from './routes/postulacion.routes.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3000
@@ -19,6 +20,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/posts', postRoutes)
+app.use('/api/postulaciones', postulacionRoutes)
 app.use(errorHandler)
 
 if (process.env.NODE_ENV !== 'test') {

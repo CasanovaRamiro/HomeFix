@@ -4,6 +4,8 @@ import Login from './views/Login'
 import Register from './views/Register'
 import Users from './views/Users'
 import MisPostulaciones from './views/MisPostulaciones'
+import TrabajadorFeed from './views/TrabajadorFeed'
+import PostDetail from './views/PostDetail'
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
   localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -16,6 +18,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
         <Route path="/trabajador/mis-postulaciones" element={<MisPostulaciones />} />
+        <Route path="/trabajador/feed" element={<TrabajadorFeed />} />
+        <Route path="/trabajador/posts/:id" element={<PostDetail />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
