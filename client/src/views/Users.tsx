@@ -13,15 +13,15 @@ interface User {
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([])
-  const [error] = useState('')
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
     api.get<User[]>('/users')
       .then(({ data }) => setUsers(data))
-      .catch(() => {
-        localStorage.removeItem('token')
-        navigate('/login')
+      .catch((err) => {
+        console.error('Error al cargar usuarios:', err);
+        setError('Error al cargar los usuarios. Revisa la consola.');
       })
   }, [navigate])
 
