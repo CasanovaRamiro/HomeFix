@@ -5,7 +5,7 @@ import { useCreatePost } from '../hooks/useCreatePost'
 import { useDiagnosisChat } from '../hooks/useDiagnosisChat'
 import SubmitButton from '../components/SubmitButton'
 
-export default function Diagnostico() {
+export default function AiDiagnosis() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { form, setForm, formError, formSubmitting, formSuccess, handleFocus, handleBlur, handleSubmit } = useCreatePost()

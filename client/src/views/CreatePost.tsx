@@ -6,7 +6,7 @@ import { useCreatePost } from '../hooks/useCreatePost'
 import SuccessScreen from '../components/SuccessScreen'
 import SubmitButton from '../components/SubmitButton'
 
-export default function CrearPublicacion() {
+export default function CreatePost() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { categories, loading: loadingCategories } = useCategories()
