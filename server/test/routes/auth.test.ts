@@ -48,7 +48,7 @@ describe('POST /auth/register', () => {
     })
 
     expect(res.status).toBe(201)
-    expect(res.body.userId).toBeTypeOf('number')
+    expect(res.body.userId).toBeTypeOf('string')
     expect(res.body.email).toBe('newuser@test.com')
     expect(res.body.emailVerified).toBe(false)
   })
