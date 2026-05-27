@@ -51,7 +51,7 @@ describe("POST /ai/suggest", () => {
       type: "suggestion",
       data: {
         suggestedTitle: "Reparación de canilla",
-        suggestedCategoryId: 1,
+        suggestedCategoryId: "1",
         suggestedCategoryName: "Plomería",
         possibleIssue: "Posible problema de pérdida de agua en la cocina.",
         startDate: "2026-05-23T00:00:00.000Z",
@@ -68,7 +68,7 @@ describe("POST /ai/suggest", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.type).toBe("suggestion");
-    expect(res.body.data.suggestedCategoryId).toBe(1);
+    expect(res.body.data.suggestedCategoryId).toBe("1");
   });
 
   it("should return 400 when service throws", async () => {

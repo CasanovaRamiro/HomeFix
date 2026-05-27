@@ -29,14 +29,6 @@
     "express-oauth2-jwt-bearer": "~1.9.0",
     "jsonwebtoken": "~9.0.3"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "esbuild",
-      "prisma"
-    ]
-  },
   "devDependencies": {
     "@eslint/js": "~9.39.4",
     "@types/bcryptjs": "~2.4.6",
