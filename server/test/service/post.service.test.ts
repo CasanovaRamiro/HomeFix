@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import { PostInput } from "../../src/types/postInput.js";
 
@@ -7,6 +7,7 @@ vi.mock("../../src/data/post.data.js", () => ({
   createPost: vi.fn(),
   findPostsByUser: vi.fn(),
   findPostById: vi.fn(),
+  updatePostStatus: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -117,3 +118,51 @@ describe("post.service - getUserPosts", () => {
     expect(result).toEqual([]);
   });
 });
+describe('post.service - finalizePost', () => {
+  const mockPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Paused',
+     createdAt: new Date("2026-05-25"),
+    categories: [
+      {
+        category: { id: 'uuid-category-1', name: "Plomeria" },
+      },
+    ],
+  }
+
+  it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Finalized' })
+
+    const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Finalized')
+    expect(result.status).toBe('Finalized')
+  })
+
+  it('lanza 404 si el post no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.finalizePost('no-existe', 'user-uuid-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si el post pertenece a otro usuario', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+
+    await expect(postService.finalizePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si el post no está en estado Paused', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
+
+    await expect(postService.finalizePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+
