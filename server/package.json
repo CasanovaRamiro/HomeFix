@@ -20,6 +20,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "~0.24.1",
     "@prisma/client": "~5.22.0",
     "bcryptjs": "~3.0.3",
     "cors": "~2.8.6",
@@ -27,14 +28,6 @@
     "express": "~5.2.1",
     "express-oauth2-jwt-bearer": "~1.9.0",
     "jsonwebtoken": "~9.0.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "esbuild",
-      "prisma"
-    ]
   },
   "devDependencies": {
     "@eslint/js": "~9.39.4",
