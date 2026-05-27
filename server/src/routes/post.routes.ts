@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { post, getUserPosts, getPostById } from '../services/post.service.js'
+import { post, getUserPosts, getPostById, finalizePost } from '../services/post.service.js'
 import { syncAuth0User } from '../services/auth.service.js'
 
 const router = Router()
@@ -49,6 +49,29 @@ router.post("/user-posts", async (req, res, next) => {
     const err = error as Error & { status?: number };
     if (!err.status) err.status = 400;
     next(err);
+  }
+})
+
+router.patch('/:id/finalize', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as {
+      sub?: string
+      email?: string
+      name?: string
+      nickname?: string
+      phone_number?: string
+    } | undefined
+
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const user = await syncAuth0User(claims)
+    const result = await finalizePost(req.params.id, user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
   }
 })
 

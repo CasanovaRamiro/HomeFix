@@ -84,3 +84,10 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
     })),
   }));
 };
+
+export const updatePostStatus = (id: string, status: string) =>
+  prisma.post.update({
+    where: { id },
+    data: { status },
+    select: postFields,
+  })
