@@ -128,6 +128,12 @@ describe('post.service - finalizePost', () => {
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-15'),
     status: 'Paused',
+     createdAt: new Date("2026-05-25"),
+    categories: [
+      {
+        category: { id: 'uuid-category-1', name: "Plomeria" },
+      },
+    ],
   }
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
