@@ -65,6 +65,8 @@ describe("post.service - getPostById", () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
+    user: { id: 'uuid-user-1', name: "Test User", phone: null },
+    images: [],
   };
 
   it("should return a post by id", async () => {
