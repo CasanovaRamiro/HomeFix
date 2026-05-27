@@ -47,6 +47,12 @@ export const findPostById = (id: string) =>
           },
         },
       },
+      user: {
+        select: { id: true, name: true, phone: true },
+      },
+      images: {
+        select: { url: true },
+      },
     },
   });
 

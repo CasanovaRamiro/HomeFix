@@ -1,6 +1,8 @@
 import prisma from '../src/lib/prisma.js'
+import bcrypt from 'bcryptjs'
 
 async function main() {
+  const hashedPassword = await bcrypt.hash('123456', 10)
   const existingUser = await prisma.user.findUnique({ where: { email: 'trabajador@homefix.com' } })
   if (existingUser) {
     const extraPost = await prisma.post.findFirst({ where: { title: 'Reparación de instalación eléctrica' } })
@@ -24,7 +26,7 @@ async function main() {
           data: { url: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b0?w=800', postId: post5.id },
         })
         await prisma.postImage.create({
-          data: { url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800', postId: 1 },
+          data: { url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800', postId: post5.id },
         })
         console.log('Added extra post + missing images')
       }
@@ -37,7 +39,7 @@ async function main() {
     data: {
       name: 'Carlos Gómez',
       email: 'trabajador@homefix.com',
-      password: '$2a$10$dummy',
+      password: hashedPassword,
       phone: '11-5555-0101',
       role: 'trabajador',
     },
@@ -48,7 +50,7 @@ async function main() {
     data: {
       name: 'Marta Ocampo',
       email: 'marta@example.com',
-      password: '$2a$10$dummy',
+      password: hashedPassword,
       phone: '11-5555-0102',
       role: 'cliente',
     },
@@ -58,7 +60,7 @@ async function main() {
     data: {
       name: 'Juan Pérez',
       email: 'juan@example.com',
-      password: '$2a$10$dummy',
+      password: hashedPassword,
       phone: '11-5555-0103',
       role: 'cliente',
     },
@@ -68,7 +70,7 @@ async function main() {
     data: {
       name: 'Laura Martínez',
       email: 'laura@example.com',
-      password: '$2a$10$dummy',
+      password: hashedPassword,
       phone: '11-5555-0104',
       role: 'cliente',
     },
@@ -78,7 +80,7 @@ async function main() {
     data: {
       name: 'Roberto Sánchez',
       email: 'roberto@example.com',
-      password: '$2a$10$dummy',
+      password: hashedPassword,
       phone: '11-5555-0105',
       role: 'cliente',
     },

@@ -1,7 +1,7 @@
 import { findPostulacionesByTrabajador, findPostulacion, createPostulacion } from "../data/postulacion.data.js"
 import { findPostById } from "../data/post.data.js"
 
-export const getMisPostulaciones = async (trabajadorId: number) => {
+export const getMisPostulaciones = async (trabajadorId: string) => {
   const postulaciones = await findPostulacionesByTrabajador(trabajadorId)
 
   return postulaciones.map((p) => ({
@@ -16,7 +16,7 @@ export const getMisPostulaciones = async (trabajadorId: number) => {
   }))
 }
 
-export const aplicarPostulacion = async (trabajadorId: number, postId: number) => {
+export const aplicarPostulacion = async (trabajadorId: string, postId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error("Publicación no encontrada"), { status: 404 })
   if (post.status !== "Active") throw Object.assign(new Error("Esta publicación ya no está disponible"), { status: 400 })

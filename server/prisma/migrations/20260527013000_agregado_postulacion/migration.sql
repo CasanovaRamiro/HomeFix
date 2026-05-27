@@ -1,8 +1,8 @@
 -- CreateTable
 CREATE TABLE `Postulacion` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `trabajadorId` INTEGER NOT NULL,
-    `postId` INTEGER NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
+    `trabajadorId` VARCHAR(36) NOT NULL,
+    `postId` VARCHAR(36) NOT NULL,
     `estado` VARCHAR(191) NOT NULL DEFAULT 'Pendiente',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,

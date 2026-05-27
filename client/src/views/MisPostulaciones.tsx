@@ -1,323 +1,599 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { MapPin, Calendar, Briefcase, ArrowLeft, Bell, XCircle, Phone, Tag, Loader } from 'lucide-react'
+import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Home, Briefcase, ShieldCheck, ChevronDown } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 interface Postulacion {
-  id: number
-  postId: number
+  id: string
+  postId: string
   titulo: string
   cliente: string
   ubicacion: string
   fecha_postulacion: string
   fecha_servicio: string
   estado: 'Aceptada' | 'Rechazada' | 'Pendiente'
-}
-
-const statusBadge: Record<string, string> = {
-  Aceptada: 'bg-emerald-100 text-emerald-700',
-  Rechazada: 'bg-rose-100 text-rose-700',
-  Pendiente: 'bg-amber-100 text-amber-700',
+  descripcion?: string
+  categoria?: string
+  imagen?: string
 }
 
 const tabs = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas'] as const
 type Tab = (typeof tabs)[number]
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .map((w) => w[0])
+function getInitials(name: string): string {
+  if (!name) return 'U'
+  const parts = name.trim().split(' ')
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2)
 }
 
-interface PostDetalle {
-  descripcion: string
-  categorias: string[]
-  imagenes: string[]
-  telefono: string
-  fecha_fin: string
-}
+// ─── Navbar ──────────────────────────────────────────────────────────────────
 
-function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
-  const [detalle, setDetalle] = useState<PostDetalle | null>(null)
-  const [cargando, setCargando] = useState(false)
-
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      if (!mounted) return
-      try {
-        setCargando(true)
-        const res = await api.get<PostDetalle>(`/posts/${p.postId}`)
-        if (!mounted) return
-        setDetalle(res.data)
-      } catch {
-        if (!mounted) return
-        setDetalle({ descripcion: '', categorias: [], imagenes: [], telefono: '', fecha_fin: '' })
-      } finally {
-        if (!mounted) return
-        setCargando(false)
-      }
-    })()
-    return () => { mounted = false }
-  }, [p.postId])
-
-  const primerImagen = detalle?.imagenes?.[0]
+function WorkerNavbar() {
+  const navigate = useNavigate()
+  const userName = localStorage.getItem('userName') ?? 'Pedro Picapied...'
+  const userInitial = userName.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-      {/* Header: Título + Badge */}
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-slate-900">{p.titulo}</h3>
-        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge[p.estado]}`}>
-          {p.estado}
-        </span>
-      </div>
-
-      {/* Main content: Left (info) + Right (image) */}
-      <div className="flex gap-6 mb-4 flex-grow">
-        {/* Left: Cliente, fechas, ubicación, descripción, categorías */}
-        <div className="flex-1 min-w-0">
-          {/* Cliente */}
-          <div className="mb-2 flex items-center gap-2 text-sm text-slate-600">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-slate-700">
-              {getInitials(p.cliente)}
-            </div>
-            <span>{p.cliente}</span>
+    <nav
+      style={{
+        background: '#0F172A',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        width: '100%',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          padding: '0 24px',
+          height: 60,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 900,
+              fontSize: 18,
+              color: '#fff',
+              fontFamily: 'Arial',
+            }}
+          >
+            X
           </div>
-
-          {/* Fechas */}
-          <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>Postulado {formatDate(p.fecha_postulacion)} — A realizar el {formatDate(p.fecha_servicio)}</span>
-          </div>
-
-          {/* Ubicación */}
-          <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{p.ubicacion}</span>
-          </div>
-
-          {/* Descripción */}
-          {cargando ? (
-            <div className="mb-3 flex items-center justify-center py-2">
-              <Loader className="h-4 w-4 animate-spin text-slate-400" />
-            </div>
-          ) : (
-            detalle && (
-              <>
-                {detalle.descripcion && (
-                  <p className="mb-3 text-sm text-slate-600 italic leading-relaxed">
-                    "{detalle.descripcion}"
-                  </p>
-                )}
-
-                {/* Categorías */}
-                {detalle.categorias.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {detalle.categorias.map((cat) => (
-                      <span key={cat} className="inline-flex items-center gap-1.5 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-                        <Tag className="h-3 w-3" />{cat}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </>
-            )
-          )}
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
+            Home<span style={{ color: '#10B981' }}>Fix</span>
+          </span>
         </div>
 
-        {/* Right: Image */}
-        {primerImagen && (
-          <div className="shrink-0">
-            <img
-              src={primerImagen}
-              alt=""
-              className="h-40 w-56 rounded-xl object-cover"
-            />
-          </div>
-        )}
-      </div>
+        {/* Nav links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'center' }}>
+          <NavLink to="/trabajador" icon={<Home size={15} />} label="Inicio" />
+          <NavLink to="/trabajador" icon={<Briefcase size={15} />} label="Trabajos Disponibles" />
+          <NavLink to="/trabajador/mis-postulaciones" icon={<FileText size={15} />} label="Mis Postulaciones" active />
+          <NavLink to="#" icon={<ShieldCheck size={15} />} label="Validaciones" />
+        </div>
 
-      {/* Footer: Contact button (always at bottom) */}
-      {detalle?.telefono && p.estado === 'Aceptada' && (
-        <a
-          href={`tel:${detalle.telefono}`}
-          className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        {/* User menu */}
+        <button
+          onClick={() => navigate('/login')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 8,
+            padding: '6px 12px 6px 8px',
+            cursor: 'pointer',
+            color: '#fff',
+            flexShrink: 0,
+          }}
         >
-          <Phone className="h-4 w-4" />
-          Contactar cliente
-        </a>
-      )}
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              background: '#3B82F6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 13,
+              color: '#fff',
+            }}
+          >
+            {userInitial}
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {userName}
+          </span>
+          <ChevronDown size={14} color="#94A3B8" />
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+function NavLink({
+  to,
+  icon,
+  label,
+  active = false,
+}: {
+  to: string
+  icon: React.ReactNode
+  label: string
+  active?: boolean
+}) {
+  return (
+    <Link
+      to={to}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 14px',
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 500,
+        textDecoration: 'none',
+        color: active ? '#fff' : '#94A3B8',
+        background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        transition: 'color 0.15s, background 0.15s',
+      }}
+    >
+      {icon}
+      {label}
+    </Link>
+  )
+}
+
+// ─── Postulacion Card ─────────────────────────────────────────────────────────
+
+function StatusBadge({ estado }: { estado: string }) {
+  const cfg: Record<string, { bg: string; color: string; border: string }> = {
+    Aceptada:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' },
+    Rechazada: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
+    Pendiente: { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
+  }
+  const s = cfg[estado] ?? { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' }
+  return (
+    <span
+      style={{
+        background: s.bg,
+        color: s.color,
+        border: `1px solid ${s.border}`,
+        fontSize: 12,
+        fontWeight: 600,
+        padding: '3px 12px',
+        borderRadius: 20,
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}
+    >
+      {estado}
+    </span>
+  )
+}
+
+function ClientAvatar({ name }: { name: string }) {
+  const initials = getInitials(name)
+  // pick a color based on first char
+  const colors = ['#6366F1','#8B5CF6','#EC4899','#F59E0B','#10B981','#3B82F6']
+  const idx = (name.charCodeAt(0) ?? 0) % colors.length
+  return (
+    <div
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: '50%',
+        background: colors[idx],
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 11,
+        fontWeight: 700,
+        flexShrink: 0,
+      }}
+    >
+      {initials}
     </div>
   )
 }
 
+function PostulacionCard({ p }: { p: Postulacion }) {
+  const fechaPost = p.fecha_postulacion?.substring(0, 10) ?? ''
+  const fechaServ = p.fecha_servicio?.substring(0, 10) ?? ''
+
+  return (
+    <article
+      style={{
+        background: '#fff',
+        border: '1px solid #E2E8F0',
+        borderRadius: 16,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'box-shadow 0.2s',
+        cursor: 'default',
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.09)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+    >
+      {/* ── Card body ── */}
+      <div style={{ padding: '20px 20px 16px', flex: 1, display: 'flex', gap: 14 }}>
+
+        {/* Left content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Title + badge */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.35 }}>
+              {p.titulo}
+            </h3>
+            <StatusBadge estado={p.estado} />
+          </div>
+          <hr style={{ border: 'none', borderTop: '1px solid #F1F5F9', margin: '0 0 12px' }} />
+
+          {/* Client */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+            <ClientAvatar name={p.cliente} />
+            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{p.cliente}</span>
+          </div>
+
+          {/* Dates */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+            <Calendar size={13} color="#9CA3AF" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: '#6B7280' }}>
+              Postulado {fechaPost}{fechaServ ? ` — A realizar el ${fechaServ}` : ''}
+            </span>
+          </div>
+
+          {/* Location */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <MapPin size={13} color="#9CA3AF" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: '#6B7280' }}>{p.ubicacion}</span>
+          </div>
+
+          {/* Description quote */}
+          {p.descripcion && (
+            <p style={{ fontSize: 13, color: '#374151', fontStyle: 'italic', margin: '0 0 10px', lineHeight: 1.5 }}>
+              &ldquo;{p.descripcion}&rdquo;
+            </p>
+          )}
+
+          {/* Category chip */}
+          {p.categoria && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: '#F0FDF4', border: '1px solid #BBF7D0',
+              borderRadius: 20, padding: '3px 10px' }}>
+              <span style={{ fontSize: 12, color: '#15803D', fontWeight: 500 }}>{p.categoria}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right image (optional) */}
+        {p.imagen && (
+          <div style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
+            <img src={p.imagen} alt={p.titulo}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Contact button ── */}
+      <div style={{ padding: '0 20px 20px' }}>
+        <button
+          style={{
+            width: '100%',
+            background: '#16A34A',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 600,
+            padding: '12px 0',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
+        >
+          📞 Contactar cliente
+        </button>
+      </div>
+    </article>
+  )
+}
+
+// ─── Mock data (demo) ────────────────────────────────────────────────────────
+
+const MOCK_POSTULACIONES: Postulacion[] = [
+  {
+    id: 'mock-1',
+    postId: 'post-1',
+    titulo: 'Reparación de tuberías en cocina',
+    cliente: 'Marta Ocampo',
+    ubicacion: 'Recoleta, Buenos Aires',
+    fecha_postulacion: '2026-05-08',
+    fecha_servicio: '2026-05-15',
+    estado: 'Aceptada',
+    descripcion: 'Se necesita reparar fuga de agua debajo de la pileta de la cocina.',
+    categoria: 'Plomería',
+    imagen: '/tuberia.png',
+  },
+  {
+    id: 'mock-2',
+    postId: 'post-2',
+    titulo: 'Destape de cañería en baño',
+    cliente: 'Juan Pérez',
+    ubicacion: 'Palermo, Buenos Aires',
+    fecha_postulacion: '2026-05-06',
+    fecha_servicio: '2026-05-10',
+    estado: 'Aceptada',
+    descripcion: 'El lavabo del baño principal está tapado.',
+    categoria: 'Plomería',
+  },
+]
+
+// ─── Main View ────────────────────────────────────────────────────────────────
+
 export default function MisPostulaciones() {
-  const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
+  const [postulaciones, setPostulaciones] = useState<Postulacion[]>(MOCK_POSTULACIONES)
   const [filter, setFilter] = useState<Tab>('Todas')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const fetchPostulaciones = useCallback(async () => {
     try {
-      const res = await api.get<Postulacion[]>('/api/postulaciones/mis-postulaciones')
+      const res = await api.get<Postulacion[]>('/postulaciones/mis-postulaciones')
       const data = res.data
-
       setPostulaciones((prev) => {
         const prevMap = new Map(prev.map((p) => [p.id, p.estado]))
         const changes: string[] = []
         for (const p of data) {
-          const oldEstado = prevMap.get(p.id)
-          if (oldEstado && oldEstado !== p.estado) {
-            changes.push(
-              `"${p.titulo}" → ${p.estado}`
-            )
-          }
+          const old = prevMap.get(p.id)
+          if (old && old !== p.estado) changes.push(`"${p.titulo}" → ${p.estado}`)
         }
-        if (changes.length > 0) {
-          setNotification(
-            `¡El estado de ${changes.length === 1 ? 'tu postulación' : 'tus postulaciones'} cambió! ${changes.join(', ')}`
-          )
-        }
+        if (changes.length > 0)
+          setNotification(`¡Estado actualizado! ${changes.join(', ')}`)
         return data
       })
-
-      setLoading(false)
     } catch {
+      // silence
+    } finally {
       setLoading(false)
     }
   }, [])
 
+  // Merge API data on top of mocks (first load replaces mocks if API responds)
+
   useEffect(() => {
-    void (async () => {
-      await fetchPostulaciones()
-    })()
-    const interval = setInterval(() => { void fetchPostulaciones() }, 20_000)
-    return () => clearInterval(interval)
+    void fetchPostulaciones()
+    const iv = setInterval(() => { void fetchPostulaciones() }, 20_000)
+    return () => clearInterval(iv)
   }, [fetchPostulaciones])
 
-  const metrics = useMemo(() => {
-    const total = postulaciones.length
-    const pendientes = postulaciones.filter((p) => p.estado === 'Pendiente').length
-    const aceptadas = postulaciones.filter((p) => p.estado === 'Aceptada').length
-    const rechazadas = postulaciones.filter((p) => p.estado === 'Rechazada').length
-    return { total, pendientes, aceptadas, rechazadas }
-  }, [postulaciones])
+  const metrics = useMemo(() => ({
+    total: postulaciones.length,
+    pendientes: postulaciones.filter((p) => p.estado === 'Pendiente').length,
+    aceptadas: postulaciones.filter((p) => p.estado === 'Aceptada').length,
+    rechazadas: postulaciones.filter((p) => p.estado === 'Rechazada').length,
+  }), [postulaciones])
 
   const filtered = useMemo(() => {
     if (filter === 'Todas') return postulaciones
-    return postulaciones.filter((p) => p.estado === filter.slice(0, -1))
+    // "Pendientes" → "Pendiente", "Aceptadas" → "Aceptada", "Rechazadas" → "Rechazada"
+    const map: Record<Tab, string> = {
+      Todas: '',
+      Pendientes: 'Pendiente',
+      Aceptadas: 'Aceptada',
+      Rechazadas: 'Rechazada',
+    }
+    return postulaciones.filter((p) => p.estado === map[filter])
   }, [postulaciones, filter])
 
   return (
-    <div className="min-h-screen font-montserrat">
+    <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
 
+      {/* ── Toast notification ── */}
       {notification && (
-        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 max-w-md rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg">
-          <Bell className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-          <p className="text-sm font-medium text-emerald-900">{notification}</p>
-          <button onClick={() => setNotification(null)} className="shrink-0 p-0 border-0 bg-transparent text-emerald-400 hover:text-emerald-700">
-            <XCircle className="h-5 w-5" />
+        <div
+          style={{
+            position: 'fixed', top: 16, right: 16, zIndex: 100,
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            background: '#ECFDF5', border: '1px solid #A7F3D0',
+            borderRadius: 14, padding: '14px 16px', maxWidth: 380,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+          }}
+        >
+          <Bell size={18} color="#10B981" style={{ marginTop: 1, flexShrink: 0 }} />
+          <p style={{ fontSize: 13, fontWeight: 500, color: '#064E3B', margin: 0 }}>{notification}</p>
+          <button
+            onClick={() => setNotification(null)}
+            style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: '#6EE7B7', flexShrink: 0 }}
+          >
+            <XCircle size={18} />
           </button>
         </div>
       )}
 
-      <div className="w-full bg-[#0F172A]">
-        <div className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
-          <button className="bg-transparent text-slate-300 hover:text-white flex items-center gap-2 border-0 p-0 text-sm font-medium transition-colors mb-6">
-            <ArrowLeft className="h-4 w-4" />
+      {/* ── Navbar ── */}
+      <WorkerNavbar />
+
+      {/* ── Dark header ── */}
+      <div style={{ background: '#0F172A', width: '100%', paddingTop: 32, paddingBottom: 40 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+
+          {/* Breadcrumb */}
+          <button
+            onClick={() => navigate('/trabajador')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'none', border: 'none', padding: 0,
+              color: '#94A3B8', fontSize: 13, fontWeight: 500,
+              cursor: 'pointer', marginBottom: 20,
+            }}
+          >
+            <ArrowLeft size={14} />
             Volver al Dashboard
           </button>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
+          {/* Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <FileText size={28} color="#10B981" />
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
               Mis Postulaciones
             </h1>
-            <p className="mt-1 text-sm text-white/60">
-              Revisa el estado de tus postulaciones a trabajos
+          </div>
+          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 32px 38px' }}>
+            Revisa el estado de tus postulaciones a trabajos
+          </p>
+
+          {/* Metric cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <MetricCard value={metrics.total} label="Total" valueColor="#fff" />
+            <MetricCard value={metrics.pendientes} label="Pendientes" valueColor="#F59E0B" />
+            <MetricCard value={metrics.aceptadas} label="Aceptadas" valueColor="#10B981" />
+            <MetricCard value={metrics.rechazadas} label="Rechazadas" valueColor="#EF4444" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content area ── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              style={{
+                padding: '7px 18px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+                border: filter === tab ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
+                background: filter === tab ? '#0F172A' : '#fff',
+                color: filter === tab ? '#fff' : '#475569',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Cards grid */}
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+            <div
+              style={{
+                width: 36, height: 36,
+                border: '4px solid #E2E8F0',
+                borderTopColor: '#0F172A',
+                borderRadius: '50%',
+                animation: 'spin 0.7s linear infinite',
+              }}
+            />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #E2E8F0',
+              borderRadius: 16,
+              padding: '64px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <FileText size={48} color="#CBD5E1" style={{ margin: '0 auto 16px' }} />
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', margin: '0 0 8px' }}>
+              No hay postulaciones
+            </h2>
+            <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
+              {filter === 'Todas'
+                ? 'Todavía no te postulaste a ningún trabajo.'
+                : `No tenés postulaciones en "${filter}".`}
             </p>
           </div>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: 'Total', value: metrics.total, color: 'text-white' },
-              { label: 'Pendientes', value: metrics.pendientes, color: 'text-warning' },
-              { label: 'Aceptadas', value: metrics.aceptadas, color: 'text-accent' },
-              { label: 'Rechazadas', value: metrics.rechazadas, color: 'text-danger' },
-            ].map((m) => (
-              <div
-                key={m.label}
-                className="flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-[#1E293B]/60 p-6 transition-all duration-300 hover:scale-[1.02]"
-              >
-                <span className={`text-4xl font-bold ${m.color}`}>{m.value}</span>
-                <span className="mt-1 text-sm text-white/50">{m.label}</span>
-              </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 16,
+            }}
+          >
+            {filtered.map((p) => (
+              <PostulacionCard key={`${p.id}-${p.postId}`} p={p} />
             ))}
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="w-full bg-[#F8FAFC]">
-        <div className="-mt-6 z-10 w-full"> 
-          <div className="w-full bg-white py-4 shadow-sm">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setFilter(tab)}
-                    className={`rounded-md px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-                      filter === tab
-                        ? 'bg-[#0F172A] text-white shadow-sm'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  )
+}
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-[#0F172A]" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-border bg-slate-50 p-12 text-center">
-                <Briefcase className="mb-4 h-12 w-12 text-slate-400" />
-                <h2 className="text-lg font-semibold text-[#0F172A]">
-                  No hay postulaciones
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {filter === 'Todas'
-                    ? 'Todavía no te postulaste a ningún trabajo.'
-                    : `No tenés postulaciones en "${filter}".`}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="mt-8 grid grid-cols-1 gap-6 pb-12 lg:grid-cols-2">
-                {filtered.map((p) => (
-                  <PostulacionCard key={`${p.id}-${p.postId}`} postulacion={p} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+// ─── Metric Card ──────────────────────────────────────────────────────────────
+
+function MetricCard({
+  value,
+  label,
+  valueColor,
+}: {
+  value: number
+  label: string
+  valueColor: string
+}) {
+  return (
+    <div
+      style={{
+        background: '#1E293B',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 14,
+        padding: '24px 20px',
+        textAlign: 'center',
+      }}
+    >
+      <p style={{ fontSize: 36, fontWeight: 700, color: valueColor, margin: '0 0 6px' }}>{value}</p>
+      <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, fontWeight: 500 }}>{label}</p>
     </div>
   )
 }
