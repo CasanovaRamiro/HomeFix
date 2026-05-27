@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react'
-import { MapPin, Calendar, Briefcase, ArrowLeft, Check, X } from 'lucide-react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { MapPin, Calendar, Briefcase, ArrowLeft, Bell, XCircle, Phone, Tag, Loader } from 'lucide-react'
+import api from '../services/api'
 
 interface Postulacion {
   id: number
+  postId: number
   titulo: string
   cliente: string
   ubicacion: string
@@ -11,55 +13,10 @@ interface Postulacion {
   estado: 'Aceptada' | 'Rechazada' | 'Pendiente'
 }
 
-const mockPostulaciones: Postulacion[] = [
-  {
-    id: 1,
-    titulo: 'Reparacion de tuberias en cocina',
-    cliente: 'Marta Ocampo',
-    ubicacion: 'Recoleta, Buenos Aires',
-    fecha_postulacion: '2026-05-08',
-    fecha_servicio: '2026-05-15',
-    estado: 'Aceptada',
-  },
-  {
-    id: 2,
-    titulo: 'Destape de caneria en bano',
-    cliente: 'Juan Perez',
-    ubicacion: 'Palermo, Buenos Aires',
-    fecha_postulacion: '2026-05-06',
-    fecha_servicio: '2026-05-10',
-    estado: 'Aceptada',
-  },
-  {
-    id: 3,
-    titulo: 'Instalacion de calefon a gas',
-    cliente: 'Laura Martinez',
-    ubicacion: 'Villa Crespo, Buenos Aires',
-    fecha_postulacion: '2026-05-04',
-    fecha_servicio: '2026-05-20',
-    estado: 'Rechazada',
-  },
-  {
-    id: 4,
-    titulo: 'Cambio de griferia completa en bano',
-    cliente: 'Roberto Sanchez',
-    ubicacion: 'Belgrano, Buenos Aires',
-    fecha_postulacion: '2026-05-02',
-    fecha_servicio: '2026-05-08',
-    estado: 'Aceptada',
-  },
-]
-
 const statusBadge: Record<string, string> = {
   Aceptada: 'bg-emerald-100 text-emerald-700',
   Rechazada: 'bg-rose-100 text-rose-700',
   Pendiente: 'bg-amber-100 text-amber-700',
-}
-
-const statusCircle: Record<string, string> = {
-  Aceptada: 'bg-emerald-50 text-emerald-600',
-  Rechazada: 'bg-rose-50 text-rose-600',
-  Pendiente: 'bg-amber-50 text-amber-600',
 }
 
 const tabs = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas'] as const
@@ -82,9 +39,160 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
+interface PostDetalle {
+  descripcion: string
+  categorias: string[]
+  imagenes: string[]
+  telefono: string
+  fecha_fin: string
+}
+
+function PostulacionCard({ postulacion: p }: { postulacion: Postulacion }) {
+  const [detalle, setDetalle] = useState<PostDetalle | null>(null)
+  const [cargando, setCargando] = useState(false)
+
+  useEffect(() => {
+    setCargando(true)
+    api.get<PostDetalle>(`/posts/${p.postId}`)
+      .then((res) => { setDetalle(res.data); setCargando(false) })
+      .catch(() => {
+        setDetalle({ descripcion: '', categorias: [], imagenes: [], telefono: '', fecha_fin: '' })
+        setCargando(false)
+      })
+  }, [p.postId])
+
+  const primerImagen = detalle?.imagenes?.[0]
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+      {/* Header: Título + Badge */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h3 className="text-lg font-bold text-slate-900">{p.titulo}</h3>
+        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge[p.estado]}`}>
+          {p.estado}
+        </span>
+      </div>
+
+      {/* Main content: Left (info) + Right (image) */}
+      <div className="flex gap-6 mb-4">
+        {/* Left: Cliente, fechas, ubicación, descripción, categorías */}
+        <div className="flex-1 min-w-0">
+          {/* Cliente */}
+          <div className="mb-2 flex items-center gap-2 text-sm text-slate-600">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-slate-700">
+              {getInitials(p.cliente)}
+            </div>
+            <span>{p.cliente}</span>
+          </div>
+
+          {/* Fechas */}
+          <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>Postulado {formatDate(p.fecha_postulacion)} — A realizar el {formatDate(p.fecha_servicio)}</span>
+          </div>
+
+          {/* Ubicación */}
+          <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>{p.ubicacion}</span>
+          </div>
+
+          {/* Descripción */}
+          {cargando ? (
+            <div className="mb-3 flex items-center justify-center py-2">
+              <Loader className="h-4 w-4 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            detalle && (
+              <>
+                {detalle.descripcion && (
+                  <p className="mb-3 text-sm text-slate-600 italic leading-relaxed">
+                    "{detalle.descripcion}"
+                  </p>
+                )}
+
+                {/* Categorías */}
+                {detalle.categorias.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {detalle.categorias.map((cat) => (
+                      <span key={cat} className="inline-flex items-center gap-1.5 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                        <Tag className="h-3 w-3" />{cat}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )
+          )}
+        </div>
+
+        {/* Right: Image */}
+        {primerImagen && (
+          <div className="shrink-0">
+            <img
+              src={primerImagen}
+              alt=""
+              className="h-40 w-56 rounded-xl object-cover"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Footer: Contact button */}
+      {detalle?.telefono && p.estado === 'Aceptada' && (
+        <a
+          href={`tel:${detalle.telefono}`}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
+          <Phone className="h-4 w-4" />
+          Contactar cliente
+        </a>
+      )}
+    </div>
+  )
+}
+
 export default function MisPostulaciones() {
-  const [postulaciones] = useState(mockPostulaciones)
+  const [postulaciones, setPostulaciones] = useState<Postulacion[]>([])
   const [filter, setFilter] = useState<Tab>('Todas')
+  const [loading, setLoading] = useState(true)
+  const [notification, setNotification] = useState<string | null>(null)
+
+  const fetchPostulaciones = useCallback(async () => {
+    try {
+      const res = await api.get<Postulacion[]>('/api/postulaciones/mis-postulaciones')
+      const data = res.data
+
+      setPostulaciones((prev) => {
+        const prevMap = new Map(prev.map((p) => [p.id, p.estado]))
+        const changes: string[] = []
+        for (const p of data) {
+          const oldEstado = prevMap.get(p.id)
+          if (oldEstado && oldEstado !== p.estado) {
+            changes.push(
+              `"${p.titulo}" → ${p.estado}`
+            )
+          }
+        }
+        if (changes.length > 0) {
+          setNotification(
+            `¡El estado de ${changes.length === 1 ? 'tu postulación' : 'tus postulaciones'} cambió! ${changes.join(', ')}`
+          )
+        }
+        return data
+      })
+
+      setLoading(false)
+    } catch {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchPostulaciones()
+    const interval = setInterval(fetchPostulaciones, 20_000)
+    return () => clearInterval(interval)
+  }, [fetchPostulaciones])
 
   const metrics = useMemo(() => {
     const total = postulaciones.length
@@ -101,6 +209,16 @@ export default function MisPostulaciones() {
 
   return (
     <div className="min-h-screen font-montserrat">
+
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 max-w-md rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg">
+          <Bell className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <p className="text-sm font-medium text-emerald-900">{notification}</p>
+          <button onClick={() => setNotification(null)} className="shrink-0 p-0 border-0 bg-transparent text-emerald-400 hover:text-emerald-700">
+            <XCircle className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       <div className="w-full bg-[#0F172A]">
         <div className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
@@ -159,69 +277,31 @@ export default function MisPostulaciones() {
             </div>
           </div>
 
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-slate-50 p-12 text-center">
-              <Briefcase className="mb-4 h-12 w-12 text-slate-400" />
-              <h2 className="text-lg font-semibold text-[#0F172A]">
-                No hay postulaciones
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {filter === 'Todas'
-                  ? 'Todavía no te postulaste a ningún trabajo.'
-                  : `No tenés postulaciones en "${filter}".`}
-              </p>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-[#0F172A]" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-border bg-slate-50 p-12 text-center">
+                <Briefcase className="mb-4 h-12 w-12 text-slate-400" />
+                <h2 className="text-lg font-semibold text-[#0F172A]">
+                  No hay postulaciones
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {filter === 'Todas'
+                    ? 'Todavía no te postulaste a ningún trabajo.'
+                    : `No tenés postulaciones en "${filter}".`}
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="mt-8 grid grid-cols-1 gap-6 pb-12 lg:grid-cols-2">
-              {filtered.map((p) => (
-                <div
-                  key={p.id}
-                  className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-slate-100 p-6 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md"
-                >
-                  <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${statusCircle[p.estado]}`}
-                  >
-                    {p.estado === 'Aceptada' ? (
-                      <Check className="h-5 w-5" />
-                    ) : (
-                      <X className="h-5 w-5" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-start justify-between gap-3">
-                      <h3 className="font-bold text-slate-900">{p.titulo}</h3>
-                      <span
-                        className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge[p.estado]}`}
-                      >
-                        {p.estado}
-                      </span>
-                    </div>
-
-                    <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
-                        {getInitials(p.cliente)}
-                      </span>
-                      <span>{p.cliente}</span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {p.ubicacion}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        Postulado {formatDate(p.fecha_postulacion)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        Servicio {formatDate(p.fecha_servicio)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mt-8 grid grid-cols-1 gap-6 pb-12 lg:grid-cols-2">
+                {filtered.map((p) => (
+                  <PostulacionCard key={`${p.id}-${p.postId}`} postulacion={p} />
+                ))}
+              </div>
             </div>
           )}
         </div>
