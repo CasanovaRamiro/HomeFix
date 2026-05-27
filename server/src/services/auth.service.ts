@@ -123,7 +123,8 @@ const loginWithAuth0 = async (email: string, password: string) => {
   })
 
   if (!response.ok) {
-    const text = await response.text()
+    const text = await response.text();
+    console.error("Error de Auth0:", text);
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Invalid email or password')
     }
