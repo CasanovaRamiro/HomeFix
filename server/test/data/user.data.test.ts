@@ -1,62 +1,84 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { cleanDb, prisma } from '../helpers/db.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { findUniqueMock, findManyMock, createMock, findFirstMock } = vi.hoisted(() => ({
+  findUniqueMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
+  findManyMock: vi.fn<(args: unknown) => Promise<unknown[]>>(),
+  createMock: vi.fn<(args: unknown) => Promise<unknown>>(),
+  findFirstMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
+}))
+
+vi.mock('../../src/lib/prisma.js', () => ({
+  default: {
+    user: {
+      findUnique: findUniqueMock,
+      findMany: findManyMock,
+      create: createMock,
+    },
+    nationalIdType: {
+      findFirst: findFirstMock,
+    },
+  },
+}))
+
 import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
 
-beforeEach(() => cleanDb())
-
-const createUserData = async (name: string, email: string, password: string) => {
-  const nationalIdType = await prisma.nationalIdType.create({
-    data: { description: `DNI-${email}` },
-  })
-  const address = await prisma.address.create({
-    data: {
-      street: 'Test street',
-      number: '123',
-      city: 'Test city',
-      state: 'Test state',
-    },
-  })
-
-  return {
-    name,
-    surname: 'Test',
-    email,
-    password,
-    nationalId: `nid-${email}`,
-    nationalIdTypeId: nationalIdType.id,
-    addressId: address.id,
-  }
+const mockUser = {
+  id: 1,
+  name: 'Jane',
+  surname: 'Test',
+  email: 'jane@test.com',
+  password: 'hashed',
+  nationalId: 'DNI-12345678',
+  phone: null,
+  role: 'user',
+  active: true,
+  deleted: false,
+  profilePicture: null,
+  createdAt: new Date(),
+  nationalIdTypeId: 'uuid-type',
+  addressId: 'uuid-addr',
 }
+
+const publicUser = {
+  id: 1,
+  name: 'Jane',
+  email: 'jane@test.com',
+  phone: null,
+  role: 'user',
+  createdAt: mockUser.createdAt,
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('findByEmail', () => {
   it('returns the user when the email exists', async () => {
-    await prisma.user.create({
-      data: await createUserData('Jane', 'jane@test.com', 'hashed'),
-    })
+    findUniqueMock.mockResolvedValue(mockUser)
 
     const user = await findByEmail('jane@test.com')
 
+    expect(findUniqueMock).toHaveBeenCalledWith({ where: { email: 'jane@test.com' } })
     expect(user).not.toBeNull()
     expect(user!.email).toBe('jane@test.com')
   })
 
   it('returns null when the email does not exist', async () => {
+    findUniqueMock.mockResolvedValue(null)
+
     const user = await findByEmail('nobody@test.com')
+
     expect(user).toBeNull()
   })
 })
 
 describe('findAll', () => {
   it('returns all users without the password field', async () => {
-    await prisma.user.createMany({
-      data: [
-        await createUserData('Jane', 'jane@test.com', 'hashed'),
-        await createUserData('John', 'john@test.com', 'hashed'),
-      ],
-    })
+    findManyMock.mockResolvedValue([publicUser, { ...publicUser, id: 2, name: 'John', email: 'john@test.com' }])
 
     const users = await findAll()
 
+    expect(findManyMock).toHaveBeenCalledOnce()
     expect(users).toHaveLength(2)
     users.forEach((u: unknown) => expect(u).not.toHaveProperty('password'))
   })
@@ -64,12 +86,17 @@ describe('findAll', () => {
 
 describe('createUser', () => {
   it('inserts the user and returns it without the password field', async () => {
+    findFirstMock.mockResolvedValue({ id: 'uuid-type', description: 'DNI' })
+    createMock.mockResolvedValue(publicUser)
+
     const user = await createUser({
       name: 'Jane',
       email: 'jane@test.com',
       password: 'hashed',
+      nationalId: 'DNI-87654321',
     })
 
+    expect(createMock).toHaveBeenCalledOnce()
     expect(user.id).toBeDefined()
     expect(user.email).toBe('jane@test.com')
     expect(user).not.toHaveProperty('password')

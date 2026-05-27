@@ -26,8 +26,8 @@ model User {
   phone        String?
   createdAt    DateTime @default(now()) @map("created_at")
   posts     Post[]
-  nationalIdTypeId Int  @map("national_id_type_id") // Antes dniTypeId
-  addressId        Int  @map("address_id")
+  nationalIdTypeId String @map("national_id_type_id")
+  addressId        String @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
   address          Address        @relation(fields: [addressId], references: [id])
 
@@ -71,7 +71,7 @@ model PostCategory {
 
 
 model NationalIdType { 
-  id          Int    @id @default(autoincrement()) 
+  id          String @id @default(uuid()) 
   description String
   users       User[]
 
@@ -82,11 +82,11 @@ model NationalIdType {
 
 
 model Address {
-  id        Int      @id @default(autoincrement()) @map("address_id")
-  street    String   @map("street")
-  number    String   @map("number")
-  city      String   @map("city")
-  state     String   @map("state")
+  id        String   @id @default(uuid()) @map("address_id")
+  street    String
+  number    String
+  city      String
+  state     String
   users     User[]
 
   @@map("address")

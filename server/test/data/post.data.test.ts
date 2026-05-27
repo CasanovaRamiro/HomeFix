@@ -1,9 +1,11 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const findManyMock = jest.fn<(args: unknown) => Promise<unknown[]>>()
-const findUniqueMock = jest.fn<(args: unknown) => Promise<unknown>>()
+const { findManyMock, findUniqueMock } = vi.hoisted(() => ({
+  findManyMock: vi.fn<(args: unknown) => Promise<unknown[]>>(),
+  findUniqueMock: vi.fn<(args: unknown) => Promise<unknown>>(),
+}))
 
-jest.unstable_mockModule('../../src/lib/prisma.js', () => ({
+vi.mock('../../src/lib/prisma.js', () => ({
   default: {
     post: {
       findMany: findManyMock,
@@ -22,7 +24,7 @@ const postSelect = expect.objectContaining({
 
 describe('post.data', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('findAvailablePosts', () => {

@@ -6,6 +6,7 @@ interface RegisterInput {
   name: string
   email: string
   password: string
+  nationalId: string
   phone?: string
 }
 
@@ -17,11 +18,11 @@ interface LoginInput {
 const signToken = (id: number, role: string): string =>
   jwt.sign({ id, role }, process.env.JWT_SECRET!, { expiresIn: '7d' })
 
-export const register = async ({ name, email, password, phone }: RegisterInput) => {
+export const register = async ({ name, email, password, nationalId, phone }: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw new Error('Email already in use')
   const hashed = await bcrypt.hash(password, 10)
-  const user = await createUser({ name, email, password: hashed, phone })
+  const user = await createUser({ name, email, password: hashed, nationalId, phone })
   return { token: signToken(user.id, user.role), user }
 }
 

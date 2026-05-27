@@ -1,10 +1,12 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PostWithCategories } from '../../src/data/post.data.js'
 
-const findAvailablePostsMock = jest.fn<(category?: string) => Promise<PostWithCategories[]>>()
-const findPostByIdMock = jest.fn<(id: number) => Promise<PostWithCategories | null>>()
+const { findAvailablePostsMock, findPostByIdMock } = vi.hoisted(() => ({
+  findAvailablePostsMock: vi.fn<(category?: string) => Promise<PostWithCategories[]>>(),
+  findPostByIdMock: vi.fn<(id: number) => Promise<PostWithCategories | null>>(),
+}))
 
-jest.unstable_mockModule('../../src/data/post.data.js', () => ({
+vi.mock('../../src/data/post.data.js', () => ({
   findAvailablePosts: findAvailablePostsMock,
   findPostById: findPostByIdMock,
 }))
@@ -55,7 +57,7 @@ const expectedPostDTO = {
 
 describe('post.service', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('listAvailablePosts', () => {

@@ -1,8 +1,8 @@
-/*import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
-  createUser: vi.fn(),
+  createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId: string; phone?: string }) => Promise<{ id: number; name: string; email: string; phone: string | null; role: string }>>(),
 }))
 
 import * as userData from '../../src/data/user.data.js'
@@ -15,6 +15,14 @@ const mockUser = {
   phone: null as string | null,
   role: 'user',
   createdAt: new Date(),
+  nationalId: 'DNI-12345678',
+  surname: 'Test',
+  password: 'hashed',
+  profilePicture: null as string | null,
+  active: true,
+  deleted: false,
+  nationalIdTypeId: 'uuid-national-id-type',
+  addressId: 'uuid-address',
 }
 
 describe('auth.service - register', () => {
@@ -24,17 +32,17 @@ describe('auth.service - register', () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
     vi.mocked(userData.createUser).mockResolvedValue(mockUser)
 
-    const result = await register({ name: 'Jane', email: 'jane@test.com', password: 'secret' })
+    const result = await register({ name: 'Jane', email: 'jane@test.com', password: 'secret', nationalId: 'DNI-12345678' })
 
     expect(result).toHaveProperty('token')
     expect(result.user.email).toBe('jane@test.com')
   })
 
   it('throws if the email is already taken', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed' })
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
 
     await expect(
-      register({ name: 'Jane', email: 'jane@test.com', password: 'secret' })
+      register({ name: 'Jane', email: 'jane@test.com', password: 'secret', nationalId: 'DNI-12345678' })
     ).rejects.toThrow('Email already in use')
   })
 })
@@ -51,12 +59,10 @@ describe('auth.service - login', () => {
   })
 
   it('throws if the password is wrong', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed_password' })
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
 
     await expect(
       login({ email: 'jane@test.com', password: 'wrongpassword' })
     ).rejects.toThrow('Invalid credentials')
   })
 })
-
-*/
