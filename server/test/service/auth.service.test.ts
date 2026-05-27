@@ -79,7 +79,7 @@ describe('auth.service - registerUser', () => {
       phone: '123456',
     })
 
-    expect(result.userId).toBe(1)
+    expect(result.userId).toBe('uuid-jane')
     expect(result.email).toBe('jane@test.com')
     expect(result.emailVerified).toBe(false)
     expect(userData.createUser).toHaveBeenCalled()
