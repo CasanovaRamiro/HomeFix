@@ -10,6 +10,8 @@ export const validateEnv = (): void => {
   if (missing.length > 0) {
     console.error(`Missing required environment variables: ${missing.join(', ')}`)
     console.error('Copy .env.example to .env and fill in the values.')
-    process.exit(1)
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1)
+    }
   }
 }
