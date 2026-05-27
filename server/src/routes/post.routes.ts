@@ -6,7 +6,7 @@ const router = Router()
 
 router.post('/create', async (req, res, next) => {
   try {
-    const result = await post({ ...req.body, userId: req.user!.id });
+    const result = await post(req.body);
     res.status(201).json(result);
   } catch (error) {
     const err = error as Error & { status?: number };

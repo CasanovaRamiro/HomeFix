@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
-import { app } from "../../src/index.js";
-import { cleanDb, createUser } from "../helpers/db.js";
-import { getTestToken } from "../helpers/auth.js";
+
+vi.mock("../../src/middleware/auth0.middleware.js", async () => {
+  const mock = await import("../helpers/auth0Mock.js");
+  return { jwtCheck: mock.jwtCheck };
+});
 
 vi.mock("../../src/services/ai.service.js", () => ({
   suggestPost: vi.fn(),
 }));
 
+import { app } from "../../src/index.js";
 import { suggestPost } from "../../src/services/ai.service.js";
 
-let token: string;
+const token = "test-auth0-token";
 
-beforeEach(async () => {
-  await cleanDb();
-  const user = await createUser("ai-test@test.com", "AI Test", "hashed");
-  token = getTestToken(user.id);
+beforeEach(() => {
   vi.clearAllMocks();
 });
 
