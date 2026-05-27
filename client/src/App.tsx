@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './views/Login'
 import Register from './views/Register'
 import Users from './views/Users'
-import Diagnostico from './views/AiDiagnosis'
-import CrearPublicacion from './views/CreatePost'
+import AiDiagnosis from './views/AiDiagnosis'
+import CreatePost from './views/CreatePost'
 import PostOptions from './views/PostOptions'
 import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
@@ -19,8 +19,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
-        <Route path="/diagnosis" element={<PrivateRoute><Diagnostico /></PrivateRoute>} />
-        <Route path="/manual-post" element={<PrivateRoute><CrearPublicacion /></PrivateRoute>} />
+        <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
+        <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
         <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
         <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
