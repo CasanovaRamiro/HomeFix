@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { CheckCircle } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Props {
   onGoHome: () => void

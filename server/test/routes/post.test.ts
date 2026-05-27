@@ -145,3 +145,79 @@ describe('POST /posts/user-posts', () => {
     expect(res.status).toBe(401)
   })
 })
+describe('PATCH /posts/:id/finalize', () => {
+  let postId: string
+
+  beforeEach(async () => {
+    const createdPost = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Trabajo a finalizar',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Paused',
+        categories: { create: { categoryId } },
+      },
+    })
+    postId = createdPost.id
+  })
+
+  it('devuelve 200 y status Finalized cuando el post está Paused y es del usuario', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}/finalize`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Finalized')
+  })
+
+  it('devuelve 400 si el post no está en estado Paused', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Active' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/finalize`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(400)
+  })
+
+  it('devuelve 403 si el post pertenece a otro usuario', async () => {
+    const otroUsuario = await prisma.user.create({
+      data: { email: 'otro@test.com', name: 'Otro', password: 'hashed' },
+    })
+    const postAjeno = await prisma.post.create({
+      data: {
+        userId: otroUsuario.id,
+        title: 'Post ajeno',
+        description: 'Test',
+        address: 'Otra calle',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Paused',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${postAjeno.id}/finalize`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(403)
+  })
+
+  it('devuelve 404 si el post no existe', async () => {
+    const res = await request(app)
+      .patch('/posts/id-que-no-existe/finalize')
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('devuelve 401 sin token', async () => {
+    const res = await request(app).patch(`/posts/${postId}/finalize`)
+
+    expect(res.status).toBe(401)
+  })
+})

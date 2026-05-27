@@ -1,4 +1,4 @@
-import Badge from './Badge'
+import Badge from '../ui/Badge'
 
 interface Category {
   category: { id: string; name: string }

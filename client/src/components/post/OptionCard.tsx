@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { ArrowRight } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme'
+import { useTheme } from '../../hooks/useTheme'
 
 interface Props {
   icon: LucideIcon

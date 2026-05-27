@@ -3,8 +3,8 @@ import { FileText } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { useCreatePost } from '../hooks/useCreatePost'
-import SuccessScreen from '../components/SuccessScreen'
-import SubmitButton from '../components/SubmitButton'
+import SuccessScreen from '../components/post/SuccessScreen'
+import SubmitButton from '../components/ui/SubmitButton'
 
 export default function CreatePost() {
   const navigate = useNavigate()
