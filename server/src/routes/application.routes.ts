@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { requireSession } from '../middleware/session.middleware.js'
-import { getMisPostulaciones, aplicarPostulacion } from '../services/postulacion.service.js'
+import { getMyApplications, applyToPost } from '../services/application.service.js'
 
 const router = Router()
 
-router.get('/mis-postulaciones', requireSession, async (req, res, next) => {
+router.get('/my-applications', requireSession, async (req, res, next) => {
   try {
-    const trabajadorId = req.user!.id
-    const result = await getMisPostulaciones(trabajadorId)
+    const workerId = req.user!.id
+    const result = await getMyApplications(workerId)
     res.json(result)
   } catch (err) {
     next(err)
@@ -16,13 +16,13 @@ router.get('/mis-postulaciones', requireSession, async (req, res, next) => {
 
 router.post('/', requireSession, async (req, res, next) => {
   try {
-    const trabajadorId = req.user!.id
+    const workerId = req.user!.id
     const { postId } = req.body
     if (!postId || typeof postId !== 'string') {
-      res.status(400).json({ error: 'postId es requerido' })
+      res.status(400).json({ error: 'postId is required' })
       return
     }
-    const result = await aplicarPostulacion(trabajadorId, postId)
+    const result = await applyToPost(workerId, postId)
     res.status(201).json(result)
   } catch (err) {
     next(err)

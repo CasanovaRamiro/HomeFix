@@ -42,7 +42,7 @@ export default function TrabajadorFeed() {
       <div className="w-full bg-[#0F172A]">
         <div className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
           <button
-            onClick={() => navigate('/trabajador/mis-postulaciones')}
+            onClick={() => navigate('/worker/my-applications')}
             className="bg-transparent text-slate-300 hover:text-white flex items-center gap-2 border-0 p-0 text-sm font-medium transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -82,7 +82,7 @@ export default function TrabajadorFeed() {
                 {posts.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => navigate(`/trabajador/posts/${p.id}`)}
+                    onClick={() => navigate(`/worker/posts/${p.id}`)}
                     className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md text-left w-full cursor-pointer"
                   >
                     <div className="flex items-center gap-2 w-full">

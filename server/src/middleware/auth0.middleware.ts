@@ -14,12 +14,6 @@ function getJwtCheck() {
   return _jwtCheck
 }
 
-const isDev = !process.env.AUTH0_AUDIENCE || !process.env.AUTH0_ISSUER_BASE_URL || process.env.AUTH0_AUDIENCE === 'http://localhost:3000'
-
 export const jwtCheck = (req: Request, res: Response, next: NextFunction): void => {
-  if (isDev) {
-    next()
-    return
-  }
   getJwtCheck()(req, res, next)
 }

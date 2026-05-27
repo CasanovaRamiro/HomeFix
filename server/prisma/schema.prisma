@@ -24,7 +24,7 @@ model User {
   jobApplications JobApplication[] @relation("WorkerApplications")
   reviewsGiven    WorkerReview[]   @relation("ReviewsGiven")
   reviewsReceived WorkerReview[]   @relation("ReviewsReceived")
-  postulaciones   Postulacion[]
+  applications    Application[]
 }
 
 model Post {
@@ -42,7 +42,7 @@ model Post {
   categories      PostCategory[]
   jobApplications JobApplication[]
   images          PostImage[]
-  postulaciones   Postulacion[]
+  applications    Application[]
 }
 
 model Category {
@@ -97,17 +97,17 @@ model WorkerReview {
   worker           User           @relation("ReviewsReceived", fields: [workerId], references: [id])
 }
 
-model Postulacion {
-  id              String   @id @default(uuid())
-  trabajadorId    String
-  postId          String
-  estado          String   @default("Pendiente")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  trabajador      User     @relation(fields: [trabajadorId], references: [id], onDelete: Cascade)
+model Application {
+  id        String   @id @default(uuid())
+  workerId  String
+  postId    String
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  worker    User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
 
-  @@unique([trabajadorId, postId])
+  @@unique([workerId, postId])
 }
 
 model PostImage {

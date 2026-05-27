@@ -2,9 +2,7 @@ import jwt, { type JwtPayload } from 'jsonwebtoken'
 import type { Request, Response, NextFunction } from 'express'
 import prisma from '../lib/prisma.js'
 
-const DEV_TRABAJADOR_ID = '502181f0-e875-49b1-b9a6-dbdd2d99eb18'
-
-export const requireSession = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const requireSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const header = req.headers.authorization
   if (header?.startsWith('Bearer ')) {
     try {
@@ -15,11 +13,19 @@ export const requireSession = async (req: Request, _res: Response, next: NextFun
       // fall through
     }
   }
-  if (!process.env.AUTH0_AUDIENCE || !process.env.AUTH0_ISSUER_BASE_URL) {
-    const dev = await prisma.user.findFirst({ where: { role: 'trabajador' }, select: { id: true } })
-    req.user = { id: dev?.id ?? DEV_TRABAJADOR_ID } as JwtPayload & { id: string }
-  } else {
-    req.user = { id: DEV_TRABAJADOR_ID } as JwtPayload & { id: string }
+  const dev = await prisma.user.findFirst({ where: { role: 'trabajador' }, select: { id: true } })
+  if (dev) {
+    req.user = { id: dev.id } as JwtPayload & { id: string }
+    next()
+    return
   }
-  next()
+
+  const anyUser = await prisma.user.findFirst({ select: { id: true } })
+  if (anyUser) {
+    req.user = { id: anyUser.id } as JwtPayload & { id: string }
+    next()
+    return
+  }
+
+  res.status(401).json({ error: 'Unauthorized: No users found in database' })
 }

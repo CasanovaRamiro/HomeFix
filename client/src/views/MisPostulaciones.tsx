@@ -5,21 +5,21 @@ import api from '../services/api'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface Postulacion {
+interface Application {
   id: string
   postId: string
-  titulo: string
-  cliente: string
-  ubicacion: string
-  fecha_postulacion: string
-  fecha_servicio: string
-  estado: 'Aceptada' | 'Rechazada' | 'Pendiente'
-  descripcion?: string
-  categoria?: string
-  imagen?: string
+  title: string
+  client: string
+  location: string
+  appliedAt: string
+  serviceDate: string
+  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
+  description?: string
+  category?: string
+  image?: string
 }
 
-const tabs = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas'] as const
+const tabs = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas', 'Completadas'] as const
 type Tab = (typeof tabs)[number]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -90,9 +90,9 @@ function WorkerNavbar() {
 
         {/* Nav links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'center' }}>
-          <NavLink to="/trabajador" icon={<Home size={15} />} label="Inicio" />
-          <NavLink to="/trabajador" icon={<Briefcase size={15} />} label="Trabajos Disponibles" />
-          <NavLink to="/trabajador/mis-postulaciones" icon={<FileText size={15} />} label="Mis Postulaciones" active />
+          <NavLink to="/worker" icon={<Home size={15} />} label="Inicio" />
+          <NavLink to="/worker" icon={<Briefcase size={15} />} label="Trabajos Disponibles" />
+          <NavLink to="/worker/my-applications" icon={<FileText size={15} />} label="Mis Postulaciones" active />
           <NavLink to="#" icon={<ShieldCheck size={15} />} label="Validaciones" />
         </div>
 
@@ -175,12 +175,13 @@ function NavLink({
 // ─── Postulacion Card ─────────────────────────────────────────────────────────
 
 function StatusBadge({ estado }: { estado: string }) {
-  const cfg: Record<string, { bg: string; color: string; border: string }> = {
-    Aceptada:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' },
-    Rechazada: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
-    Pendiente: { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
+  const cfg: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    Accepted:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Aceptada' },
+    Rejected:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Rechazada' },
+    Pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pendiente' },
+    Completed: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Completada' },
   }
-  const s = cfg[estado] ?? { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' }
+  const s = cfg[estado] ?? { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0', label: estado }
   return (
     <span
       style={{
@@ -195,7 +196,7 @@ function StatusBadge({ estado }: { estado: string }) {
         flexShrink: 0,
       }}
     >
-      {estado}
+      {s.label}
     </span>
   )
 }
@@ -226,9 +227,9 @@ function ClientAvatar({ name }: { name: string }) {
   )
 }
 
-function PostulacionCard({ p }: { p: Postulacion }) {
-  const fechaPost = p.fecha_postulacion?.substring(0, 10) ?? ''
-  const fechaServ = p.fecha_servicio?.substring(0, 10) ?? ''
+function PostulacionCard({ p }: { p: Application }) {
+  const appliedAt = p.appliedAt?.substring(0, 10) ?? ''
+  const serviceDate = p.serviceDate?.substring(0, 10) ?? ''
 
   return (
     <article
@@ -254,139 +255,111 @@ function PostulacionCard({ p }: { p: Postulacion }) {
           {/* Title + badge */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.35 }}>
-              {p.titulo}
+              {p.title}
             </h3>
-            <StatusBadge estado={p.estado} />
+            <StatusBadge estado={p.status} />
           </div>
           <hr style={{ border: 'none', borderTop: '1px solid #F1F5F9', margin: '0 0 12px' }} />
 
           {/* Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <ClientAvatar name={p.cliente} />
-            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{p.cliente}</span>
+            <ClientAvatar name={p.client} />
+            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{p.client}</span>
           </div>
 
           {/* Dates */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <Calendar size={13} color="#9CA3AF" style={{ flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: '#6B7280' }}>
-              Postulado {fechaPost}{fechaServ ? ` — A realizar el ${fechaServ}` : ''}
+              Applied {appliedAt}{serviceDate ? ` — Service on ${serviceDate}` : ''}
             </span>
           </div>
 
           {/* Location */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <MapPin size={13} color="#9CA3AF" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#6B7280' }}>{p.ubicacion}</span>
+            <span style={{ fontSize: 12, color: '#6B7280' }}>{p.location}</span>
           </div>
 
           {/* Description quote */}
-          {p.descripcion && (
+          {p.description && (
             <p style={{ fontSize: 13, color: '#374151', fontStyle: 'italic', margin: '0 0 10px', lineHeight: 1.5 }}>
-              &ldquo;{p.descripcion}&rdquo;
+              &ldquo;{p.description}&rdquo;
             </p>
           )}
 
           {/* Category chip */}
-          {p.categoria && (
+          {p.category && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
               background: '#F0FDF4', border: '1px solid #BBF7D0',
               borderRadius: 20, padding: '3px 10px' }}>
-              <span style={{ fontSize: 12, color: '#15803D', fontWeight: 500 }}>{p.categoria}</span>
+              <span style={{ fontSize: 12, color: '#15803D', fontWeight: 500 }}>{p.category}</span>
             </div>
           )}
         </div>
 
         {/* Right image (optional) */}
-        {p.imagen && (
+        {p.image && (
           <div style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
-            <img src={p.imagen} alt={p.titulo}
+            <img src={p.image} alt={p.title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
       </div>
 
       {/* ── Contact button ── */}
-      <div style={{ padding: '0 20px 20px' }}>
-        <button
-          style={{
-            width: '100%',
-            background: '#16A34A',
-            border: 'none',
-            borderRadius: 10,
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 600,
-            padding: '12px 0',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
-        >
-          📞 Contactar cliente
-        </button>
-      </div>
+      {p.status !== 'Completed' && (
+        <div style={{ padding: '0 20px 20px' }}>
+          <button
+            style={{
+              width: '100%',
+              background: '#16A34A',
+              border: 'none',
+              borderRadius: 10,
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              padding: '12px 0',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
+          >
+            📞 Contactar cliente
+          </button>
+        </div>
+      )}
     </article>
   )
 }
 
-// ─── Mock data (demo) ────────────────────────────────────────────────────────
-
-const MOCK_POSTULACIONES: Postulacion[] = [
-  {
-    id: 'mock-1',
-    postId: 'post-1',
-    titulo: 'Reparación de tuberías en cocina',
-    cliente: 'Marta Ocampo',
-    ubicacion: 'Recoleta, Buenos Aires',
-    fecha_postulacion: '2026-05-08',
-    fecha_servicio: '2026-05-15',
-    estado: 'Aceptada',
-    descripcion: 'Se necesita reparar fuga de agua debajo de la pileta de la cocina.',
-    categoria: 'Plomería',
-    imagen: '/tuberia.png',
-  },
-  {
-    id: 'mock-2',
-    postId: 'post-2',
-    titulo: 'Destape de cañería en baño',
-    cliente: 'Juan Pérez',
-    ubicacion: 'Palermo, Buenos Aires',
-    fecha_postulacion: '2026-05-06',
-    fecha_servicio: '2026-05-10',
-    estado: 'Aceptada',
-    descripcion: 'El lavabo del baño principal está tapado.',
-    categoria: 'Plomería',
-  },
-]
-
 // ─── Main View ────────────────────────────────────────────────────────────────
 
 export default function MisPostulaciones() {
-  const [postulaciones, setPostulaciones] = useState<Postulacion[]>(MOCK_POSTULACIONES)
+  const [postulaciones, setPostulaciones] = useState<Application[]>([])
   const [filter, setFilter] = useState<Tab>('Todas')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const fetchPostulaciones = useCallback(async () => {
     try {
-      const res = await api.get<Postulacion[]>('/postulaciones/mis-postulaciones')
+      const res = await api.get<Application[]>('/applications/my-applications')
       const data = res.data
       setPostulaciones((prev) => {
-        const prevMap = new Map(prev.map((p) => [p.id, p.estado]))
+        const prevMap = new Map(prev.map((p) => [p.id, p.status]))
         const changes: string[] = []
         for (const p of data) {
           const old = prevMap.get(p.id)
-          if (old && old !== p.estado) changes.push(`"${p.titulo}" → ${p.estado}`)
+          if (old && old !== p.status) changes.push(`"${p.title}" → ${p.status}`)
         }
         if (changes.length > 0)
-          setNotification(`¡Estado actualizado! ${changes.join(', ')}`)
+          setNotification(`Status updated! ${changes.join(', ')}`)
         return data
       })
     } catch {
@@ -396,7 +369,6 @@ export default function MisPostulaciones() {
     }
   }, [])
 
-  // Merge API data on top of mocks (first load replaces mocks if API responds)
 
   useEffect(() => {
     void fetchPostulaciones()
@@ -406,21 +378,22 @@ export default function MisPostulaciones() {
 
   const metrics = useMemo(() => ({
     total: postulaciones.length,
-    pendientes: postulaciones.filter((p) => p.estado === 'Pendiente').length,
-    aceptadas: postulaciones.filter((p) => p.estado === 'Aceptada').length,
-    rechazadas: postulaciones.filter((p) => p.estado === 'Rechazada').length,
+    pendientes:   postulaciones.filter((p) => p.status === 'Pending').length,
+    aceptadas:    postulaciones.filter((p) => p.status === 'Accepted').length,
+    rechazadas:   postulaciones.filter((p) => p.status === 'Rejected').length,
+    completadas:  postulaciones.filter((p) => p.status === 'Completed').length,
   }), [postulaciones])
 
   const filtered = useMemo(() => {
     if (filter === 'Todas') return postulaciones
-    // "Pendientes" → "Pendiente", "Aceptadas" → "Aceptada", "Rechazadas" → "Rechazada"
     const map: Record<Tab, string> = {
-      Todas: '',
-      Pendientes: 'Pendiente',
-      Aceptadas: 'Aceptada',
-      Rechazadas: 'Rechazada',
+      Todas:       '',
+      Pendientes:  'Pending',
+      Aceptadas:   'Accepted',
+      Rechazadas:  'Rejected',
+      Completadas: 'Completed',
     }
-    return postulaciones.filter((p) => p.estado === map[filter])
+    return postulaciones.filter((p) => p.status === map[filter])
   }, [postulaciones, filter])
 
   return (
@@ -457,7 +430,7 @@ export default function MisPostulaciones() {
 
           {/* Breadcrumb */}
           <button
-            onClick={() => navigate('/trabajador')}
+            onClick={() => navigate('/worker')}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'none', border: 'none', padding: 0,
@@ -481,11 +454,12 @@ export default function MisPostulaciones() {
           </p>
 
           {/* Metric cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            <MetricCard value={metrics.total} label="Total" valueColor="#fff" />
-            <MetricCard value={metrics.pendientes} label="Pendientes" valueColor="#F59E0B" />
-            <MetricCard value={metrics.aceptadas} label="Aceptadas" valueColor="#10B981" />
-            <MetricCard value={metrics.rechazadas} label="Rechazadas" valueColor="#EF4444" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+            <MetricCard value={metrics.total}       label="Total"       valueColor="#fff" />
+            <MetricCard value={metrics.pendientes}  label="Pendientes"  valueColor="#F59E0B" />
+            <MetricCard value={metrics.aceptadas}   label="Aceptadas"   valueColor="#10B981" />
+            <MetricCard value={metrics.rechazadas}  label="Rechazadas"  valueColor="#EF4444" />
+            <MetricCard value={metrics.completadas} label="Completadas" valueColor="#3B82F6" />
           </div>
         </div>
       </div>
