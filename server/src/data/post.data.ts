@@ -13,18 +13,9 @@ const postFields = {
   status: true,
 } satisfies Prisma.PostSelect;
 
-const postListInclude = {
-  user: { select: { id: true, name: true } },
-  categories: { include: { category: { select: { id: true, name: true } } } },
-} satisfies Prisma.PostInclude;
-
-const postDetailInclude = {
-  user: { select: { id: true, name: true, phone: true } },
-  categories: { include: { category: { select: { id: true, name: true } } } },
-  images: { select: { id: true, url: true } },
-} satisfies Prisma.PostInclude;
-
-export const createPost = (data: PostInput) =>
+export const createPost = (
+  data: PostInput,
+) =>
   prisma.post.create({
     data: {
       userId: data.userId,
@@ -33,22 +24,63 @@ export const createPost = (data: PostInput) =>
       startDate: data.startDate,
       endDate: data.endDate,
       address: data.address,
+
       categories: {
-        create: { categoryId: data.categoryId },
+        create: {
+          categoryId: data.categoryId,
+        },
       },
     },
     select: postFields,
   });
 
-export const findAllActivePosts = () =>
-  prisma.post.findMany({
-    where: { status: "Active" },
-    include: postListInclude,
-    orderBy: { createdAt: "desc" },
-  });
-
-export const findPostById = (id: number) =>
+export const findPostById = (id: string) =>
   prisma.post.findUnique({
     where: { id },
-    include: postDetailInclude,
+    select: {
+      ...postFields,
+      createdAt: true,
+      categories: {
+        select: {
+          category: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
   });
+
+export type UserPostSummary = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: Date;
+  address: string;
+  startDate: Date;
+  endDate: Date;
+  categories: { id: string; name: string }[];
+};
+
+export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
+  const posts = await prisma.post.findMany({
+    where: { userId, status: { in: ["Active", "Paused"] } },
+    include: { categories: { include: { category: true } } },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+
+  return posts.map((post) => ({
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    status: post.status,
+    createdAt: post.createdAt,
+    address: post.address,
+    startDate: post.startDate,
+    endDate: post.endDate,
+    categories: post.categories.map((pc) => ({
+      id: pc.category.id,
+      name: pc.category.name,
+    })),
+  }));
+};

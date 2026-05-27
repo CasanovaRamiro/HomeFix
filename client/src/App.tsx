@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './views/Login'
 import Register from './views/Register'
 import Users from './views/Users'
-import MisPostulaciones from './views/MisPostulaciones'
-import TrabajadorFeed from './views/TrabajadorFeed'
+import AiDiagnosis from './views/AiDiagnosis'
+import CreatePost from './views/CreatePost'
+import PostOptions from './views/PostOptions'
+import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
@@ -17,9 +19,11 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
-        <Route path="/trabajador/mis-postulaciones" element={<MisPostulaciones />} />
-        <Route path="/trabajador/feed" element={<TrabajadorFeed />} />
-        <Route path="/trabajador/posts/:id" element={<PostDetail />} />
+        <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
+        <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
+        <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
+        <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
+        <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

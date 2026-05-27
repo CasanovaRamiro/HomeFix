@@ -1,6 +1,6 @@
 export interface createdPost {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   title: string;
   description: string;
   startDate: Date;
