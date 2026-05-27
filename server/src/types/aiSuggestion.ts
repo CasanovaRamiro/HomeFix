@@ -16,7 +16,7 @@ export interface AiQuestionResponse {
 
 export interface AiSuggestionData {
   suggestedTitle: string
-  suggestedCategoryId: number
+  suggestedCategoryId: string
   suggestedCategoryName: string
   possibleIssue: string
   startDate: string | null

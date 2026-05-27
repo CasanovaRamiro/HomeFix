@@ -8,16 +8,17 @@ const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
 const HISTORY_LIMIT = 6
 const CACHE_TTL = 5 * 60 * 1000
 
-let categoriesCache: { id: number; name: string }[] | null = null
+let categoriesCache: { id: string; name: string }[] | null = null
 let categoriesCacheAt = 0
 
-async function getCachedCategories() {
+async function getCachedCategories(): Promise<{ id: string; name: string }[]> {
   if (categoriesCache && Date.now() - categoriesCacheAt < CACHE_TTL) {
     return categoriesCache
   }
-  categoriesCache = await prisma.category.findMany()
+  const fresh = await prisma.category.findMany()
+  categoriesCache = fresh
   categoriesCacheAt = Date.now()
-  return categoriesCache
+  return fresh
 }
 
 export const clearCategoryCache = () => {
@@ -61,7 +62,7 @@ FORMATO SUGGESTION:
   "type":"suggestion",
   "data":{
     "suggestedTitle":"...",
-    "suggestedCategoryId": number,
+    "suggestedCategoryId": "uuid-string",
     "suggestedCategoryName":"...",
     "possibleIssue":"...",
     "startDate":"ISO string",
