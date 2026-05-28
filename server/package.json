@@ -9,9 +9,11 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:test": "cross-env DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma migrate deploy",
     "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -66,6 +66,8 @@ describe("post.service - getPostById", () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
+    user: { id: 'uuid-user-1', name: "Test User", phone: null },
+    images: [],
   };
 
   it("should return a post by id", async () => {
@@ -134,6 +136,8 @@ describe('post.service - finalizePost', () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
+    user: { id: 'user-uuid-1', name: 'Test User', phone: null },
+    images: [],
   }
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
