@@ -1,4 +1,3 @@
-import { useIsMobile } from '../../hooks/useIsMobile'
 import type { Worker } from '../../services/api'
 
 interface Props {
@@ -6,7 +5,6 @@ interface Props {
 }
 
 export default function WorkerHeader({ worker }: Props) {
-  const isMobile = useIsMobile()
   const initials = worker.name
     .split(' ')
     .map((n) => n[0])
@@ -20,31 +18,20 @@ export default function WorkerHeader({ worker }: Props) {
   })
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+    <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
 
       {/* Cover banner */}
-      <div style={{ height: isMobile ? 72 : 100, background: 'linear-gradient(135deg, #0F172A 0%, #1e3a5f 60%, #10B981 100%)' }} />
+      <div className="h-[72px] md:h-[100px] bg-gradient-to-r from-primary-dark via-[#1e3a5f] to-secondary" />
 
-      <div style={{ padding: isMobile ? '0 16px 20px' : '0 28px 28px' }}>
+      <div className="px-4 pb-5 md:px-7 md:pb-7">
 
         {/* Avatar row */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: -40, marginBottom: 16 }}>
-          <div style={{ position: 'relative' }}>
-            <div style={{
-              width: 88, height: 88, borderRadius: '50%',
-              background: '#E5E7EB', border: '4px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, fontWeight: 700, color: '#374151',
-              userSelect: 'none',
-            }}>
+        <div className="flex items-end justify-between -mt-10 mb-4">
+          <div className="relative">
+            <div className="w-[88px] h-[88px] rounded-full bg-gray-200 ring-4 ring-white flex items-center justify-center text-[26px] font-bold text-gray-700 select-none">
               {initials}
             </div>
-            <div style={{
-              position: 'absolute', bottom: 4, right: 4,
-              width: 22, height: 22, borderRadius: '50%',
-              background: '#10B981', border: '2px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+            <div className="absolute bottom-1 right-1 w-[22px] h-[22px] rounded-full bg-secondary ring-2 ring-white flex items-center justify-center">
               <svg width="11" height="11" fill="none" stroke="#fff" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
               </svg>
@@ -53,32 +40,22 @@ export default function WorkerHeader({ worker }: Props) {
         </div>
 
         {/* Name + badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>{worker.name}</h2>
-          {/* <span style={{
-            background: '#D1FAE5', color: '#059669',
-            fontSize: 12, fontWeight: 600,
-            padding: '3px 10px', borderRadius: 999,
-          }}>
-            Verificado
-          </span> */}
+        <div className="flex items-center gap-2.5 flex-wrap mb-1">
+          <h2 className="text-2xl font-bold text-gray-900">{worker.name}</h2>
         </div>
 
         {/* Role */}
-        <p style={{ color: '#6B7280', fontSize: 15, margin: '0 0 12px', textTransform: 'capitalize' }}>
+        <p className="text-text-muted text-[15px] mb-3 capitalize">
           {worker.role}
         </p>
 
         {/* Categories */}
         {worker.categories.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          <div className="flex flex-wrap gap-2 mb-5">
             {worker.categories.map(({ category }) => (
-              <span key={category.id} style={{
-                background: '#EFF6FF', color: '#1D4ED8',
-                fontSize: 12, fontWeight: 600,
-                padding: '4px 12px', borderRadius: 999,
-                border: '1px solid #BFDBFE',
-              }}>
+              <span key={category.id} className="text-xs font-semibold px-3 py-1 rounded-full border"
+                style={{ background: '#EFF6FF', color: '#1D4ED8', borderColor: '#BFDBFE' }}
+              >
                 {category.name}
               </span>
             ))}
@@ -86,10 +63,10 @@ export default function WorkerHeader({ worker }: Props) {
         )}
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid #F3F4F6', marginBottom: 20 }} />
+        <div className="border-t border-gray-100 mb-5" />
 
         {/* Contact info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           <ContactRow icon="✉" value={worker.email} />
           {worker.phone && <ContactRow icon="📞" value={worker.phone} />}
           <ContactRow icon="📅" value={`Miembro desde ${memberSince}`} />
@@ -102,8 +79,8 @@ export default function WorkerHeader({ worker }: Props) {
 
 function ContactRow({ icon, value }: { icon: string; value: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#374151' }}>
-      <span style={{ fontSize: 15, width: 20, textAlign: 'center' }}>{icon}</span>
+    <div className="flex items-center gap-2.5 text-sm text-gray-700">
+      <span className="text-[15px] w-5 text-center">{icon}</span>
       <span>{value}</span>
     </div>
   )

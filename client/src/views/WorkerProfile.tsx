@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
-import { useIsMobile } from '../hooks/useIsMobile'
 import WorkerHeader from '../components/worker/WorkerHeader'
 import WorkerAbout from '../components/worker/WorkerAbout'
 import WorkerReviews from '../components/worker/WorkerReviews'
@@ -11,7 +10,6 @@ import WorkerStats from '../components/worker/WorkerStats'
 export default function WorkerProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
   const [worker, setWorker] = useState<Worker | null>(null)
   const [reviews, setReviews] = useState<WorkerReview[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(true)
@@ -39,58 +37,55 @@ export default function WorkerProfile() {
     : 0
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-gray-100">
 
       {/* Header bar */}
-      <div style={{ background: '#0F172A', width: '100%' }}>
-        <div style={{ maxWidth: 1024, margin: '0 auto', padding: isMobile ? '14px 16px' : '16px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isMobile ? 0 : 12 }}>
+      <div className="bg-primary-dark w-full">
+        <div className="max-w-[1024px] mx-auto px-4 py-3.5 md:px-6 md:py-4">
+          <div className="flex items-center justify-between md:mb-3">
             <button
               onClick={() => navigate(-1)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#E5E7EB', fontSize: 13, fontWeight: 500,
-                padding: '9px 16px', borderRadius: 10,
-                cursor: 'pointer', letterSpacing: '0.01em',
-              }}
+              className="flex items-center gap-2 bg-white/7 border border-white/15 text-gray-200 text-[13px] font-medium px-4 py-2.25 rounded-xl cursor-pointer tracking-[0.01em]"
             >
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Volver
             </button>
-
           </div>
         </div>
       </div>
 
       {/* Page content */}
-      <div style={{ maxWidth: 1024, margin: '0 auto', padding: isMobile ? '20px 16px' : '32px 24px' }}>
-        {loading && <p style={{ textAlign: 'center', color: '#6B7280', paddingTop: 80 }}>Cargando...</p>}
-        {error   && <p style={{ textAlign: 'center', color: '#EF4444', paddingTop: 80 }}>{error}</p>}
+      <div className="max-w-[1024px] mx-auto px-4 py-5 md:px-6 md:py-8">
+        {loading && <p className="text-center text-text-muted pt-20">Cargando...</p>}
+        {error   && <p className="text-center text-danger pt-20">{error}</p>}
 
-        {worker && isMobile && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <WorkerHeader worker={worker} />
-            <WorkerActions />
-            <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
-            <WorkerAbout worker={worker} />
-            <WorkerReviews reviews={reviews} loading={reviewsLoading} />
-          </div>
-        )}
-
-        {worker && !isMobile && (
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, alignItems: 'start' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {worker && (
+          <div className="md:grid md:grid-cols-[2fr_1fr] md:gap-6 md:items-start flex flex-col gap-5">
+            <div className="flex flex-col gap-5 md:gap-6">
               <WorkerHeader worker={worker} />
-              <WorkerAbout worker={worker} />
+              <div className="hidden md:block">
+                <WorkerAbout worker={worker} />
+              </div>
               <WorkerReviews reviews={reviews} loading={reviewsLoading} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <WorkerActions />
-              <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
+            <div className="flex flex-col gap-5 md:gap-6">
+              <div className="md:hidden">
+                <WorkerActions />
+              </div>
+              <div className="md:hidden">
+                <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
+              </div>
+              <div className="hidden md:block md:order-first">
+                <WorkerActions />
+              </div>
+              <div className="hidden md:block">
+                <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
+              </div>
+              <div className="md:hidden">
+                <WorkerAbout worker={worker} />
+              </div>
             </div>
           </div>
         )}

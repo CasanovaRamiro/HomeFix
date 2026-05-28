@@ -7,7 +7,7 @@ interface Props {
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <div style={{ display: 'flex', gap: 2 }}>
+    <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
         <svg
           key={n}
@@ -28,12 +28,7 @@ function Stars({ rating }: { rating: number }) {
 function Avatar({ name }: { name: string }) {
   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
   return (
-    <div style={{
-      width: 40, height: 40, borderRadius: '50%',
-      background: '#E5E7EB', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 700, color: '#374151',
-    }}>
+    <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0 flex items-center justify-center text-[13px] font-bold text-gray-700">
       {initials}
     </div>
   )
@@ -49,52 +44,48 @@ export default function WorkerReviews({ reviews, loading }: Props) {
     : null
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 28 }}>
+    <div className="bg-card rounded-2xl shadow-sm p-7">
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: 0 }}>Reseñas</h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-[17px] font-bold text-gray-900">Reseñas</h3>
         {avg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="flex items-center gap-1.5">
             <Stars rating={Math.round(Number(avg))} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{avg}</span>
-            <span style={{ fontSize: 13, color: '#9CA3AF' }}>({reviews.length})</span>
+            <span className="text-sm font-bold text-gray-900">{avg}</span>
+            <span className="text-[13px] text-gray-400">({reviews.length})</span>
           </div>
         )}
       </div>
 
       {/* States */}
       {loading && (
-        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Cargando reseñas...</p>
+        <p className="text-sm text-gray-400 text-center py-5">Cargando reseñas...</p>
       )}
 
       {!loading && reviews.length === 0 && (
-        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Este trabajador aún no tiene reseñas.</p>
+        <p className="text-sm text-gray-400 text-center py-5">Este trabajador aún no tiene reseñas.</p>
       )}
 
       {/* Review list */}
       {!loading && reviews.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <div className="flex flex-col">
           {reviews.map((review, i) => (
             <div
               key={review.id}
-              style={{
-                paddingTop: i === 0 ? 0 : 20,
-                paddingBottom: 20,
-                borderBottom: i < reviews.length - 1 ? '1px solid #F3F4F6' : 'none',
-              }}
+              className={`${i > 0 ? 'pt-5' : ''} pb-5 ${i < reviews.length - 1 ? 'border-b border-gray-100' : ''}`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <div className="flex items-center gap-3 mb-2.5">
                 <Avatar name={review.reviewer.name} />
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 2px' }}>{review.reviewer.name}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <p className="text-sm font-semibold text-gray-900 mb-0.5">{review.reviewer.name}</p>
+                  <div className="flex items-center gap-2">
                     <Stars rating={review.rating} />
-                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>{formatDate(review.createdAt)}</span>
+                    <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
                   </div>
                 </div>
               </div>
-              <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, margin: 0 }}>{review.description}</p>
+              <p className="text-sm text-text-muted leading-relaxed">{review.description}</p>
             </div>
           ))}
         </div>

@@ -12,21 +12,16 @@ export default function WorkerStats({ reviewCount, avgRating }: Props) {
   ]
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
-      <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: '0 0 20px' }}>Estadísticas</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="bg-card rounded-2xl shadow-sm p-6">
+      <h3 className="text-[17px] font-bold text-gray-900 mb-5">Estadísticas</h3>
+      <div className="flex flex-col gap-1">
         {rows.map(({ label, value, icon }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #F9FAFB' }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 8,
-              background: '#F3F4F6',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, flexShrink: 0,
-            }}>
+          <div key={label} className="flex items-center gap-3 py-2.5 border-b border-[#F9FAFB]">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-base shrink-0">
               {icon}
             </div>
-            <span style={{ flex: 1, fontSize: 14, color: '#6B7280' }}>{label}</span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>{value}</span>
+            <span className="flex-1 text-sm text-text-muted">{label}</span>
+            <span className="text-[15px] font-bold text-gray-900">{value}</span>
           </div>
         ))}
       </div>
