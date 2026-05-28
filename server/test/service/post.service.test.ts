@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PostWithCategories } from '../../src/data/post.data.js'
 
-const { findAvailablePostsMock, findPostByIdMock } = vi.hoisted(() => ({
+const { findAvailablePostsMock, findPostByIdMock, searchByDistanceMock } = vi.hoisted(() => ({
   findAvailablePostsMock: vi.fn<(category?: string) => Promise<PostWithCategories[]>>(),
   findPostByIdMock: vi.fn<(id: number) => Promise<PostWithCategories | null>>(),
+  searchByDistanceMock: vi.fn<
+    (lat: number, lng: number, radiusKm: number, category?: string) => Promise<unknown[]>
+  >(),
 }))
 
 vi.mock('../../src/data/post.data.js', () => ({
   findAvailablePosts: findAvailablePostsMock,
   findPostById: findPostByIdMock,
+  searchByDistance: searchByDistanceMock,
 }))
 
-const { getPostById, listAvailablePosts } = await import('../../src/services/post.service.js')
+const { getPostById, listAvailablePosts, searchPostsByDistance } = await import('../../src/services/post.service.js')
 
 const mockPost: PostWithCategories = {
   id: 1,
@@ -24,6 +28,8 @@ const mockPost: PostWithCategories = {
   status: 'Active',
   createdAt: new Date('2026-05-19T10:00:00.000Z'),
   image: 'photo.jpg',
+  latitude: null,
+  longitude: null,
   categories: [
     {
       category: {
@@ -45,6 +51,8 @@ const expectedPostDTO = {
   status: 'Active',
   createdAt: '2026-05-19T10:00:00.000Z',
   image: 'photo.jpg',
+  latitude: null,
+  longitude: null,
   categories: [
     {
       category: {
@@ -89,6 +97,36 @@ describe('post.service', () => {
       findPostByIdMock.mockResolvedValue(null)
 
       await expect(getPostById(99)).rejects.toThrow('Post not found')
+    })
+  })
+
+  describe('searchPostsByDistance', () => {
+    const lat = -34.6, lng = -58.4, radius = 10
+
+    it('returns posts sorted by distance', async () => {
+      searchByDistanceMock.mockResolvedValue([{
+        ...mockPost, latitude: -34.6, longitude: -58.4, distance: 5.2,
+      }])
+
+      const results = await searchPostsByDistance(lat, lng, radius, 'Plomero')
+
+      expect(results).toHaveLength(1)
+      expect(results[0].latitude).toBe(-34.6)
+      expect(searchByDistanceMock).toHaveBeenCalledWith(lat, lng, radius, 'Plomero')
+    })
+
+    it('validates coordinate ranges', async () => {
+      await expect(searchPostsByDistance(100, 0, 10)).rejects.toThrow('latitude must be between -90 and 90')
+      await expect(searchPostsByDistance(0, 200, 10)).rejects.toThrow('longitude must be between -180 and 180')
+    })
+
+    it('validates radius range', async () => {
+      await expect(searchPostsByDistance(0, 0, 0)).rejects.toThrow('radius must be between 1 and 1000 km')
+      await expect(searchPostsByDistance(0, 0, 1001)).rejects.toThrow('radius must be between 1 and 1000 km')
+    })
+
+    it('requires numeric parameters', async () => {
+      await expect(searchPostsByDistance(NaN, 0, 10)).rejects.toThrow('lat, lng, and radius must be finite numbers')
     })
   })
 })

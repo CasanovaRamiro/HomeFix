@@ -14,6 +14,8 @@ export interface PostDTO {
   status: string
   createdAt: string
   image: string
+  latitude: number | null
+  longitude: number | null
   categories: {
     category: PostCategoryDTO
   }[]
