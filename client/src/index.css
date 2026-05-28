@@ -8,36 +8,39 @@
 }
 
 @theme {
+  --color-primary: #13243B;
+  --color-primary-light: #1a2f4a;
   --color-primary-dark: #0F172A;
   --color-secondary-dark: #1E293B;
   --color-accent: #10B981;
   --color-accent-hover: #059669;
-  --color-background: #F8FAFC;
+  --color-background: #f5f5f5;
   --color-card: #FFFFFF;
-  --color-border: #E2E8F0;
+  --color-border: #e8e8e8;
   --color-muted: #64748B;
+  --color-text: #111111;
+  --color-text-muted: #6B7280;
   --color-danger: #EF4444;
   --color-warning: #F59E0B;
   --color-success: #10B981;
   --color-whatsapp-bg: #E5DDD5;
   --color-whatsapp-user: #DCF8C6;
+  --radius: 8px;
   --font-family-sans: 'Montserrat', sans-serif;
 }
 
 :root {
-  --primary: #13243B;
-  --primary-light: #1a2f4a;
-  --accent: #10B981;
-  --accent-hover: #059669;
-  --bg: #f5f5f5;
-  --card-bg: #ffffff;
-  --border: #e8e8e8;
-  --text: #111111;
-  --text-muted: #6B7280;
-  --danger: #ef4444;
-  --radius: 8px;
-  --accent-bg: #ECFDF5;
-  --accent-border: #10B981;
+  --primary: var(--color-primary);
+  --primary-light: var(--color-primary-light);
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
+  --bg: var(--color-background);
+  --card-bg: var(--color-card);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --danger: var(--color-danger);
+  --radius: var(--radius);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,28 +56,6 @@ body {
 
 a { color: var(--primary); }
 a:hover { color: var(--accent); }
-
-/* Auth screens */
-.center {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2rem;
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card h2 { font-size: 1.25rem; font-weight: 600; }
 
 @layer base {
   input {
@@ -356,4 +337,3 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
