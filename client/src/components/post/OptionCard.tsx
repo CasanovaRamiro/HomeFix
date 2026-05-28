@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
 import { ArrowRight } from 'lucide-react'
-import { useTheme } from '../../hooks/useTheme'
 
 interface Props {
   icon: LucideIcon
@@ -11,42 +10,23 @@ interface Props {
 }
 
 export default function OptionCard({ icon: Icon, title, description, linkText, onClick }: Props) {
-  const theme = useTheme()
-
   return (
     <div
-      style={{
-        background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px',
-        padding: '40px 32px', transition: 'all 0.3s', cursor: 'pointer',
-      }}
+      className="bg-card border border-border rounded-2xl px-8 py-10 transition-all duration-300 cursor-pointer hover:shadow-md hover:border-secondary"
       onClick={onClick}
-      onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.06)'
-        e.currentTarget.style.borderColor = theme.accent
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = 'none'
-        e.currentTarget.style.borderColor = theme.border
-      }}
     >
-      <div style={{
-        width: '56px', height: '56px', borderRadius: '14px', background: `${theme.accent}0d`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px',
-      }}>
-        <Icon style={{ width: '28px', height: '28px', color: theme.accent }} />
+      <div className="w-14 h-14 rounded-xl bg-secondary/5 flex items-center justify-center mb-6">
+        <Icon className="w-7 h-7 text-secondary" />
       </div>
-      <h2 style={{ fontSize: '22px', fontWeight: 700, color: theme.primaryDark, marginBottom: '12px' }}>
+      <h2 className="text-[22px] font-bold text-primary-dark mb-3">
         {title}
       </h2>
-      <p style={{ fontSize: '15px', color: theme.muted, lineHeight: '1.6', marginBottom: '28px' }}>
+      <p className="text-[15px] text-muted leading-relaxed mb-7">
         {description}
       </p>
-      <button style={{
-        display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 600,
-        color: theme.accent, border: 'none', background: 'none', padding: '0', cursor: 'pointer',
-      }}>
+      <button className="inline-flex items-center gap-2 text-[15px] font-semibold text-secondary border-none bg-transparent p-0 cursor-pointer">
         {linkText}
-        <ArrowRight style={{ width: '18px', height: '18px' }} />
+        <ArrowRight className="w-[18px] h-[18px]" />
       </button>
     </div>
   )

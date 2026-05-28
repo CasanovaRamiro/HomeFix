@@ -14,8 +14,6 @@
   --color-secondary-dark: #1E293B;
   --color-secondary: #10B981;
   --color-secondary-hover: #059669;
-  --color-accent: #10B981;
-  --color-accent-hover: #059669;
   --color-background: #f5f5f5;
   --color-card: #FFFFFF;
   --color-border: #e8e8e8;
@@ -28,14 +26,13 @@
   --color-whatsapp-bg: #E5DDD5;
   --color-whatsapp-user: #DCF8C6;
   --radius: 8px;
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
   --font-family-sans: 'Montserrat', sans-serif;
 }
 
 :root {
   --primary: var(--color-primary);
   --primary-light: var(--color-primary-light);
-  --accent: var(--color-secondary);
-  --accent-hover: var(--color-secondary-hover);
   --bg: var(--color-background);
   --card-bg: var(--color-card);
   --border: var(--color-border);
@@ -57,7 +54,7 @@ body {
 }
 
 a { color: var(--primary); }
-a:hover { color: var(--accent); }
+a:hover { color: var(--color-secondary); }
 
 @layer base {
   input {
@@ -267,7 +264,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   font-weight: 500;
 }
 .badge-primary { background: var(--primary); color: #fff; }
-.badge-accent { background: var(--accent); color: #fff; }
+.badge-accent { background: var(--color-secondary); color: #fff; }
 .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
 .badge-danger { background: var(--danger); color: #fff; }
 .badge-warning { background: #f59e0b; color: #fff; }
