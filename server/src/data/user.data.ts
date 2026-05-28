@@ -18,3 +18,12 @@ export const findAll = () =>
 
 export const createUser = (data: Prisma.UserCreateInput) =>
   prisma.user.create({ data, select: publicFields })
+
+export const addUserCategories = async (userId: string, categoryIds: string[]) => {
+  return prisma.userCategory.createMany({
+    data: categoryIds.map(categoryId => ({
+      userId,
+      categoryId
+    }))
+  })
+}
