@@ -147,6 +147,31 @@ button:hover { background: var(--primary-light); }
 
 .card h2 { font-size: 1.25rem; font-weight: 600; }
 
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus { border-color: #888; }
+
+button {
+  padding: 10px;
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button:hover { background: #333; }
+
 .btn-outline {
   background: transparent;
   color: var(--primary);
@@ -634,4 +659,93 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .trabajos-hero .btn-outline:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.trabajos-hero .btn-outline.btn-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
+
+.location-filter-modal {
+  max-width: 520px;
+  width: 90%;
+}
+
+.location-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.location-modal-header h2 { margin: 0; font-size: 1.1rem; }
+
+.location-search-box {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.location-search-box input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.location-searching {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.location-suggestions li button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.location-suggestions li button:hover {
+  background: #f0f0f0;
+}
+
+.location-map-container {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.location-radius-row {
+  margin-bottom: 12px;
+}
+
+.location-radius-row label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.location-radius-row input[type="range"] {
+  width: 100%;
 }

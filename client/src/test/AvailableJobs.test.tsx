@@ -1,18 +1,37 @@
+import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Post } from '../types/post'
 
-const { fetchAvailablePostsMock } = vi.hoisted(() => ({
+const { fetchAvailablePostsMock, searchPostsByLocationMock } = vi.hoisted(() => ({
   fetchAvailablePostsMock: vi.fn<(category?: string) => Promise<{ data: Post[] }>>(),
+  searchPostsByLocationMock: vi.fn<() => Promise<{ data: Post[] }>>(),
+}))
+
+const mockMap = {
+  setView: vi.fn(),
+  getZoom: vi.fn(() => 12),
+  on: vi.fn(() => mockMap),
+  off: vi.fn(() => mockMap),
+}
+
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  TileLayer: () => null,
+  Marker: () => null,
+  Circle: () => null,
+  useMap: () => mockMap,
+  useMapEvents: () => ({}),
 }))
 
 vi.mock('../services/posts', () => ({
   fetchAvailablePosts: fetchAvailablePostsMock,
+  searchPostsByLocation: searchPostsByLocationMock,
 }))
 
-const { default: Trabajos } = await import('../views/Trabajos')
+const { default: AvailableJobs } = await import('../views/AvailableJobs')
 
 const posts: Post[] = [
   {
@@ -26,6 +45,8 @@ const posts: Post[] = [
     status: 'Active',
     createdAt: '2026-05-20T10:00:00.000Z',
     image: 'canilla.jpg',
+    latitude: null,
+    longitude: null,
     categories: [{ category: { id: 1, name: 'Plomero' } }],
   },
   {
@@ -39,21 +60,23 @@ const posts: Post[] = [
     status: 'Active',
     createdAt: '2026-05-18T10:00:00.000Z',
     image: '',
+    latitude: null,
+    longitude: null,
     categories: [{ category: { id: 2, name: 'Electricista' } }],
   },
 ]
 
-const renderTrabajos = (initialRoute = '/trabajador/trabajos'): ReturnType<typeof render> =>
+const renderAvailableJobs = (initialRoute = '/trabajador/trabajos'): ReturnType<typeof render> =>
   render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <Routes>
-        <Route path="/trabajador/trabajos" element={<Trabajos />} />
+        <Route path="/trabajador/trabajos" element={<AvailableJobs />} />
         <Route path="/login" element={<h1>Login</h1>} />
       </Routes>
     </MemoryRouter>,
   )
 
-describe('Trabajos', () => {
+describe('AvailableJobs', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
@@ -61,7 +84,7 @@ describe('Trabajos', () => {
   })
 
   it('loads and renders available jobs', async () => {
-    renderTrabajos()
+    renderAvailableJobs()
 
     expect(await screen.findByText('Cambiar canilla')).toBeTruthy()
     expect(screen.getByText('Instalar termica')).toBeTruthy()
@@ -70,7 +93,7 @@ describe('Trabajos', () => {
 
   it('filters rendered jobs by search text', async () => {
     const user = userEvent.setup()
-    renderTrabajos()
+    renderAvailableJobs()
 
     await screen.findByText('Cambiar canilla')
     await user.type(screen.getByRole('searchbox'), 'termica')
@@ -81,7 +104,7 @@ describe('Trabajos', () => {
 
   it('reloads jobs when a category chip is selected', async () => {
     const user = userEvent.setup()
-    renderTrabajos()
+    renderAvailableJobs()
 
     await screen.findByText('Cambiar canilla')
     await user.click(screen.getByRole('button', { name: 'Plomero' }))
@@ -94,7 +117,7 @@ describe('Trabajos', () => {
 
   it('stores an application in localStorage from the detail modal', async () => {
     const user = userEvent.setup()
-    renderTrabajos()
+    renderAvailableJobs()
 
     await user.click(await screen.findByText('Cambiar canilla'))
     await user.click(screen.getByRole('button', { name: 'Postularme' }))
@@ -113,10 +136,22 @@ describe('Trabajos', () => {
     expect(screen.getByText('Postulacion enviada')).toBeTruthy()
   })
 
+  it('shows location filter button and opens modal on click', async () => {
+    const user = userEvent.setup()
+    renderAvailableJobs()
+
+    await screen.findByText('Cambiar canilla')
+    const btn = screen.getByRole('button', { name: /ubicación/i })
+    expect(btn).toBeTruthy()
+
+    await user.click(btn)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+
   it('redirects to login when the backend responds with 401', async () => {
     fetchAvailablePostsMock.mockRejectedValue({ response: { status: 401 } })
 
-    renderTrabajos()
+    renderAvailableJobs()
 
     expect(await screen.findByText('Login')).toBeTruthy()
     expect(localStorage.getItem('token')).toBeNull()

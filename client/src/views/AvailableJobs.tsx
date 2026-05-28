@@ -5,19 +5,51 @@ import {
   WORKER_CATEGORY_KEY,
   postToTrabajo,
 } from '../lib/post'
-import { fetchAvailablePosts } from '../services/posts'
+import { fetchAvailablePosts, searchPostsByLocation } from '../services/posts'
 import type { Post, TrabajoView } from '../types/post'
+import LocationFilterModal from '../components/post/LocationFilterModal'
 
 const POSTULACIONES_KEY = 'homefix_postulaciones_trabajador'
-const CATEGORIAS_DISPONIBLES = ['', 'Electricista', 'Plomero']
+const CATEGORIAS_DISPONIBLES = [
+  '',
+  'Electricista',
+  'Plomero',
+  'Gasista',
+  'Pintor',
+  'Carpintero',
+  'Albañil',
+  'Cerrajero',
+  'Techista',
+  'Climatización', 
+  'Jardinero',
+  'Fumigador',
+  'Vidriero',
+  'Instalador',  
+  'Mudanzas',
+  'Limpieza'
+];const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
-export default function Trabajos(): JSX.Element {
+interface LocationFilter {
+  lat: number
+  lng: number
+  radius: number
+}
+
+const loadStoredFilter = (): LocationFilter | null => {
+  try {
+    const raw = localStorage.getItem(LOCATION_FILTER_KEY)
+    if (raw) return JSON.parse(raw) as LocationFilter
+  } catch { /* ignore */ }
+  return null
+}
+
+export default function AvailableJobs(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [category, setCategory] = useState<string>(
     () => localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
   )
-  const [trabajos, setTrabajos] = useState<TrabajoView[]>([])
+  const [trabajos, setTrabajos] = useState<(TrabajoView & { lat?: number | null; lng?: number | null })[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -28,6 +60,8 @@ export default function Trabajos(): JSX.Element {
   const [enviando, setEnviando] = useState<boolean>(false)
   const [enviado, setEnviado] = useState<boolean>(false)
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
 
   const loadPostulaciones = useCallback((): void => {
     try {
@@ -46,11 +80,12 @@ export default function Trabajos(): JSX.Element {
     setLoading(true)
     setError('')
     try {
-      const { data } = await fetchAvailablePosts(category)
-      // Tipamos explícitamente el mapa para evitar advertencias de tipo 'any'
+      const { data } = locationFilter
+        ? await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
+        : await fetchAvailablePosts(category)
       const mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
       setTrabajos(mapped)
-      
+
       const idParam = searchParams.get('id')
       if (idParam !== null && idParam !== '') {
         const found = mapped.find((t) => t.id === Number(idParam))
@@ -68,7 +103,7 @@ export default function Trabajos(): JSX.Element {
     } finally {
       setLoading(false)
     }
-  }, [category, navigate, searchParams])
+  }, [category, navigate, searchParams, locationFilter])
 
   useEffect(() => {
     loadPostulaciones()
@@ -76,12 +111,12 @@ export default function Trabajos(): JSX.Element {
 
   useEffect(() => {
     localStorage.setItem(WORKER_CATEGORY_KEY, category)
-    void loadTrabajos() // El operador void le avisa al linter que manejamos la promesa flotante intencionalmente
+    void loadTrabajos()
   }, [category, loadTrabajos])
 
-  const filtradosYOrdenados = useMemo((): TrabajoView[] => {
+  const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
     let resultado = [...trabajos]
-    
+
     const q = searchQuery.trim().toLowerCase()
     if (q !== '') {
       resultado = resultado.filter(
@@ -94,7 +129,7 @@ export default function Trabajos(): JSX.Element {
     resultado.sort((a, b) => {
       const dateA = new Date(a.fechaPublicacion.split('/').reverse().join('-')).getTime()
       const dateB = new Date(b.fechaPublicacion.split('/').reverse().join('-')).getTime()
-      
+
       return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
     })
 
@@ -132,6 +167,18 @@ export default function Trabajos(): JSX.Element {
     }, 1500)
   }
 
+  const handleLocationApply = (lat: number, lng: number, radius: number) => {
+    const filter = { lat, lng, radius }
+    setLocationFilter(filter)
+    localStorage.setItem(LOCATION_FILTER_KEY, JSON.stringify(filter))
+    setShowLocationModal(false)
+  }
+
+  const handleLocationClear = () => {
+    setLocationFilter(null)
+    localStorage.removeItem(LOCATION_FILTER_KEY)
+  }
+
   return (
     <div className="trabajos-page">
       <header className="trabajos-hero">
@@ -153,10 +200,13 @@ export default function Trabajos(): JSX.Element {
                 ) : (
                   'trabajos activos'
                 )}
+                {locationFilter && (
+                  <span> — {locationFilter.radius} km a la redonda</span>
+                )}
               </>
             )}
           </p>
-          
+
           <div className="trabajos-hero-actions-row">
             <div className="backloggd-chips-container">
               <span className="chips-label">Filtrar rubro:</span>
@@ -195,6 +245,16 @@ export default function Trabajos(): JSX.Element {
               </select>
             </div>
 
+            <div className="search-wrapper-inline">
+              <button
+                type="button"
+                className={`btn-outline ${locationFilter ? 'btn-active' : ''}`}
+                onClick={() => setShowLocationModal(true)}
+              >
+                {locationFilter ? `Ubicación (${locationFilter.radius} km)` : 'Filtrar por ubicación'}
+              </button>
+            </div>
+
             <div className="logout-wrapper-inline">
               <button type="button" className="btn-outline" onClick={logout}>
                 Salir
@@ -203,8 +263,6 @@ export default function Trabajos(): JSX.Element {
           </div>
         </div>
       </header>
-
-     
 
       {error !== '' && (
         <p className="error trabajos-error">{error}</p>
@@ -352,6 +410,17 @@ export default function Trabajos(): JSX.Element {
             )}
           </div>
         </div>
+      )}
+
+      {showLocationModal && (
+        <LocationFilterModal
+          initialLat={locationFilter?.lat ?? -34.6037}
+          initialLng={locationFilter?.lng ?? -58.3816}
+          initialRadius={locationFilter?.radius ?? 30}
+          onApply={handleLocationApply}
+          onClear={handleLocationClear}
+          onClose={() => setShowLocationModal(false)}
+        />
       )}
     </div>
   )
