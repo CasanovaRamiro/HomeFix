@@ -111,15 +111,15 @@ async function main() {
 
   console.log('Created client users')
 
-  const catPlomeria = await prisma.category.create({ data: { name: 'Plomeria' } })
-  const catElect = await prisma.category.create({ data: { name: 'Electricidad' } })
-  const catCarpinteria = await prisma.category.create({ data: { name: 'Carpinteria' } })
-  const catAire = await prisma.category.create({ data: { name: 'Instalador de aire acondicionado' } })
-  const catPintura = await prisma.category.create({ data: { name: 'Pintura' } })
-  const catAlbanil = await prisma.category.create({ data: { name: 'Albanileria' } })
-  const catCerrajeria = await prisma.category.create({ data: { name: 'Cerrajeria' } })
-  const catClima = await prisma.category.create({ data: { name: 'Climatizacion' } })
-  const catGas = await prisma.category.create({ data: { name: 'Gas' } })
+  const catPlomeria = await prisma.category.findUniqueOrThrow({ where: { name: 'Plomeria' } })
+  const catElect = await prisma.category.findUniqueOrThrow({ where: { name: 'Electricidad' } })
+  const catCarpinteria = await prisma.category.findUniqueOrThrow({ where: { name: 'Carpinteria' } })
+  const catAire = await prisma.category.findUniqueOrThrow({ where: { name: 'Instalador de aire acondicionado' } })
+  const catPintura = await prisma.category.findUniqueOrThrow({ where: { name: 'Pintura' } })
+  const catAlbanil = await prisma.category.findUniqueOrThrow({ where: { name: 'Albanileria' } })
+  const catCerrajeria = await prisma.category.findUniqueOrThrow({ where: { name: 'Cerrajeria' } })
+  const catClima = await prisma.category.findUniqueOrThrow({ where: { name: 'Climatizacion' } })
+  const catGas = await prisma.category.findUniqueOrThrow({ where: { name: 'Gas' } })
 
   const post1 = await prisma.post.create({
     data: {
