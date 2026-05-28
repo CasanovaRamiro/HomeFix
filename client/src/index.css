@@ -1,12 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes bounce {
-  0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-  50% { transform: none; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-}
-
 @theme {
   --color-primary: #13243B;
   --color-primary-light: #1a2f4a;
@@ -180,27 +174,6 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .post-detail .post-actions .btn-cancel { background: var(--danger); }
 .post-detail .post-actions .btn-cancel:hover { background: #dc2626; }
 
-/* Badge */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-}
-.badge-primary { background: var(--primary); color: #fff; }
-.badge-accent { background: var(--color-secondary); color: #fff; }
-.badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-.badge-danger { background: var(--danger); color: #fff; }
-.badge-warning { background: #f59e0b; color: #fff; }
-
-/* Star Rating */
-.star-rating { display: inline-flex; align-items: center; gap: 2px; }
-.star-rating .star { color: #f59e0b; font-size: 14px; }
-.star-rating .star.empty { color: #d1d5db; }
-.star-rating .num { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
-
 /* Applicant Card */
 .applicant-card {
   background: var(--card-bg);
@@ -244,21 +217,4 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   padding: 6px 14px;
   font-size: 13px;
   white-space: nowrap;
-}
-
-/* Loading */
-.spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-}
-.spinner::after {
-  content: '';
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
 }
