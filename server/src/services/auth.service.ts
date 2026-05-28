@@ -29,7 +29,7 @@ interface LoginInput {
   password?: string
 }
 
-const createHttpError = (status: number, message: string) => {
+export const createHttpError = (status: number, message: string) => {
   const error = new Error(message) as Error & { status?: number }
   error.status = status
   return error
@@ -161,15 +161,11 @@ const getAuth0UserInfo = async (accessToken: string) => {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-  const name = input.name?.trim()
+  const name = input.name!.trim()
   const lastName = input.lastName?.trim()
-  const email = input.email?.trim().toLowerCase()
-  const password = input.password
+  const email = input.email!.trim().toLowerCase()
+  const password = input.password!
   const phone = input.phone?.trim() || undefined
-
-  if (!name) throw createHttpError(400, 'El nombre es obligatorio')
-  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
-  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
   const passwordError = validatePassword(password)
   if (passwordError) throw createHttpError(400, passwordError)
@@ -200,15 +196,11 @@ export const registerUser = async (input: RegisterInput) => {
 }
 
 export const registerWorker = async (input: RegisterWorkerInput) => {
-  const name = input.name?.trim()
+  const name = input.name!.trim()
   const lastName = input.lastName?.trim()
-  const email = input.email?.trim().toLowerCase()
-  const password = input.password
+  const email = input.email!.trim().toLowerCase()
+  const password = input.password!
   const phone = input.phone?.trim() || undefined
-
-  if (!name) throw createHttpError(400, 'El nombre es obligatorio')
-  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
-  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
   const passwordError = validatePassword(password)
   if (passwordError) throw createHttpError(400, passwordError)
