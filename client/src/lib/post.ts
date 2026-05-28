@@ -9,7 +9,7 @@ export const formatPostDate = (value: string): string => {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export const postToTrabajo = (post: Post): TrabajoView => ({
+export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; lng?: number | null } => ({
   id: post.id,
   titulo: post.title,
   descripcion: post.description,
@@ -17,4 +17,6 @@ export const postToTrabajo = (post: Post): TrabajoView => ({
   fechaPublicacion: formatPostDate(post.createdAt),
   fechaServicio: formatPostDate(post.startDate),
   photo: post.image,
+  lat: post.latitude,
+  lng: post.longitude,
 })

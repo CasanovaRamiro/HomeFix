@@ -6,7 +6,7 @@ const router = Router()
 
 router.post('/create', async (req, res, next) => {
 import { requireAuth, requireWorkerAuth } from '../middleware/auth.middleware.js'
-import { getPostById, listAvailablePosts } from '../services/post.service.js'
+import { getPostById, listAvailablePosts, searchPostsByDistance } from '../services/post.service.js'
 
 const router = Router()
 
@@ -89,6 +89,20 @@ router.patch('/:id/finalize', async (req, res, next) => {
     const result = await finalizePost(req.params.id, user.id)
     res.json(result)
   } catch (err) {
+router.get('/search-location', requireWorkerAuth, async (req, res) => {
+  try {
+    const lat = Number(req.query.lat)
+    const lng = Number(req.query.lng)
+    const radius = Number(req.query.radius)
+    const category = typeof req.query.category === 'string' ? req.query.category : undefined
+    const posts = await searchPostsByDistance(lat, lng, radius, category)
+    res.json(posts)
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    res.status(err.status ?? 400).json({ error: err.message })
+  }
+})
+
 router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const id = Number(req.params.id)

@@ -3,9 +3,16 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import request from 'supertest'
 import type { PostWithCategories } from '../../src/data/post.data.js'
 
-const { listAvailablePostsMock, getPostByIdMock } = vi.hoisted(() => ({
+const { listAvailablePostsMock, getPostByIdMock, searchPostsByDistanceMock } = vi.hoisted(() => ({
   listAvailablePostsMock: vi.fn<(category?: string) => Promise<PostWithCategories[]>>(),
   getPostByIdMock: vi.fn<(id: number) => Promise<PostWithCategories>>(),
+  searchPostsByDistanceMock: vi.fn<() => Promise<unknown[]>>(),
+}))
+
+vi.mock('../../src/services/post.service.js', () => ({
+  listAvailablePosts: listAvailablePostsMock,
+  getPostById: getPostByIdMock,
+  searchPostsByDistance: searchPostsByDistanceMock,
 }))
 
 vi.mock('../../src/middleware/auth.middleware.js', () => ({
@@ -13,10 +20,7 @@ vi.mock('../../src/middleware/auth.middleware.js', () => ({
   requireWorkerAuth: (_req: Request, _res: Response, next: NextFunction) => next(),
 }))
 
-vi.mock('../../src/services/post.service.js', () => ({
-  listAvailablePosts: listAvailablePostsMock,
-  getPostById: getPostByIdMock,
-}))
+
 
 const { default: postRoutes } = await import('../../src/routes/post.routes.js')
 
@@ -38,6 +42,8 @@ const mockPost: PostWithCategories = {
   status: 'Active',
   createdAt: new Date('2026-05-19T10:00:00.000Z'),
   image: 'photo.jpg',
+  latitude: null,
+  longitude: null,
   categories: [
     {
       category: {
@@ -87,6 +93,34 @@ describe('post.routes', () => {
 
       expect(response.status).toBe(400)
       expect(response.body).toEqual({ error: 'Could not list posts' })
+    })
+  })
+
+  describe('GET /posts/search-location', () => {
+    it('returns posts filtered by distance', async () => {
+      searchPostsByDistanceMock.mockResolvedValue([mockPost])
+
+      const response = await request(app).get('/posts/search-location?lat=-34.6&lng=-58.4&radius=10&category=Plomero')
+
+      expect(response.status).toBe(200)
+      expect(searchPostsByDistanceMock).toHaveBeenCalledWith(-34.6, -58.4, 10, 'Plomero')
+    })
+
+    it('forwards service errors as bad requests', async () => {
+      searchPostsByDistanceMock.mockImplementation(() => Promise.reject(new Error('Invalid radius')))
+
+      const response = await request(app).get('/posts/search-location?lat=-34.6&lng=-58.4&radius=abc')
+
+      expect(response.status).toBe(400)
+      expect(response.body).toEqual({ error: 'Invalid radius' })
+    })
+
+    it('forwards validation errors', async () => {
+      searchPostsByDistanceMock.mockImplementation(() => Promise.reject(new Error('latitude must be between -90 and 90')))
+
+      const response = await request(app).get('/posts/search-location?lat=200&lng=0&radius=10')
+
+      expect(response.status).toBe(400)
     })
   })
 

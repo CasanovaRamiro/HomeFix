@@ -259,28 +259,21 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10)
 
+  // 1. Tipo de documento
   const dni = await prisma.nationalIdType.create({
     data: { description: 'DNI' },
   })
 
+  // 2. Direcciones base para los usuarios
   const addressPalermo = await prisma.address.create({
-    data: {
-      street: 'Av. Santa Fe',
-      number: '3200',
-      city: 'Buenos Aires',
-      state: 'CABA',
-    },
+    data: { street: 'Av. Santa Fe', number: '3200', city: 'Buenos Aires', state: 'CABA' },
   })
 
   const addressRecoleta = await prisma.address.create({
-    data: {
-      street: 'Av. Callao',
-      number: '1500',
-      city: 'Buenos Aires',
-      state: 'CABA',
-    },
+    data: { street: 'Av. Callao', number: '1500', city: 'Buenos Aires', state: 'CABA' },
   })
 
+  // 3. Crear Usuarios (IDs autoincrementales numéricos)
   const cliente = await prisma.user.create({
     data: {
       name: 'Maria',
@@ -309,9 +302,11 @@ async function main() {
     },
   })
 
+  // 4. Categorías
   const categories = await Promise.all([
     prisma.category.create({ data: { name: 'Electricista' } }),
     prisma.category.create({ data: { name: 'Plomero' } }),
+    prisma.category.create({ data: { name: 'Gasista' } }),
   ])
   const categoryByName = new Map(categories.map((category) => [category.name, category]))
 
@@ -319,53 +314,144 @@ async function main() {
     { from: new Date('2026-05-15'), until: new Date('2026-05-16') },
     { from: new Date('2026-05-10'), until: new Date('2026-05-11') },
     { from: new Date('2026-05-20'), until: new Date('2026-05-22') },
-    { from: new Date('2026-05-18'), until: new Date('2026-05-19') },
-    { from: new Date('2026-05-09'), until: new Date('2026-05-10') },
+    { from: new Date('2026-06-01'), until: new Date('2026-06-02') },
+    { from: new Date('2026-06-05'), until: new Date('2026-06-06') },
   ]
 
+  // 5. Publicaciones Geolocalizadas en el AMBA (coordenadas reales)
   const posts = [
+    // --- CABA ---
     {
-      title: 'Instalar spots LED en cocina',
-      description:
-        'Necesito instalar 6 spots LED en la cocina. Ya tengo las luces compradas, solo necesito la mano de obra. La cocina tiene falso techo de durlock.',
+      title: 'Instalar spots LED - Palermo (CABA)',
+      description: 'Necesito instalar 6 spots LED empotrables en la cocina. El techo es de durlock.',
       category: 'Electricista',
+      address: 'Palermo, CABA',
+      latitude: -34.5889,
+      longitude: -58.4306,
       ...jobDates[0],
     },
     {
-      title: 'Revisar tablero electrico',
-      description:
-        'El tablero salta cada vez que prendo el aire acondicionado. Necesito una revision urgente porque hace mucho calor. El edificio es antiguo.',
+      title: 'Cambio de llave termomagnética - Belgrano (CABA)',
+      description: 'Se quema la llave térmica general cada vez que enchufo el horno.',
       category: 'Electricista',
+      address: 'Belgrano, CABA',
+      latitude: -34.5631,
+      longitude: -58.4556,
       ...jobDates[1],
     },
     {
-      title: 'Cambiar cableado completo',
-      description:
-        'Departamento de 2 ambientes con cableado muy viejo (mas de 40 anos). Quiero cambiar todo el cableado y poner llaves termicas nuevas.',
-      category: 'Electricista',
+      title: 'Reparar pérdida de agua en baño - Almagro (CABA)',
+      description: 'El tanque del inodoro pierde agua constantemente. Necesito cambiar válvula.',
+      category: 'Plomero',
+      address: 'Almagro, CABA',
+      latitude: -34.6045,
+      longitude: -58.4212,
       ...jobDates[2],
     },
     {
-      title: 'Agregar enchufes',
-      description:
-        'Necesito agregar 4 enchufes en el living y 2 en el dormitorio. El departamento tiene instalacion electrica relativamente nueva.',
+      title: 'Colocar calefón tiro balanceado - Caballito (CABA)',
+      description: 'Compré un calefón nuevo a gas y necesito que lo instalen y conecten.',
+      category: 'Gasista',
+      address: 'Caballito, CABA',
+      latitude: -34.6196,
+      longitude: -58.4457,
+      ...jobDates[3],
+    },
+
+    // --- Zona Oeste ---
+    {
+      title: 'Revisar tablero - San Justo (Zona Oeste)',
+      description: 'El tablero salta seguido. Cerca de la Universidad Nacional de La Matanza.',
       category: 'Electricista',
+      address: 'San Justo, Buenos Aires',
+      latitude: -34.6703,
+      longitude: -58.5628,
+      ...jobDates[1],
+    },
+    {
+      title: 'Cambiar cableado - Ramos Mejía (Zona Oeste)',
+      description: 'Cambio de cables viejos y térmicas en departamento de 2 ambientes.',
+      category: 'Electricista',
+      address: 'Ramos Mejía, Buenos Aires',
+      latitude: -34.6436,
+      longitude: -58.5639,
+      ...jobDates[2],
+    },
+    {
+      title: 'Destapar cañería - Morón (Zona Oeste)',
+      description: 'Urgente plomero para destapar la bacha principal de la cocina.',
+      category: 'Plomero',
+      address: 'Morón, Buenos Aires',
+      latitude: -34.6514,
+      longitude: -58.6212,
+      ...jobDates[0],
+    },
+    {
+      title: 'Instalar termotanque - Castelar (Zona Oeste)',
+      description: 'Compré un termotanque eléctrico de 80L y necesito instalación con soporte.',
+      category: 'Plomero',
+      address: 'Castelar, Buenos Aires',
+      latitude: -34.6482,
+      longitude: -58.6481,
+      ...jobDates[4],
+    },
+
+    // --- Zona Sur ---
+    {
+      title: 'Fuga de agua - Avellaneda (Zona Sur)',
+      description: 'Tengo una filtración en la pared del baño, necesito romper y reparar caño.',
+      category: 'Plomero',
+      address: 'Avellaneda, Buenos Aires',
+      latitude: -34.6622,
+      longitude: -58.3653,
+      ...jobDates[1],
+    },
+    {
+      title: 'Puesta a tierra - Lanús (Zona Sur)',
+      description: 'Necesito que alguien haga la jabalina y conexión a tierra de toda la casa.',
+      category: 'Electricista',
+      address: 'Lanús, Buenos Aires',
+      latitude: -34.6939,
+      longitude: -58.3961,
       ...jobDates[3],
     },
     {
-      title: 'Resolver cortocircuito',
-      description:
-        'Hay un cortocircuito en una de las habitaciones. No funciona ninguna luz ni enchufe de ese cuarto desde ayer.',
-      category: 'Electricista',
-      ...jobDates[4],
+      title: 'Arreglar pérdida en junta - Lomas de Zamora (Zona Sur)',
+      description: 'La junta del inodoro pierde y mancha el piso del baño.',
+      category: 'Plomero',
+      address: 'Lomas de Zamora, Buenos Aires',
+      latitude: -34.7619,
+      longitude: -58.4056,
+      ...jobDates[2],
+    },
+
+    // --- Zona Norte ---
+    {
+      title: 'Instalación de Estufa - Martínez (Zona Norte)',
+      description: 'Colocación de tiro balanceado con su correspondiente ventilación al exterior.',
+      category: 'Gasista',
+      address: 'Martínez, Buenos Aires',
+      latitude: -34.4947,
+      longitude: -58.5094,
+      ...jobDates[2],
     },
     {
-      title: 'Destapar inodoro',
-      description:
-        'Se tapo el inodoro de la cocina. Necesito urgente un plomero para destapar y revisar la caneria.',
-      category: 'Plomero',
-      from: new Date('2026-07-13'),
-      until: new Date('2026-07-15'),
+      title: 'Cortocircuito en llaves - San Isidro (Zona Norte)',
+      description: 'Cada vez que llueve salta la térmica del circuito de enchufes.',
+      category: 'Electricista',
+      address: 'San Isidro, Buenos Aires',
+      latitude: -34.4701,
+      longitude: -58.5189,
+      ...jobDates[0],
+    },
+    {
+      title: 'Reparar calefactor - Vicente López (Zona Norte)',
+      description: 'El piloto del calefactor no se enciende. Posible suciedad en el inyector.',
+      category: 'Gasista',
+      address: 'Vicente López, Buenos Aires',
+      latitude: -34.5296,
+      longitude: -58.4750,
+      ...jobDates[4],
     },
   ]
 
@@ -379,9 +465,11 @@ async function main() {
         description: item.description,
         startDate: item.from,
         endDate: item.until,
-        address: 'CABA',
+        address: item.address,
         status: 'Active',
         image: PLACEHOLDER_PHOTO,
+        latitude: item.latitude,
+        longitude: item.longitude,
         userId: cliente.id,
         categories: {
           create: {
@@ -393,9 +481,7 @@ async function main() {
   }
 
   console.log('Seed OK')
-  console.log('  Login trabajador: trabajador@test.com /', SEED_PASSWORD)
-  console.log('  Login cliente:    cliente@test.com /', SEED_PASSWORD)
-  console.log('  Posts:          5 Electricista + 1 Plomero (status: Active)')
+  console.log(' Datos de prueba distribuidos geográficamente en CABA, Oeste, Norte y Sur.')
 }
 
 main()

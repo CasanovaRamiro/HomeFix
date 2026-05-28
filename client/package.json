@@ -14,13 +14,16 @@
   },
   "dependencies": {
     "@prisma/client": "~7.7.0",
+    "@types/leaflet": "^1.9.21",
     "axios": "~1.15.1",
     "cors": "~2.8.6",
     "dotenv": "~17.4.2",
     "express": "~5.2.1",
-    "lucide-react": "~1.16.0",
+    "lucide-react": "^1.16.0",
+    "leaflet": "^1.9.4",
     "react": "~19.2.4",
     "react-dom": "~19.2.4",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "~7.14.1"
   },
   "devDependencies": {

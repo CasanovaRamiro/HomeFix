@@ -13,6 +13,7 @@ import TrabajadorFeed from './views/TrabajadorFeed'
 import MisPostulaciones from './views/MisPostulaciones'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
+import AvailableJobs from './views/AvailableJobs'
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
   localStorage.getItem('token') ? children : <Navigate to="/login" replace />
