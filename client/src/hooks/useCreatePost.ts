@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useTheme } from './useTheme'
 import api from '../services/api'
 
 export interface PostFormData {
@@ -12,7 +11,6 @@ export interface PostFormData {
 }
 
 export function useCreatePost() {
-  const { accent, border } = useTheme()
   const [form, setForm] = useState<PostFormData>({
     title: '', categoryId: '', description: '',
     startDate: '', endDate: '', address: '',
@@ -22,12 +20,12 @@ export function useCreatePost() {
   const [formSuccess, setFormSuccess] = useState(false)
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = accent
+    e.target.style.borderColor = 'var(--color-secondary)'
     e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.15)'
   }
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = border
+    e.target.style.borderColor = 'var(--color-border)'
     e.target.style.boxShadow = 'none'
   }
 

@@ -1,11 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { Bot, FileText } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme'
 import OptionCard from '../components/post/OptionCard'
 
 export default function PostOptions() {
   const navigate = useNavigate()
-  const theme = useTheme()
 
   const cards = [
     {
@@ -25,16 +23,16 @@ export default function PostOptions() {
   ]
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FFFFFF' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '100px 24px' }}>
-        <h1 style={{ fontSize: '36px', fontWeight: 700, color: theme.primaryDark, textAlign: 'center', marginBottom: '12px' }}>
+    <main className="min-h-screen bg-card">
+      <div className="max-w-[900px] mx-auto px-6 py-[100px]">
+        <h1 className="text-[36px] font-bold text-primary-dark text-center mb-3">
           ¿Cómo querés crear tu publicación?
         </h1>
-        <p style={{ fontSize: '18px', color: theme.muted, textAlign: 'center', marginBottom: '64px' }}>
+        <p className="text-lg text-muted text-center mb-16">
           Elegí la opción que te resulte más cómoda
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+        <div className="grid gap-8 grid-cols-1 sm:grid-cols-2">
           {cards.map((card, idx) => (
             <OptionCard
               key={idx}

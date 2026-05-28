@@ -12,6 +12,8 @@
   --color-primary-light: #1a2f4a;
   --color-primary-dark: #0F172A;
   --color-secondary-dark: #1E293B;
+  --color-secondary: #10B981;
+  --color-secondary-hover: #059669;
   --color-accent: #10B981;
   --color-accent-hover: #059669;
   --color-background: #f5f5f5;
@@ -32,8 +34,8 @@
 :root {
   --primary: var(--color-primary);
   --primary-light: var(--color-primary-light);
-  --accent: var(--color-accent);
-  --accent-hover: var(--color-accent-hover);
+  --accent: var(--color-secondary);
+  --accent-hover: var(--color-secondary-hover);
   --bg: var(--color-background);
   --card-bg: var(--color-card);
   --border: var(--color-border);
