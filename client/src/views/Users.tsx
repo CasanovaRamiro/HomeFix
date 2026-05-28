@@ -31,12 +31,12 @@ export default function Users() {
   }
 
   return (
-    <div className="page">
-      <header className="page-header">
-        <h2>Users</h2>
+    <div className="max-w-[900px] mx-auto my-8 px-4">
+      <header className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Users</h2>
         <button onClick={logout} className="btn-outline">Logout</button>
       </header>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="text-danger text-[13px]">{error}</p>}
       <table>
         <thead>
           <tr>

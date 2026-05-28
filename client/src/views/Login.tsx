@@ -33,15 +33,15 @@ export default function Login() {
   }
 
   return (
-    <div className="center">
-      <form className="card" onSubmit={handleSubmit}>
-        <h2>Iniciar sesion</h2>
-        {error && <p className="error">{error}</p>}
-        {success && <p style={{ color: '#059669', fontSize: 13 }}>{success}</p>}
+    <div className="min-h-screen flex items-center justify-center">
+      <form className="bg-card border border-border rounded-lg p-8 w-full max-w-[360px] flex flex-col gap-3" onSubmit={handleSubmit}>
+        <h2 className="text-xl font-semibold">Iniciar sesion</h2>
+        {error && <p className="text-danger text-[13px]">{error}</p>}
+        {success && <p className="text-secondary-hover text-[13px]">{success}</p>}
         <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
         <input type="password" placeholder="Contrasena" value={form.password} onChange={set('password')} required />
         <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Iniciando sesion...' : 'Iniciar sesion'}</button>
-        <p className="hint">¿No tienes cuenta? <Link to="/register">Registrate</Link></p>
+        <p className="text-[13px] text-text-muted text-center">¿No tienes cuenta? <Link to="/register">Registrate</Link></p>
       </form>
     </div>
   )

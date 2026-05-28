@@ -87,11 +87,11 @@ export default function Register() {
   }
 
   return (
-    <div className="center">
-      <form className="card" onSubmit={handleSubmit}>
-        <h2>Crear cuenta</h2>
-        {error && <p className="error">{error}</p>}
-        {success && <p style={{ color: '#059669', fontSize: 13 }}>{success}</p>}
+    <div className="min-h-screen flex items-center justify-center">
+      <form className="bg-card border border-border rounded-lg p-8 w-full max-w-[360px] flex flex-col gap-3" onSubmit={handleSubmit}>
+        <h2 className="text-xl font-semibold">Crear cuenta</h2>
+        {error && <p className="text-danger text-[13px]">{error}</p>}
+        {success && <p className="text-secondary-hover text-[13px]">{success}</p>}
         <input type="text" placeholder="Nombre" value={form.name} onChange={set('name')} required />
         <input type="text" placeholder="Apellido" value={form.lastName} onChange={set('lastName')} />
         <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
@@ -114,7 +114,7 @@ export default function Register() {
         />
         <input type="tel" placeholder="Telefono (opcional)" value={form.phone} onChange={set('phone')} />
         <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}</button>
-        <p className="hint">Ya tienes cuenta? <Link to="/login">Iniciar sesion</Link></p>
+        <p className="text-[13px] text-text-muted text-center">Ya tienes cuenta? <Link to="/login">Iniciar sesion</Link></p>
       </form>
     </div>
   )

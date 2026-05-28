@@ -69,7 +69,7 @@ export default function PostDetail() {
     <>
       <PageHeader title="Detalle de publicación" backTo="/users" />
       <div className="post-detail">
-        <p className="error">{error}</p>
+        <p className="text-danger text-[13px]">{error}</p>
       </div>
     </>
   )

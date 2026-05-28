@@ -32,7 +32,7 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div className="info-card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
+      <div className="flex items-center gap-2 mb-3">
         <h2>{post.title}</h2>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
