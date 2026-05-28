@@ -33,7 +33,7 @@ importers:
         specifier: ~9.0.3
         version: 9.0.3
       morgan:
-        specifier: ^1.10.1
+        specifier: ~1.10.1
         version: 1.10.1
     devDependencies:
       '@eslint/js':
@@ -52,7 +52,7 @@ importers:
         specifier: ~9.0.9
         version: 9.0.10
       '@types/morgan':
-        specifier: ^1.9.10
+        specifier: ~1.9.10
         version: 1.9.10
       '@types/node':
         specifier: ~22.0.0
