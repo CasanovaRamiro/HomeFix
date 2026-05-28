@@ -68,9 +68,6 @@ export default function Navbar() {
 
   const navLinks = role === 'cliente' ? clienteLinks : role === 'trabajador' ? trabajadorLinks : []
 
-  const isActive = (href: string, label: string) => pathname === href && label !== 'Inicio'
-    || (pathname === href && label === 'Inicio')
-
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
