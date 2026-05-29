@@ -15,7 +15,7 @@ const fmtDate = (d: string) =>
 
 export default function TurnoCard({ post }: { post: UserPost }) {
   const navigate = useNavigate()
-  const st = STATUS_MAP[post.status as keyof typeof STATUS_MAP] ?? STATUS_MAP.Active
+  const st = STATUS_MAP[post.status] ?? STATUS_MAP.Active
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-md">
