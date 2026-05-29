@@ -46,6 +46,7 @@ export const createUser = async (
       name,
       password,
       surname: "Test",
+      nationalId: `${Math.floor(10000000 + Math.random() * 90000000)}`,
       nationalIdTypeId: nationalIdType.id,
       addressId: address.id,
       ...extra,

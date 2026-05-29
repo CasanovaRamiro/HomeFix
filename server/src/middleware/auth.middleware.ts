@@ -8,10 +8,8 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
     return
   }
   try {
-    req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as JwtPayload & {
-      id: string
-      role?: string
-    }
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'dev-secret') as JwtPayload & { sub?: string; id?: string; role?: string }
+    req.user = { id: decoded.sub ?? decoded.id!, role: decoded.role } as JwtPayload & { id: string; role?: string }
     next()
   } catch {
     res.status(401).json({ error: 'Invalid token' })

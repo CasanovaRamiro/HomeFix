@@ -6,14 +6,15 @@ export const requireSession = async (req: Request, res: Response, next: NextFunc
   const header = req.headers.authorization
   if (header?.startsWith('Bearer ')) {
     try {
-      req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as JwtPayload & { id: string }
+      const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'dev-secret') as JwtPayload & { sub?: string; id?: string }
+      req.user = { id: decoded.sub ?? decoded.id! } as JwtPayload & { id: string }
       next()
       return
     } catch {
       // fall through
     }
   }
-  const dev = await prisma.user.findFirst({ where: { role: 'trabajador' }, select: { id: true } })
+  const dev = await prisma.user.findFirst({ where: { role: 'worker' }, select: { id: true } })
   if (dev) {
     req.user = { id: dev.id } as JwtPayload & { id: string }
     next()

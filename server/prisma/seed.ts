@@ -124,6 +124,7 @@ async function main() {
           surname: c.surname,
           email: c.email,
           password: passwordHash,
+          nationalId: `${Math.floor(10000000 + Math.random() * 90000000)}`,
           nationalIdTypeId: dni.id,
           addressId: c.addressId,
           role: 'user',
@@ -139,6 +140,7 @@ async function main() {
       surname: 'Mendez',
       email: 'trabajador@test.com',
       password: passwordHash,
+      nationalId: '2033344455',
       nationalIdTypeId: dni.id,
       addressId: addressPalermo.id,
       role: 'worker',
@@ -301,17 +303,17 @@ async function main() {
   }
 
   // Postulaciones de ejemplo
-  await prisma.jobApplication.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[0], status: 'Aceptada', createdAt: new Date('2026-05-08') },
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[0], status: 'Accepted', createdAt: new Date('2026-05-08') },
   })
-  await prisma.jobApplication.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[1], status: 'Aceptada', createdAt: new Date('2026-05-06') },
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[1], status: 'Accepted', createdAt: new Date('2026-05-06') },
   })
-  await prisma.jobApplication.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[2], status: 'Rechazada', createdAt: new Date('2026-05-04') },
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[2], status: 'Rejected', createdAt: new Date('2026-05-04') },
   })
-  await prisma.jobApplication.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[3], status: 'Aceptada', createdAt: new Date('2026-05-02') },
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[3], status: 'Accepted', createdAt: new Date('2026-05-02') },
   })
 
   console.log('Seed OK')

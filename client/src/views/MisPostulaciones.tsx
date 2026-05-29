@@ -24,6 +24,17 @@ type Tab = (typeof tabs)[number]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function getUserNameFromToken(): string | null {
+  const token = localStorage.getItem('token')
+  if (!token) return null
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.name ?? payload.nickname ?? payload.sub ?? null
+  } catch {
+    return null
+  }
+}
+
 function getInitials(name: string): string {
   if (!name) return 'U'
   const parts = name.trim().split(' ')
@@ -38,7 +49,7 @@ function getInitials(name: string): string {
 
 function WorkerNavbar() {
   const navigate = useNavigate()
-  const userName = localStorage.getItem('userName') ?? 'Pedro Picapied...'
+  const userName = getUserNameFromToken() ?? 'Usuario'
   const userInitial = userName.charAt(0).toUpperCase()
 
   return (
@@ -330,7 +341,7 @@ function PostulacionCard({ p }: { p: Application }) {
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
           >
-            📞 Contactar cliente
+            Contactar cliente
           </button>
         </div>
       )}

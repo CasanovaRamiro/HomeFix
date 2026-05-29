@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import type { PostInput } from "../../src/types/postInput.js";
 
@@ -8,6 +8,8 @@ vi.mock("../../src/data/post.data.js", () => ({
   findPostsByUser: vi.fn(),
   findPostById: vi.fn(),
   updatePostStatus: vi.fn(),
+  findAvailablePosts: vi.fn(),
+  searchByDistance: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -130,6 +132,79 @@ describe("post.service - getUserPosts", () => {
 
     const result = await postService.getUserPosts('uuid-user-1');
     expect(result).toEqual([]);
+  });
+});
+
+describe("post.service - listAvailablePosts", () => {
+  const mockPost = {
+    id: "uuid-1",
+    userId: "uuid-user-1",
+    title: "Reparación de caño",
+    description: "Test",
+    address: "Calle 123",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ category: { id: "uuid-cat-1", name: "Plomero" } }],
+    user: { id: "uuid-user-1", name: "Test", surname: "User" },
+  };
+
+  it("should return available posts without category filter", async () => {
+    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+
+    const result = await postService.listAvailablePosts();
+
+    expect(findAvailablePosts).toHaveBeenCalledWith(undefined);
+    expect(result).toHaveLength(1);
+    expect(result[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
+  });
+
+  it("should filter available posts by category", async () => {
+    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+
+    const result = await postService.listAvailablePosts("Plomero");
+
+    expect(findAvailablePosts).toHaveBeenCalledWith("Plomero");
+    expect(result).toHaveLength(1);
+  });
+
+  it("should return empty array when no posts match", async () => {
+    vi.mocked(findAvailablePosts).mockResolvedValue([]);
+
+    const result = await postService.listAvailablePosts("NonExistent");
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("post.service - searchPostsByDistance", () => {
+  it("should call searchByDistance with correct params", async () => {
+    vi.mocked(searchByDistance).mockResolvedValue([]);
+
+    const result = await postService.searchPostsByDistance(-34.6, -58.4, 10);
+
+    expect(searchByDistance).toHaveBeenCalledWith(-34.6, -58.4, 10, undefined);
+    expect(result).toEqual([]);
+  });
+
+  it("should reject invalid latitude", async () => {
+    await expect(postService.searchPostsByDistance(200, 0, 10)).rejects.toThrow("latitude must be between -90 and 90");
+  });
+
+  it("should reject invalid longitude", async () => {
+    await expect(postService.searchPostsByDistance(0, 200, 10)).rejects.toThrow("longitude must be between -180 and 180");
+  });
+
+  it("should reject radius larger than 1000", async () => {
+    await expect(postService.searchPostsByDistance(0, 0, 2000)).rejects.toThrow("radius must be between 1 and 1000 km");
+  });
+
+  it("should reject non-finite numbers", async () => {
+    await expect(postService.searchPostsByDistance(NaN, 0, 10)).rejects.toThrow("lat, lng, and radius must be finite numbers");
   });
 });
 describe('post.service - finalizePost', () => {

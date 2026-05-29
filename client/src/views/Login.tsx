@@ -20,10 +20,11 @@ export default function Login() {
 
     try {
       setIsSubmitting(true)
-      const { data } = await api.post<{ accessToken: string; idToken: string }>('/auth/login', form)
+      const { data } = await api.post<{ accessToken: string; idToken: string; user: { role: string } }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
-      setTimeout(() => navigate('/worker/available-jobs'), 1200)
+      const destino = data.user.role === 'worker' ? '/worker/available-jobs' : '/users'
+      setTimeout(() => navigate(destino), 1200)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? 'Error al iniciar sesion')

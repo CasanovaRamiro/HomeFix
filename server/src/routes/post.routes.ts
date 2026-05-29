@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { requireAuth, requireWorkerAuth } from '../middleware/auth.middleware.js'
 import { syncAuth0User } from '../services/auth.service.js'
-import { getPostById, getUserPosts, finalizePost, listAvailablePosts, searchPostsByDistance } from '../services/post.service.js'
+import { createPost, getPostById, getUserPosts, finalizePost, listAvailablePosts, searchPostsByDistance } from '../services/post.service.js'
 
 const router = Router()
 
@@ -28,6 +28,19 @@ router.get('/search-location', requireWorkerAuth, async (req, res) => {
   } catch (error) {
     const err = error as Error & { status?: number }
     res.status(err.status ?? 400).json({ error: err.message })
+  }
+})
+
+router.post('/create', requireAuth, async (req, res, next) => {
+  try {
+    if (!req.body.title?.trim()) {
+      res.status(400).json({ error: 'Title is required' })
+      return
+    }
+    const post = await createPost(req.body)
+    res.status(201).json(post)
+  } catch (err) {
+    next(err)
   }
 })
 
