@@ -97,12 +97,22 @@ export default function Register() {
         <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
         <input type="password" placeholder="Contrasena" value={form.password} onChange={set('password')} required />
         
-        <ul className="validation-list">
-          <li className={`validation-item ${validations.length ? 'valid' : ''}`}>Al menos 8 caracteres</li>
-          <li className={`validation-item ${validations.upper ? 'valid' : ''}`}>Al menos una mayuscula</li>
-          <li className={`validation-item ${validations.lower ? 'valid' : ''}`}>Al menos una minuscula</li>
-          <li className={`validation-item ${validations.number ? 'valid' : ''}`}>Al menos un numero</li>
-          <li className={`validation-item ${validations.special ? 'valid' : ''}`}>Al menos un caracter especial</li>
+        <ul className="list-none p-0 my-2.5 text-xs">
+          <li className={`flex items-center gap-2 mb-1 ${validations.length ? 'text-secondary-hover' : 'text-danger'}`}>
+            <span>{validations.length ? '✓' : '✕'}</span> Al menos 8 caracteres
+          </li>
+          <li className={`flex items-center gap-2 mb-1 ${validations.upper ? 'text-secondary-hover' : 'text-danger'}`}>
+            <span>{validations.upper ? '✓' : '✕'}</span> Al menos una mayuscula
+          </li>
+          <li className={`flex items-center gap-2 mb-1 ${validations.lower ? 'text-secondary-hover' : 'text-danger'}`}>
+            <span>{validations.lower ? '✓' : '✕'}</span> Al menos una minuscula
+          </li>
+          <li className={`flex items-center gap-2 mb-1 ${validations.number ? 'text-secondary-hover' : 'text-danger'}`}>
+            <span>{validations.number ? '✓' : '✕'}</span> Al menos un numero
+          </li>
+          <li className={`flex items-center gap-2 mb-1 ${validations.special ? 'text-secondary-hover' : 'text-danger'}`}>
+            <span>{validations.special ? '✓' : '✕'}</span> Al menos un caracter especial
+          </li>
         </ul>
 
         <input
