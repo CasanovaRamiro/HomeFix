@@ -50,7 +50,7 @@ export default function AiDiagnosis() {
     chatInput: { flex: 1, padding: '12px 20px', borderRadius: '9999px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.card, color: theme.primaryDark, transition: 'all 0.3s' },
     chatSendBtn: { width: '48px', height: '48px', borderRadius: '50%', background: theme.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'all 0.3s' },
     chatSendIcon: { width: '20px', height: '20px', color: '#FFFFFF' },
-    resultContainer: { borderRadius: '16px', padding: '40px', background: theme.card, border: `1px solid ${theme.border}` },
+    resultContainer: { borderRadius: '16px', padding: 'clamp(24px, 4vw, 40px)', background: theme.card, border: `1px solid ${theme.border}` },
     resultBadge: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '9999px', background: `${theme.accent}1a`, color: theme.accent, fontSize: '14px' },
     resultBadgeIcon: { width: '16px', height: '16px' },
     resultTitle: { fontSize: '24px', fontWeight: 700, color: theme.primaryDark },
