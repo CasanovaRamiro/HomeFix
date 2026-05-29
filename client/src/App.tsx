@@ -11,6 +11,7 @@ import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
 import TrabajadorFeed from './views/TrabajadorFeed'
 import MisPostulaciones from './views/MisPostulaciones'
+import ClienteDashboard from './views/ClienteDashboard'
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
   localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
+        <Route path="/dashboard" element={<PrivateRoute><ClienteDashboard /></PrivateRoute>} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
         <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />

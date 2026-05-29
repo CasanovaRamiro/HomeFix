@@ -45,4 +45,20 @@ export interface WorkerReview {
   }
 }
 
+export interface UserPost {
+  id: string
+  title: string
+  description: string
+  status: string
+  createdAt: string
+  address: string
+  startDate: string
+  endDate: string
+  categories: { id: string; name: string }[]
+  worker: { id: string; name: string } | null
+}
+
+export const getUserPosts = (): Promise<UserPost[]> =>
+  api.post<UserPost[]>('/posts/user-posts').then((r) => r.data)
+
 export default api

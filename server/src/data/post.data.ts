@@ -66,12 +66,20 @@ export type UserPostSummary = {
   startDate: Date;
   endDate: Date;
   categories: { id: string; name: string }[];
+  worker: { id: string; name: string } | null;
 };
 
 export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
   const posts = await prisma.post.findMany({
-    where: { userId, status: { in: ["Active", "Paused"] } },
-    include: { categories: { include: { category: true } } },
+    where: { userId, status: { in: ["Active", "Paused", "Finalized"] } },
+    include: {
+      categories: { include: { category: true } },
+      applications: {
+        include: { worker: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+      },
+    },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
 
@@ -88,6 +96,7 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
       id: pc.category.id,
       name: pc.category.name,
     })),
+    worker: post.applications[0]?.worker ?? null,
   }));
 };
 
