@@ -70,9 +70,9 @@ export default function Navbar(): React.ReactElement | null {
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
 
-          {/* Logo */}
+          {/* Logo, marginLeft -10px is intended to center the logo */}
           <Link to={homeRoute} className="flex items-center flex-shrink-0" style={{ textDecoration: 'none' }}>
-            <img src={logo} alt="HomeFix" style={{ height: '40px', width: 'auto' }} />
+            <img src={logo} alt="HomeFix" style={{ height: '40px', width: 'auto', marginLeft: '-10px' }} />
           </Link>
 
           {/* Desktop nav links */}
