@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import logo from '../assets/homefix-logo.png'
 import { Menu, X, Home, Search, FileText, ClipboardList, Briefcase, User, LogOut, ChevronDown } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
@@ -39,6 +40,8 @@ export default function Navbar(): React.ReactElement | null {
 
   if (AUTH_ROUTES.includes(pathname)) return null
 
+  const isLanding = !isLoggedIn && pathname === '/'
+
   const navLinks =
     user?.role === UserRole.Worker ? WORKER_LINKS :
     user?.role === UserRole.Client ? CLIENT_LINKS :
@@ -47,6 +50,7 @@ export default function Navbar(): React.ReactElement | null {
   const homeRoute =
     user?.role === UserRole.Worker ? '/worker' :
     user?.role === UserRole.Client    ? '/users'  :
+    isLanding ? '/' :
     '/login'
 
   const displayName    = user?.name ?? 'Mi cuenta'
@@ -68,11 +72,31 @@ export default function Navbar(): React.ReactElement | null {
 
           {/* Logo */}
           <Link to={homeRoute} className="flex items-center flex-shrink-0" style={{ textDecoration: 'none' }}>
-            <img src="/homefix-logo.png" alt="HomeFix" style={{ height: '40px', width: 'auto' }} />
+            <img src={logo} alt="HomeFix" style={{ height: '40px', width: 'auto' }} />
           </Link>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
+            {isLanding && (
+              <>
+                <Link
+                  to="/login"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Buscar Profesionales
+                </Link>
+                <Link
+                  to="/register/worker"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Soy Profesional
+                </Link>
+              </>
+            )}
             {navLinks.map((link) => {
               const active  = pathname === link.href
               const hovered = hoveredLink === link.label
