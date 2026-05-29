@@ -1,11 +1,11 @@
-# Ofix
+# HomeFix
 
 Full-stack web application with a React + Vite frontend and a Node.js + Express + Prisma + MySQL backend.
 
 ## Project Structure
 
 ```
-Ofix/
+HomeFix/
 ├── client/   ← React + Vite (port 5173)
 └── server/   ← Express + Prisma + MySQL (port 3000)
 ```
@@ -22,7 +22,7 @@ Ofix/
 
 ```bash
 git clone <repository-url>
-cd Ofix
+cd HomeFix
 ```
 
 ### 2. Set up the server
