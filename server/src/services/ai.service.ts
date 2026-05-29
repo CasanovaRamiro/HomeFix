@@ -3,7 +3,7 @@ import type { AiSuggestRequest, AiResponse } from '../types/aiSuggestion.js'
 import prisma from '../lib/prisma.js'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
+const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite' })
 
 const HISTORY_LIMIT = 6
 const CACHE_TTL = 5 * 60 * 1000

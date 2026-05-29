@@ -11,7 +11,9 @@ export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void
   const mounted = useRef(false)
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatEndRef.current?.parentElement) {
+      chatEndRef.current.parentElement.scrollTop = chatEndRef.current.parentElement.scrollHeight
+    }
   }, [messages, loading])
 
   useEffect(() => {
