@@ -15,7 +15,7 @@ const mockUser = {
   password:'password123',
   phone: null as string | null,
   bio: null as string | null,
-  role: 'user',
+  role: 'client',
   createdAt: new Date(),
 }
 
@@ -133,7 +133,7 @@ describe('auth.service - loginUser', () => {
 
     expect(result.accessToken).toBe('access-token')
     expect(result.user.id).toBe('uuid-jane')
-    expect(result.user.role).toBe('user')
+    expect(result.user.role).toBe('client')
   })
 
   it('throws 401 when credentials are invalid', async () => {

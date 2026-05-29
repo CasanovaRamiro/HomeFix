@@ -17,7 +17,7 @@ model User {
   password        String
   phone           String?
   bio             String?          @db.Text
-  role            String           @default("user")
+  role            String           @default("client")
   createdAt       DateTime         @default(now())
   posts           Post[]
   categories      UserCategory[]

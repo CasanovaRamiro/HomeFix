@@ -1,5 +1,6 @@
 import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
+import { UserRole } from '../types/userRole.js'
 
 interface Auth0Claims {
   sub?: string
@@ -185,7 +186,7 @@ export const registerUser = async (input: RegisterInput) => {
     email,
     password: managedPassword,
     phone,
-    role: 'cliente',
+    role: UserRole.Client,
   })
 
   return {

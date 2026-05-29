@@ -1,6 +1,7 @@
 import jwt, { type JwtPayload } from 'jsonwebtoken'
 import type { Request, Response, NextFunction } from 'express'
 import prisma from '../lib/prisma.js'
+import { UserRole } from '../types/userRole.js'
 
 export const requireSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const header = req.headers.authorization
@@ -13,7 +14,7 @@ export const requireSession = async (req: Request, res: Response, next: NextFunc
       // fall through
     }
   }
-  const dev = await prisma.user.findFirst({ where: { role: 'trabajador' }, select: { id: true } })
+  const dev = await prisma.user.findFirst({ where: { role: UserRole.Worker }, select: { id: true } })
   if (dev) {
     req.user = { id: dev.id } as JwtPayload & { id: string }
     next()
