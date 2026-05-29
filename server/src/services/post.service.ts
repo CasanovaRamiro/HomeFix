@@ -28,7 +28,7 @@ export const finalizePost = async (postId: string, userId: string) => {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
   }
 
-  return updatePostStatus(postId, 'Finalized')
+  return updatePostStatus(postId, 'Completed')
 }
 
 

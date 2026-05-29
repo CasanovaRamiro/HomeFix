@@ -202,13 +202,13 @@ describe('PATCH /posts/:id/finalize', () => {
     postId = createdPost.id
   })
 
-  it('devuelve 200 y status Finalized cuando el post está Paused y es del usuario', async () => {
+  it('devuelve 200 y status Completed cuando el post está Paused y es del usuario', async () => {
     const res = await request(app)
       .patch(`/posts/${postId}/finalize`)
       .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(200)
-    expect(res.body.status).toBe('Finalized')
+    expect(res.body.status).toBe('Completed')
   })
 
   it('devuelve 400 si el post no está en estado Paused', async () => {

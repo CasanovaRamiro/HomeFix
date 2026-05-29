@@ -120,12 +120,12 @@ describe("findPostsByUser", () => {
     expect(posts[0].title).toBe("Test Post");
   });
 
-  it("should return Active, Paused and Finalized posts", async () => {
+  it("should return Active, In progress, Paused and Completed posts", async () => {
     await createPost(createValidPost());
     const p2 = await createPost({ ...createValidPost(), title: "Paused post" });
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Paused" } });
-    const p3 = await createPost({ ...createValidPost(), title: "Finalized post" });
-    await prisma.post.update({ where: { id: p3.id }, data: { status: "Finalized" } });
+    const p3 = await createPost({ ...createValidPost(), title: "In progress post" });
+    await prisma.post.update({ where: { id: p3.id }, data: { status: "In progress" } });
 
     const posts = await findPostsByUser(userId);
     expect(posts).toHaveLength(3);

@@ -142,12 +142,12 @@ describe('post.service - finalizePost', () => {
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Finalized' })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed' })
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Finalized')
-    expect(result.status).toBe('Finalized')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(result.status).toBe('Completed')
   })
 
   it('lanza 404 si el post no existe', async () => {

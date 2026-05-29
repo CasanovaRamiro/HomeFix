@@ -71,7 +71,7 @@ export type UserPostSummary = {
 
 export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
   const posts = await prisma.post.findMany({
-    where: { userId, status: { in: ["Active", "Paused", "Finalized"] } },
+    where: { userId, status: { in: ["Active", "In progress", "Paused", "Completed"] } },
     include: {
       categories: { include: { category: true } },
       applications: {
