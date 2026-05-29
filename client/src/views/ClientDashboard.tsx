@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 
-export default function ClienteDashboard() {
+export default function ClientDashboard() {
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -19,19 +19,19 @@ export default function ClienteDashboard() {
 
   if (loading) return <LoadingSpinner />
 
-  const activos     = posts.filter(p => p.status === 'Active' || p.status === 'Paused').length
-  const completados = posts.filter(p => p.status === 'Finalized').length
+  const activos     = posts.filter(p => p.status === 'Active' || p.status === 'In progress' || p.status === 'Paused').length
+  const completados = posts.filter(p => p.status === 'Completed').length
 
   const stats = [
-    { label: 'Turnos Activos', value: activos,    icon: CalendarDays,  iconColor: '#10B981' },
-    { label: 'Completados',    value: completados, icon: CheckCircle2,  iconColor: '#3B82F6' },
+    { label: 'Publicaciones activas', value: activos,    icon: CalendarDays,  iconColor: '#10B981' },
+    { label: 'Completadas',    value: completados, icon: CheckCircle2,  iconColor: '#3B82F6' },
     { label: 'Mensajes',       value: 0,           icon: MessageSquare, iconColor: '#8B5CF6' },
     { label: 'Sin Leer',       value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
   ]
 
-  const inProgress = posts.filter(p => p.status !== 'Finalized')
-  const finalized  = posts.filter(p => p.status === 'Finalized')
-  const ordered    = [...inProgress, ...finalized]
+  const inProgress = posts.filter(p => p.status !== 'Completed')
+  const completed  = posts.filter(p => p.status === 'Completed')
+  const ordered    = [...inProgress, ...completed]
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -40,7 +40,7 @@ export default function ClienteDashboard() {
       <div className="bg-primary-dark px-6 pt-12 pb-28 md:px-12">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold text-white">Mi Dashboard</h1>
-          <p className="text-slate-400 text-sm mt-2">Gestioná tus turnos y conversaciones</p>
+          <p className="text-slate-400 text-sm mt-2">Gestioná tus publicaciones y conversaciones</p>
         </div>
       </div>
 
@@ -61,19 +61,13 @@ export default function ClienteDashboard() {
             {/* Mis Turnos */}
             <section>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
-                <h2 className="text-xl font-bold text-slate-900">Mis Turnos</h2>
-                <button
-                  disabled
-                  title="Próximamente disponible"
-                  className="flex items-center gap-2 bg-slate-100 text-slate-400 text-sm font-semibold rounded-lg px-4 py-2 cursor-not-allowed opacity-70"
-                >
-                  <Search size={15} /> Buscar profesionales
-                </button>
+                <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
+                
               </div>
 
               {ordered.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-xl px-6 py-16 text-center shadow-md">
-                  <p className="text-slate-400 text-sm">Todavía no tenés turnos.</p>
+                  <p className="text-slate-400 text-sm">Todavía no tenés publicaciones.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
