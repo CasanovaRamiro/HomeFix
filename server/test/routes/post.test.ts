@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 import { PostInput } from '../../src/types/postInput.js'
@@ -25,12 +26,12 @@ const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
 })
 
 vi.mock('../../src/middleware/auth0.middleware.js', () => ({
-  jwtCheck: (req: any, res: any, next: any) => {
+  jwtCheck: (req: Request, res: Response, next: NextFunction) => {
     if (!req.headers.authorization?.startsWith('Bearer ')) {
       res.status(401).json({ error: 'Unauthorized' })
       return
     }
-    req.auth = { header: {}, token: '', payload: mockPayload }
+    ;(req as Request & { auth?: unknown }).auth = { header: {}, token: '', payload: mockPayload }
     next()
   },
 }))

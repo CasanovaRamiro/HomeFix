@@ -1,27 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+const mockFindMany = vi.hoisted(() => vi.fn())
+
 vi.mock('../../src/lib/prisma.js', () => ({
   default: {
     category: {
-      findMany: vi.fn(),
+      findMany: mockFindMany,
     },
   },
 }))
 
-import prisma from '../../src/lib/prisma.js'
 import { listCategories } from '../../src/services/category.service.js'
-
-const mockedFindMany = vi.mocked(prisma.category.findMany)
 
 beforeEach(() => vi.clearAllMocks())
 
 describe('category.service - listCategories', () => {
   it('calls prisma.category.findMany with the correct order', async () => {
-    mockedFindMany.mockResolvedValue([])
+    mockFindMany.mockResolvedValue([])
 
     await listCategories()
 
-    expect(mockedFindMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } })
+    expect(mockFindMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } })
   })
 
   it('returns the categories from prisma', async () => {
@@ -29,7 +28,7 @@ describe('category.service - listCategories', () => {
       { id: 'uuid-1', name: 'Alpha' },
       { id: 'uuid-2', name: 'Zulu' },
     ]
-    mockedFindMany.mockResolvedValue(mockCategories)
+    mockFindMany.mockResolvedValue(mockCategories)
 
     const result = await listCategories()
 
@@ -37,7 +36,7 @@ describe('category.service - listCategories', () => {
   })
 
   it('returns an empty array when no categories exist', async () => {
-    mockedFindMany.mockResolvedValue([])
+    mockFindMany.mockResolvedValue([])
 
     const result = await listCategories()
 
