@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
-import { PostInput } from '../../src/types/postInput.js'
 
 const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
   const payload: Record<string, string | undefined> = {
@@ -44,16 +44,14 @@ let categoryId: string
 
 beforeEach(async () => {
   await cleanDb()
-  const user = await createUser('test@test.com', 'Test', 'hashed')
+  const user = await createUser('test@test.com', 'Test', 'hashed', { role: 'worker' })
   const category = await createCategory('Test Category')
   userId = user.id
   categoryId = category.id
-  token = 'test-auth0-token'
+  token = jwt.sign({ sub: userId, email: 'test@test.com', role: 'worker' }, 'test-secret')
 })
 
-let postId: string
-
-const createValidPost = (): PostInput => ({
+const postInput = (overrides: Record<string, unknown> = {}) => ({
   userId,
   description: 'Test description',
   startDate: new Date('2026-06-01T00:00:00.000Z'),
@@ -61,28 +59,141 @@ const createValidPost = (): PostInput => ({
   address: '123 Test St',
   categoryId,
   title: 'Test Post',
+  ...overrides,
+})
+
+describe('GET /posts/available', () => {
+  it('returns active posts matching the category', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Plumber job',
+        description: 'Fix pipes',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .get('/posts/available?category=Test Category')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].title).toBe('Plumber job')
+  })
+
+  it('returns empty array when no posts match the category', async () => {
+    const res = await request(app)
+      .get('/posts/available?category=Nonexistent')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([])
+  })
+
+  it('returns all active posts when no category given', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Job A',
+        description: 'A',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .get('/posts/available')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).get('/posts/available')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('GET /posts/search-location', () => {
+  it('returns posts within the given radius', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Nearby job',
+        description: 'Close by',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        latitude: -34.6,
+        longitude: -58.4,
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .get('/posts/search-location?lat=-34.6&lng=-58.4&radius=50')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].title).toBe('Nearby job')
+  })
+
+  it('returns empty array when no posts within radius', async () => {
+    const res = await request(app)
+      .get('/posts/search-location?lat=-90&lng=0&radius=1')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([])
+  })
+
+  it('returns 400 for invalid latitude', async () => {
+    const res = await request(app)
+      .get('/posts/search-location?lat=200&lng=0&radius=10')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).get('/posts/search-location?lat=0&lng=0&radius=10')
+    expect(res.status).toBe(401)
+  })
 })
 
 describe('GET /posts/:id', () => {
+  let postId: string
+
   beforeEach(async () => {
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
-      .send(createValidPost())
+      .send(postInput())
     postId = res.body.id
   })
 
-  it('should return a post with categories', async () => {
+  it('returns the post with categories', async () => {
     const res = await request(app)
       .get(`/posts/${postId}`)
       .set('Authorization', `Bearer ${token}`)
     expect(res.status).toBe(200)
     expect(res.body.title).toBe('Test Post')
     expect(res.body.categories).toHaveLength(1)
-    expect(res.body.categories[0].category.name).toBe('Test Category')
+    expect(res.body.categories[0].name).toBe('Test Category')
   })
 
-  it('should contain description and address fields', async () => {
+  it('includes description and address', async () => {
     const res = await request(app)
       .get(`/posts/${postId}`)
       .set('Authorization', `Bearer ${token}`)
@@ -91,7 +202,7 @@ describe('GET /posts/:id', () => {
     expect(res.body.address).toBe('123 Test St')
   })
 
-  it('should return 404 for non-existent post', async () => {
+  it('returns 404 for non-existent post', async () => {
     const res = await request(app)
       .get('/posts/9999')
       .set('Authorization', `Bearer ${token}`)
@@ -99,35 +210,33 @@ describe('GET /posts/:id', () => {
     expect(res.body.error).toBe('Post not found')
   })
 
-  it('should return 401 for unauthorized access', async () => {
+  it('returns 401 without token', async () => {
     const res = await request(app).get(`/posts/${postId}`)
     expect(res.status).toBe(401)
   })
 })
 
 describe('POST /posts/create', () => {
-
-  it('should create a new post', async () => {
+  it('creates a new post', async () => {
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
-      .send(createValidPost())
+      .send(postInput())
     expect(res.status).toBe(201)
-
     expect(res.body).toHaveProperty('id')
     expect(res.body.title).toBe('Test Post')
   })
 
-  it('should return 400 for invalid post data', async () => {
+  it('returns 400 for empty title', async () => {
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
-      .send({ ...createValidPost(), title: '' })
+      .send(postInput({ title: '' }))
     expect(res.status).toBe(400)
   })
 
-  it('should return 401 for unauthorized access', async () => {
-    const res = await request(app).post('/posts/create').send(createValidPost())
+  it('returns 401 without token', async () => {
+    const res = await request(app).post('/posts/create').send(postInput())
     expect(res.status).toBe(401)
   })
 
@@ -144,7 +253,7 @@ describe('POST /posts/create', () => {
 })
 
 describe('POST /posts/user-posts', () => {
-  it('should return posts for the authenticated user', async () => {
+  it('returns posts for the authenticated user', async () => {
     await prisma.post.create({
       data: {
         userId,
@@ -168,7 +277,7 @@ describe('POST /posts/user-posts', () => {
     expect(res.body[0].categories).toEqual([{ id: expect.any(String), name: 'Test Category' }])
   })
 
-  it('should return empty array when authenticated user has no posts', async () => {
+  it('returns empty array when the user has no posts', async () => {
     const res = await request(app)
       .post('/posts/user-posts')
       .set('Authorization', `Bearer ${token}`)
@@ -177,17 +286,17 @@ describe('POST /posts/user-posts', () => {
     expect(res.body).toEqual([])
   })
 
-  it('should return 401 without token', async () => {
+  it('returns 401 without token', async () => {
     const res = await request(app).post('/posts/user-posts')
-
     expect(res.status).toBe(401)
   })
 })
+
 describe('PATCH /posts/:id/finalize', () => {
   let postId: string
 
   beforeEach(async () => {
-    const createdPost = await prisma.post.create({
+    const post = await prisma.post.create({
       data: {
         userId,
         title: 'Trabajo a finalizar',
@@ -199,33 +308,33 @@ describe('PATCH /posts/:id/finalize', () => {
         categories: { create: { categoryId } },
       },
     })
-    postId = createdPost.id
+    postId = post.id
   })
 
-  it('devuelve 200 y status Finalized cuando el post está Paused y es del usuario', async () => {
+  it('returns 200 and Finalized when post is Paused and owned by user', async () => {
     const res = await request(app)
       .patch(`/posts/${postId}/finalize`)
-      .set('Authorization', 'Bearer test-auth0-token')
+      .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
     expect(res.body.status).toBe('Finalized')
   })
 
-  it('devuelve 400 si el post no está en estado Paused', async () => {
+  it('returns 400 when post is not Paused', async () => {
     await prisma.post.update({ where: { id: postId }, data: { status: 'Active' } })
 
     const res = await request(app)
       .patch(`/posts/${postId}/finalize`)
-      .set('Authorization', 'Bearer test-auth0-token')
+      .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(400)
   })
 
-  it('devuelve 403 si el post pertenece a otro usuario', async () => {
-    const otroUsuario = await createUser('otro@test.com', 'Otro', 'hashed')
+  it('returns 403 when post belongs to another user', async () => {
+    const otro = await createUser('otro@test.com', 'Otro', 'hashed')
     const postAjeno = await prisma.post.create({
       data: {
-        userId: otroUsuario.id,
+        userId: otro.id,
         title: 'Post ajeno',
         description: 'Test',
         address: 'Otra calle',
@@ -238,22 +347,21 @@ describe('PATCH /posts/:id/finalize', () => {
 
     const res = await request(app)
       .patch(`/posts/${postAjeno.id}/finalize`)
-      .set('Authorization', 'Bearer test-auth0-token')
+      .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(403)
   })
 
-  it('devuelve 404 si el post no existe', async () => {
+  it('returns 404 when post does not exist', async () => {
     const res = await request(app)
-      .patch('/posts/id-que-no-existe/finalize')
-      .set('Authorization', 'Bearer test-auth0-token')
+      .patch('/posts/id-inexistente/finalize')
+      .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(404)
   })
 
-  it('devuelve 401 sin token', async () => {
+  it('returns 401 without token', async () => {
     const res = await request(app).patch(`/posts/${postId}/finalize`)
-
     expect(res.status).toBe(401)
   })
 })

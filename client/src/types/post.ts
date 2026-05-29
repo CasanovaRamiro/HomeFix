@@ -35,6 +35,7 @@ export interface TrabajoView {
   fechaPublicacion: string
   fechaServicio: string
   createdAt: string
+  startDate: string
   photo: string
   clientName: string
   clientSurname: string

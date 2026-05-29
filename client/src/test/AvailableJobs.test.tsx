@@ -5,9 +5,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Post } from '../types/post'
 
-const { fetchAvailablePostsMock, searchPostsByLocationMock } = vi.hoisted(() => ({
+const { fetchAvailablePostsMock, searchPostsByLocationMock, applyToPostMock } = vi.hoisted(() => ({
   fetchAvailablePostsMock: vi.fn<(category?: string) => Promise<{ data: Post[] }>>(),
   searchPostsByLocationMock: vi.fn<() => Promise<{ data: Post[] }>>(),
+  applyToPostMock: vi.fn<(postId: string) => Promise<{ data: { id: string; status: string; message: string } }>>(),
 }))
 
 const mockMap = {
@@ -31,12 +32,16 @@ vi.mock('../services/posts', () => ({
   searchPostsByLocation: searchPostsByLocationMock,
 }))
 
+vi.mock('../services/applications', () => ({
+  applyToPost: applyToPostMock,
+}))
+
 const { default: AvailableJobs } = await import('../views/AvailableJobs')
 
 const posts: Post[] = [
   {
-    id: 1,
-    userId: 2,
+    id: '1',
+    userId: '2',
     title: 'Cambiar canilla',
     description: 'Pierde agua en la cocina',
     startDate: '2026-05-25T10:00:00.000Z',
@@ -44,14 +49,15 @@ const posts: Post[] = [
     address: 'Calle 123',
     status: 'Active',
     createdAt: '2026-05-20T10:00:00.000Z',
-    image: 'canilla.jpg',
+    images: [{ url: 'canilla.jpg' }],
     latitude: null,
     longitude: null,
-    categories: [{ category: { id: 1, name: 'Plomero' } }],
+    categories: [{ id: '1', name: 'Plomero' }],
+    user: { id: '2', name: 'Cliente', surname: 'Apellido' },
   },
   {
-    id: 2,
-    userId: 3,
+    id: '2',
+    userId: '3',
     title: 'Instalar termica',
     description: 'Tablero nuevo para departamento',
     startDate: '2026-05-24T10:00:00.000Z',
@@ -59,10 +65,11 @@ const posts: Post[] = [
     address: 'Avenida 456',
     status: 'Active',
     createdAt: '2026-05-18T10:00:00.000Z',
-    image: '',
+    images: [],
     latitude: null,
     longitude: null,
-    categories: [{ category: { id: 2, name: 'Electricista' } }],
+    categories: [{ id: '2', name: 'Electricista' }],
+    user: { id: '3', name: 'Otro', surname: 'Cliente' },
   },
 ]
 
@@ -72,6 +79,7 @@ const renderAvailableJobs = (initialRoute = '/trabajador/trabajos'): ReturnType<
       <Routes>
         <Route path="/trabajador/trabajos" element={<AvailableJobs />} />
         <Route path="/login" element={<h1>Login</h1>} />
+        <Route path="/worker/my-applications" element={<h1>Mis Postulaciones</h1>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -81,6 +89,7 @@ describe('AvailableJobs', () => {
     localStorage.clear()
     vi.clearAllMocks()
     fetchAvailablePostsMock.mockResolvedValue({ data: posts })
+    applyToPostMock.mockResolvedValue({ data: { id: 'app-1', status: 'Pending', message: 'OK' } })
   })
 
   it('loads and renders available jobs', async () => {
@@ -102,12 +111,12 @@ describe('AvailableJobs', () => {
     expect(screen.getByText('Instalar termica')).toBeTruthy()
   })
 
-  it('reloads jobs when a category chip is selected', async () => {
+  it('reloads jobs when a category is selected', async () => {
     const user = userEvent.setup()
     renderAvailableJobs()
 
     await screen.findByText('Cambiar canilla')
-    await user.click(screen.getByRole('button', { name: 'Plomero' }))
+    await user.selectOptions(screen.getByLabelText('Rubro'), 'Plomero')
 
     await waitFor(() => {
       expect(fetchAvailablePostsMock).toHaveBeenLastCalledWith('Plomero')
@@ -115,7 +124,7 @@ describe('AvailableJobs', () => {
     expect(localStorage.getItem('workerCategory')).toBe('Plomero')
   })
 
-  it('stores an application in localStorage from the detail modal', async () => {
+  it('calls the API and navigates to my-applications on submit', async () => {
     const user = userEvent.setup()
     renderAvailableJobs()
 
@@ -124,16 +133,7 @@ describe('AvailableJobs', () => {
     await user.type(screen.getByLabelText(/Mensaje para el cliente/i), 'Tengo experiencia.')
     await user.click(screen.getByRole('button', { name: 'Enviar postulacion' }))
 
-    const stored = JSON.parse(localStorage.getItem('homefix_postulaciones_trabajador') ?? '[]') as [
-      { trabajoId: number; mensaje: string },
-    ]
-    expect(stored[0]).toEqual(
-      expect.objectContaining({
-        trabajoId: 1,
-        mensaje: 'Tengo experiencia.',
-      }),
-    )
-    expect(screen.getByText('Postulacion enviada')).toBeTruthy()
+    expect(applyToPostMock).toHaveBeenCalledWith('1')
   })
 
   it('shows location filter button and opens modal on click', async () => {

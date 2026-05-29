@@ -6,10 +6,10 @@ import {
   postToTrabajo,
 } from '../lib/post'
 import { fetchAvailablePosts, searchPostsByLocation } from '../services/posts'
+import { applyToPost } from '../services/applications'
+import api from '../services/api'
 import type { Post, TrabajoView } from '../types/post'
 import LocationFilterModal from '../components/post/LocationFilterModal'
-
-const POSTULACIONES_KEY = 'homefix_postulaciones_trabajador'
 const CATEGORIAS_DISPONIBLES = [
   '',
   'Electricista',
@@ -63,14 +63,10 @@ export default function AvailableJobs(): JSX.Element {
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
 
-  const loadPostulaciones = useCallback((): void => {
+  const loadPostulaciones = useCallback(async (): Promise<void> => {
     try {
-      const stored = JSON.parse(localStorage.getItem(POSTULACIONES_KEY) ?? '[]') as {
-        trabajoId: string | number
-      }[]
-      setPostulacionesIds(
-        stored.map((p) => String(p.trabajoId))
-      )
+      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
+      setPostulacionesIds(res.data.map((a) => a.postId))
     } catch {
       setPostulacionesIds([])
     }
@@ -106,7 +102,7 @@ export default function AvailableJobs(): JSX.Element {
   }, [category, navigate, searchParams, locationFilter])
 
   useEffect(() => {
-    loadPostulaciones()
+    void loadPostulaciones()
   }, [loadPostulaciones])
 
   useEffect(() => {
@@ -127,8 +123,8 @@ export default function AvailableJobs(): JSX.Element {
     }
 
     resultado.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime()
-      const dateB = new Date(b.createdAt).getTime()
+      const dateA = new Date(a.startDate).getTime()
+      const dateB = new Date(b.startDate).getTime()
 
       return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
     })
@@ -143,28 +139,15 @@ export default function AvailableJobs(): JSX.Element {
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
-  const handlePostular = (): void => {
+  const handlePostular = async (): Promise<void> => {
     if (!selected) return
     setEnviando(true)
-    const entry = {
-      id: `post-${Date.now()}`,
-      trabajoId: selected.id,
-      trabajo: selected.titulo,
-      cliente: `Cliente #${selected.id}`,
-      mensaje: mensaje,
-      estado: 'pendiente',
-      fechaPostulacion: new Date().toISOString().split('T')[0],
-    }
-    const prev = JSON.parse(localStorage.getItem(POSTULACIONES_KEY) ?? '[]') as unknown[]
-    localStorage.setItem(POSTULACIONES_KEY, JSON.stringify([entry, ...prev]))
-    setPostulacionesIds((ids) => [...ids, selected.id])
-    setEnviado(true)
-    setTimeout(() => {
-      setShowModal(false)
-      setEnviado(false)
-      setMensaje('')
+    try {
+      await applyToPost(selected.id)
+      navigate('/worker/my-applications')
+    } catch {
       setEnviando(false)
-    }, 1500)
+    }
   }
 
   const handleLocationApply = (lat: number, lng: number, radius: number) => {
@@ -431,7 +414,7 @@ export default function AvailableJobs(): JSX.Element {
             ) : (
               <div className="modal-success">
                 <h2>Postulacion enviada</h2>
-                <p>Guardada localmente hasta que exista el backend de postulaciones.</p>
+                <p>Te postulaste correctamente al trabajo.</p>
               </div>
             )}
           </div>

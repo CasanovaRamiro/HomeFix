@@ -183,25 +183,32 @@ export const registerUser = async (input: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  const auth0User = await createAuth0User({
-    email,
-    password,
-    name,
-    lastName,
-  })
+  let auth0User: { email: string; emailVerified: boolean } | null = null
+  try {
+    auth0User = await createAuth0User({
+      email,
+      password,
+      name,
+      lastName,
+    })
+  } catch {
+    console.error('Auth0 no disponible, registrando solo localmente')
+  }
+
+  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: managedPassword,
+    password: passwordHash,
     phone,
     role: UserRole.Client,
   })
 
   return {
     userId: user.id,
-    email: auth0User.email,
-    emailVerified: auth0User.emailVerified,
+    email: auth0User?.email ?? email,
+    emailVerified: auth0User?.emailVerified ?? false,
     message: 'Usuario registrado exitosamente',
   }
 }
@@ -223,17 +230,24 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  const auth0User = await createAuth0User({
-    email,
-    password,
-    name,
-    lastName,
-  })
+  let auth0User: { email: string; emailVerified: boolean } | null = null
+  try {
+    auth0User = await createAuth0User({
+      email,
+      password,
+      name,
+      lastName,
+    })
+  } catch {
+    console.error('Auth0 no disponible, registrando solo localmente')
+  }
+
+  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: managedPassword,
+    password: passwordHash,
     phone,
     role: 'worker',
   })
@@ -254,8 +268,8 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
 
   return {
     userId: user.id,
-    email: auth0User.email,
-    emailVerified: auth0User.emailVerified,
+    email: auth0User?.email ?? email,
+    emailVerified: auth0User?.emailVerified ?? false,
     message: 'Trabajador registrado exitosamente',
   }
 }
