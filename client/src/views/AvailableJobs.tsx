@@ -127,8 +127,8 @@ export default function AvailableJobs(): JSX.Element {
     }
 
     resultado.sort((a, b) => {
-      const dateA = new Date(a.fechaPublicacion.split('/').reverse().join('-')).getTime()
-      const dateB = new Date(b.fechaPublicacion.split('/').reverse().join('-')).getTime()
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
 
       return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
     })
@@ -183,11 +183,16 @@ export default function AvailableJobs(): JSX.Element {
     <div className="trabajos-page">
       <header className="trabajos-hero">
         <div className="trabajos-hero-inner">
-          <Link to="/users" className="trabajos-back">
-            {'<- Volver'}
-          </Link>
+          <div className="trabajos-hero-top">
+            <Link to="/users" className="trabajos-back">
+              {'<- Volver'}
+            </Link>
+            <button type="button" className="btn-logout" onClick={logout}>
+              Salir
+            </button>
+          </div>
           <h1>Trabajos disponibles</h1>
-          <p>
+          <p className="trabajos-hero-subtitle">
             {loading ? (
               'Cargando…'
             ) : (
@@ -207,26 +212,26 @@ export default function AvailableJobs(): JSX.Element {
             )}
           </p>
 
-          <div className="trabajos-hero-actions-row">
-            <div className="backloggd-chips-container">
-              <span className="chips-label">Filtrar rubro:</span>
-              <div className="backloggd-chips">
+          <div className="trabajos-filters-row">
+            <div className="filter-group filter-category">
+              <label htmlFor="cat-select">Rubro</label>
+              <select
+                id="cat-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
                 {CATEGORIAS_DISPONIBLES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`chip ${category === cat ? 'active' : ''}`}
-                    onClick={() => setCategory(cat)}
-                  >
-                    {cat === '' ? 'Todos' : cat}
-                  </button>
+                  <option key={cat} value={cat}>
+                    {cat === '' ? 'Todos los rubros' : cat}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
 
-            <div className="search-wrapper-inline">
-              <span className="search-label">Buscar:</span>
+            <div className="filter-group filter-search">
+              <label htmlFor="search-input">Buscar</label>
               <input
+                id="search-input"
                 type="search"
                 placeholder="Palabra clave..."
                 value={searchQuery}
@@ -234,9 +239,10 @@ export default function AvailableJobs(): JSX.Element {
               />
             </div>
 
-            <div className="search-wrapper-inline">
-              <span className="search-label">Orden:</span>
+            <div className="filter-group filter-sort">
+              <label htmlFor="sort-select">Orden</label>
               <select
+                id="sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'reciente' | 'antiguo')}
               >
@@ -245,19 +251,14 @@ export default function AvailableJobs(): JSX.Element {
               </select>
             </div>
 
-            <div className="search-wrapper-inline">
+            <div className="filter-group filter-location">
+              <label>&nbsp;</label>
               <button
                 type="button"
-                className={`btn-outline ${locationFilter ? 'btn-active' : ''}`}
+                className={`btn-filter-location ${locationFilter ? 'active' : ''}`}
                 onClick={() => setShowLocationModal(true)}
               >
                 {locationFilter ? `Ubicación (${locationFilter.radius} km)` : 'Filtrar por ubicación'}
-              </button>
-            </div>
-
-            <div className="logout-wrapper-inline">
-              <button type="button" className="btn-outline" onClick={logout}>
-                Salir
               </button>
             </div>
           </div>
@@ -281,7 +282,7 @@ export default function AvailableJobs(): JSX.Element {
             filtradosYOrdenados.map((trabajo) => (
               <article
                 key={trabajo.id}
-                className={`trabajo-card card ${selected?.id === trabajo.id ? 'is-selected' : ''} ${yaPostulado(trabajo.id) ? 'is-applied' : ''}`}
+                className={`trabajo-card ${selected?.id === trabajo.id ? 'is-selected' : ''} ${yaPostulado(trabajo.id) ? 'is-applied' : ''}`}
                 onClick={() => setSelected(trabajo)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -292,25 +293,39 @@ export default function AvailableJobs(): JSX.Element {
                 role="button"
                 tabIndex={0}
               >
-                <div className="trabajo-card-head">
-                  <span className="badge badge-open">{trabajo.categoria}</span>
-                  {yaPostulado(trabajo.id) && (
-                    <span className="badge badge-applied">Postulado</span>
-                  )}
-                  <span className="trabajo-date">{trabajo.fechaPublicacion}</span>
+                {trabajo.photo && (
+                  <img
+                    src={trabajo.photo}
+                    alt=""
+                    className="trabajo-card-img"
+                  />
+                )}
+                <div className="trabajo-card-body">
+                  <div className="trabajo-card-head">
+                    <span className="badge badge-open">{trabajo.categoria}</span>
+                    {yaPostulado(trabajo.id) && (
+                      <span className="badge badge-applied">Postulado</span>
+                    )}
+                  </div>
+                  <h3>{trabajo.titulo}</h3>
+                  <p className="trabajo-desc">{trabajo.descripcion}</p>
                 </div>
-                <h3>{trabajo.titulo}</h3>
-                <p className="trabajo-desc">{trabajo.descripcion}</p>
-                <p className="trabajo-meta">
-                  Servicio: {trabajo.fechaServicio}
-                </p>
+                <div className="trabajo-card-footer">
+                  <div className="trabajo-client">
+                    <div className="trabajo-client-avatar">
+                      {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
+                    </div>
+                    <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+                  </div>
+                  <span className="trabajo-date">{trabajo.fechaServicio}</span>
+                </div>
               </article>
             ))}
         </div>
 
         <aside className="trabajos-detail">
           {selected !== null ? (
-            <div className="card trabajos-detail-card">
+            <div className="trabajos-detail-card">
               <div className="trabajos-detail-head">
                 <h2>Detalle del trabajo</h2>
                 <button
@@ -322,40 +337,51 @@ export default function AvailableJobs(): JSX.Element {
                   x
                 </button>
               </div>
-              {selected.photo !== null && selected.photo !== undefined && selected.photo !== '' && (
+              {selected.photo && (
                 <img
                   src={selected.photo}
                   alt=""
                   className="trabajo-photo"
                 />
               )}
-              <h3>{selected.titulo}</h3>
-              <p className="trabajo-meta">Publicado: {selected.fechaPublicacion}</p>
-              <p className="trabajo-detail-desc">{selected.descripcion}</p>
-              <dl className="trabajo-facts">
-                <div>
-                  <dt>Rubro</dt>
-                  <dd>{selected.categoria}</dd>
+              <div className="trabajos-detail-body">
+                <div className="trabajo-detail-client">
+                  <div className="trabajo-detail-client-avatar">
+                    {selected.clientName?.charAt(0).toUpperCase() ?? 'C'}
+                  </div>
+                  <div>
+                    <div className="trabajo-detail-client-name">{selected.clientName} {selected.clientSurname}</div>
+                    <span className="trabajo-detail-client-label">Cliente</span>
+                  </div>
                 </div>
-                <div>
-                  <dt>Fecha servicio</dt>
-                  <dd>{selected.fechaServicio}</dd>
-                </div>
-              </dl>
-              {yaPostulado(selected.id) ? (
-                <p className="trabajos-applied-msg">Ya te postulaste a este trabajo.</p>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-accent"
-                  onClick={() => setShowModal(true)}
-                >
-                  Postularme
-                </button>
-              )}
+                <h3>{selected.titulo}</h3>
+                <p className="trabajo-meta">Publicado: {selected.fechaPublicacion}</p>
+                <p className="trabajo-detail-desc">{selected.descripcion}</p>
+                <dl className="trabajo-facts">
+                  <div>
+                    <dt>Rubro</dt>
+                    <dd>{selected.categoria}</dd>
+                  </div>
+                  <div>
+                    <dt>Fecha servicio</dt>
+                    <dd>{selected.fechaServicio}</dd>
+                  </div>
+                </dl>
+                {yaPostulado(selected.id) ? (
+                  <p className="trabajos-applied-msg">Ya te postulaste a este trabajo.</p>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-accent"
+                    onClick={() => setShowModal(true)}
+                  >
+                    Postularme
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="card trabajos-detail-placeholder">
+            <div className="trabajos-detail-placeholder">
               <p>Selecciona un trabajo para ver el detalle</p>
             </div>
           )}

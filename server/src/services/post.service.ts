@@ -14,12 +14,8 @@ const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number])
   images: post.images,
   latitude: post.latitude,
   longitude: post.longitude,
-  categories: (post.categories || []).map((item) => ({
-    category: {
-      id: item.category.id,
-      name: item.category.name,
-    },
-  })),
+  categories: (post.categories || []).map((item) => item.category),
+  user: post.user,
 });
 
 interface ServicePostInput {
