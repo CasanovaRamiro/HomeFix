@@ -16,7 +16,10 @@ export interface PostDTO {
   images: { url: string }[]
   latitude: number | null
   longitude: number | null
-  categories: {
-    category: PostCategoryDTO
-  }[]
+  categories: PostCategoryDTO[]
+  user: {
+    id: string
+    name: string
+    surname: string
+  }
 }

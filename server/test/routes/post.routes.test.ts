@@ -52,6 +52,7 @@ const mockPost: PostWithCategories = {
       },
     },
   ],
+  user: { id: '2', name: 'Maria', surname: 'Gonzalez' },
 }
 
 describe('post.routes', () => {

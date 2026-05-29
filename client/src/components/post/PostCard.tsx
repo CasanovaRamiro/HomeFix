@@ -1,7 +1,8 @@
 import Badge from '../ui/Badge'
 
 interface Category {
-  category: { id: string; name: string }
+  id: string
+  name: string
 }
 
 interface PostDetail {
@@ -39,7 +40,7 @@ export default function PostCard({ post }: PostCardProps) {
 
       <div className="categories">
         {post.categories.map((c) => (
-          <Badge key={c.category.id}>{c.category.name}</Badge>
+          <Badge key={c.id}>{c.name}</Badge>
         ))}
       </div>
 

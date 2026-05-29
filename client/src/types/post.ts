@@ -1,8 +1,6 @@
 export interface PostCategoryDTO {
-  category: {
-    id: string
-    name: string
-  }
+  id: string
+  name: string
 }
 
 export interface PostDTO {
@@ -19,6 +17,11 @@ export interface PostDTO {
   latitude: number | null
   longitude: number | null
   categories: PostCategoryDTO[]
+  user: {
+    id: string
+    name: string
+    surname: string
+  }
 }
 
 export type Post = PostDTO
@@ -31,5 +34,8 @@ export interface TrabajoView {
   categoria: string
   fechaPublicacion: string
   fechaServicio: string
+  createdAt: string
   photo: string
+  clientName: string
+  clientSurname: string
 }
