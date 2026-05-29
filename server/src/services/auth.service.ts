@@ -185,6 +185,7 @@ export const registerUser = async (input: RegisterInput) => {
     email,
     password: managedPassword,
     phone,
+    role: 'cliente',
   })
 
   return {

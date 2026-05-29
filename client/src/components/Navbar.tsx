@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Menu, X, Home, Search, FileText, ClipboardList, Briefcase, User, LogOut, ChevronDown } from 'lucide-react'
 import type { ElementType } from 'react'
@@ -12,13 +12,13 @@ interface NavLinkDef {
   icon: ElementType
 }
 
-const TRABAJADOR_LINKS: NavLinkDef[] = [
+const WORKER_LINKS: NavLinkDef[] = [
   { href: '/worker',                 label: 'Inicio',               icon: Home },
   { href: '/worker',                 label: 'Trabajos Disponibles', icon: Briefcase },
   { href: '/worker/my-applications', label: 'Mis Postulaciones',    icon: ClipboardList },
 ]
 
-const CLIENTE_LINKS: NavLinkDef[] = [
+const CLIENT_LINKS: NavLinkDef[] = [
   { href: '/users',        label: 'Inicio',               icon: Home },
   { href: '/users',        label: 'Buscar Profesionales', icon: Search },
   { href: '/post-options', label: 'Nueva Solicitud',      icon: FileText },
@@ -27,7 +27,7 @@ const CLIENTE_LINKS: NavLinkDef[] = [
 
 const AUTH_ROUTES = ['/login', '/register']
 
-export default function Navbar(): JSX.Element | null {
+export default function Navbar(): React.ReactElement | null {
   const theme = useTheme()
   const { user, isLoggedIn } = useAuth()
   const { pathname } = useLocation()
@@ -40,8 +40,8 @@ export default function Navbar(): JSX.Element | null {
   if (AUTH_ROUTES.includes(pathname)) return null
 
   const navLinks =
-    user?.role === UserRole.Worker ? TRABAJADOR_LINKS :
-    user?.role === UserRole.Client    ? CLIENTE_LINKS    :
+    user?.role === UserRole.Worker ? WORKER_LINKS :
+    user?.role === UserRole.Client ? CLIENT_LINKS :
     []
 
   const homeRoute =
