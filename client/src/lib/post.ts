@@ -16,7 +16,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   categoria: post.categories[0]?.category.name ?? 'Sin rubro',
   fechaPublicacion: formatPostDate(post.createdAt),
   fechaServicio: formatPostDate(post.startDate),
-  photo: post.image,
+  photo: post.images[0]?.url ?? '',
   lat: post.latitude,
   lng: post.longitude,
 })

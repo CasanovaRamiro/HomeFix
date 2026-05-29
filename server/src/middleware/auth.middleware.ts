@@ -9,7 +9,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
   }
   try {
     req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as JwtPayload & {
-      id: number
+      id: string
       role?: string
     }
     next()

@@ -1,8 +1,9 @@
 import prisma from "../lib/prisma.js";
+import type { PostInput } from "../types/postInput.js";
 
 export interface PostWithCategories {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   description: string
   startDate: Date
@@ -10,12 +11,12 @@ export interface PostWithCategories {
   address: string
   status: string
   createdAt: Date
-  image: string
+  images: { url: string }[]
   latitude: number | null
   longitude: number | null
   categories: {
     category: {
-      id: number
+      id: string
       name: string
     }
   }[]
@@ -31,7 +32,9 @@ const postFields = {
   address: true,
   status: true,
   createdAt: true,
-  image: true,
+  images: {
+    select: { url: true },
+  },
   latitude: true,
   longitude: true,
   categories: {
@@ -45,6 +48,22 @@ const postFields = {
     },
   },
 } as const;
+
+export const createPost = (data: PostInput) =>
+  prisma.post.create({
+    data: {
+      userId: data.userId,
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      address: data.address,
+      categories: {
+        create: { categoryId: data.categoryId },
+      },
+    },
+    select: postFields,
+  }) as unknown as Promise<PostWithCategories>
 
 const availablePostWhere = (category?: string) => ({
   status: "Active",
@@ -77,6 +96,19 @@ export const findPostById = (id: string) =>
 export interface LocationSearchResult extends PostWithCategories {
   distance: number
 }
+
+export const findPostsByUser = (userId: string) =>
+  prisma.post.findMany({
+    where: { userId },
+    select: postFields,
+    orderBy: { createdAt: 'desc' },
+  }) as unknown as Promise<PostWithCategories[]>
+
+export const updatePostStatus = (id: string, status: string) =>
+  prisma.post.update({
+    where: { id },
+    data: { status },
+  })
 
 export const searchByDistance = async (
   lat: number,
@@ -116,7 +148,7 @@ export const searchByDistance = async (
   }
   params.push(radiusKm);
 
-  const rawResults = await prisma.$queryRawUnsafe<{ id: number; distance: number }[]>(sql, ...params);
+  const rawResults = await prisma.$queryRawUnsafe<{ id: string; distance: number }[]>(sql, ...params);
 
   if (!Array.isArray(rawResults) || rawResults.length === 0) return [];
 
@@ -128,11 +160,13 @@ export const searchByDistance = async (
     select: postFields,
   });
 
-  return posts
-    .map((p) => {
-      const dist = distanceMap.get(p.id);
-      return dist !== undefined ? { ...p, distance: dist } : null;
-    })
+  const results: (LocationSearchResult | null)[] = posts.map((p) => {
+    const dist = distanceMap.get(p.id);
+    if (dist === undefined) return null;
+    return { ...p, distance: dist } as unknown as LocationSearchResult;
+  });
+
+  return results
     .filter((p): p is LocationSearchResult => p !== null)
     .sort((a, b) => a.distance - b.distance);
 };

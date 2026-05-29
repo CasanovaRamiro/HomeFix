@@ -16,7 +16,7 @@ let categoryId: string
 
 beforeEach(async () => {
   await cleanDb()
-  const user = await createUser({ email: 'test@test.com', name: 'Test', password: 'hashed' })
+  const user = await createUser('test@test.com', 'Test', 'hashed')
   const category = await createCategory('Test Category')
   userId = user.id
   categoryId = category.id
@@ -184,9 +184,7 @@ describe('PATCH /posts/:id/finalize', () => {
   })
 
   it('devuelve 403 si el post pertenece a otro usuario', async () => {
-    const otroUsuario = await prisma.user.create({
-      data: { email: 'otro@test.com', name: 'Otro', password: 'hashed' },
-    })
+    const otroUsuario = await createUser('otro@test.com', 'Otro', 'hashed')
     const postAjeno = await prisma.post.create({
       data: {
         userId: otroUsuario.id,

@@ -44,7 +44,7 @@ describe('POST /auth/register', () => {
     const res = await request(app).post('/auth/register').send({
       name: 'New User',
       email: 'newuser@test.com',
-      password: 'password123',
+      password: 'Test1234!',
     })
 
     expect(res.status).toBe(201)
@@ -62,13 +62,13 @@ describe('POST /auth/register', () => {
     await request(app).post('/auth/register').send({
       name: 'New User',
       email: 'newuser@test.com',
-      password: 'password123',
+      password: 'Test1234!',
     })
 
     const duplicate = await request(app).post('/auth/register').send({
       name: 'New User',
       email: 'newuser@test.com',
-      password: 'password123',
+      password: 'Test1234!',
     })
 
     expect(duplicate.status).toBe(409)

@@ -1,11 +1,11 @@
 export interface PostCategoryDTO {
-  id: number
+  id: string
   name: string
 }
 
 export interface PostDTO {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   description: string
   startDate: string
@@ -13,7 +13,7 @@ export interface PostDTO {
   address: string
   status: string
   createdAt: string
-  image: string
+  images: { url: string }[]
   latitude: number | null
   longitude: number | null
   categories: {
