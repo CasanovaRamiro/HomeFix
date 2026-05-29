@@ -52,7 +52,7 @@ export function useCreatePost() {
         startDate: form.startDate,
         endDate: form.endDate,
         address: form.address,
-        categoryId: Number(form.categoryId),
+        categoryId: form.categoryId,
       })
       setFormSuccess(true)
     } catch (err) {

@@ -3,10 +3,37 @@ import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 import { PostInput } from '../../src/types/postInput.js'
 
-vi.mock('../../src/middleware/auth0.middleware.js', async () => {
-  const mock = await import('../helpers/auth0Mock.js')
-  return { jwtCheck: mock.jwtCheck }
+const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
+  const payload: Record<string, string | undefined> = {
+    sub: 'auth0|test123',
+    email: 'test@test.com',
+    name: 'Test User',
+  }
+  return {
+    mockPayload: payload,
+    setMockPayload: (p: Record<string, string | undefined>) => {
+      Object.keys(payload).forEach(k => delete payload[k])
+      Object.assign(payload, p)
+    },
+    resetMockPayload: () => {
+      Object.keys(payload).forEach(k => delete payload[k])
+      payload.sub = 'auth0|test123'
+      payload.email = 'test@test.com'
+      payload.name = 'Test User'
+    },
+  }
 })
+
+vi.mock('../../src/middleware/auth0.middleware.js', () => ({
+  jwtCheck: (req: any, res: any, next: any) => {
+    if (!req.headers.authorization?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    req.auth = { header: {}, token: '', payload: mockPayload }
+    next()
+  },
+}))
 
 import { app } from '../../src/index.js'
 
@@ -101,6 +128,16 @@ describe('POST /posts/create', () => {
   it('should return 401 for unauthorized access', async () => {
     const res = await request(app).post('/posts/create').send(createValidPost())
     expect(res.status).toBe(401)
+  })
+
+  it('should return 401 when token payload lacks sub claim', async () => {
+    setMockPayload({ email: 'test@test.com' })
+    const res = await request(app)
+      .post('/posts/create')
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send(createValidPost())
+    expect(res.status).toBe(401)
+    resetMockPayload()
   })
 
 })

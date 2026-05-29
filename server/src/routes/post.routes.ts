@@ -6,7 +6,19 @@ const router = Router()
 
 router.post('/create', async (req, res, next) => {
   try {
-    const result = await post(req.body);
+    const claims = req.auth?.payload as {
+      sub?: string
+      email?: string
+      name?: string
+      nickname?: string
+      phone_number?: string
+    } | undefined
+    if(!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await post({...req.body, userId: user.id });
     res.status(201).json(result);
   } catch (error) {
     const err = error as Error & { status?: number };
