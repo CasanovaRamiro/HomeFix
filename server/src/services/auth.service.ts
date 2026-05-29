@@ -1,4 +1,5 @@
-import { findByEmail, createUser } from '../data/user.data.js'
+import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
+import prisma from '../lib/prisma.js'
 
 interface Auth0Claims {
   sub?: string
@@ -19,15 +20,28 @@ interface RegisterInput {
   address?: string
 }
 
+interface RegisterWorkerInput extends RegisterInput {
+  categories: string[]
+}
+
 interface LoginInput {
   email?: string
   password?: string
 }
 
-const createHttpError = (status: number, message: string) => {
+export const createHttpError = (status: number, message: string) => {
   const error = new Error(message) as Error & { status?: number }
   error.status = status
   return error
+}
+
+const validatePassword = (password: string) => {
+  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres'
+  if (!/[A-Z]/.test(password)) return 'La contraseña debe contener al menos una letra mayúscula'
+  if (!/[a-z]/.test(password)) return 'La contraseña debe contener al menos una letra minúscula'
+  if (!/[0-9]/.test(password)) return 'La contraseña debe contener al menos un número'
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'La contraseña debe contener al menos un carácter especial'
+  return null
 }
 
 const getRequiredEnv = (key: 'AUTH0_CLIENT_ID' | 'AUTH0_DB_CONNECTION') => {
@@ -126,9 +140,9 @@ const loginWithAuth0 = async (email: string, password: string) => {
     const text = await response.text();
     console.error("Error de Auth0:", text);
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
-      throw createHttpError(401, 'Invalid email or password')
+      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }
-    throw createHttpError(502, 'Failed to authenticate with Auth0')
+    throw createHttpError(502, 'Error al autenticar con Auth0')
   }
 
   return (await response.json()) as Auth0TokenResponse
@@ -147,19 +161,17 @@ const getAuth0UserInfo = async (accessToken: string) => {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-  const name = input.name?.trim()
+  const name = input.name!.trim()
   const lastName = input.lastName?.trim()
-  const email = input.email?.trim().toLowerCase()
-  const password = input.password
+  const email = input.email!.trim().toLowerCase()
+  const password = input.password!
   const phone = input.phone?.trim() || undefined
 
-  if (!name) throw createHttpError(400, 'Name is required')
-  if (!email) throw createHttpError(400, 'Email is required')
-  if (!password) throw createHttpError(400, 'Password is required')
-  if (password.length < 8) throw createHttpError(400, 'Password must be at least 8 characters')
+  const passwordError = validatePassword(password)
+  if (passwordError) throw createHttpError(400, passwordError)
 
   const existing = await findByEmail(email)
-  if (existing) throw createHttpError(409, 'Email already registered')
+  if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
   const auth0User = await createAuth0User({
     email,
@@ -179,7 +191,61 @@ export const registerUser = async (input: RegisterInput) => {
     userId: user.id,
     email: auth0User.email,
     emailVerified: auth0User.emailVerified,
-    message: 'User registered successfully',
+    message: 'Usuario registrado exitosamente',
+  }
+}
+
+export const registerWorker = async (input: RegisterWorkerInput) => {
+  const name = input.name!.trim()
+  const lastName = input.lastName?.trim()
+  const email = input.email!.trim().toLowerCase()
+  const password = input.password!
+  const phone = input.phone?.trim() || undefined
+
+  const passwordError = validatePassword(password)
+  if (passwordError) throw createHttpError(400, passwordError)
+
+  if (!input.categories || input.categories.length === 0) {
+    throw createHttpError(400, 'Debes seleccionar al menos una especialidad')
+  }
+
+  const existing = await findByEmail(email)
+  if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
+
+  const auth0User = await createAuth0User({
+    email,
+    password,
+    name,
+    lastName,
+  })
+
+  const user = await createUser({
+    name: lastName ? `${name} ${lastName}` : name,
+    email,
+    password: managedPassword,
+    phone,
+    role: 'worker',
+  })
+
+  // Resolve categories to IDs and create associations
+  const categoryIds = await Promise.all(
+    input.categories.map(async (catName) => {
+      const cat = await prisma.category.upsert({
+        where: { name: catName },
+        update: {},
+        create: { name: catName },
+      })
+      return cat.id
+    })
+  )
+
+  await addUserCategories(user.id, categoryIds)
+
+  return {
+    userId: user.id,
+    email: auth0User.email,
+    emailVerified: auth0User.emailVerified,
+    message: 'Trabajador registrado exitosamente',
   }
 }
 

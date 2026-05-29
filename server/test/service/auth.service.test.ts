@@ -76,7 +76,7 @@ describe('auth.service - registerUser', () => {
       name: 'Jane',
       lastName: 'Doe',
       email: 'jane@test.com',
-      password: 'password123',
+      password: 'Password123!',
       phone: '123456',
     })
 
@@ -93,7 +93,7 @@ describe('auth.service - registerUser', () => {
       registerUser({
         name: 'Jane',
         email: 'jane@test.com',
-        password: 'password123',
+        password: 'Password123!',
       })
     ).rejects.toMatchObject({ status: 409 })
   })

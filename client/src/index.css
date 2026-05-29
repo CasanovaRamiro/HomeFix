@@ -36,6 +36,8 @@
   --text-muted: #6B7280;
   --danger: #ef4444;
   --radius: 8px;
+  --accent-bg: #ECFDF5;
+  --accent-border: #10B981;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

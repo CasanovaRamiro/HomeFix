@@ -24,16 +24,39 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
-  const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [field]: e.target.value })
+  const [validations, setValidations] = useState({
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false,
+  })
+
+  const validatePassword = (password: string) => {
+    setValidations({
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    })
+  }
+
+  const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setForm({ ...form, [field]: value })
+    if (field === 'password') {
+      validatePassword(value)
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setSuccess('')
 
-    if (form.password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres')
+    if (!Object.values(validations).every(Boolean)) {
+      setError('La contraseña no cumple con todos los requisitos')
       return
     }
 
@@ -73,6 +96,15 @@ export default function Register() {
         <input type="text" placeholder="Apellido" value={form.lastName} onChange={set('lastName')} />
         <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
         <input type="password" placeholder="Contrasena" value={form.password} onChange={set('password')} required />
+        
+        <ul className="validation-list">
+          <li className={`validation-item ${validations.length ? 'valid' : ''}`}>Al menos 8 caracteres</li>
+          <li className={`validation-item ${validations.upper ? 'valid' : ''}`}>Al menos una mayuscula</li>
+          <li className={`validation-item ${validations.lower ? 'valid' : ''}`}>Al menos una minuscula</li>
+          <li className={`validation-item ${validations.number ? 'valid' : ''}`}>Al menos un numero</li>
+          <li className={`validation-item ${validations.special ? 'valid' : ''}`}>Al menos un caracter especial</li>
+        </ul>
+
         <input
           type="password"
           placeholder="Confirmar contrasena"

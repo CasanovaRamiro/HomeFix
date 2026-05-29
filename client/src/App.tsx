@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './views/Login'
 import Register from './views/Register'
+import RegisterWorker from './views/RegisterWorker'
 import Users from './views/Users'
 import AiDiagnosis from './views/AiDiagnosis'
 import CreatePost from './views/CreatePost'
@@ -20,6 +21,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/register/worker" element={<RegisterWorker />} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
         <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />

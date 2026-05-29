@@ -1,8 +1,31 @@
 import prisma from '../src/lib/prisma.js'
-import bcrypt from 'bcryptjs'
+import * as bcrypt from 'bcryptjs'
 
 async function main() {
   const hashedPassword = await bcrypt.hash('123456', 10)
+
+  // 1. Asegurar que las categorías existan siempre
+  const categories = [
+    'Plomeria',
+    'Electricidad',
+    'Carpinteria',
+    'Instalador de aire acondicionado',
+    'Pintura',
+    'Albanileria',
+    'Cerrajeria',
+    'Climatizacion',
+    'Gas'
+  ]
+
+  for (const name of categories) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    })
+  }
+  console.log('Categories synchronized')
+
   const existingUser = await prisma.user.findUnique({ where: { email: 'trabajador@homefix.com' } })
   if (existingUser) {
     const extraPost = await prisma.post.findFirst({ where: { title: 'Reparación de instalación eléctrica' } })
@@ -88,10 +111,15 @@ async function main() {
 
   console.log('Created client users')
 
-  const catPlomeria = await prisma.category.create({ data: { name: 'Plomería' } })
-  const catElect = await prisma.category.create({ data: { name: 'Electricidad' } })
-  const catGas = await prisma.category.create({ data: { name: 'Gas' } })
-  const catAlbanil = await prisma.category.create({ data: { name: 'Albañilería' } })
+  const catPlomeria = await prisma.category.findUniqueOrThrow({ where: { name: 'Plomeria' } })
+  const catElect = await prisma.category.findUniqueOrThrow({ where: { name: 'Electricidad' } })
+  const catCarpinteria = await prisma.category.findUniqueOrThrow({ where: { name: 'Carpinteria' } })
+  const catAire = await prisma.category.findUniqueOrThrow({ where: { name: 'Instalador de aire acondicionado' } })
+  const catPintura = await prisma.category.findUniqueOrThrow({ where: { name: 'Pintura' } })
+  const catAlbanil = await prisma.category.findUniqueOrThrow({ where: { name: 'Albanileria' } })
+  const catCerrajeria = await prisma.category.findUniqueOrThrow({ where: { name: 'Cerrajeria' } })
+  const catClima = await prisma.category.findUniqueOrThrow({ where: { name: 'Climatizacion' } })
+  const catGas = await prisma.category.findUniqueOrThrow({ where: { name: 'Gas' } })
 
   const post1 = await prisma.post.create({
     data: {
@@ -171,38 +199,38 @@ async function main() {
   console.log('Created post images')
   console.log('Created job posts')
 
-  await prisma.postulacion.create({
+  await prisma.jobApplication.create({
     data: {
-      trabajadorId: trabajador.id,
+      workerId: trabajador.id,
       postId: post1.id,
-      estado: 'Aceptada',
+      status: 'Aceptada',
       createdAt: new Date('2026-05-08'),
     },
   })
 
-  await prisma.postulacion.create({
+  await prisma.jobApplication.create({
     data: {
-      trabajadorId: trabajador.id,
+      workerId: trabajador.id,
       postId: post2.id,
-      estado: 'Aceptada',
+      status: 'Aceptada',
       createdAt: new Date('2026-05-06'),
     },
   })
 
-  await prisma.postulacion.create({
+  await prisma.jobApplication.create({
     data: {
-      trabajadorId: trabajador.id,
+      workerId: trabajador.id,
       postId: post3.id,
-      estado: 'Rechazada',
+      status: 'Rechazada',
       createdAt: new Date('2026-05-04'),
     },
   })
 
-  await prisma.postulacion.create({
+  await prisma.jobApplication.create({
     data: {
-      trabajadorId: trabajador.id,
+      workerId: trabajador.id,
       postId: post4.id,
-      estado: 'Aceptada',
+      status: 'Aceptada',
       createdAt: new Date('2026-05-02'),
     },
   })
