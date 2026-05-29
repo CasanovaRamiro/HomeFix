@@ -68,7 +68,7 @@ export default function PostDetail() {
   if (error) return (
     <>
       <PageHeader title="Detalle de publicación" backTo="/users" />
-      <div className="post-detail">
+      <div className="max-w-[800px] mx-auto my-6 px-4">
         <p className="text-danger text-[13px]">{error}</p>
       </div>
     </>
@@ -78,10 +78,10 @@ export default function PostDetail() {
   return (
     <>
       <PageHeader title="Detalle de publicación" backTo="/users" />
-      <div className="post-detail">
+      <div className="max-w-[800px] mx-auto my-6 px-4">
       <PostCard post={post} />
 
-      <h3 className="section-title">Postulantes ({MOCK_APPLICANTS.length})</h3>
+      <h3 className="text-base font-semibold my-6 mb-4 pb-2 border-b border-border">Postulantes ({MOCK_APPLICANTS.length})</h3>
 
       {MOCK_APPLICANTS.map((a) => (
         <ApplicantCard key={a.name} applicant={a} />

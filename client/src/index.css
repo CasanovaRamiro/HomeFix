@@ -84,15 +84,6 @@ button:hover { background: var(--primary-light); }
 
 }
 
-.btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--border);
-  padding: 8px 16px;
-}
-
-.btn-outline:hover { background: #f0f0f0; }
-
 table {
   width: 100%;
   border-collapse: collapse;
@@ -117,104 +108,6 @@ th {
 
 tr + tr td { border-top: 1px solid #f0f0f0; }
 
-/* Post Detail */
-.post-detail { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
 
-.post-detail .info-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
 
-.post-detail .info-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; }
 
-.post-detail .info-row {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-.post-detail .info-row strong { color: var(--text); }
-
-.post-detail .desc {
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 1rem 0;
-  white-space: pre-wrap;
-}
-
-.post-detail .categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0.75rem 0;
-}
-
-.post-detail .section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 1.5rem 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.post-detail .post-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-.post-detail .post-actions button { font-size: 13px; padding: 6px 16px; }
-.post-detail .post-actions .btn-edit { background: var(--primary); }
-.post-detail .post-actions .btn-pause { background: #f59e0b; }
-.post-detail .post-actions .btn-pause:hover { background: #d97706; }
-.post-detail .post-actions .btn-cancel { background: var(--danger); }
-.post-detail .post-actions .btn-cancel:hover { background: #dc2626; }
-
-/* Applicant Card */
-.applicant-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.applicant-card .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.applicant-card .info { flex: 1; min-width: 200px; }
-.applicant-card .info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-.applicant-card .info .meta { font-size: 13px; color: var(--text-muted); }
-.applicant-card .info .stats { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-
-.applicant-card .actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.applicant-card .actions button {
-  padding: 6px 14px;
-  font-size: 13px;
-  white-space: nowrap;
-}

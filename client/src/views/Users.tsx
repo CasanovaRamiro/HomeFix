@@ -34,7 +34,7 @@ export default function Users() {
     <div className="max-w-[900px] mx-auto my-8 px-4">
       <header className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Users</h2>
-        <button onClick={logout} className="btn-outline">Logout</button>
+        <button onClick={logout} className="bg-transparent text-primary border border-border px-4 py-2 rounded-md hover:bg-gray-100">Logout</button>
       </header>
       {error && <p className="text-danger text-[13px]">{error}</p>}
       <table>
