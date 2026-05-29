@@ -58,7 +58,6 @@ export default function AvailableJobs(): JSX.Element {
   const [showModal, setShowModal] = useState<boolean>(false)
   const [mensaje, setMensaje] = useState<string>('')
   const [enviando, setEnviando] = useState<boolean>(false)
-  const [enviado, setEnviado] = useState<boolean>(false)
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
@@ -379,44 +378,35 @@ export default function AvailableJobs(): JSX.Element {
             aria-labelledby="modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            {!enviado ? (
-              <>
-                <h2 id="modal-title">Postularte a este trabajo</h2>
-                <p className="trabajos-muted">{selected.titulo}</p>
-                <label className="modal-label">
-                  Mensaje para el cliente (opcional)
-                  <textarea
-                    value={mensaje}
-                    onChange={(e) => setMensaje(e.target.value)}
-                    rows={4}
-                    placeholder="Presentate brevemente o conta tu experiencia..."
-                  />
-                </label>
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="btn-outline"
-                    onClick={() => setShowModal(false)}
-                    disabled={enviando}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-accent"
-                    onClick={handlePostular}
-                    disabled={enviando}
-                  >
-                    {enviando ? 'Enviando...' : 'Enviar postulacion'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="modal-success">
-                <h2>Postulacion enviada</h2>
-                <p>Te postulaste correctamente al trabajo.</p>
-              </div>
-            )}
+            <h2 id="modal-title">Postularte a este trabajo</h2>
+            <p className="trabajos-muted">{selected.titulo}</p>
+            <label className="modal-label">
+              Mensaje para el cliente (opcional)
+              <textarea
+                value={mensaje}
+                onChange={(e) => setMensaje(e.target.value)}
+                rows={4}
+                placeholder="Presentate brevemente o conta tu experiencia..."
+              />
+            </label>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setShowModal(false)}
+                disabled={enviando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-accent"
+                onClick={handlePostular}
+                disabled={enviando}
+              >
+                {enviando ? 'Enviando...' : 'Enviar postulacion'}
+              </button>
+            </div>
           </div>
         </div>
       )}
