@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js'
 import { Prisma } from '@prisma/client'
+import { UserRole } from '../types/userRole.js'
 
 const workerFields = {
   id: true,
@@ -22,12 +23,12 @@ type WorkerResult = Prisma.UserGetPayload<{ select: typeof workerFields }>
 
 export const findWorkerById = (id: string): Promise<WorkerResult | null> =>
   prisma.user.findFirst({
-    where: { id, role: 'worker' },
+    where: { id, role: UserRole.Worker },
     select: workerFields,
   })
 
 export const findAllWorkers = (): Promise<WorkerResult[]> =>
   prisma.user.findMany({
-    where: { role: 'worker' },
+    where: { role: UserRole.Worker },
     select: workerFields,
   })

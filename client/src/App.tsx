@@ -11,6 +11,7 @@ import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
 import TrabajadorFeed from './views/TrabajadorFeed'
 import MisPostulaciones from './views/MisPostulaciones'
+import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
@@ -19,6 +20,7 @@ const PrivateRoute = ({ children }: { children: ReactNode }) =>
 export default function App() {
   return (
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

@@ -8,6 +8,7 @@ vi.mock('../../src/middleware/auth0.middleware.js', async () => {
 import request from 'supertest'
 import { app } from '../../src/index.js'
 import { cleanDb, prisma } from '../helpers/db.js'
+import { UserRole } from '../../src/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
@@ -15,8 +16,8 @@ describe('GET /workers', () => {
   it('returns all workers when authenticated', async () => {
     await prisma.user.createMany({
       data: [
-        { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
-        { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: 'worker' },
+        { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
+        { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Worker },
       ],
     })
 
@@ -26,12 +27,12 @@ describe('GET /workers', () => {
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(2)
-    res.body.forEach((w: { role: string }) => expect(w.role).toBe('worker'))
+    res.body.forEach((w: { role: string }) => expect(w.role).toBe(UserRole.Worker))
   })
 
   it('does not return non-worker users', async () => {
     await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
     })
 
     const res = await request(app)
@@ -51,7 +52,7 @@ describe('GET /workers', () => {
 describe('GET /workers/:id', () => {
   it('returns the worker when found', async () => {
     const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
     })
 
     const res = await request(app)
@@ -60,7 +61,7 @@ describe('GET /workers/:id', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.email).toBe('ana@test.com')
-    expect(res.body.role).toBe('worker')
+    expect(res.body.role).toBe(UserRole.Worker)
     expect(res.body).not.toHaveProperty('password')
     expect(res.body).toHaveProperty('categories')
     expect(Array.isArray(res.body.categories)).toBe(true)
@@ -69,7 +70,7 @@ describe('GET /workers/:id', () => {
 
   it('returns the categories assigned to the worker', async () => {
     const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
     })
     const category = await prisma.category.create({ data: { name: 'Plumbing' } })
     await prisma.userCategory.create({
@@ -110,10 +111,10 @@ describe('GET /workers/:id', () => {
 describe('GET /workers/:id/reviews', () => {
   it('returns reviews for a worker', async () => {
     const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
     })
     const client = await prisma.user.create({
-      data: { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: 'user' },
+      data: { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: UserRole.Client },
     })
     const post = await prisma.post.create({
       data: {
@@ -152,7 +153,7 @@ describe('GET /workers/:id/reviews', () => {
 
   it('returns an empty array when the worker has no reviews', async () => {
     const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: 'worker' },
+      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
     })
 
     const res = await request(app)

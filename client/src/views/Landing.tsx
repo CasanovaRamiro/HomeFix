@@ -1,5 +1,4 @@
 // src/views/Landing.tsx
-import LandingNav from '../components/landing/LandingNav'
 import Hero from '../components/landing/Hero'
 import TrustSection from '../components/landing/TrustSection'
 import HowItWorks from '../components/landing/HowItWorks'
@@ -12,7 +11,6 @@ import LandingFooter from '../components/landing/LandingFooter'
 export default function Landing() {
   return (
     <main className="min-h-screen bg-white">
-      <LandingNav />
       <Hero />
       <TrustSection />
       <HowItWorks />

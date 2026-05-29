@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Home, Briefcase, ShieldCheck, ChevronDown } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -32,144 +32,6 @@ function getInitials(name: string): string {
     .map((p) => p[0])
     .join('')
     .toUpperCase()
-}
-
-// ─── Navbar ──────────────────────────────────────────────────────────────────
-
-function WorkerNavbar() {
-  const navigate = useNavigate()
-  const userName = localStorage.getItem('userName') ?? 'Pedro Picapied...'
-  const userInitial = userName.charAt(0).toUpperCase()
-
-  return (
-    <nav
-      style={{
-        background: '#0F172A',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        width: '100%',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '0 24px',
-          height: 60,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 16,
-        }}
-      >
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: 18,
-              color: '#fff',
-              fontFamily: 'Arial',
-            }}
-          >
-            X
-          </div>
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
-            Home<span style={{ color: '#10B981' }}>Fix</span>
-          </span>
-        </div>
-
-        {/* Nav links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'center' }}>
-          <NavLink to="/worker" icon={<Home size={15} />} label="Inicio" />
-          <NavLink to="/worker" icon={<Briefcase size={15} />} label="Trabajos Disponibles" />
-          <NavLink to="/worker/my-applications" icon={<FileText size={15} />} label="Mis Postulaciones" active />
-          <NavLink to="#" icon={<ShieldCheck size={15} />} label="Validaciones" />
-        </div>
-
-        {/* User menu */}
-        <button
-          onClick={() => navigate('/login')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 8,
-            padding: '6px 12px 6px 8px',
-            cursor: 'pointer',
-            color: '#fff',
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: '#3B82F6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 13,
-              color: '#fff',
-            }}
-          >
-            {userInitial}
-          </div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#E2E8F0', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {userName}
-          </span>
-          <ChevronDown size={14} color="#94A3B8" />
-        </button>
-      </div>
-    </nav>
-  )
-}
-
-function NavLink({
-  to,
-  icon,
-  label,
-  active = false,
-}: {
-  to: string
-  icon: React.ReactNode
-  label: string
-  active?: boolean
-}) {
-  return (
-    <Link
-      to={to}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '6px 14px',
-        borderRadius: 8,
-        fontSize: 13,
-        fontWeight: 500,
-        textDecoration: 'none',
-        color: active ? '#fff' : '#94A3B8',
-        background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-        transition: 'color 0.15s, background 0.15s',
-      }}
-    >
-      {icon}
-      {label}
-    </Link>
-  )
 }
 
 // ─── Postulacion Card ─────────────────────────────────────────────────────────
@@ -420,9 +282,6 @@ export default function MisPostulaciones() {
           </button>
         </div>
       )}
-
-      {/* ── Navbar ── */}
-      <WorkerNavbar />
 
       {/* ── Dark header ── */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 32, paddingBottom: 40 }}>

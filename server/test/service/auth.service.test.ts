@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { UserRole } from '../../src/types/userRole.js'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
@@ -15,7 +16,7 @@ const mockUser = {
   password:'password123',
   phone: null as string | null,
   bio: null as string | null,
-  role: 'user',
+  role: UserRole.Client,
   createdAt: new Date(),
 }
 
@@ -133,7 +134,7 @@ describe('auth.service - loginUser', () => {
 
     expect(result.accessToken).toBe('access-token')
     expect(result.user.id).toBe('uuid-jane')
-    expect(result.user.role).toBe('user')
+    expect(result.user.role).toBe(UserRole.Client)
   })
 
   it('throws 401 when credentials are invalid', async () => {

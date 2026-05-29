@@ -64,7 +64,7 @@ async function main() {
       email: 'trabajador@homefix.com',
       password: hashedPassword,
       phone: '11-5555-0101',
-      role: 'trabajador',
+      role: 'worker',
     },
   })
   console.log(`Created worker: ${trabajador.id} - ${trabajador.name}`)
@@ -75,7 +75,7 @@ async function main() {
       email: 'marta@example.com',
       password: hashedPassword,
       phone: '11-5555-0102',
-      role: 'cliente',
+      role: 'client',
     },
   })
 
@@ -85,7 +85,7 @@ async function main() {
       email: 'juan@example.com',
       password: hashedPassword,
       phone: '11-5555-0103',
-      role: 'cliente',
+      role: 'client',
     },
   })
 
@@ -95,7 +95,7 @@ async function main() {
       email: 'laura@example.com',
       password: hashedPassword,
       phone: '11-5555-0104',
-      role: 'cliente',
+      role: 'client',
     },
   })
 
@@ -105,7 +105,7 @@ async function main() {
       email: 'roberto@example.com',
       password: hashedPassword,
       phone: '11-5555-0105',
-      role: 'cliente',
+      role: 'client',
     },
   })
 
