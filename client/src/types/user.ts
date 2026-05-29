@@ -1,6 +1,6 @@
 export enum UserRole {
-  Trabajador = 'trabajador',
-  Cliente = 'cliente',
+  Worker = 'trabajador',
+  Client = 'cliente',
 }
 
 export interface StoredUser {

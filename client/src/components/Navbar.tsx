@@ -40,13 +40,13 @@ export default function Navbar(): JSX.Element | null {
   if (AUTH_ROUTES.includes(pathname)) return null
 
   const navLinks =
-    user?.role === UserRole.Trabajador ? TRABAJADOR_LINKS :
-    user?.role === UserRole.Cliente    ? CLIENTE_LINKS    :
+    user?.role === UserRole.Worker ? TRABAJADOR_LINKS :
+    user?.role === UserRole.Client    ? CLIENTE_LINKS    :
     []
 
   const homeRoute =
-    user?.role === UserRole.Trabajador ? '/worker' :
-    user?.role === UserRole.Cliente    ? '/users'  :
+    user?.role === UserRole.Worker ? '/worker' :
+    user?.role === UserRole.Client    ? '/users'  :
     '/login'
 
   const displayName    = user?.name ?? 'Mi cuenta'
