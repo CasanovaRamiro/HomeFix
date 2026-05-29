@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, Search } from 'lucide-react'
+import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import StatCard from '../components/dashboard/StatCard'

@@ -101,6 +101,7 @@ describe("post.service - getUserPosts", () => {
       startDate: new Date("2026-06-01"),
       endDate: new Date("2026-06-15"),
       categories: [{ id: 'uuid-category-1', name: "Plumbing" }],
+      worker: null,
     },
   ];
 
