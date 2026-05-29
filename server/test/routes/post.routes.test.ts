@@ -5,7 +5,7 @@ import type { PostWithCategories } from '../../src/data/post.data.js'
 
 const { listAvailablePostsMock, getPostByIdMock, searchPostsByDistanceMock } = vi.hoisted(() => ({
   listAvailablePostsMock: vi.fn<(category?: string) => Promise<PostWithCategories[]>>(),
-  getPostByIdMock: vi.fn<(id: number) => Promise<PostWithCategories>>(),
+  getPostByIdMock: vi.fn<(id: string) => Promise<PostWithCategories>>(),
   searchPostsByDistanceMock: vi.fn<() => Promise<unknown[]>>(),
 }))
 
@@ -32,8 +32,8 @@ app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: 
 })
 
 const mockPost: PostWithCategories = {
-  id: 1,
-  userId: 2,
+  id: '1',
+  userId: '2',
   title: 'Cambiar canilla',
   description: 'Pierde agua',
   startDate: new Date('2026-05-20T10:00:00.000Z'),
@@ -41,13 +41,13 @@ const mockPost: PostWithCategories = {
   address: 'Calle 123',
   status: 'Active',
   createdAt: new Date('2026-05-19T10:00:00.000Z'),
-  image: 'photo.jpg',
+  images: [{ url: 'photo.jpg' }],
   latitude: null,
   longitude: null,
   categories: [
     {
       category: {
-        id: 1,
+        id: '1',
         name: 'Plomero',
       },
     },
@@ -131,16 +131,8 @@ describe('post.routes', () => {
       const response = await request(app).get('/posts/1')
 
       expect(response.status).toBe(200)
-      expect(response.body.id).toBe(1)
-      expect(getPostByIdMock).toHaveBeenCalledWith(1)
-    })
-
-    it('returns 400 when the id is invalid', async () => {
-      const response = await request(app).get('/posts/nope')
-
-      expect(response.status).toBe(400)
-      expect(response.body).toEqual({ error: 'Invalid post id' })
-      expect(getPostByIdMock).not.toHaveBeenCalled()
+      expect(response.body.id).toBe('1')
+      expect(getPostByIdMock).toHaveBeenCalledWith('1')
     })
 
     it('returns 404 when the post does not exist', async () => {

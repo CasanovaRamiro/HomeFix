@@ -280,7 +280,6 @@ async function main() {
       surname: 'Gonzalez',
       email: 'cliente@test.com',
       password: passwordHash,
-      nationalId: '30111222',
       nationalIdTypeId: dni.id,
       addressId: addressRecoleta.id,
       role: 'user',
@@ -288,13 +287,12 @@ async function main() {
     },
   })
 
-  await prisma.user.create({
+  const trabajador = await prisma.user.create({
     data: {
       name: 'Carlos',
       surname: 'Mendez',
       email: 'trabajador@test.com',
       password: passwordHash,
-      nationalId: '28123456',
       nationalIdTypeId: dni.id,
       addressId: addressPalermo.id,
       role: 'worker',
@@ -455,11 +453,13 @@ async function main() {
     },
   ]
 
+  const createdPostIds: string[] = []
+
   for (const item of posts) {
     const category = categoryByName.get(item.category)
     if (!category) throw new Error(`Missing category: ${item.category}`)
 
-    await prisma.post.create({
+    const post = await prisma.post.create({
       data: {
         title: item.title,
         description: item.description,
@@ -467,7 +467,7 @@ async function main() {
         endDate: item.until,
         address: item.address,
         status: 'Active',
-        image: PLACEHOLDER_PHOTO,
+        images: { create: { url: PLACEHOLDER_PHOTO } },
         latitude: item.latitude,
         longitude: item.longitude,
         userId: cliente.id,
@@ -478,7 +478,45 @@ async function main() {
         },
       },
     })
+    createdPostIds.push(post.id)
   }
+
+  // Postulaciones de ejemplo
+  await prisma.jobApplication.create({
+    data: {
+      workerId: trabajador.id,
+      postId: createdPostIds[0],
+      status: 'Aceptada',
+      createdAt: new Date('2026-05-08'),
+    },
+  })
+
+  await prisma.jobApplication.create({
+    data: {
+      workerId: trabajador.id,
+      postId: createdPostIds[1],
+      status: 'Aceptada',
+      createdAt: new Date('2026-05-06'),
+    },
+  })
+
+  await prisma.jobApplication.create({
+    data: {
+      workerId: trabajador.id,
+      postId: createdPostIds[2],
+      status: 'Rechazada',
+      createdAt: new Date('2026-05-04'),
+    },
+  })
+
+  await prisma.jobApplication.create({
+    data: {
+      workerId: trabajador.id,
+      postId: createdPostIds[3],
+      status: 'Aceptada',
+      createdAt: new Date('2026-05-02'),
+    },
+  })
 
   console.log('Seed OK')
   console.log(' Datos de prueba distribuidos geográficamente en CABA, Oeste, Norte y Sur.')

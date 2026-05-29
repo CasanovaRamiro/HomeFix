@@ -28,8 +28,8 @@ model User {
   reviewsGiven    WorkerReview[]   @relation("ReviewsGiven")
   reviewsReceived WorkerReview[]   @relation("ReviewsReceived")
   applications    Application[]
-  nationalIdTypeId Int  @map("national_id_type_id") // Antes dniTypeId
-  addressId        Int  @map("address_id")
+  nationalIdTypeId String  @map("national_id_type_id") // Antes dniTypeId
+  addressId        String  @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
   address          Address        @relation(fields: [addressId], references: [id])
 
@@ -45,6 +45,8 @@ model Post {
   description     String
   address         String
   status          String           @default("Active")
+  latitude        Float?
+  longitude       Float?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   categories      PostCategory[]

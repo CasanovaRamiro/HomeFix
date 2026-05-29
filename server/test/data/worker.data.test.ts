@@ -1,9 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { cleanDb, prisma } from '../helpers/db.js'
+import { cleanDb, prisma, createUser } from '../helpers/db.js'
 import { findWorkerById, findAllWorkers } from '../../src/data/worker.data.js'
 import { UserRole } from '../../src/types/userRole.js'
 
 beforeEach(() => cleanDb())
+
+const makeWorker = (email: string, name: string, extra: Record<string, unknown> = {}) =>
+  createUser(email, name, 'hashed', { role: 'worker', ...extra })
+
+const makeUser = (email: string, name: string, extra: Record<string, unknown> = {}) =>
+  createUser(email, name, 'hashed', { role: 'user', ...extra })
 
 describe('findWorkerById', () => {
   it('returns the worker when id and role match', async () => {

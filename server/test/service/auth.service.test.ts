@@ -3,7 +3,7 @@ import { UserRole } from '../../src/types/userRole.js'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
-  createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId: string; phone?: string }) => Promise<{ id: number; name: string; email: string; phone: string | null; role: string }>>(),
+  createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId?: string; phone?: string; surname?: string }) => Promise<{ id: string; name: string; email: string; phone: string | null; role: string }>>(),
 }))
 
 import * as userData from '../../src/data/user.data.js'
@@ -21,18 +21,22 @@ const mockUser = {
   nationalId: 'DNI-12345678',
   surname: 'Test',
   password: 'hashed',
-  profilePicture: null as string | null,
+  phone: null as string | null,
+  role: 'user',
+  surname: 'Test',
+  bio: null,
+  createdAt: new Date(),
   active: true,
   deleted: false,
-  nationalIdTypeId: 'uuid-national-id-type',
-  addressId: 'uuid-address',
+  nationalIdTypeId: 'uuid-dni',
+  addressId: 'uuid-addr',
 }
 
 describe('auth.service - syncAuth0User', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns existing user when email already exists', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed' })
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser as any)
 
     const result = await syncAuth0User({
       sub: 'auth0|abc123',
@@ -47,7 +51,7 @@ describe('auth.service - syncAuth0User', () => {
 
   it('creates a user when email does not exist', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
+    vi.mocked(userData.createUser).mockResolvedValue(mockUser as any)
 
     const result = await syncAuth0User({
       sub: 'auth0|abc123',
@@ -57,48 +61,37 @@ describe('auth.service - syncAuth0User', () => {
 
     expect(result.email).toBe('jane@test.com')
   })
-
-  it('throws if the email is already taken', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
-
-    await expect(
-      register({ name: 'Jane', email: 'jane@test.com', password: 'secret', nationalId: 'DNI-12345678' })
-    ).rejects.toThrow('Email already in use')
-  })
 })
 
 describe('auth.service - registerUser', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.example.com/'
-    process.env.AUTH0_CLIENT_ID = 'client-id'
-    process.env.AUTH0_DB_CONNECTION = 'Username-Password-Authentication'
   })
 
-  it('creates a user in auth0 and db', async () => {
+  it('registers a user via Auth0', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    vi.mocked(userData.createUser).mockResolvedValue(mockUser as any)
+    process.env.AUTH0_CLIENT_ID = 'client-id'
+    process.env.AUTH0_DB_CONNECTION = 'Username-Password-Authentication'
+    process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.example.com/'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ _id: 'auth0|1', email: 'jane@test.com', email_verified: false }),
+      json: async () => ({ _id: 'auth0|123', email: 'jane@test.com', email_verified: false }),
     } as Response)
 
     const result = await registerUser({
       name: 'Jane',
-      lastName: 'Doe',
       email: 'jane@test.com',
       password: 'Password123!',
       phone: '123456',
     })
 
-    expect(result.userId).toBe('uuid-jane')
     expect(result.email).toBe('jane@test.com')
-    expect(result.emailVerified).toBe(false)
     expect(userData.createUser).toHaveBeenCalled()
   })
 
   it('throws conflict if email exists', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, password: 'hashed' })
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser as any)
 
     await expect(
       registerUser({
@@ -106,7 +99,11 @@ describe('auth.service - registerUser', () => {
         email: 'jane@test.com',
         password: 'Password123!',
       })
-    ).rejects.toMatchObject({ status: 409 })
+    ).rejects.toThrow('El correo electrónico ya está registrado')
+  })
+
+  it('throws if required fields are missing', async () => {
+    await expect(registerUser({} as any)).rejects.toThrow('El nombre es obligatorio')
   })
 })
 

@@ -1,12 +1,5 @@
-import { createPost, findPostById, findPostsByUser,updatePostStatus, findAvailablePosts,searchByDistance} from "../data/post.data.js";
-import { postServiceValidator } from "../middleware/postServiceValidator.js";
-import { PostInput } from "../types/postInput.js";
-
-const assertPositiveId = (id: number, label: string): void => {
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error(`${label} must be a positive integer`);
-  }
-};
+import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
+import type { PostDTO } from "../types/post.dto.js";
 
 const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number]): PostDTO => ({
   id: post.id,
@@ -18,7 +11,7 @@ const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number])
   address: post.address,
   status: post.status,
   createdAt: post.createdAt.toISOString(),
-  image: post.image,
+  images: post.images,
   latitude: post.latitude,
   longitude: post.longitude,
   categories: (post.categories || []).map((item) => ({
@@ -28,6 +21,20 @@ const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number])
     },
   })),
 });
+
+interface ServicePostInput {
+  userId: string
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  categoryId: string
+}
+
+export const createPost = async (data: ServicePostInput) => {
+  return createPostData(data)
+}
 
 export const listAvailablePosts = async (category?: string): Promise<PostDTO[]> => {
   const posts = await findAvailablePosts(category);
@@ -54,56 +61,34 @@ export const searchPostsByDistance = async (
   }
 
   const results = await searchByDistance(lat, lng, radiusKm, category);
-  
-  return results.map((r) => ({
-    id: r.id,
-    userId: r.userId,
-    title: r.title,
-    description: r.description,
-    startDate: typeof r.startDate === 'string' ? r.startDate : new Date(r.startDate).toISOString(),
-    endDate: typeof r.endDate === 'string' ? r.endDate : new Date(r.endDate).toISOString(),
-    address: r.address,
-    status: r.status,
-    createdAt: typeof r.createdAt === 'string' ? r.createdAt : new Date(r.createdAt).toISOString(),
-    image: r.image,
-    latitude: r.latitude,
-    longitude: r.longitude,
-    categories: (r.categories || []).map((item) => ({
-      category: {
-        id: item.category.id,
-        name: item.category.name,
-      },
-    })),
-  }));
+  return results.map(toPostDTO);
 };
 
-export const getPostById = async (id: number): Promise<PostDTO> => {
-  assertPositiveId(id, "Post id");
+export const getPostById = async (id: string): Promise<PostDTO | null> => {
   const found = await findPostById(id);
-  if (!found) {
-    throw new Error("Post not found");
-  }
+  if (!found) return null;
   return toPostDTO(found);
 };
+
+export const getUserPosts = async (userId: string): Promise<PostDTO[]> => {
+  const posts = await findPostsByUser(userId);
+  return posts.map(toPostDTO);
+};
+
 export const finalizePost = async (postId: string, userId: string) => {
-  const post = await findPostById(postId)
+  const post = await findPostById(postId);
 
   if (!post) {
-    throw Object.assign(new Error('Post not found'), { status: 404 })
+    throw Object.assign(new Error('Post not found'), { status: 404 });
   }
 
   if (post.userId !== userId) {
-    throw Object.assign(new Error('Forbidden'), { status: 403 })
+    throw Object.assign(new Error('Forbidden'), { status: 403 });
   }
 
   if (post.status !== 'Paused') {
-    throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
+    throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 });
   }
 
-  return updatePostStatus(postId, 'Finalized')
-}
-
-
-export const getUserPosts = (userId: string) => findPostsByUser(userId);
-
-export const getPostById = (id: string) => findPostById(id);
+  return updatePostStatus(postId, 'Finalized');
+};

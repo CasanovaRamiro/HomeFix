@@ -1,7 +1,7 @@
 export interface PostInput {
-  startDate: string
-  endDate: string
-  categoryId: number
+  startDate: string | Date
+  endDate: string | Date
+  categoryId: string
   title: string
   description: string
   address: string

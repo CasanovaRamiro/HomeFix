@@ -35,7 +35,15 @@ export default function App() {
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
         <Route path="/worker" element={<TrabajadorFeed />} />
         <Route path="/worker/my-applications" element={<MisPostulaciones />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/worker/available-jobs"
+          element={
+            <PrivateRoute>
+              <AvailableJobs />
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   )

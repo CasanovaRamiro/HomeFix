@@ -16,8 +16,6 @@ export const cleanDb = async () => {
   await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
 };
 
-export const createUser = async (data: { email: string; name: string; password: string; role?: string }) => {
-  return await prisma.user.create({ data });
 const createUserDependencies = async () => {
   const nationalIdType = await prisma.nationalIdType.create({
     data: { description: `DNI-${Date.now()}-${Math.random()}` },
@@ -38,6 +36,7 @@ export const createUser = async (
   email: string,
   name: string,
   password: string,
+  extra: Record<string, unknown> = {},
 ) => {
   const { nationalIdType, address } = await createUserDependencies();
 
@@ -47,10 +46,10 @@ export const createUser = async (
       name,
       password,
       surname: "Test",
-      nationalId: `nid-${Date.now()}-${Math.random()}`,
       nationalIdTypeId: nationalIdType.id,
       addressId: address.id,
-    },
+      ...extra,
+    } as any,
   });
 };
 

@@ -19,6 +19,11 @@ interface RegisterInput {
   password?: string
   phone?: string
   address?: string
+  nationalId?: string
+}
+
+interface RegisterWorkerInput extends RegisterInput {
+  categories: string[]
 }
 
 interface RegisterWorkerInput extends RegisterInput {
@@ -139,7 +144,7 @@ const loginWithAuth0 = async (email: string, password: string) => {
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("Error de Auth0:", text);
+    console.error('Error de Auth0:', text);
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }
@@ -168,10 +173,13 @@ export const registerUser = async (input: RegisterInput) => {
   const password = input.password!
   const phone = input.phone?.trim() || undefined
 
+  if (!name) throw createHttpError(400, 'El nombre es obligatorio')
+  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
+  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
+
   const passwordError = validatePassword(password)
   if (passwordError) throw createHttpError(400, passwordError)
 
-export const register = async ({ name, email, password, nationalId, phone }: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
@@ -259,7 +267,43 @@ export const loginUser = async (input: LoginInput) => {
   if (!email) throw createHttpError(400, 'Email is required')
   if (!password) throw createHttpError(400, 'Password is required')
 
-  const tokenData = await loginWithAuth0(email, password)
+  let tokenData: Auth0TokenResponse | null = null
+  try {
+    tokenData = await loginWithAuth0(email, password)
+  } catch {
+    console.error('Auth0 no disponible, usando autenticación local')
+  }
+
+  if (!tokenData) {
+    const user = await findByEmail(email)
+    if (!user || user.password === managedPassword) {
+      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
+    }
+    const isValid = await bcrypt.compare(password, user.password)
+    if (!isValid) {
+      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
+    }
+    const localToken = jwt.sign(
+      { sub: user.id, email: user.email, name: user.name, role: user.role },
+      process.env.JWT_SECRET || 'dev-secret',
+      { expiresIn: '24h' },
+    )
+    return {
+      accessToken: localToken,
+      idToken: null,
+      tokenType: 'local',
+      expiresIn: 86400,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    }
+  }
+
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
   const profileEmail = profile.email?.toLowerCase() ?? email

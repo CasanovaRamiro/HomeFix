@@ -54,7 +54,7 @@ export default function AvailableJobs(): JSX.Element {
   const [error, setError] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selected, setSelected] = useState<TrabajoView | null>(null)
-  const [postulacionesIds, setPostulacionesIds] = useState<number[]>([])
+  const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [mensaje, setMensaje] = useState<string>('')
   const [enviando, setEnviando] = useState<boolean>(false)
@@ -69,7 +69,7 @@ export default function AvailableJobs(): JSX.Element {
         trabajoId: string | number
       }[]
       setPostulacionesIds(
-        stored.map((p) => Number(p.trabajoId)).filter((id) => !Number.isNaN(id))
+        stored.map((p) => String(p.trabajoId))
       )
     } catch {
       setPostulacionesIds([])
@@ -88,7 +88,7 @@ export default function AvailableJobs(): JSX.Element {
 
       const idParam = searchParams.get('id')
       if (idParam !== null && idParam !== '') {
-        const found = mapped.find((t) => t.id === Number(idParam))
+        const found = mapped.find((t) => t.id === idParam)
         if (found) setSelected(found)
       }
     } catch (err) {
@@ -141,7 +141,7 @@ export default function AvailableJobs(): JSX.Element {
     void navigate('/login')
   }
 
-  const yaPostulado = (id: number): boolean => postulacionesIds.includes(id)
+  const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
   const handlePostular = (): void => {
     if (!selected) return

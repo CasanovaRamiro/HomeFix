@@ -8,7 +8,7 @@ let categoryId: string;
 
 beforeEach(async () => {
   await cleanDb();
-  const user = await createUser({ email: "test@test.com", name: "Test", password: "hashed" });
+  const user = await createUser("test@test.com", "Test", "hashed");
   const category = await createCategory("Test Category");
   userId = user.id;
   categoryId = category.id;
@@ -107,11 +107,7 @@ describe("createPost", () => {
 
 describe("findPostsByUser", () => {
   it("should return only posts for the given user", async () => {
-    const otherUser = await createUser({
-      email: "other@test.com",
-      name: "Other",
-      password: "hashed",
-    });
+    const otherUser = await createUser("other@test.com", "Other", "hashed");
     await createPost(createValidPost());
     await createPost({ ...createValidPost(), userId: otherUser.id, title: "Other post" });
 

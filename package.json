@@ -11,5 +11,12 @@
     "test": "pnpm --prefix server run test && pnpm --prefix client run test",
     "test-be": "pnpm --prefix server run test",
     "test-fe": "pnpm --prefix client run test"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "tailwindcss": "^4.3.0"
+  },
+  "dependencies": {
+    "lucide-react": "^1.17.0"
   }
 }

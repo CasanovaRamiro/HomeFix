@@ -11,5 +11,5 @@ export const searchPostsByLocation = (lat: number, lng: number, radius: number, 
     params: { lat, lng, radius, ...(category?.trim() ? { category: category.trim() } : {}) },
   })
 
-export const fetchPostById = (id: number) =>
+export const fetchPostById = (id: string) =>
   api.get<Post>(`/posts/${id}`)
