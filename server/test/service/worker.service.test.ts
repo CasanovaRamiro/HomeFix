@@ -7,6 +7,7 @@ vi.mock('../../src/data/worker.data.js', () => ({
 
 import * as workerData from '../../src/data/worker.data.js'
 import { listWorkers, getWorker } from '../../src/services/worker.service.js'
+import { UserRole } from '../../src/types/userRole.js'
 
 const mockWorker = {
   id: 'uuid-worker-1',
@@ -14,7 +15,7 @@ const mockWorker = {
   email: 'ana@test.com',
   phone: null as string | null,
   bio: null as string | null,
-  role: 'worker',
+  role: UserRole.Worker,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [
     { category: { id: 'uuid-category-1', name: 'Plumbing' } },

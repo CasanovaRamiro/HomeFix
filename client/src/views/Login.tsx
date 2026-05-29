@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import api from '../services/api'
+import { UserRole } from '../types/user'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -23,11 +24,11 @@ export default function Login() {
       const { data } = await api.post<{
         accessToken: string
         idToken?: string
-        user: { id: string; name: string; email: string; role: string }
+        user: { id: string; name: string; email: string; role: UserRole }
       }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify({ name: data.user.name, role: data.user.role }))
-      const destination = data.user.role === 'worker' ? '/worker' : '/users'
+      const destination = data.user.role === UserRole.Worker ? '/worker' : '/users'
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
     } catch (err) {
