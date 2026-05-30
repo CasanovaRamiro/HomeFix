@@ -1,4 +1,11 @@
-import { PostInput } from "../types/postInput.js"
+export interface PostInput {
+  startDate: string | Date
+  endDate: string | Date
+  categoryId: string
+  title: string
+  description: string
+  address: string
+}
 
 export const postServiceValidator = (input: PostInput): void => {
 
@@ -25,4 +32,3 @@ export const postServiceValidator = (input: PostInput): void => {
     throw new Error('endDate must be after startDate')
   }
 }
-

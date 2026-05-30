@@ -7,7 +7,8 @@ export const requireSession = async (req: Request, res: Response, next: NextFunc
   const header = req.headers.authorization
   if (header?.startsWith('Bearer ')) {
     try {
-      req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as JwtPayload & { id: string }
+      const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'dev-secret') as JwtPayload & { sub?: string; id?: string }
+      req.user = { id: decoded.sub ?? decoded.id! } as JwtPayload & { id: string }
       next()
       return
     } catch {
