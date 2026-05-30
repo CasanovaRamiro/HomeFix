@@ -7,19 +7,20 @@ vi.mock('../../src/middleware/auth0.middleware.js', async () => {
 
 import request from 'supertest'
 import { app } from '../../src/index.js'
-import { cleanDb, prisma } from '../helpers/db.js'
+import { cleanDb, prisma, createUser } from '../helpers/db.js'
 import { UserRole } from '../../src/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
+const makeWorker = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'worker' })
+const makeUser = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'user' })
+
 describe('GET /workers', () => {
   it('returns all workers when authenticated', async () => {
-    await prisma.user.createMany({
-      data: [
-        { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-        { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Worker },
-      ],
-    })
+    await Promise.all([
+      makeWorker('ana@test.com', 'Ana'),
+      makeWorker('bob@test.com', 'Bob'),
+    ])
 
     const res = await request(app)
       .get('/workers')
@@ -31,9 +32,7 @@ describe('GET /workers', () => {
   })
 
   it('does not return non-worker users', async () => {
-    await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get('/workers')
@@ -51,9 +50,7 @@ describe('GET /workers', () => {
 
 describe('GET /workers/:id', () => {
   it('returns the worker when found', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
@@ -69,9 +66,7 @@ describe('GET /workers/:id', () => {
   })
 
   it('returns the categories assigned to the worker', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
     const category = await prisma.category.create({ data: { name: 'Plumbing' } })
     await prisma.userCategory.create({
       data: { userId: worker.id, categoryId: category.id },
@@ -96,26 +91,22 @@ describe('GET /workers/:id', () => {
 
   it('returns 404 when the worker does not exist', async () => {
     const res = await request(app)
-      .get('/workers/9999')
+      .get('/workers/non-existent-id')
       .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(404)
   })
 
   it('returns 401 when no token is provided', async () => {
-    const res = await request(app).get('/workers/1')
+    const res = await request(app).get('/workers/non-existent-id')
     expect(res.status).toBe(401)
   })
 })
 
 describe('GET /workers/:id/reviews', () => {
   it('returns reviews for a worker', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
-    const client = await prisma.user.create({
-      data: { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: UserRole.Client },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const client = await makeUser('carlos@test.com', 'Carlos')
     const post = await prisma.post.create({
       data: {
         userId: client.id,
@@ -152,9 +143,7 @@ describe('GET /workers/:id/reviews', () => {
   })
 
   it('returns an empty array when the worker has no reviews', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get(`/workers/${worker.id}/reviews`)
@@ -166,7 +155,7 @@ describe('GET /workers/:id/reviews', () => {
 
   it('returns 404 when the worker does not exist', async () => {
     const res = await request(app)
-      .get('/workers/9999/reviews')
+      .get('/workers/non-existent-id/reviews')
       .set('Authorization', 'Bearer test-auth0-token')
 
     expect(res.status).toBe(404)
@@ -181,7 +170,7 @@ describe('GET /workers/:id/reviews', () => {
   })
 
   it('returns 401 when no token is provided', async () => {
-    const res = await request(app).get('/workers/1/reviews')
+    const res = await request(app).get('/workers/non-existent-id/reviews')
     expect(res.status).toBe(401)
   })
 })

@@ -8,7 +8,7 @@ export const getMyApplications = async (workerId: string) => {
     id: a.id,
     postId: a.postId,
     title: a.post.title,
-    client: a.post.user.name,
+    client: `${a.post.user.name} ${a.post.user.surname}`.trim(),
     location: a.post.address,
     appliedAt: a.createdAt.toISOString().split('T')[0],
     serviceDate: a.post.startDate.toISOString().split('T')[0],
