@@ -1,25 +1,8 @@
 import Badge from '../ui/Badge'
-
-interface Category {
-  id: string
-  name: string
-}
-
-interface PostDetail {
-  id: string
-  userId: string
-  title: string
-  description: string
-  startDate: string
-  endDate: string
-  address: string
-  status: string
-  createdAt: string
-  categories: Category[]
-}
+import type { Post } from '../../types/post'
 
 interface PostCardProps {
-  post: PostDetail
+  post: Post
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' }> = {
