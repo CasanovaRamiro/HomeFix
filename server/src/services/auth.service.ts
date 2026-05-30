@@ -12,7 +12,7 @@ interface Auth0Claims {
 
 const managedPassword = 'AUTH0_MANAGED_ACCOUNT'
 
-interface RegisterInput {
+export interface RegisterInput {
   name?: string
   lastName?: string
   email?: string
