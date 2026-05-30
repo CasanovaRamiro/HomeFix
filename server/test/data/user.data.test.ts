@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { findUniqueMock, findManyMock, createMock, findFirstMock } = vi.hoisted(() => ({
+const { findUniqueMock, findManyMock, createMock, findFirstMock, upsertNationalIdMock, upsertAddressMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
   findManyMock: vi.fn<(args: unknown) => Promise<unknown[]>>(),
   createMock: vi.fn<(args: unknown) => Promise<unknown>>(),
   findFirstMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
+  upsertNationalIdMock: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+  upsertAddressMock: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
 }))
 
 vi.mock('../../src/lib/prisma.js', () => ({
@@ -16,6 +18,10 @@ vi.mock('../../src/lib/prisma.js', () => ({
     },
     nationalIdType: {
       findFirst: findFirstMock,
+      upsert: upsertNationalIdMock,
+    },
+    address: {
+      upsert: upsertAddressMock,
     },
   },
 }))
@@ -86,7 +92,8 @@ describe('findAll', () => {
 
 describe('createUser', () => {
   it('inserts the user and returns it without the password field', async () => {
-    findFirstMock.mockResolvedValue({ id: 'uuid-type', description: 'DNI' })
+    upsertNationalIdMock.mockResolvedValue({ id: 'default-dni-id', description: 'DNI' })
+    upsertAddressMock.mockResolvedValue({ id: 'default-addr-id', street: '', number: '0', city: '', state: '' })
     createMock.mockResolvedValue(publicUser)
 
     const user = await createUser({

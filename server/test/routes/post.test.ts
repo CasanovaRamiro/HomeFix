@@ -245,7 +245,7 @@ describe('POST /posts/create', () => {
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', 'Bearer test-auth0-token')
-      .send(createValidPost())
+      .send(postInput())
     expect(res.status).toBe(401)
     resetMockPayload()
   })

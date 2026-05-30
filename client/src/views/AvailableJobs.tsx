@@ -1,5 +1,5 @@
 import { JSX, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DEFAULT_WORKER_CATEGORY,
   WORKER_CATEGORY_KEY,
@@ -9,31 +9,14 @@ import { fetchAvailablePosts, searchPostsByLocation } from '../services/posts'
 import { applyToPost } from '../services/applications'
 import api from '../services/api'
 import type { Post, TrabajoView } from '../types/post'
+import type { LocationFilter } from '../components/worker/types'
+import TrabajoCard from '../components/worker/TrabajoCard'
+import TrabajoDetail from '../components/worker/TrabajoDetail'
+import ApplyModal from '../components/worker/ApplyModal'
+import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
-const CATEGORIAS_DISPONIBLES = [
-  '',
-  'Electricista',
-  'Plomero',
-  'Gasista',
-  'Pintor',
-  'Carpintero',
-  'Albañil',
-  'Cerrajero',
-  'Techista',
-  'Climatización', 
-  'Jardinero',
-  'Fumigador',
-  'Vidriero',
-  'Instalador',  
-  'Mudanzas',
-  'Limpieza'
-];const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
-interface LocationFilter {
-  lat: number
-  lng: number
-  radius: number
-}
+const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
 const loadStoredFilter = (): LocationFilter | null => {
   try {
@@ -166,9 +149,9 @@ export default function AvailableJobs(): JSX.Element {
       <header className="trabajos-hero">
         <div className="trabajos-hero-inner">
           <div className="trabajos-hero-top">
-            <Link to="/users" className="trabajos-back">
+            <button type="button" className="trabajos-back" onClick={() => navigate('/worker')}>
               {'<- Volver'}
-            </Link>
+            </button>
             <button type="button" className="btn-logout" onClick={logout}>
               Salir
             </button>
@@ -194,56 +177,16 @@ export default function AvailableJobs(): JSX.Element {
             )}
           </p>
 
-          <div className="trabajos-filters-row">
-            <div className="filter-group filter-category">
-              <label htmlFor="cat-select">Rubro</label>
-              <select
-                id="cat-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {CATEGORIAS_DISPONIBLES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === '' ? 'Todos los rubros' : cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group filter-search">
-              <label htmlFor="search-input">Buscar</label>
-              <input
-                id="search-input"
-                type="search"
-                placeholder="Palabra clave..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className="filter-group filter-sort">
-              <label htmlFor="sort-select">Orden</label>
-              <select
-                id="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'reciente' | 'antiguo')}
-              >
-                <option value="reciente">Mas recientes</option>
-                <option value="antiguo">Mas antiguos</option>
-              </select>
-            </div>
-
-            <div className="filter-group filter-location">
-              <label>&nbsp;</label>
-              <button
-                type="button"
-                className={`btn-filter-location ${locationFilter ? 'active' : ''}`}
-                onClick={() => setShowLocationModal(true)}
-              >
-                {locationFilter ? `Ubicación (${locationFilter.radius} km)` : 'Filtrar por ubicación'}
-              </button>
-            </div>
-          </div>
+          <FilterBar
+            category={category}
+            onCategoryChange={setCategory}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            locationFilter={locationFilter}
+            onOpenLocationModal={() => setShowLocationModal(true)}
+          />
         </div>
       </header>
 
@@ -262,106 +205,30 @@ export default function AvailableJobs(): JSX.Element {
           )}
           {!loading &&
             filtradosYOrdenados.map((trabajo) => (
-              <article
+              <TrabajoCard
                 key={trabajo.id}
-                className={`trabajo-card ${selected?.id === trabajo.id ? 'is-selected' : ''} ${yaPostulado(trabajo.id) ? 'is-applied' : ''}`}
+                trabajo={trabajo}
+                isSelected={selected?.id === trabajo.id}
+                isApplied={yaPostulado(trabajo.id)}
                 onClick={() => setSelected(trabajo)}
-                onKeyDown={(e) => {
+                onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     setSelected(trabajo)
                   }
                 }}
-                role="button"
-                tabIndex={0}
-              >
-                {trabajo.photo && (
-                  <img
-                    src={trabajo.photo}
-                    alt=""
-                    className="trabajo-card-img"
-                  />
-                )}
-                <div className="trabajo-card-body">
-                  <div className="trabajo-card-head">
-                    <span className="badge badge-open">{trabajo.categoria}</span>
-                    {yaPostulado(trabajo.id) && (
-                      <span className="badge badge-applied">Postulado</span>
-                    )}
-                  </div>
-                  <h3>{trabajo.titulo}</h3>
-                  <p className="trabajo-desc">{trabajo.descripcion}</p>
-                </div>
-                <div className="trabajo-card-footer">
-                  <div className="trabajo-client">
-                    <div className="trabajo-client-avatar">
-                      {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
-                    </div>
-                    <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
-                  </div>
-                  <span className="trabajo-date">{trabajo.fechaServicio}</span>
-                </div>
-              </article>
+              />
             ))}
         </div>
 
         <aside className="trabajos-detail">
           {selected !== null ? (
-            <div className="trabajos-detail-card">
-              <div className="trabajos-detail-head">
-                <h2>Detalle del trabajo</h2>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setSelected(null)}
-                  aria-label="Cerrar detalle"
-                >
-                  x
-                </button>
-              </div>
-              {selected.photo && (
-                <img
-                  src={selected.photo}
-                  alt=""
-                  className="trabajo-photo"
-                />
-              )}
-              <div className="trabajos-detail-body">
-                <div className="trabajo-detail-client">
-                  <div className="trabajo-detail-client-avatar">
-                    {selected.clientName?.charAt(0).toUpperCase() ?? 'C'}
-                  </div>
-                  <div>
-                    <div className="trabajo-detail-client-name">{selected.clientName} {selected.clientSurname}</div>
-                    <span className="trabajo-detail-client-label">Cliente</span>
-                  </div>
-                </div>
-                <h3>{selected.titulo}</h3>
-                <p className="trabajo-meta">Publicado: {selected.fechaPublicacion}</p>
-                <p className="trabajo-detail-desc">{selected.descripcion}</p>
-                <dl className="trabajo-facts">
-                  <div>
-                    <dt>Rubro</dt>
-                    <dd>{selected.categoria}</dd>
-                  </div>
-                  <div>
-                    <dt>Fecha servicio</dt>
-                    <dd>{selected.fechaServicio}</dd>
-                  </div>
-                </dl>
-                {yaPostulado(selected.id) ? (
-                  <p className="trabajos-applied-msg">Ya te postulaste a este trabajo.</p>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-accent"
-                    onClick={() => setShowModal(true)}
-                  >
-                    Postularme
-                  </button>
-                )}
-              </div>
-            </div>
+            <TrabajoDetail
+              selected={selected}
+              yaPostulado={yaPostulado(selected.id)}
+              onClose={() => setSelected(null)}
+              onPostular={() => setShowModal(true)}
+            />
           ) : (
             <div className="trabajos-detail-placeholder">
               <p>Selecciona un trabajo para ver el detalle</p>
@@ -371,44 +238,14 @@ export default function AvailableJobs(): JSX.Element {
       </div>
 
       {showModal && selected !== null && (
-        <div className="modal-overlay" role="presentation" onClick={() => !enviando && setShowModal(false)}>
-          <div
-            className="card modal-card"
-            role="dialog"
-            aria-labelledby="modal-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="modal-title">Postularte a este trabajo</h2>
-            <p className="trabajos-muted">{selected.titulo}</p>
-            <label className="modal-label">
-              Mensaje para el cliente (opcional)
-              <textarea
-                value={mensaje}
-                onChange={(e) => setMensaje(e.target.value)}
-                rows={4}
-                placeholder="Presentate brevemente o conta tu experiencia..."
-              />
-            </label>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn-outline"
-                onClick={() => setShowModal(false)}
-                disabled={enviando}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn-accent"
-                onClick={handlePostular}
-                disabled={enviando}
-              >
-                {enviando ? 'Enviando...' : 'Enviar postulacion'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApplyModal
+          selected={selected}
+          mensaje={mensaje}
+          onMensajeChange={setMensaje}
+          onEnviar={handlePostular}
+          onClose={() => setShowModal(false)}
+          enviando={enviando}
+        />
       )}
 
       {showLocationModal && (

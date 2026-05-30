@@ -11,6 +11,8 @@ const { fetchAvailablePostsMock, searchPostsByLocationMock, applyToPostMock } = 
   applyToPostMock: vi.fn<(postId: string) => Promise<{ data: { id: string; status: string; message: string } }>>(),
 }))
 
+const mockGet = vi.hoisted(() => vi.fn())
+
 const mockMap = {
   setView: vi.fn(),
   getZoom: vi.fn(() => 12),
@@ -34,6 +36,12 @@ vi.mock('../services/posts', () => ({
 
 vi.mock('../services/applications', () => ({
   applyToPost: applyToPostMock,
+}))
+
+vi.mock('../services/api', () => ({
+  default: {
+    get: mockGet,
+  },
 }))
 
 const { default: AvailableJobs } = await import('../views/AvailableJobs')
@@ -73,13 +81,14 @@ const posts: Post[] = [
   },
 ]
 
-const renderAvailableJobs = (initialRoute = '/trabajador/trabajos'): ReturnType<typeof render> =>
+const renderAvailableJobs = (initialRoute = '/worker/available-jobs'): ReturnType<typeof render> =>
   render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <Routes>
-        <Route path="/trabajador/trabajos" element={<AvailableJobs />} />
+        <Route path="/worker/available-jobs" element={<AvailableJobs />} />
         <Route path="/login" element={<h1>Login</h1>} />
         <Route path="/worker/my-applications" element={<h1>Mis Postulaciones</h1>} />
+        <Route path="/worker" element={<h1>Worker Dashboard</h1>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -90,6 +99,7 @@ describe('AvailableJobs', () => {
     vi.clearAllMocks()
     fetchAvailablePostsMock.mockResolvedValue({ data: posts })
     applyToPostMock.mockResolvedValue({ data: { id: 'app-1', status: 'Pending', message: 'OK' } })
+    mockGet.mockResolvedValue({ data: [] })
   })
 
   it('loads and renders available jobs', async () => {
@@ -155,5 +165,47 @@ describe('AvailableJobs', () => {
 
     expect(await screen.findByText('Login')).toBeTruthy()
     expect(localStorage.getItem('token')).toBeNull()
+  })
+
+  it('shows empty state when no jobs are returned', async () => {
+    fetchAvailablePostsMock.mockResolvedValue({ data: [] })
+    renderAvailableJobs()
+
+    expect(await screen.findByText('No hay trabajos disponibles')).toBeTruthy()
+  })
+
+  it('shows "Postulado" badge on already applied jobs', async () => {
+    mockGet.mockResolvedValue({ data: [{ postId: '1' }] })
+
+    renderAvailableJobs()
+
+    await screen.findByText('Cambiar canilla')
+    expect(screen.getByText('Postulado')).toBeTruthy()
+  })
+
+  it('persists category selection in localStorage', async () => {
+    const user = userEvent.setup()
+    renderAvailableJobs()
+
+    await screen.findByText('Cambiar canilla')
+    await user.selectOptions(screen.getByLabelText('Rubro'), 'Electricista')
+
+    expect(localStorage.getItem('workerCategory')).toBe('Electricista')
+  })
+
+  it('shows detail placeholder when no job is selected', async () => {
+    renderAvailableJobs()
+
+    expect(await screen.findByText('Selecciona un trabajo para ver el detalle')).toBeTruthy()
+  })
+
+  it('displays job detail when a job is clicked', async () => {
+    const user = userEvent.setup()
+    renderAvailableJobs()
+
+    await user.click(await screen.findByText('Cambiar canilla'))
+
+    expect(screen.getByText('Detalle del trabajo')).toBeTruthy()
+    expect(screen.getByText(/Fecha servicio/)).toBeTruthy()
   })
 })

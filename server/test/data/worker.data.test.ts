@@ -13,9 +13,7 @@ const makeUser = (email: string, name: string, extra: Record<string, unknown> = 
 
 describe('findWorkerById', () => {
   it('returns the worker when id and role match', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const created = await makeWorker('ana@test.com', 'Ana')
 
     const worker = await findWorkerById(created.id)
 
@@ -25,9 +23,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns null when the user exists but is not a worker', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Client },
-    })
+    const created = await makeUser('bob@test.com', 'Bob')
 
     const worker = await findWorkerById(created.id)
 
@@ -40,9 +36,7 @@ describe('findWorkerById', () => {
   })
 
   it('does not expose the password field', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana2@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const created = await makeWorker('ana2@test.com', 'Ana')
 
     const worker = await findWorkerById(created.id)
 
@@ -50,9 +44,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns categories when the worker has some assigned', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const created = await makeWorker('ana@test.com', 'Ana')
     const category = await prisma.category.create({ data: { name: 'Plumbing' } })
     await prisma.userCategory.create({
       data: { userId: created.id, categoryId: category.id },
@@ -65,9 +57,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns an empty categories array when the worker has none', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const created = await makeWorker('ana@test.com', 'Ana')
 
     const worker = await findWorkerById(created.id)
 
@@ -75,9 +65,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns bio as null when not set', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const created = await makeWorker('ana@test.com', 'Ana')
 
     const worker = await findWorkerById(created.id)
 
@@ -85,9 +73,7 @@ describe('findWorkerById', () => {
   })
 
   it('returns the correct bio when set', async () => {
-    const created = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker, bio: 'Experienced plumber.' },
-    })
+    const created = await makeWorker('ana@test.com', 'Ana', { bio: 'Experienced plumber.' })
 
     const worker = await findWorkerById(created.id)
 
@@ -97,13 +83,11 @@ describe('findWorkerById', () => {
 
 describe('findAllWorkers', () => {
   it('returns only users with role worker', async () => {
-    await prisma.user.createMany({
-      data: [
-        { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-        { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Worker },
-        { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: UserRole.Client },
-      ],
-    })
+    await Promise.all([
+      makeWorker('ana@test.com', 'Ana'),
+      makeWorker('bob@test.com', 'Bob'),
+      makeUser('carlos@test.com', 'Carlos'),
+    ])
 
     const workers = await findAllWorkers()
 
@@ -112,9 +96,7 @@ describe('findAllWorkers', () => {
   })
 
   it('returns an empty array when there are no workers', async () => {
-    await prisma.user.create({
-      data: { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Client },
-    })
+    await makeUser('bob@test.com', 'Bob')
 
     const workers = await findAllWorkers()
 
@@ -122,9 +104,7 @@ describe('findAllWorkers', () => {
   })
 
   it('does not expose the password field', async () => {
-    await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    await makeWorker('ana@test.com', 'Ana')
 
     const workers = await findAllWorkers()
 
@@ -132,9 +112,7 @@ describe('findAllWorkers', () => {
   })
 
   it('returns categories for each worker', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
     const category = await prisma.category.create({ data: { name: 'Electrical' } })
     await prisma.userCategory.create({
       data: { userId: worker.id, categoryId: category.id },

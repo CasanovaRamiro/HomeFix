@@ -1,6 +1,8 @@
 import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
 import { UserRole } from '../types/userRole.js'
+import * as bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 interface Auth0Claims {
   sub?: string
@@ -167,10 +169,10 @@ const getAuth0UserInfo = async (accessToken: string) => {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-  const name = input.name!.trim()
+  const name = input.name?.trim()
   const lastName = input.lastName?.trim()
-  const email = input.email!.trim().toLowerCase()
-  const password = input.password!
+  const email = input.email?.trim()?.toLowerCase()
+  const password = input.password
   const phone = input.phone?.trim() || undefined
 
   if (!name) throw createHttpError(400, 'El nombre es obligatorio')
@@ -198,10 +200,11 @@ export const registerUser = async (input: RegisterInput) => {
   const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
-    name: lastName ? `${name} ${lastName}` : name,
+    name,
     email,
     password: passwordHash,
     phone,
+    surname: lastName ?? '',
     role: UserRole.Client,
   })
 

@@ -7,7 +7,7 @@ vi.mock('../../src/middleware/auth0.middleware.js', async () => {
 
 import request from 'supertest'
 import { app } from '../../src/index.js'
-import { cleanDb, prisma } from '../helpers/db.js'
+import { cleanDb, prisma, createUser } from '../helpers/db.js'
 import { UserRole } from '../../src/types/userRole.js'
 
 beforeEach(() => cleanDb())
@@ -31,12 +31,10 @@ async function makePost(userId: string,   extra: Record<string, unknown> = {}) {
 
 describe('GET /workers', () => {
   it('returns all workers when authenticated', async () => {
-    await prisma.user.createMany({
-      data: [
-        { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-        { name: 'Bob', email: 'bob@test.com', password: 'hashed', role: UserRole.Worker },
-      ],
-    })
+    await Promise.all([
+      makeWorker('ana@test.com', 'Ana'),
+      makeWorker('bob@test.com', 'Bob'),
+    ])
 
     const res = await request(app)
       .get('/workers')
@@ -48,9 +46,7 @@ describe('GET /workers', () => {
   })
 
   it('does not return non-worker users', async () => {
-    await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get('/workers')
@@ -68,9 +64,7 @@ describe('GET /workers', () => {
 
 describe('GET /workers/:id', () => {
   it('returns the worker when found', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
@@ -86,9 +80,7 @@ describe('GET /workers/:id', () => {
   })
 
   it('returns the categories assigned to the worker', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
     const category = await prisma.category.create({ data: { name: 'Plumbing' } })
     await prisma.userCategory.create({
       data: { userId: worker.id, categoryId: category.id },
@@ -127,12 +119,8 @@ describe('GET /workers/:id', () => {
 
 describe('GET /workers/:id/reviews', () => {
   it('returns reviews for a worker', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
-    const client = await prisma.user.create({
-      data: { name: 'Carlos', email: 'carlos@test.com', password: 'hashed', role: UserRole.Client },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const client = await makeUser('carlos@test.com', 'Carlos')
     const post = await prisma.post.create({
       data: {
         userId: client.id,
@@ -165,13 +153,11 @@ describe('GET /workers/:id/reviews', () => {
     expect(res.body[0].rating).toBe(5)
     expect(res.body[0].description).toBe('Great work!')
     expect(res.body[0].reviewer.name).toBe('Carlos')
-    expect(res.body[0].jobApplication.post.title).toBe('Test Post')
+    expect(res.body[0].jobApplication.post.title).toBe('Fix pipes')
   })
 
   it('returns an empty array when the worker has no reviews', async () => {
-    const worker = await prisma.user.create({
-      data: { name: 'Ana', email: 'ana@test.com', password: 'hashed', role: UserRole.Worker },
-    })
+    const worker = await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get(`/workers/${worker.id}/reviews`)

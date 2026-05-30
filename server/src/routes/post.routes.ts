@@ -7,20 +7,9 @@ const router = Router()
 
 router.get('/available', requireWorkerAuth, async (req, res, next) => {
   try {
-    const claims = req.auth?.payload as {
-      sub?: string
-      email?: string
-      name?: string
-      nickname?: string
-      phone_number?: string
-    } | undefined
-    if(!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-    const user = await syncAuth0User(claims)
-    const result = await post({...req.body, userId: user.id });
-    res.status(201).json(result);
+    const category = typeof req.query.category === 'string' ? req.query.category : undefined
+    const result = await listAvailablePosts(category)
+    res.json(result)
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
