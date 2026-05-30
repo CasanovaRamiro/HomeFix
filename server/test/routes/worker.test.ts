@@ -15,20 +15,6 @@ beforeEach(() => cleanDb())
 const makeWorker = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'worker' })
 const makeUser = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'user' })
 
-async function makePost(userId: string,   extra: Record<string, unknown> = {}) {
-  return prisma.post.create({
-    data: {
-      userId,
-      title: 'Test Post',
-      description: 'Test description',
-      address: '123 Main St',
-      startDate: new Date('2026-06-01'),
-      endDate: new Date('2026-06-02'),
-      ...extra,
-    } as unknown as Prisma.PostCreateInput,
-  })
-}
-
 describe('GET /workers', () => {
   it('returns all workers when authenticated', async () => {
     await Promise.all([
