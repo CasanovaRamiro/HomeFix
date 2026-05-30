@@ -1,8 +1,24 @@
 import Badge from '../ui/Badge'
-import type { Post } from '../../types/post'
+
+interface Category {
+  category: { id: string; name: string }
+}
+
+interface PostDetail {
+  id: string
+  userId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  categories: Category[]
+}
 
 interface PostCardProps {
-  post: Post
+  post: PostDetail
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' }> = {
@@ -23,7 +39,7 @@ export default function PostCard({ post }: PostCardProps) {
 
       <div className="categories">
         {post.categories.map((c) => (
-          <Badge key={c.id}>{c.name}</Badge>
+          <Badge key={c.category.id}>{c.category.name}</Badge>
         ))}
       </div>
 
