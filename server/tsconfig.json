@@ -3,14 +3,12 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "isolatedModules": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "types": ["node"]
+    "noUnusedParameters": true
   },
-  "include": ["src", "test", "prisma"]
+  "include": ["src", "test"]
 }

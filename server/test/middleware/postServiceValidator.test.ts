@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { postServiceValidator } from "../../src/middleware/postServiceValidator.js";
 import { PostInput } from "../../src/types/postInput.js";
 
-import { postServiceValidator } from "../../src/middleware/postServiceValidator.js";
-
-const validPostData: PostInput = {
+const validPostData:PostInput = {
   userId: 'uuid-user-1',
   title: "Tubo roto en cocina",
   description: "El tubo bajo el lavaplatos está roto",
@@ -18,7 +17,7 @@ describe("postServiceValidator", () => {
     expect(() =>
       postServiceValidator({
         ...validPostData,
-        categoryId: "",
+        categoryId: null as unknown as string,
       }),
     ).toThrow("At least one category must be selected");
   });
@@ -54,8 +53,8 @@ describe("postServiceValidator", () => {
     expect(() =>
       postServiceValidator({
         ...validPostData,
-        startDate: "2026-06-30T00:00:00.000Z",
-        endDate: "2026-06-01T00:00:00.000Z",
+        startDate: new Date("2026-06-30T00:00:00.000Z"),
+        endDate: new Date("2026-06-01T00:00:00.000Z"),
       }),
     ).toThrow("endDate must be after startDate");
   });

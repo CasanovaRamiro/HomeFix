@@ -1,8 +1,6 @@
 import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
 import { UserRole } from '../types/userRole.js'
-import * as bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 
 interface Auth0Claims {
   sub?: string
@@ -14,18 +12,13 @@ interface Auth0Claims {
 
 const managedPassword = 'AUTH0_MANAGED_ACCOUNT'
 
-export interface RegisterInput {
+interface RegisterInput {
   name?: string
   lastName?: string
   email?: string
   password?: string
   phone?: string
   address?: string
-  nationalId?: string
-}
-
-interface RegisterWorkerInput extends RegisterInput {
-  categories: string[]
 }
 
 interface RegisterWorkerInput extends RegisterInput {
@@ -146,7 +139,7 @@ const loginWithAuth0 = async (email: string, password: string) => {
 
   if (!response.ok) {
     const text = await response.text();
-    console.error('Error de Auth0:', text);
+    console.error("Error de Auth0:", text);
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }
@@ -169,15 +162,11 @@ const getAuth0UserInfo = async (accessToken: string) => {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-  const name = input.name?.trim()
+  const name = input.name!.trim()
   const lastName = input.lastName?.trim()
-  const email = input.email?.trim()?.toLowerCase()
-  const password = input.password
+  const email = input.email!.trim().toLowerCase()
+  const password = input.password!
   const phone = input.phone?.trim() || undefined
-
-  if (!name) throw createHttpError(400, 'El nombre es obligatorio')
-  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
-  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
   const passwordError = validatePassword(password)
   if (passwordError) throw createHttpError(400, passwordError)
@@ -185,33 +174,25 @@ export const registerUser = async (input: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
-
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const auth0User = await createAuth0User({
+    email,
+    password,
+    name,
+    lastName,
+  })
 
   const user = await createUser({
-    name,
+    name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
-    surname: lastName ?? '',
     role: UserRole.Client,
   })
 
   return {
     userId: user.id,
-    email: auth0User?.email ?? email,
-    emailVerified: auth0User?.emailVerified ?? false,
+    email: auth0User.email,
+    emailVerified: auth0User.emailVerified,
     message: 'Usuario registrado exitosamente',
   }
 }
@@ -233,24 +214,17 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
-
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const auth0User = await createAuth0User({
+    email,
+    password,
+    name,
+    lastName,
+  })
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
     role: 'worker',
   })
@@ -271,8 +245,8 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
 
   return {
     userId: user.id,
-    email: auth0User?.email ?? email,
-    emailVerified: auth0User?.emailVerified ?? false,
+    email: auth0User.email,
+    emailVerified: auth0User.emailVerified,
     message: 'Trabajador registrado exitosamente',
   }
 }
@@ -284,43 +258,7 @@ export const loginUser = async (input: LoginInput) => {
   if (!email) throw createHttpError(400, 'Email is required')
   if (!password) throw createHttpError(400, 'Password is required')
 
-  let tokenData: Auth0TokenResponse | null = null
-  try {
-    tokenData = await loginWithAuth0(email, password)
-  } catch {
-    console.error('Auth0 no disponible, usando autenticación local')
-  }
-
-  if (!tokenData) {
-    const user = await findByEmail(email)
-    if (!user || user.password === managedPassword) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const isValid = await bcrypt.compare(password, user.password)
-    if (!isValid) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const localToken = jwt.sign(
-      { sub: user.id, email: user.email, name: user.name, role: user.role },
-      process.env.JWT_SECRET || 'dev-secret',
-      { expiresIn: '24h' },
-    )
-    return {
-      accessToken: localToken,
-      idToken: null,
-      tokenType: 'local',
-      expiresIn: 86400,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    }
-  }
-
+  const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
   const profileEmail = profile.email?.toLowerCase() ?? email

@@ -7,7 +7,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -17,8 +16,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "types": ["vitest/globals", "node", "@testing-library/jest-dom"]
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
 }

@@ -24,9 +24,6 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@google/generative-ai": "~0.24.1",
     "@prisma/client": "~5.22.0",
@@ -38,13 +35,6 @@
     "jsonwebtoken": "~9.0.3",
     "morgan": "~1.10.1"
   },
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "esbuild",
-      "prisma",
-      "unrs-resolver"
-    ],
   "devDependencies": {
     "@eslint/js": "~9.39.4",
     "@types/bcryptjs": "~2.4.6",

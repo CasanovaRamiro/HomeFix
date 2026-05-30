@@ -5,7 +5,23 @@ import PageHeader from '../components/ui/PageHeader'
 import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
-import type { Post } from '../types/post'
+
+interface Category {
+  category: { id: string; name: string }
+}
+
+interface PostDetail {
+  id: string
+  userId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  categories: Category[]
+}
 
 const MOCK_APPLICANTS = [
   {
@@ -30,12 +46,12 @@ const MOCK_APPLICANTS = [
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>()
-  const [post, setPost] = useState<Post | null>(null)
+  const [post, setPost] = useState<PostDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get<Post>(`/posts/${id}`)
+    api.get<PostDetail>(`/posts/${id}`)
       .then(({ data }) => setPost(data))
       .catch((err) => {
         const axiosErr = err as { response?: { status?: number } }

@@ -192,7 +192,7 @@ function PostulacionCard({ p }: { p: Application }) {
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
           >
-            Contactar cliente
+            📞 Contactar cliente
           </button>
         </div>
       )}
