@@ -24,7 +24,7 @@ describe("post.service - createPost", () => {
     address: "Calle Principal 123, Apt 4B",
     categoryId: 'uuid-category-1',
   };
-  const createdPostMock = {
+  const createdPostMock: PostWithCategories = {
     id: 'uuid-post-1',
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
@@ -38,10 +38,11 @@ describe("post.service - createPost", () => {
     longitude: null,
     createdAt: new Date(),
     categories: [],
+    user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
   };
 
   it("should create a post successfully", async () => {
-    vi.mocked(createPost).mockResolvedValue(createdPostMock as PostWithCategories);
+    vi.mocked(createPost).mockResolvedValue(createdPostMock);
 
     const result = await postService.createPost(inputData);
 
@@ -54,7 +55,7 @@ describe("post.service - createPost", () => {
 });
 
 describe("post.service - getPostById", () => {
-  const postDetailMock = {
+  const postDetailMock: PostWithCategories = {
     id: 'uuid-post-1',
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
@@ -72,11 +73,11 @@ describe("post.service - getPostById", () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
-    user: { id: 'uuid-user-1', name: "Test User", phone: null },
+    user: { id: 'uuid-user-1', name: "Test User", surname: "Test" },
   };
 
   it("should return a post by id", async () => {
-    vi.mocked(findPostById).mockResolvedValue(postDetailMock as PostWithCategories);
+    vi.mocked(findPostById).mockResolvedValue(postDetailMock);
 
     const result = await postService.getPostById('uuid-post-1');
 
@@ -108,12 +109,13 @@ describe("post.service - getUserPosts", () => {
       address: "123 Test St",
       startDate: new Date("2026-06-01"),
       endDate: new Date("2026-06-15"),
-    images: [],
-    latitude: null,
+      images: [],
+      latitude: null,
       longitude: null,
       categories: [
         { category: { id: 'uuid-category-1', name: "Plumbing" } },
       ],
+      user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
     },
   ];
 
