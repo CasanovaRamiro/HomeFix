@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import prisma from "../../src/lib/prisma.js";
 
 export { prisma };
@@ -36,7 +37,7 @@ export const createUser = async (
   email: string,
   name: string,
   password: string,
-  extra: Record<string, unknown> = {},
+  extra: Partial<Prisma.UserCreateInput> = {},
 ) => {
   const { nationalIdType, address } = await createUserDependencies();
 
@@ -50,7 +51,7 @@ export const createUser = async (
       nationalIdTypeId: nationalIdType.id,
       addressId: address.id,
       ...extra,
-    } as any,
+    },
   });
 };
 

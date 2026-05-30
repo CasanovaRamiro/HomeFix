@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance, type PostWithCategories } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import type { PostInput } from "../../src/types/postInput.js";
 
@@ -41,7 +41,7 @@ describe("post.service - createPost", () => {
   };
 
   it("should create a post successfully", async () => {
-    vi.mocked(createPost).mockResolvedValue(createdPostMock as any);
+    vi.mocked(createPost).mockResolvedValue(createdPostMock as PostWithCategories);
 
     const result = await postService.createPost(inputData);
 
@@ -76,7 +76,7 @@ describe("post.service - getPostById", () => {
   };
 
   it("should return a post by id", async () => {
-    vi.mocked(findPostById).mockResolvedValue(postDetailMock as any);
+    vi.mocked(findPostById).mockResolvedValue(postDetailMock as PostWithCategories);
 
     const result = await postService.getPostById('uuid-post-1');
 
@@ -97,7 +97,7 @@ describe("post.service - getPostById", () => {
 });
 
 describe("post.service - getUserPosts", () => {
-  const userPostsMock: any[] = [
+  const userPostsMock: PostWithCategories[] = [
     {
       id: 'uuid-post-1',
       userId: 'uuid-user-1',
@@ -231,7 +231,7 @@ describe('post.service - finalizePost', () => {
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Finalized', updatedAt: new Date() } as any)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Finalized', updatedAt: new Date() })
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
@@ -246,13 +246,13 @@ describe('post.service - finalizePost', () => {
   })
 
   it('lanza 403 si el post pertenece a otro usuario', async () => {
-    vi.mocked(findPostById).mockResolvedValue(mockPost as any)
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
 
     await expect(postService.finalizePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
   it('lanza 400 si el post no está en estado Paused', async () => {
-    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' } as any)
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
 
     await expect(postService.finalizePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })

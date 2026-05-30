@@ -6,7 +6,7 @@ vi.mock('../../src/data/user.data.js', () => ({
 }))
 
 import * as userData from '../../src/data/user.data.js'
-import { loginUser, registerUser, syncAuth0User } from '../../src/services/auth.service.js'
+import { loginUser, registerUser, syncAuth0User, type RegisterInput } from '../../src/services/auth.service.js'
 
 const mockUser = {
   id: 'uuid-jane',
@@ -28,7 +28,7 @@ describe('auth.service - syncAuth0User', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns existing user when email already exists', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser as any)
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
 
     const result = await syncAuth0User({
       sub: 'auth0|abc123',
@@ -43,7 +43,7 @@ describe('auth.service - syncAuth0User', () => {
 
   it('creates a user when email does not exist', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser as any)
+    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
 
     const result = await syncAuth0User({
       sub: 'auth0|abc123',
@@ -62,7 +62,7 @@ describe('auth.service - registerUser', () => {
 
   it('registers a user via Auth0', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser as any)
+    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
     process.env.AUTH0_CLIENT_ID = 'client-id'
     process.env.AUTH0_DB_CONNECTION = 'Username-Password-Authentication'
     process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.example.com/'
@@ -82,7 +82,7 @@ describe('auth.service - registerUser', () => {
   })
 
   it('throws conflict if email exists', async () => {
-    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser as any)
+    vi.mocked(userData.findByEmail).mockResolvedValue(mockUser)
 
     await expect(
       registerUser({
@@ -94,7 +94,7 @@ describe('auth.service - registerUser', () => {
   })
 
   it('throws if required fields are missing', async () => {
-    await expect(registerUser({} as any)).rejects.toThrow('El nombre es obligatorio')
+    await expect(registerUser({} as RegisterInput)).rejects.toThrow('El nombre es obligatorio')
   })
 })
 
