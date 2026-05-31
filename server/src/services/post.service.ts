@@ -1,4 +1,4 @@
-import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
+import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
 import type { PostDTO } from "../types/post.dto.js";
 
 import {postServiceValidator} from "../middleware/postServiceValidator.js";
@@ -22,10 +22,10 @@ const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number])
   user: post.user,
 });
 
-export const post = async (input: PostInput) => {
+export const createPost = async (input: PostInput) => {
   postServiceValidator(input);
 
-  const createdPost = await createPost({
+  const createdPost = await createPostData({
     ...input,
     startDate: new Date(input.startDate),
     endDate: new Date(input.endDate),
