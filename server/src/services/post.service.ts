@@ -1,5 +1,9 @@
-import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
 import type { PostDTO } from "../types/post.dto.js";
+
+import {postServiceValidator} from "../middleware/postServiceValidator.js";
+
+import { PostInput } from "../types/postInput.js";
 
 const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number]): PostDTO => ({
   id: post.id,
@@ -18,19 +22,23 @@ const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number])
   user: post.user,
 });
 
-interface ServicePostInput {
-  userId: string
-  title: string
-  description: string
-  startDate: Date
-  endDate: Date
-  address: string
-  categoryId: string
-}
+export const post = async (input: PostInput) => {
+  postServiceValidator(input);
 
-export const createPost = async (data: ServicePostInput) => {
-  return createPostData(data)
-}
+  const createdPost = await createPost({
+    ...input,
+    startDate: new Date(input.startDate),
+    endDate: new Date(input.endDate),
+  });
+
+  return createdPost;
+};
+
+
+
+
+
+
 
 export const listAvailablePosts = async (category?: string): Promise<PostDTO[]> => {
   const posts = await findAvailablePosts(category);

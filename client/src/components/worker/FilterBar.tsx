@@ -1,5 +1,6 @@
 import type { LocationFilter } from './types'
 
+// TODO: fetch categories from BE
 const CATEGORIAS_DISPONIBLES = [
   '',
   'Electricista',
