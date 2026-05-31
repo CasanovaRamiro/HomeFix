@@ -19,9 +19,7 @@ export const jwtCheck = (req: Request, res: Response, next: NextFunction): void 
 }
 
 export const requireWorkerAuth = (req: Request, res: Response, next: NextFunction): void => {
-  const authReq = req as any 
-  
-  const payload = authReq.auth?.payload
+  const payload = req.auth?.payload
   
   if (!payload || payload.role !== 'worker') {
     res.status(403).json({ error: 'Worker access required' })
