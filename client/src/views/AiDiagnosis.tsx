@@ -1,20 +1,25 @@
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle } from 'lucide-react'
+import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle, Image, X } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useCreatePost } from '../hooks/useCreatePost'
 import { useDiagnosisChat } from '../hooks/useDiagnosisChat'
 import SubmitButton from '../components/ui/SubmitButton'
+import FileUpload from '../components/ui/FileUpload'
 
 export default function AiDiagnosis() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { form, setForm, formError, formSubmitting, formSuccess, handleFocus, handleBlur, handleSubmit } = useCreatePost()
+  const [files, setFiles] = useState<File[]>([])
+  const [chatImage, setChatImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, input, setInput, loading, suggestion, conversationDone, chatEndRef, handleSend, handleKeyDown } = useDiagnosisChat((data) => {
     setForm({
       title: data.suggestedTitle || '',
       categoryId: String(data.suggestedCategoryId || ''),
-      description: '',
+      description: data.possibleIssue || '',
       startDate: data.startDate || '',
       endDate: data.endDate || '',
       address: data.address || '',
@@ -144,9 +149,43 @@ export default function AiDiagnosis() {
             <div ref={chatEndRef} />
           </div>
 
+          {chatImage && (
+            <div style={{
+              padding: '8px 24px', display: 'flex', alignItems: 'center',
+              gap: '12px', background: theme.card,
+              borderTop: `1px solid ${theme.border}`,
+            }}>
+              <div style={{
+                position: 'relative', borderRadius: '8px', overflow: 'hidden',
+                maxWidth: '200px', maxHeight: '120px',
+              }}>
+                <img src={chatImage} alt="Foto seleccionada"
+                  style={{ width: '100%', height: 'auto', maxHeight: '120px', objectFit: 'contain', display: 'block' }} />
+              </div>
+              <button type="button" onClick={() => { setChatImage(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                style={{
+                  width: '28px', height: '28px', borderRadius: '50%', border: 'none',
+                  background: theme.danger, color: '#fff', cursor: 'pointer', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                }}>
+                <X style={{ width: '16px', height: '16px' }} />
+              </button>
+            </div>
+          )}
+
           {!conversationDone && (
             <div style={s.chatInputBar}>
               <div style={s.chatInputRow}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) setChatImage(URL.createObjectURL(file))
+                  }}
+                />
                 <input
                   type="text"
                   value={input}
@@ -158,6 +197,21 @@ export default function AiDiagnosis() {
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                 />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
+                    border: `1px solid ${theme.border}`,
+                    background: theme.card, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.3s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = theme.background; e.currentTarget.style.borderColor = theme.accent }}
+                  onMouseLeave={e => { e.currentTarget.style.background = theme.card; e.currentTarget.style.borderColor = theme.border }}
+                >
+                  <Image style={{ width: '20px', height: '20px', color: theme.muted }} />
+                </button>
                 <button
                   onClick={handleSend}
                   disabled={loading || !input.trim()}
@@ -273,17 +327,8 @@ export default function AiDiagnosis() {
                   </div>
 
                   <div style={{ marginBottom: '24px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Descripción del problema</label>
-                    <textarea
-                      value={form.description}
-                      onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                      placeholder="Describí tu problema en detalle..."
-                      required
-                      rows={4}
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.background, color: theme.primaryDark, transition: 'all 0.3s', resize: 'none' as const, boxSizing: 'border-box' as const }}
-                      onFocus={handleFocus}
-                      onBlur={handleBlur}
-                    />
+                    <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Fotos / Videos (opcional)</label>
+                    <FileUpload files={files} onFilesChange={setFiles} />
                   </div>
 
                   <SubmitButton loading={formSubmitting} loadingText="Publicando...">
