@@ -12,7 +12,7 @@
   "dependencies": {
     "@prisma/client": "~7.7.0",
     "@types/leaflet": "~1.9.21",
-    "axios": "^1.16.1",
+    "axios": "~1.15.1",
     "cors": "~2.8.6",
     "dotenv": "~17.4.2",
     "express": "~5.2.1",
@@ -39,7 +39,7 @@
     "globals": "~17.4.0",
     "jsdom": "~29.0.2",
     "nodemon": "~3.1.14",
-    "prisma": "^6.19.3",
+    "prisma": "~7.7.0",
     "tailwindcss": "~4.3.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "~8.33.0",
