@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `post` MODIFY `description` TEXT NOT NULL;
+ALTER TABLE `Post` MODIFY `description` TEXT NOT NULL;
