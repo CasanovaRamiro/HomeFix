@@ -15,19 +15,25 @@ function getJwtCheck() {
 }
 
 export const jwtCheck = (req: Request, res: Response, next: NextFunction): void => {
-  getJwtCheck()(req, res, next)
+  getJwtCheck()(req, res, async () => {
+    const header = req.headers.authorization
+    if (header?.startsWith('Bearer ')) {
+      try {
+        const token = header.split(' ')[1]
+        const issuer = (process.env.AUTH0_ISSUER_BASE_URL || '').replace(/\/$/, '')
+        const resp = await fetch(`${issuer}/userinfo`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (resp.ok) {
+          const userinfo = await resp.json()
+          if (userinfo.email && (req as any).auth?.payload) {
+            ;(req as any).auth.payload.email = userinfo.email
+          }
+        }
+      } catch {
+        // continue without email
+      }
+    }
+    next()
+  })
 }
-
-export const requireWorkerAuth = (req: Request, res: Response, next: NextFunction): void => {
-  const authReq = req as any 
-  
-  const payload = authReq.auth?.payload
-  
-  if (!payload || payload.role !== 'worker') {
-    res.status(403).json({ error: 'Worker access required' })
-    return
-  }
-
-  next()
-}
-

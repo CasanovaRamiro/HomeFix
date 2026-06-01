@@ -87,7 +87,7 @@ const getIssuerBaseUrl = () => {
   return issuer.replace(/\/$/, '')
 }
 
-const createAuth0User = async (payload: {
+export const createAuth0User = async (payload: {
   email: string
   password: string
   name: string
@@ -377,3 +377,6 @@ export const syncAuth0User = async (claims: Auth0Claims) => {
 
   return user
 }
+
+
+

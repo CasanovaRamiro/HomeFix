@@ -25,16 +25,16 @@
 }
 
 :root {
-  --primary: #13243B;
-  --primary-light: #1a2f4a;
+  --primary: #0F172A;
+  --primary-light: #1E293B;
   --accent: #10B981;
   --accent-hover: #059669;
-  --bg: #f5f5f5;
-  --card-bg: #ffffff;
-  --border: #e8e8e8;
-  --text: #111111;
-  --text-muted: #6B7280;
-  --danger: #ef4444;
+  --bg: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --danger: #EF4444;
   --radius: 8px;
   --accent-bg: #ECFDF5;
   --accent-border: #10B981;
@@ -44,8 +44,6 @@
 
 body {
   font-family: 'Montserrat', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
   background: var(--color-background);
   color: var(--color-primary-dark);
   font-size: 15px;
@@ -127,28 +125,6 @@ button:hover { background: var(--primary-light); }
   tr + tr td { border-top: 1px solid #f0f0f0; }
 }
 
-/* Auth screens */
-.center {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card h2 { font-size: 1.25rem; font-weight: 600; }
-
 .btn-outline {
   background: transparent;
   color: var(--primary);
@@ -172,30 +148,6 @@ button:hover { background: var(--primary-light); }
 }
 
 .page-header h2 { font-size: 1.25rem; font-weight: 600; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-th, td {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
-}
-
-th {
-  background: #fafafa;
-  font-weight: 500;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-}
-
-tr + tr td { border-top: 1px solid #f0f0f0; }
 
 /* Post Detail Header */
 .post-header {
@@ -288,6 +240,8 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
 .badge-danger { background: var(--danger); color: #fff; }
 .badge-warning { background: #f59e0b; color: #fff; }
+.badge-open { background: #e8f5e9; color: #2d6a4f; }
+.badge-applied { background: #e3f2fd; color: #1565c0; }
 
 /* Star Rating */
 .star-rating { display: inline-flex; align-items: center; gap: 2px; }
@@ -356,4 +310,3 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }

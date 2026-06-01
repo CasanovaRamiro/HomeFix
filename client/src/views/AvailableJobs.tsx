@@ -15,6 +15,7 @@ import TrabajoDetail from '../components/worker/TrabajoDetail'
 import ApplyModal from '../components/worker/ApplyModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
+import { Briefcase, ArrowLeft } from 'lucide-react'
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
@@ -145,28 +146,50 @@ export default function AvailableJobs(): JSX.Element {
   }
 
   return (
-    <div className="trabajos-page">
-      <header className="trabajos-hero">
-        <div className="trabajos-hero-inner">
-          <div className="trabajos-hero-top">
-            <button type="button" className="trabajos-back" onClick={() => navigate('/worker')}>
-              {'<- Volver'}
+    <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
+      <div style={{ background: '#0F172A', width: '100%', paddingTop: 32, paddingBottom: 40 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <button
+              onClick={() => navigate('/worker')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'none', border: 'none', padding: 0,
+                color: '#94A3B8', fontSize: 13, fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <ArrowLeft size={14} />
+              Volver
             </button>
-            <button type="button" className="btn-logout" onClick={logout}>
+            <button
+              onClick={logout}
+              style={{
+                background: 'transparent', color: 'rgba(255,255,255,0.75)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                padding: '6px 16px', fontSize: 13, borderRadius: 6,
+                cursor: 'pointer',
+              }}
+            >
               Salir
             </button>
           </div>
-          <h1>Trabajos disponibles</h1>
-          <p className="trabajos-hero-subtitle">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <Briefcase size={28} color="#10B981" />
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+              Trabajos disponibles
+            </h1>
+          </div>
+          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 24px 38px' }}>
             {loading ? (
               'Cargando…'
             ) : (
               <>
-                <strong>{filtradosYOrdenados.length}</strong>{' '}
+                <strong style={{ color: '#fff' }}>{filtradosYOrdenados.length}</strong>{' '}
                 {category.trim() !== '' ? (
-                  <>
-                    trabajos de <strong>{category}</strong>
-                  </>
+                  <>trabajos de <strong style={{ color: '#fff' }}>{category}</strong></>
                 ) : (
                   'trabajos activos'
                 )}
@@ -188,19 +211,19 @@ export default function AvailableJobs(): JSX.Element {
             onOpenLocationModal={() => setShowLocationModal(true)}
           />
         </div>
-      </header>
+      </div>
 
       {error !== '' && (
-        <p className="error trabajos-error">{error}</p>
+        <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1200, margin: '12px auto 0', padding: '0 24px' }}>{error}</p>
       )}
 
-      <div className="trabajos-layout">
-        <div className="trabajos-list">
-          {loading && <p className="trabajos-muted">Cargando trabajos...</p>}
+      <div style={{ maxWidth: 1200, margin: '24px auto 0', padding: '0 24px 2rem', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
           {!loading && filtradosYOrdenados.length === 0 && (
-            <div className="trabajos-empty card">
-              <h3>No hay trabajos disponibles</h3>
-              <p>No encontramos trabajos activos para este rubro o búsqueda.</p>
+            <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
+              <h3 style={{ marginBottom: 8, fontSize: '1.1rem', color: '#0F172A' }}>No hay trabajos disponibles</h3>
+              <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
             </div>
           )}
           {!loading &&
@@ -221,7 +244,7 @@ export default function AvailableJobs(): JSX.Element {
             ))}
         </div>
 
-        <aside className="trabajos-detail">
+        <aside>
           {selected !== null ? (
             <TrabajoDetail
               selected={selected}
@@ -230,7 +253,7 @@ export default function AvailableJobs(): JSX.Element {
               onPostular={() => setShowModal(true)}
             />
           ) : (
-            <div className="trabajos-detail-placeholder">
+            <div style={{ textAlign: 'center', color: '#64748B', padding: '2.5rem 1rem' }}>
               <p>Selecciona un trabajo para ver el detalle</p>
             </div>
           )}

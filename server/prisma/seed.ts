@@ -1,7 +1,21 @@
 import prisma from '../src/lib/prisma.js'
 import * as bcrypt from 'bcryptjs'
+import { createAuth0User } from '../src/services/auth.service.js'
 
 const SEED_PASSWORD = 'test1234'
+
+async function registerInAuth0(email: string, password: string, name: string, lastName?: string) {
+  try {
+    await createAuth0User({ email, password, name, lastName })
+    console.log(`  ✓ Registrado en Auth0: ${email}`)
+  } catch (err: any) {
+    if (err?.status === 409) {
+      console.log(`  - Ya existe en Auth0: ${email}`)
+    } else {
+      console.log(`  - Auth0 no disponible para ${email}: ${err?.message ?? 'error'}`)
+    }
+  }
+}
 
 const JOB_IMAGES: Record<string, string[]> = {
   Electricista: [
@@ -134,6 +148,11 @@ async function main() {
     ),
   )
 
+  console.log('Registrando usuarios en Auth0...')
+  for (const c of clients) {
+    await registerInAuth0(c.email, SEED_PASSWORD, c.name, c.surname)
+  }
+
   const trabajador = await prisma.user.create({
     data: {
       name: 'Carlos',
@@ -147,6 +166,8 @@ async function main() {
       phone: '+541198765432',
     },
   })
+
+  await registerInAuth0('trabajador@test.com', SEED_PASSWORD, 'Carlos', 'Mendez')
 
   // Categorías
   const categories = await Promise.all([
