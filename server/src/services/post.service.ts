@@ -1,9 +1,23 @@
 import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
-import type { PostDTO } from "../types/post.dto.js";
+import type { UserPostSummary } from "../data/post.data.js";
+import type { PostDTO, UserPostDTO } from "../types/post.dto.js";
 
 import {postServiceValidator} from "../middleware/postServiceValidator.js";
 
 import { PostInput } from "../types/postInput.js";
+
+const toUserPostDTO = (post: UserPostSummary): UserPostDTO => ({
+  id: post.id,
+  title: post.title,
+  description: post.description,
+  status: post.status,
+  createdAt: post.createdAt.toISOString(),
+  address: post.address,
+  startDate: post.startDate.toISOString(),
+  endDate: post.endDate.toISOString(),
+  categories: post.categories,
+  worker: post.worker,
+});
 
 const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number]): PostDTO => ({
   id: post.id,
@@ -74,9 +88,9 @@ export const getPostById = async (id: string): Promise<PostDTO | null> => {
   return toPostDTO(found);
 };
 
-export const getUserPosts = async (userId: string): Promise<PostDTO[]> => {
+export const getUserPosts = async (userId: string): Promise<UserPostDTO[]> => {
   const posts = await findPostsByUser(userId);
-  return posts.map(toPostDTO);
+  return posts.map(toUserPostDTO);
 };
 
 export const finalizePost = async (postId: string, userId: string) => {
@@ -94,5 +108,5 @@ export const finalizePost = async (postId: string, userId: string) => {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 });
   }
 
-  return updatePostStatus(postId, 'Finalized');
+  return updatePostStatus(postId, 'Completed');
 };
