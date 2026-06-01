@@ -31,7 +31,6 @@ import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
 const mockUser = {
   id: 1,
   name: 'Jane',
-  surname: 'Test',
   email: 'jane@test.com',
   password: 'hashed',
   nationalId: 'DNI-12345678',

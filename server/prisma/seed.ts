@@ -4,21 +4,21 @@ import * as bcrypt from 'bcryptjs'
 const SEED_PASSWORD = 'test1234'
 
 const JOB_IMAGES: Record<string, string[]> = {
-  Electricista: [
+  Electricidad: [
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
     'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
     'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
     'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=800&q=80',
     'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
   ],
-  Plomero: [
+  Plomeria: [
     'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800&q=80',
     'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&q=80',
     'https://images.unsplash.com/photo-1504148455328-c376907d9e1a?w=800&q=80',
     'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
     'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80',
   ],
-  Gasista: [
+  Gas: [
     'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
     'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
@@ -51,7 +51,7 @@ async function main() {
     data: { description: 'DNI' },
   })
 
-  // Direcciones para clientes (distintas localidades de Buenos Aires)
+  // Direcciones para clientes
   const addressRecoleta = await prisma.address.create({
     data: { street: 'Av. Callao', number: '1500', city: 'Buenos Aires', state: 'CABA' },
   })
@@ -99,29 +99,32 @@ async function main() {
   })
 
   const clients = [
-    { name: 'Laura', surname: 'Fernández', email: 'laura@test.com', addressId: addressRecoleta.id },
-    { name: 'Sofía', surname: 'Martínez', email: 'sofia@test.com', addressId: addressBelgrano.id },
-    { name: 'Diego', surname: 'Ramírez', email: 'diego@test.com', addressId: addressAlmagro.id },
-    { name: 'Valentina', surname: 'López', email: 'valentina@test.com', addressId: addressCaballito.id },
-    { name: 'Martín', surname: 'García', email: 'martin@test.com', addressId: addressPalermo.id },
-    { name: 'Camila', surname: 'Torres', email: 'camila@test.com', addressId: addressSanJusto.id },
-    { name: 'Nicolás', surname: 'Pérez', email: 'nicolas@test.com', addressId: addressRamosMejia.id },
-    { name: 'Florencia', surname: 'Díaz', email: 'florencia@test.com', addressId: addressMoron.id },
-    { name: 'Joaquín', surname: 'Suárez', email: 'joaquin@test.com', addressId: addressCastelar.id },
-    { name: 'Agustina', surname: 'Romero', email: 'agustina@test.com', addressId: addressAvellaneda.id },
-    { name: 'Mateo', surname: 'Acosta', email: 'mateo@test.com', addressId: addressLanus.id },
-    { name: 'Catalina', surname: 'Medina', email: 'catalina@test.com', addressId: addressLomas.id },
-    { name: 'Benjamín', surname: 'Castillo', email: 'benjamin@test.com', addressId: addressMartinez.id },
-    { name: 'Emilia', surname: 'Giménez', email: 'emilia@test.com', addressId: addressSanIsidro.id },
-    { name: 'Facundo', surname: 'Rivas', email: 'facundo@test.com', addressId: addressVicenteLopez.id },
+    { firstName: 'Laura', lastName: 'Fernández', email: 'laura@test.com', addressId: addressRecoleta.id },
+    { firstName: 'Sofía', lastName: 'Martínez', email: 'sofia@test.com', addressId: addressBelgrano.id },
+    { firstName: 'Diego', lastName: 'Ramírez', email: 'diego@test.com', addressId: addressAlmagro.id },
+    { firstName: 'Valentina', lastName: 'López', email: 'valentina@test.com', addressId: addressCaballito.id },
+    { firstName: 'Martín', lastName: 'García', email: 'martin@test.com', addressId: addressPalermo.id },
+    { firstName: 'Camila', lastName: 'Torres', email: 'camila@test.com', addressId: addressSanJusto.id },
+    { firstName: 'Nicolás', lastName: 'Pérez', email: 'nicolas@test.com', addressId: addressRamosMejia.id },
+    { firstName: 'Florencia', lastName: 'Díaz', email: 'florencia@test.com', addressId: addressMoron.id },
+    { firstName: 'Joaquín', lastName: 'Suárez', email: 'joaquin@test.com', addressId: addressCastelar.id },
+    { firstName: 'Agustina', lastName: 'Romero', email: 'agustina@test.com', addressId: addressAvellaneda.id },
+    { firstName: 'Mateo', lastName: 'Acosta', email: 'mateo@test.com', addressId: addressLanus.id },
+    { firstName: 'Catalina', lastName: 'Medina', email: 'catalina@test.com', addressId: addressLomas.id },
+    { firstName: 'Benjamín', lastName: 'Castillo', email: 'benjamin@test.com', addressId: addressMartinez.id },
+    { firstName: 'Emilia', lastName: 'Giménez', email: 'emilia@test.com', addressId: addressSanIsidro.id },
+    { firstName: 'Facundo', lastName: 'Rivas', email: 'facundo@test.com', addressId: addressVicenteLopez.id },
+    { firstName: 'Marta', lastName: 'Ocampo', email: 'marta@example.com', addressId: addressRecoleta.id },
+    { firstName: 'Juan', lastName: 'Pérez', email: 'juan@example.com', addressId: addressPalermo.id },
+    { firstName: 'Laura', lastName: 'Martínez', email: 'laura@example.com', addressId: addressCaballito.id },
+    { firstName: 'Roberto', lastName: 'Sánchez', email: 'roberto@example.com', addressId: addressBelgrano.id },
   ]
 
   const createdClients = await Promise.all(
     clients.map((c) =>
       prisma.user.create({
         data: {
-          name: c.name,
-          surname: c.surname,
+          name: `${c.firstName} ${c.lastName}`,
           email: c.email,
           password: passwordHash,
           nationalId: `${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -136,8 +139,7 @@ async function main() {
 
   const trabajador = await prisma.user.create({
     data: {
-      name: 'Carlos',
-      surname: 'Mendez',
+      name: 'Carlos Mendez',
       email: 'trabajador@test.com',
       password: passwordHash,
       nationalId: '2033344455',
@@ -148,12 +150,22 @@ async function main() {
     },
   })
 
-  // Categorías
-  const categories = await Promise.all([
-    prisma.category.create({ data: { name: 'Electricista' } }),
-    prisma.category.create({ data: { name: 'Plomero' } }),
-    prisma.category.create({ data: { name: 'Gasista' } }),
-  ])
+  // Categorías (combinadas y ampliadas)
+  const categoryNames = [
+    'Plomeria',
+    'Electricidad',
+    'Gas',
+    'Carpinteria',
+    'Instalador de aire acondicionado',
+    'Pintura',
+    'Albanileria',
+    'Cerrajeria',
+    'Climatizacion',
+  ]
+
+  const categories = await Promise.all(
+    categoryNames.map((name) => prisma.category.create({ data: { name } })),
+  )
   const categoryByName = new Map(categories.map((c) => [c.name, c]))
 
   const jobDates = [
@@ -164,110 +176,110 @@ async function main() {
     { from: new Date('2026-06-05'), until: new Date('2026-06-06') },
   ]
 
-  // 15 publicaciones — una por cada cliente, variando categorías
-  const posts = [
+  // Posts de la rama develop
+  const postsData = [
     {
       title: 'Instalar spots LED en cocina - Recoleta',
       description: 'Necesito instalar 6 spots LED empotrables en el techo de durlock de la cocina. Las medidas son estándar.',
-      category: 'Electricista', address: 'Recoleta, CABA',
+      category: 'Electricidad', address: 'Recoleta, CABA',
       latitude: -34.5889, longitude: -58.3910,
       ...jobDates[0],
     },
     {
       title: 'Cambio de llave termomagnética - Belgrano',
       description: 'La llave térmica general salta cada vez que uso el horno eléctrico. Necesito que la revisen y la cambien.',
-      category: 'Electricista', address: 'Belgrano, CABA',
+      category: 'Electricidad', address: 'Belgrano, CABA',
       latitude: -34.5631, longitude: -58.4556,
       ...jobDates[1],
     },
     {
       title: 'Reparar pérdida de agua en baño - Almagro',
       description: 'El tanque del inodoro pierde agua constantemente. Ya cambié la válvula pero sigue perdiendo.',
-      category: 'Plomero', address: 'Almagro, CABA',
+      category: 'Plomeria', address: 'Almagro, CABA',
       latitude: -34.6045, longitude: -58.4212,
       ...jobDates[2],
     },
     {
       title: 'Colocar calefón tiro balanceado - Caballito',
       description: 'Compré un calefón nuevo a gas (tiro balanceado) y necesito que lo instalen y conecten a la salida existente.',
-      category: 'Gasista', address: 'Caballito, CABA',
+      category: 'Gas', address: 'Caballito, CABA',
       latitude: -34.6196, longitude: -58.4457,
       ...jobDates[3],
     },
     {
       title: 'Revisar tablero eléctrico - Palermo',
       description: 'El tablero salta seguido sin motivo aparente. Quiero que un electricista revise todas las térmicas y conexiones.',
-      category: 'Electricista', address: 'Palermo, CABA',
+      category: 'Electricidad', address: 'Palermo, CABA',
       latitude: -34.5889, longitude: -58.4306,
       ...jobDates[1],
     },
     {
       title: 'Destapar cañería principal - San Justo',
       description: 'Urgente: la bacha de la cocina no drena. Ya probé con destapador químico pero no funcionó.',
-      category: 'Plomero', address: 'San Justo, Buenos Aires',
+      category: 'Plomeria', address: 'San Justo, Buenos Aires',
       latitude: -34.6703, longitude: -58.5628,
       ...jobDates[0],
     },
     {
       title: 'Cambiar cableado completo - Ramos Mejía',
       description: 'Departamento de 2 ambientes con cableado viejo. Necesito cambiar todos los cables y las térmicas.',
-      category: 'Electricista', address: 'Ramos Mejía, Buenos Aires',
+      category: 'Electricidad', address: 'Ramos Mejía, Buenos Aires',
       latitude: -34.6436, longitude: -58.5639,
       ...jobDates[2],
     },
     {
       title: 'Instalar termotanque eléctrico - Morón',
       description: 'Compré un termotanque eléctrico de 80 litros. Necesito instalación con soporte de pared y conexión.',
-      category: 'Plomero', address: 'Morón, Buenos Aires',
+      category: 'Plomeria', address: 'Morón, Buenos Aires',
       latitude: -34.6514, longitude: -58.6212,
       ...jobDates[4],
     },
     {
       title: 'Reparar calefactor tiro balanceado - Castelar',
       description: 'El piloto del calefactor no se enciende. Creo que tiene suciedad en el inyector.',
-      category: 'Gasista', address: 'Castelar, Buenos Aires',
+      category: 'Gas', address: 'Castelar, Buenos Aires',
       latitude: -34.6482, longitude: -58.6481,
       ...jobDates[4],
     },
     {
       title: 'Fuga de agua en pared - Avellaneda',
       description: 'Tengo una filtración en la pared del baño. Necesito romper y reparar el caño interno.',
-      category: 'Plomero', address: 'Avellaneda, Buenos Aires',
+      category: 'Plomeria', address: 'Avellaneda, Buenos Aires',
       latitude: -34.6622, longitude: -58.3653,
       ...jobDates[1],
     },
     {
       title: 'Puesta a tierra de toda la casa - Lanús',
       description: 'Necesito la instalación de jabalina y conexión a tierra para toda la vivienda.',
-      category: 'Electricista', address: 'Lanús, Buenos Aires',
+      category: 'Electricidad', address: 'Lanús, Buenos Aires',
       latitude: -34.6939, longitude: -58.3961,
       ...jobDates[3],
     },
     {
       title: 'Cambiar junta del inodoro - Lomas de Zamora',
       description: 'La junta del inodoro pierde y mancha el piso. Hay que reemplazar el anillo de cera y ajustar.',
-      category: 'Plomero', address: 'Lomas de Zamora, Buenos Aires',
+      category: 'Plomeria', address: 'Lomas de Zamora, Buenos Aires',
       latitude: -34.7619, longitude: -58.4056,
       ...jobDates[2],
     },
     {
       title: 'Instalación de estufa tiro balanceado - Martínez',
       description: 'Colocación de estufa a gas con salida al exterior. Incluye perforación de pared.',
-      category: 'Gasista', address: 'Martínez, Buenos Aires',
+      category: 'Gas', address: 'Martínez, Buenos Aires',
       latitude: -34.4947, longitude: -58.5094,
       ...jobDates[2],
     },
     {
       title: 'Cortocircuito en llaves - San Isidro',
       description: 'Cuando llueve salta la térmica del circuito de enchufes. Posible filtraciones en caja.',
-      category: 'Electricista', address: 'San Isidro, Buenos Aires',
+      category: 'Electricidad', address: 'San Isidro, Buenos Aires',
       latitude: -34.4701, longitude: -58.5189,
       ...jobDates[0],
     },
     {
       title: 'Reparar pérdida de gas - Vicente López',
       description: 'Siento olor a gas cerca del medidor. Necesito revisión urgente de la instalación.',
-      category: 'Gasista', address: 'Vicente López, Buenos Aires',
+      category: 'Gas', address: 'Vicente López, Buenos Aires',
       latitude: -34.5296, longitude: -58.4750,
       ...jobDates[4],
     },
@@ -275,7 +287,7 @@ async function main() {
 
   const createdPostIds: string[] = []
 
-  for (const [index, item] of posts.entries()) {
+  for (const [index, item] of postsData.entries()) {
     const category = categoryByName.get(item.category)
     if (!category) throw new Error(`Missing category: ${item.category}`)
 
@@ -302,7 +314,77 @@ async function main() {
     createdPostIds.push(post.id)
   }
 
-  // Postulaciones de ejemplo
+  // Posts adicionales del PR
+  const extraPosts = [
+    {
+      userIdIndex: 15,
+      title: 'Reparación de tuberías en cocina',
+      description: 'Se necesita reparar fuga de agua debajo de la pileta de la cocina.',
+      address: 'Recoleta, Buenos Aires',
+      startDate: new Date('2026-05-15'),
+      endDate: new Date('2026-05-16'),
+      category: 'Plomeria',
+    },
+    {
+      userIdIndex: 16,
+      title: 'Destape de cañería en baño',
+      description: 'El lavabo del baño principal está tapado.',
+      address: 'Palermo, Buenos Aires',
+      startDate: new Date('2026-05-10'),
+      endDate: new Date('2026-05-11'),
+      category: 'Plomeria',
+    },
+    {
+      userIdIndex: 17,
+      title: 'Instalación de calefón a gas',
+      description: 'Cambiar calefón viejo por uno nuevo.',
+      address: 'Villa Crespo, Buenos Aires',
+      startDate: new Date('2026-05-20'),
+      endDate: new Date('2026-05-21'),
+      category: 'Gas',
+    },
+    {
+      userIdIndex: 18,
+      title: 'Cambio de grifería completa en baño',
+      description: 'Renovar toda la grifería del baño principal.',
+      address: 'Belgrano, Buenos Aires',
+      startDate: new Date('2026-05-08'),
+      endDate: new Date('2026-05-09'),
+      category: 'Plomeria',
+    },
+    {
+      userIdIndex: 17,
+      title: 'Reparación de instalación eléctrica',
+      description: 'Se cortó la luz en toda la casa. Necesito un electricista que revise el tablero y repare el circuito dañado. Incluye materiales.',
+      address: 'Caballito, Buenos Aires',
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2026-06-02'),
+      category: 'Electricidad',
+    },
+  ]
+
+  for (const item of extraPosts) {
+    const category = categoryByName.get(item.category)
+    if (!category) throw new Error(`Missing category: ${item.category}`)
+
+    const post = await prisma.post.create({
+      data: {
+        userId: createdClients[item.userIdIndex].id,
+        title: item.title,
+        description: item.description,
+        address: item.address,
+        startDate: item.startDate,
+        endDate: item.endDate,
+        status: 'Active',
+        categories: {
+          create: { categoryId: category.id },
+        },
+      },
+    })
+    createdPostIds.push(post.id)
+  }
+
+  // Postulaciones
   await prisma.application.create({
     data: { workerId: trabajador.id, postId: createdPostIds[0], status: 'Accepted', createdAt: new Date('2026-05-08') },
   })
@@ -316,8 +398,6 @@ async function main() {
     data: { workerId: trabajador.id, postId: createdPostIds[3], status: 'Accepted', createdAt: new Date('2026-05-02') },
   })
 
-  console.log('Seed OK')
-  console.log(' 15 clientes, 1 trabajador, 15 posts distribuidos en AMBA')
 }
 
 main()

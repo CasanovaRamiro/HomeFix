@@ -3,7 +3,7 @@ import { UserRole } from '../../src/types/userRole.js'
 
 vi.mock('../../src/data/user.data.js', () => ({
   findByEmail: vi.fn(),
-  createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId?: string; phone?: string; surname?: string }) => Promise<{ id: string; name: string; email: string; phone: string | null; role: string }>>(),
+  createUser: vi.fn<(args: { name: string; email: string; password: string; phone?: string }) => Promise<{ id: string; name: string; email: string; phone: string | null; role: string }>>(),
 }))
 
 import * as userData from '../../src/data/user.data.js'
@@ -16,7 +16,6 @@ const mockUser = {
   password: 'hashed',
   phone: null as string | null,
   bio: null as string | null,
-  surname: 'Test',
   role: 'client',
   createdAt: new Date(),
   active: true,

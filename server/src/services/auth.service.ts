@@ -20,12 +20,6 @@ export interface RegisterInput {
   email?: string
   password?: string
   phone?: string
-  address?: string
-  nationalId?: string
-}
-
-interface RegisterWorkerInput extends RegisterInput {
-  categories: string[]
 }
 
 interface RegisterWorkerInput extends RegisterInput {
@@ -204,7 +198,6 @@ export const registerUser = async (input: RegisterInput) => {
     email,
     password: passwordHash,
     phone,
-    surname: lastName ?? '',
     role: UserRole.Client,
   })
 

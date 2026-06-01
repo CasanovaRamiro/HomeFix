@@ -7,7 +7,7 @@ export const findApplicationsByWorker = (workerId: string) =>
       post: {
         include: {
           user: {
-            select: { id: true, name: true, surname: true },
+            select: { id: true, name: true },
           },
         },
       },

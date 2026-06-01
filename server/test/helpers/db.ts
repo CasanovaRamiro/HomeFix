@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import prisma from "../../src/lib/prisma.js";
 
 export { prisma };
@@ -12,25 +11,7 @@ export const cleanDb = async () => {
   await prisma.post.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.nationalIdType.deleteMany();
   await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
-};
-
-const createUserDependencies = async () => {
-  const nationalIdType = await prisma.nationalIdType.create({
-    data: { description: `DNI-${Date.now()}-${Math.random()}` },
-  });
-  const address = await prisma.address.create({
-    data: {
-      street: "Test street",
-      number: "123",
-      city: "Test city",
-      state: "Test state",
-    },
-  });
-
-  return { nationalIdType, address };
 };
 
 export const createUser = async (
@@ -39,19 +20,13 @@ export const createUser = async (
   password: string,
   extra: Record<string, unknown> = {},
 ) => {
-  const { nationalIdType, address } = await createUserDependencies();
-
   return await prisma.user.create({
     data: {
       email,
       name,
       password,
-      surname: "Test",
-      nationalId: `${Math.floor(10000000 + Math.random() * 90000000)}`,
-      nationalIdTypeId: nationalIdType.id,
-      addressId: address.id,
       ...extra,
-    } as unknown as Prisma.UserCreateInput,
+    },
   });
 };
 

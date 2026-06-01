@@ -38,7 +38,7 @@ describe("post.service - createPost", () => {
     longitude: null,
     createdAt: new Date(),
     categories: [],
-    user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
+    user: { id: 'uuid-user-1', name: 'Test' },
   };
 
   it("should create a post successfully", async () => {
@@ -73,7 +73,7 @@ describe("post.service - getPostById", () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
-    user: { id: 'uuid-user-1', name: "Test User", surname: "Test" },
+    user: { id: 'uuid-user-1', name: "Test User" },
   };
 
   it("should return a post by id", async () => {
@@ -115,7 +115,7 @@ describe("post.service - getUserPosts", () => {
       categories: [
         { category: { id: 'uuid-category-1', name: "Plumbing" } },
       ],
-      user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
+      user: { id: 'uuid-user-1', name: 'Test' },
     },
   ];
 
@@ -152,7 +152,7 @@ describe("post.service - listAvailablePosts", () => {
     latitude: null,
     longitude: null,
     categories: [{ category: { id: "uuid-cat-1", name: "Plomero" } }],
-    user: { id: "uuid-user-1", name: "Test", surname: "User" },
+    user: { id: "uuid-user-1", name: "Test" },
   };
 
   it("should return available posts without category filter", async () => {
@@ -228,7 +228,7 @@ describe('post.service - finalizePost', () => {
         category: { id: 'uuid-category-1', name: "Plomeria" },
       },
     ],
-    user: { id: 'user-uuid-1', name: 'Test', surname: 'User', phone: null },
+    user: { id: 'user-uuid-1', name: 'Test', phone: null },
   }
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {

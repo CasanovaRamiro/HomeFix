@@ -20,6 +20,5 @@ export interface PostDTO {
   user: {
     id: string
     name: string
-    surname: string
   }
 }

@@ -23,7 +23,6 @@ export interface PostWithCategories {
   user: {
     id: string
     name: string
-    surname: string
   }
 }
 
@@ -56,7 +55,6 @@ const postFields = {
     select: {
       id: true,
       name: true,
-      surname: true,
     },
   },
 } as const;

@@ -14,7 +14,6 @@ model User {
   id              String           @id @default(uuid())
   email           String           @unique
   name            String
-  surname      String
   password        String
   phone           String?
   bio             String?          @db.Text
@@ -28,12 +27,11 @@ model User {
   reviewsGiven    WorkerReview[]   @relation("ReviewsGiven")
   reviewsReceived WorkerReview[]   @relation("ReviewsReceived")
   applications    Application[]
-  nationalId       String
-  nationalIdTypeId String  @map("national_id_type_id")
-  addressId        String  @map("address_id")
-  nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
-  address          Address        @relation(fields: [addressId], references: [id])
-
+  nationalId       String?
+  nationalIdTypeId String?  @map("national_id_type_id")
+  addressId        String?  @map("address_id")
+  nationalIdType   NationalIdType? @relation(fields: [nationalIdTypeId], references: [id])
+  address          Address?        @relation(fields: [addressId], references: [id])
 }
 
 model Post {
@@ -135,9 +133,6 @@ model NationalIdType {
 
   @@map("national_id_type") 
 }
-
-
-
 
 model Address {
   id        String   @id @default(uuid()) @map("address_id")
