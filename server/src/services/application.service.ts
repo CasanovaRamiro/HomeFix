@@ -4,7 +4,7 @@ import { findPostById } from "../data/post.data.js"
 export const getMyApplications = async (workerId: string) => {
   const applications = await findApplicationsByWorker(workerId)
 
-  return applications.map((a: Awaited<ReturnType<typeof findApplicationsByWorker>>[number]) => ({
+  return applications.map((a) => ({
     id: a.id,
     postId: a.postId,
     title: a.post.title,

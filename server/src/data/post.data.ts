@@ -136,7 +136,7 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
 
-  return posts.map((post: Awaited<ReturnType<typeof prisma.post.findMany<{ include: { categories: { include: { category: true } }; applications: { include: { worker: { select: { id: true; name: true } } } } } }>>>[number]) => ({
+  return posts.map((post) => ({
     id: post.id,
     title: post.title,
     description: post.description,
@@ -145,7 +145,7 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
     address: post.address,
     startDate: post.startDate,
     endDate: post.endDate,
-    categories: post.categories.map((pc: { category: { id: string; name: string } }) => ({
+    categories: post.categories.map((pc) => ({
       id: pc.category.id,
       name: pc.category.name,
     })),
@@ -211,7 +211,7 @@ export const searchByDistance = async (
     select: postFields,
   });
 
-  const results: (LocationSearchResult | null)[] = posts.map((p: Awaited<ReturnType<typeof prisma.post.findMany<{ select: typeof postFields }>>>[number]) => {
+  const results: (LocationSearchResult | null)[] = posts.map((p) => {
     const dist = distanceMap.get(p.id);
     if (dist === undefined) return null;
     return { ...p, distance: dist } as unknown as LocationSearchResult;
