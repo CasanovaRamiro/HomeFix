@@ -155,13 +155,15 @@ describe("findPostsByUser", () => {
     expect(posts[0].title).toBe("Test Post");
   });
 
-  it("should return only Active and Paused posts", async () => {
+  it("should return Active, In progress, Paused and Completed posts", async () => {
     await createPost(createValidPost());
     const p2 = await createPost({ ...createValidPost(), title: "Paused post" });
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Paused" } });
+    const p3 = await createPost({ ...createValidPost(), title: "In progress post" });
+    await prisma.post.update({ where: { id: p3.id }, data: { status: "In progress" } });
 
     const posts = await findPostsByUser(userId);
-    expect(posts).toHaveLength(2);
+    expect(posts).toHaveLength(3);
   });
 
   it("should exclude posts with other statuses", async () => {
@@ -170,7 +172,7 @@ describe("findPostsByUser", () => {
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
 
     const posts = await findPostsByUser(userId);
-    expect(posts).toHaveLength(2);
+    expect(posts).toHaveLength(1);
   });
 
   it("should return empty array when user has no posts", async () => {
@@ -182,7 +184,7 @@ describe("findPostsByUser", () => {
     await createPost(createValidPost());
     const posts = await findPostsByUser(userId);
     expect(posts[0].categories).toBeDefined();
-    expect(posts[0].categories).toEqual([{ category: { id: expect.any(String), name: "Test Category" } }]);
+    expect(posts[0].categories).toEqual([{ id: expect.any(String), name: "Test Category" }]);
   });
 
   it("should order posts by createdAt descending", async () => {

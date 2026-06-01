@@ -107,12 +107,49 @@ export interface LocationSearchResult extends PostWithCategories {
   distance: number
 }
 
-export const findPostsByUser = (userId: string) =>
-  prisma.post.findMany({
-    where: { userId },
-    select: postFields,
-    orderBy: { createdAt: 'desc' },
-  }) as unknown as Promise<PostWithCategories[]>
+export type UserPostSummary = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: Date;
+  address: string;
+  startDate: Date;
+  endDate: Date;
+  categories: { id: string; name: string }[];
+  worker: { id: string; name: string } | null;
+};
+
+export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
+  const posts = await prisma.post.findMany({
+    where: { userId, status: { in: ["Active", "In progress", "Paused", "Completed"] } },
+    include: {
+      categories: { include: { category: true } },
+      applications: {
+        include: { worker: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+      },
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+
+  return posts.map((post) => ({
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    status: post.status,
+    createdAt: post.createdAt,
+    address: post.address,
+    startDate: post.startDate,
+    endDate: post.endDate,
+    categories: post.categories.map((pc) => ({
+      id: pc.category.id,
+      name: pc.category.name,
+    })),
+    worker: post.applications[0]?.worker ?? null,
+  }));
+};
 
 export const updatePostStatus = (id: string, status: string) =>
   prisma.post.update({

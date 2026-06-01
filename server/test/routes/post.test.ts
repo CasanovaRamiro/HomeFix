@@ -311,13 +311,15 @@ describe('PATCH /posts/:id/finalize', () => {
     postId = post.id
   })
 
-  it('returns 200 and Finalized when post is Paused and owned by user', async () => {
+
+  it('devuelve 200 y status Completed cuando el post está Paused y es del usuario', async () => {
+
     const res = await request(app)
       .patch(`/posts/${postId}/finalize`)
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
-    expect(res.body.status).toBe('Finalized')
+    expect(res.body.status).toBe('Completed')
   })
 
   it('returns 400 when post is not Paused', async () => {

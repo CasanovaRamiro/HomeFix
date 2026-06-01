@@ -13,6 +13,7 @@ import TrabajadorFeed from './views/TrabajadorFeed'
 import MisPostulaciones from './views/MisPostulaciones'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
+import ClientDashboard from './views/ClientDashboard'
 
 import WorkerLanding from './views/WorkerLanding'
 
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
+        <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
         <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
         <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />

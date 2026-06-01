@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance, type PostWithCategories } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance, type PostWithCategories, type UserPostSummary } from "../../src/data/post.data.js";
 import * as postService from "../../src/services/post.service.js";
 import type { PostInput } from "../../src/types/postInput.js";
 
@@ -98,10 +98,9 @@ describe("post.service - getPostById", () => {
 });
 
 describe("post.service - getUserPosts", () => {
-  const userPostsMock: PostWithCategories[] = [
+  const userPostsMock: UserPostSummary[] = [
     {
       id: 'uuid-post-1',
-      userId: 'uuid-user-1',
       title: "Test Post",
       description: "Test description",
       status: "Active",
@@ -109,13 +108,8 @@ describe("post.service - getUserPosts", () => {
       address: "123 Test St",
       startDate: new Date("2026-06-01"),
       endDate: new Date("2026-06-15"),
-      images: [],
-      latitude: null,
-      longitude: null,
-      categories: [
-        { category: { id: 'uuid-category-1', name: "Plumbing" } },
-      ],
-      user: { id: 'uuid-user-1', name: 'Test' },
+      categories: [{ id: 'uuid-category-1', name: "Plumbing" }],
+      worker: null,
     },
   ];
 
@@ -233,12 +227,13 @@ describe('post.service - finalizePost', () => {
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Finalized', updatedAt: new Date() })
+
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed', updatedAt: new Date() })
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Finalized')
-    expect(result.status).toBe('Finalized')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(result.status).toBe('Completed')
   })
 
   it('lanza 404 si el post no existe', async () => {

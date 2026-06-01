@@ -3,7 +3,7 @@ import type { AiSuggestRequest, AiResponse } from '../types/aiSuggestion.js'
 import prisma from '../lib/prisma.js'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite' })
+const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' })
 
 const HISTORY_LIMIT = 6
 const CACHE_TTL = 5 * 60 * 1000
@@ -87,7 +87,7 @@ REGLAS:
 - Respuestas cortas (maximo 2 oraciones).
 - No preguntes detalles tecnicos irrelevantes.
 - No preguntes por fechas ni direccion, el usuario las completa despues en un formulario.
-- En possibleIssue: lenguaje simple, sin certeza absoluta.
+- En possibleIssue: lenguaje simple, sin certeza absoluta, a modo de resumen de lo hablado.
   Usa: "Posiblemente...", "Probablemente...", "Esto podria deberse a..."
 - Sin markdown. SOLO JSON valido. Sin texto extra.
 

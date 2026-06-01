@@ -41,7 +41,7 @@ model Post {
   startDate       DateTime
   endDate         DateTime
   title           String
-  description     String
+  description     String          @db.Text
   address         String
   status          String           @default("Active")
   latitude        Float?

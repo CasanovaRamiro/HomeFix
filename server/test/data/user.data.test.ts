@@ -99,7 +99,6 @@ describe('createUser', () => {
       name: 'Jane',
       email: 'jane@test.com',
       password: 'hashed',
-      nationalId: 'DNI-87654321',
     })
 
     expect(createMock).toHaveBeenCalledOnce()
