@@ -3,6 +3,19 @@ export interface PostCategoryDTO {
   name: string
 }
 
+export interface UserPostDTO {
+  id: string
+  title: string
+  description: string
+  status: string
+  createdAt: string
+  address: string
+  startDate: string
+  endDate: string
+  categories: PostCategoryDTO[]
+  worker: { id: string; name: string } | null
+}
+
 export interface PostDTO {
   id: string
   userId: string
