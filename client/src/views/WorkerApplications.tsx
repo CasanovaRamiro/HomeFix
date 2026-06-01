@@ -19,7 +19,7 @@ interface Application {
   image?: string
 }
 
-const tabs = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas', 'Completadas'] as const
+const tabs = ['All', 'Pending', 'Accepted', 'Rejected', 'Completed'] as const
 type Tab = (typeof tabs)[number]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -34,16 +34,16 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-// ─── Postulacion Card ─────────────────────────────────────────────────────────
+// ─── Status Badge ────────────────────────────────────────────────────────────
 
-function StatusBadge({ estado }: { estado: string }) {
+function StatusBadge({ status }: { status: string }) {
   const cfg: Record<string, { bg: string; color: string; border: string; label: string }> = {
-    Accepted:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Aceptada' },
-    Rejected:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Rechazada' },
-    Pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pendiente' },
-    Completed: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Completada' },
+    Accepted:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Accepted' },
+    Rejected:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Rejected' },
+    Pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' },
+    Completed: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Completed' },
   }
-  const s = cfg[estado] ?? { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0', label: estado }
+  const s = cfg[status] ?? { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0', label: status }
   return (
     <span
       style={{
@@ -66,7 +66,7 @@ function StatusBadge({ estado }: { estado: string }) {
 function ClientAvatar({ name }: { name: string }) {
   const initials = getInitials(name)
   // pick a color based on first char
-  const colors = ['#6366F1','#8B5CF6','#EC4899','#F59E0B','#10B981','#3B82F6']
+  const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6']
   const idx = (name.charCodeAt(0) ?? 0) % colors.length
   return (
     <div
@@ -89,9 +89,11 @@ function ClientAvatar({ name }: { name: string }) {
   )
 }
 
-function PostulacionCard({ p }: { p: Application }) {
-  const appliedAt = p.appliedAt?.substring(0, 10) ?? ''
-  const serviceDate = p.serviceDate?.substring(0, 10) ?? ''
+// ─── Application Card ────────────────────────────────────────────────────────
+
+function ApplicationCard({ app }: { app: Application }) {
+  const appliedAt = app.appliedAt?.substring(0, 10) ?? ''
+  const serviceDate = app.serviceDate?.substring(0, 10) ?? ''
 
   return (
     <article
@@ -117,16 +119,16 @@ function PostulacionCard({ p }: { p: Application }) {
           {/* Title + badge */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.35 }}>
-              {p.title}
+              {app.title}
             </h3>
-            <StatusBadge estado={p.status} />
+            <StatusBadge status={app.status} />
           </div>
           <hr style={{ border: 'none', borderTop: '1px solid #F1F5F9', margin: '0 0 12px' }} />
 
           {/* Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <ClientAvatar name={p.client} />
-            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{p.client}</span>
+            <ClientAvatar name={app.client} />
+            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
           </div>
 
           {/* Dates */}
@@ -140,37 +142,37 @@ function PostulacionCard({ p }: { p: Application }) {
           {/* Location */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <MapPin size={13} color="#9CA3AF" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#6B7280' }}>{p.location}</span>
+            <span style={{ fontSize: 12, color: '#6B7280' }}>{app.location}</span>
           </div>
 
           {/* Description quote */}
-          {p.description && (
+          {app.description && (
             <p style={{ fontSize: 13, color: '#374151', fontStyle: 'italic', margin: '0 0 10px', lineHeight: 1.5 }}>
-              &ldquo;{p.description}&rdquo;
+              &ldquo;{app.description}&rdquo;
             </p>
           )}
 
           {/* Category chip */}
-          {p.category && (
+          {app.category && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
               background: '#F0FDF4', border: '1px solid #BBF7D0',
               borderRadius: 20, padding: '3px 10px' }}>
-              <span style={{ fontSize: 12, color: '#15803D', fontWeight: 500 }}>{p.category}</span>
+              <span style={{ fontSize: 12, color: '#15803D', fontWeight: 500 }}>{app.category}</span>
             </div>
           )}
         </div>
 
         {/* Right image (optional) */}
-        {p.image && (
+        {app.image && (
           <div style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
-            <img src={p.image} alt={p.title}
+            <img src={app.image} alt={app.title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
       </div>
 
       {/* ── Contact button ── */}
-      {p.status !== 'Completed' && (
+      {app.status !== 'Completed' && (
         <div style={{ padding: '0 20px 20px' }}>
           <button
             style={{
@@ -192,7 +194,7 @@ function PostulacionCard({ p }: { p: Application }) {
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#15803D' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#16A34A' }}
           >
-            Contactar cliente
+            Contact client
           </button>
         </div>
       )}
@@ -202,23 +204,23 @@ function PostulacionCard({ p }: { p: Application }) {
 
 // ─── Main View ────────────────────────────────────────────────────────────────
 
-export default function MisPostulaciones() {
-  const [postulaciones, setPostulaciones] = useState<Application[]>([])
-  const [filter, setFilter] = useState<Tab>('Todas')
+export default function WorkerApplications() {
+  const [applications, setApplications] = useState<Application[]>([])
+  const [filter, setFilter] = useState<Tab>('All')
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  const fetchPostulaciones = useCallback(async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       const res = await api.get<Application[]>('/applications/my-applications')
       const data = res.data
-      setPostulaciones((prev) => {
-        const prevMap = new Map(prev.map((p) => [p.id, p.status]))
+      setApplications((prev) => {
+        const prevMap = new Map(prev.map((a) => [a.id, a.status]))
         const changes: string[] = []
-        for (const p of data) {
-          const old = prevMap.get(p.id)
-          if (old && old !== p.status) changes.push(`"${p.title}" → ${p.status}`)
+        for (const a of data) {
+          const old = prevMap.get(a.id)
+          if (old && old !== a.status) changes.push(`"${a.title}" → ${a.status}`)
         }
         if (changes.length > 0)
           setNotification(`Status updated! ${changes.join(', ')}`)
@@ -231,32 +233,31 @@ export default function MisPostulaciones() {
     }
   }, [])
 
-
   useEffect(() => {
-    void fetchPostulaciones()
-    const iv = setInterval(() => { void fetchPostulaciones() }, 20_000)
+    void fetchApplications()
+    const iv = setInterval(() => { void fetchApplications() }, 20_000)
     return () => clearInterval(iv)
-  }, [fetchPostulaciones])
+  }, [fetchApplications])
 
   const metrics = useMemo(() => ({
-    total: postulaciones.length,
-    pendientes:   postulaciones.filter((p) => p.status === 'Pending').length,
-    aceptadas:    postulaciones.filter((p) => p.status === 'Accepted').length,
-    rechazadas:   postulaciones.filter((p) => p.status === 'Rejected').length,
-    completadas:  postulaciones.filter((p) => p.status === 'Completed').length,
-  }), [postulaciones])
+    total: applications.length,
+    pending:   applications.filter((a) => a.status === 'Pending').length,
+    accepted:    applications.filter((a) => a.status === 'Accepted').length,
+    rejected:   applications.filter((a) => a.status === 'Rejected').length,
+    completed:  applications.filter((a) => a.status === 'Completed').length,
+  }), [applications])
 
   const filtered = useMemo(() => {
-    if (filter === 'Todas') return postulaciones
+    if (filter === 'All') return applications
     const map: Record<Tab, string> = {
-      Todas:       '',
-      Pendientes:  'Pending',
-      Aceptadas:   'Accepted',
-      Rechazadas:  'Rejected',
-      Completadas: 'Completed',
+      All:       '',
+      Pending:  'Pending',
+      Accepted:   'Accepted',
+      Rejected:  'Rejected',
+      Completed: 'Completed',
     }
-    return postulaciones.filter((p) => p.status === map[filter])
-  }, [postulaciones, filter])
+    return applications.filter((a) => a.status === map[filter])
+  }, [applications, filter])
 
   return (
     <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
@@ -298,27 +299,27 @@ export default function MisPostulaciones() {
             }}
           >
             <ArrowLeft size={14} />
-            Volver al Dashboard
+            Back to Dashboard
           </button>
 
           {/* Title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <FileText size={28} color="#10B981" />
             <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
-              Mis Postulaciones
+              My Applications
             </h1>
           </div>
           <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 32px 38px' }}>
-            Revisa el estado de tus postulaciones a trabajos
+            Review the status of your job applications
           </p>
 
           {/* Metric cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
             <MetricCard value={metrics.total}       label="Total"       valueColor="#fff" />
-            <MetricCard value={metrics.pendientes}  label="Pendientes"  valueColor="#F59E0B" />
-            <MetricCard value={metrics.aceptadas}   label="Aceptadas"   valueColor="#10B981" />
-            <MetricCard value={metrics.rechazadas}  label="Rechazadas"  valueColor="#EF4444" />
-            <MetricCard value={metrics.completadas} label="Completadas" valueColor="#3B82F6" />
+            <MetricCard value={metrics.pending}  label="Pending"  valueColor="#F59E0B" />
+            <MetricCard value={metrics.accepted}   label="Accepted"   valueColor="#10B981" />
+            <MetricCard value={metrics.rejected}  label="Rejected"  valueColor="#EF4444" />
+            <MetricCard value={metrics.completed} label="Completed" valueColor="#3B82F6" />
           </div>
         </div>
       </div>
@@ -374,12 +375,12 @@ export default function MisPostulaciones() {
           >
             <FileText size={48} color="#CBD5E1" style={{ margin: '0 auto 16px' }} />
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', margin: '0 0 8px' }}>
-              No hay postulaciones
+              No applications found
             </h2>
             <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
-              {filter === 'Todas'
-                ? 'Todavía no te postulaste a ningún trabajo.'
-                : `No tenés postulaciones en "${filter}".`}
+              {filter === 'All'
+                ? "You haven't applied to any jobs yet."
+                : `You don't have any applications in "${filter}".`}
             </p>
           </div>
         ) : (
@@ -390,8 +391,8 @@ export default function MisPostulaciones() {
               gap: 16,
             }}
           >
-            {filtered.map((p) => (
-              <PostulacionCard key={`${p.id}-${p.postId}`} p={p} />
+            {filtered.map((a) => (
+              <ApplicationCard key={`${a.id}-${a.postId}`} app={a} />
             ))}
           </div>
         )}
