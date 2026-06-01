@@ -1,104 +1,104 @@
 /*
   Warnings:
 
-  - The primary key for the `application` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `category` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `jobapplication` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `post` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `postcategory` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `postimage` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `user` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `usercategory` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `workerreview` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - Made the column `national_id_type_id` on table `user` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `address_id` on table `user` required. This step will fail if there are existing NULL values in that column.
+  - The primary key for the `Application` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `Category` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `JobApplication` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `Post` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `PostCategory` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `PostImage` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `User` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `UserCategory` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - The primary key for the `WorkerReview` table will be changed. If it partially fails, the table could be left without primary key constraint.
+  - Made the column `national_id_type_id` on table `User` required. This step will fail if there are existing NULL values in that column.
+  - Made the column `address_id` on table `User` required. This step will fail if there are existing NULL values in that column.
 
 */
 -- DropForeignKey
-ALTER TABLE `application` DROP FOREIGN KEY `Application_postId_fkey`;
+ALTER TABLE `Application` DROP FOREIGN KEY `Application_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `application` DROP FOREIGN KEY `Application_workerId_fkey`;
+ALTER TABLE `Application` DROP FOREIGN KEY `Application_workerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `jobapplication` DROP FOREIGN KEY `JobApplication_postId_fkey`;
+ALTER TABLE `JobApplication` DROP FOREIGN KEY `JobApplication_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `jobapplication` DROP FOREIGN KEY `JobApplication_workerId_fkey`;
+ALTER TABLE `JobApplication` DROP FOREIGN KEY `JobApplication_workerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `post` DROP FOREIGN KEY `Post_userId_fkey`;
+ALTER TABLE `Post` DROP FOREIGN KEY `Post_userId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `postcategory` DROP FOREIGN KEY `PostCategory_categoryId_fkey`;
+ALTER TABLE `PostCategory` DROP FOREIGN KEY `PostCategory_categoryId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `postcategory` DROP FOREIGN KEY `PostCategory_postId_fkey`;
+ALTER TABLE `PostCategory` DROP FOREIGN KEY `PostCategory_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `postimage` DROP FOREIGN KEY `PostImage_postId_fkey`;
+ALTER TABLE `PostImage` DROP FOREIGN KEY `PostImage_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `user` DROP FOREIGN KEY `User_address_id_fkey`;
+ALTER TABLE `User` DROP FOREIGN KEY `User_address_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `user` DROP FOREIGN KEY `User_national_id_type_id_fkey`;
+ALTER TABLE `User` DROP FOREIGN KEY `User_national_id_type_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `usercategory` DROP FOREIGN KEY `UserCategory_categoryId_fkey`;
+ALTER TABLE `UserCategory` DROP FOREIGN KEY `UserCategory_categoryId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `usercategory` DROP FOREIGN KEY `UserCategory_userId_fkey`;
+ALTER TABLE `UserCategory` DROP FOREIGN KEY `UserCategory_userId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `workerreview` DROP FOREIGN KEY `WorkerReview_jobApplicationId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_jobApplicationId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `workerreview` DROP FOREIGN KEY `WorkerReview_reviewerId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_reviewerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `workerreview` DROP FOREIGN KEY `WorkerReview_workerId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_workerId_fkey`;
 
 -- AlterTable
-ALTER TABLE `application` DROP PRIMARY KEY,
+ALTER TABLE `Application` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `workerId` VARCHAR(191) NOT NULL,
     MODIFY `postId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `category` DROP PRIMARY KEY,
+ALTER TABLE `Category` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `jobapplication` DROP PRIMARY KEY,
+ALTER TABLE `JobApplication` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `workerId` VARCHAR(191) NOT NULL,
     MODIFY `postId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `post` DROP PRIMARY KEY,
+ALTER TABLE `Post` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `userId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `postcategory` DROP PRIMARY KEY,
+ALTER TABLE `PostCategory` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `postId` VARCHAR(191) NOT NULL,
     MODIFY `categoryId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `postimage` DROP PRIMARY KEY,
+ALTER TABLE `PostImage` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `postId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `user` DROP PRIMARY KEY,
+ALTER TABLE `User` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `role` VARCHAR(191) NOT NULL DEFAULT 'client',
     ALTER COLUMN `nationalId` DROP DEFAULT,
@@ -108,14 +108,14 @@ ALTER TABLE `user` DROP PRIMARY KEY,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `usercategory` DROP PRIMARY KEY,
+ALTER TABLE `UserCategory` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `userId` VARCHAR(191) NOT NULL,
     MODIFY `categoryId` VARCHAR(191) NOT NULL,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `workerreview` DROP PRIMARY KEY,
+ALTER TABLE `WorkerReview` DROP PRIMARY KEY,
     MODIFY `id` VARCHAR(191) NOT NULL,
     MODIFY `jobApplicationId` VARCHAR(191) NOT NULL,
     MODIFY `reviewerId` VARCHAR(191) NOT NULL,
