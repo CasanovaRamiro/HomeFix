@@ -47,7 +47,7 @@ export const createUser = async (data: CreateUserInput) => {
       email: data.email,
       password: data.password,
       phone: data.phone ?? null,
-      surname: data.surname ?? '',
+      surname: data.surname ?? undefined,
       nationalId: data.nationalId ?? `${Date.now()}`,
       nationalIdTypeId: dniId,
       addressId: addrId,

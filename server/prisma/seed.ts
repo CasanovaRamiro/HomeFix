@@ -117,7 +117,7 @@ async function main() {
   ]
 
   const createdClients = await Promise.all(
-    clients.map((c) =>
+    clients.map((c: { name: string; surname: string; email: string; addressId: string }) =>
       prisma.user.create({
         data: {
           name: c.name,
@@ -154,7 +154,9 @@ async function main() {
     prisma.category.create({ data: { name: 'Plomero' } }),
     prisma.category.create({ data: { name: 'Gasista' } }),
   ])
-  const categoryByName = new Map(categories.map((c) => [c.name, c]))
+  const categoryByName = new Map(
+    categories.map((c: { id: string; name: string }) => [c.name, c] as const)
+  )
 
   const jobDates = [
     { from: new Date('2026-05-15'), until: new Date('2026-05-16') },
@@ -295,7 +297,7 @@ async function main() {
         longitude: item.longitude,
         userId: createdClients[index % createdClients.length].id,
         categories: {
-          create: { categoryId: category.id },
+          create: { categoryId: category.id},
         },
       },
     })

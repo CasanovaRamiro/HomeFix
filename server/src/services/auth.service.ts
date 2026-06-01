@@ -204,7 +204,7 @@ export const registerUser = async (input: RegisterInput) => {
     email,
     password: passwordHash,
     phone,
-    surname: lastName ?? '',
+    surname: lastName ?? undefined,
     role: UserRole.Client,
   })
 

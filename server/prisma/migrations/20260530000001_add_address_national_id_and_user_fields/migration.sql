@@ -19,7 +19,7 @@ CREATE TABLE `address` (
 
 -- AlterTable
 ALTER TABLE `User`
-    ADD COLUMN `surname` VARCHAR(191) NOT NULL DEFAULT '',
+    ADD COLUMN `surname` VARCHAR(191) NULL,
     ADD COLUMN `active` BOOLEAN NOT NULL DEFAULT true,
     ADD COLUMN `deleted` BOOLEAN NOT NULL DEFAULT false,
     ADD COLUMN `national_id_type_id` VARCHAR(191) NULL,
