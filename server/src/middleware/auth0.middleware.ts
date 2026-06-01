@@ -26,13 +26,8 @@ export const jwtCheck = (req: Request, res: Response, next: NextFunction): void 
         })
         if (resp.ok) {
           const userinfo = await resp.json()
-          // TODO: tech debt, add way to type req
-          interface AuthedRequest extends Request {
-            auth?: { payload: Record<string, unknown> }
-          }
-          const authedReq = req as AuthedRequest
-          if (userinfo.email && authedReq.auth?.payload) {
-            authedReq.auth.payload.email = userinfo.email
+          if (userinfo.email && req.auth?.payload) {
+            req.auth.payload['email'] = userinfo.email
           }
         }
       } catch {
