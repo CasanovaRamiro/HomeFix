@@ -115,24 +115,21 @@ describe("AI Suggestion Service", () => {
 
       expect(mockGenerateContent).toHaveBeenCalledTimes(1);
 
-      expect(mockGenerateContent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: "Tengo humedad" }],
-            },
-            {
-              role: "model",
-              parts: [{ text: "¿Dónde aparece?" }],
-            },
-            {
-              role: "user",
-              parts: [{ text: "En el baño" }],
-            },
-          ],
-        }),
-      );
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      expect(callArg.contents).toEqual([
+        {
+          role: "user",
+          parts: [{ text: "Tengo humedad" }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "¿Dónde aparece?" }],
+        },
+        {
+          role: "user",
+          parts: [{ text: "En el baño" }],
+        },
+      ]);
     });
   });
 
@@ -253,17 +250,8 @@ describe("AI Suggestion Service", () => {
         messages: [{ role: "user", text: "Tengo humedad" }],
       });
 
-      expect(mockGenerateContent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          systemInstruction: expect.objectContaining({
-            parts: expect.arrayContaining([
-              expect.objectContaining({
-                text: expect.stringContaining("1: Plomeria"),
-              }),
-            ]),
-          }),
-        }),
-      );
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      expect(callArg.systemInstruction.parts[0].text).toContain("1: Plomeria");
     });
   });
 
@@ -426,21 +414,24 @@ describe("AI Suggestion Service", () => {
   });
 
   describe("error handling", () => {
-    it("should throw when AI returns invalid JSON", async () => {
+    it("should sanitize JSON wrapped in markdown code blocks", async () => {
       mockGenerateContent.mockResolvedValue({
         response: {
-          text: () => "respuesta invalida",
+          text: () => '```json\n{"type":"question","text":"¿Desde cuándo ocurre?"}\n```',
         },
       });
 
-      await expect(
-        suggestPost({
-          messages: [{ role: "user", text: "Hola" }],
-        }),
-      ).rejects.toThrow('Respuesta invalida de la IA');
+      const response = await suggestPost({
+        messages: [{ role: "user", text: "Tengo un problema" }],
+      });
+
+      expect(response).toMatchObject({
+        type: "question",
+        text: "¿Desde cuándo ocurre?",
+      });
     });
 
-    it("should propagate API failures", async () => {
+    it("should retry on API failure and propagate error after exhausting retries", async () => {
       mockGenerateContent.mockRejectedValue(new Error("Gemini API Error"));
 
       await expect(
@@ -448,6 +439,87 @@ describe("AI Suggestion Service", () => {
           messages: [{ role: "user", text: "Hola" }],
         }),
       ).rejects.toThrow("Gemini API Error");
+
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("should retry on timeout and succeed on retry", async () => {
+      let callCount = 0;
+      mockGenerateContent.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) return Promise.reject(new Error("Timeout"));
+        return Promise.resolve({
+          response: {
+            text: () => '{"type":"question","text":"¿Funciono al reintentar?"}',
+          },
+        });
+      });
+
+      const response = await suggestPost({
+        messages: [{ role: "user", text: "Hola" }],
+      });
+
+      expect(response).toMatchObject({
+        type: "question",
+        text: "¿Funciono al reintentar?",
+      });
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("should retry on invalid JSON and succeed on retry", async () => {
+      let callCount = 0;
+      mockGenerateContent.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({
+            response: {
+              text: () => "texto sin json",
+            },
+          });
+        }
+        return Promise.resolve({
+          response: {
+            text: () => '{"type":"question","text":"¿Segundo intento?"}',
+          },
+        });
+      });
+
+      const response = await suggestPost({
+        messages: [{ role: "user", text: "Hola" }],
+      });
+
+      expect(response).toMatchObject({
+        type: "question",
+        text: "¿Segundo intento?",
+      });
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("should throw error after exhausting retries with persistent invalid JSON", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => "siempre invalido",
+        },
+      });
+
+      await expect(
+        suggestPost({
+          messages: [{ role: "user", text: "Hola" }],
+        }),
+      ).rejects.toThrow();
+    });
+
+    it("should use temperature 0 on last retry", async () => {
+      mockGenerateContent.mockRejectedValue(new Error("Timeout"));
+
+      await expect(
+        suggestPost({
+          messages: [{ role: "user", text: "Hola" }],
+        }),
+      ).rejects.toThrow();
+
+      const lastCall = mockGenerateContent.mock.calls[1];
+      expect(lastCall[0].generationConfig?.temperature).toBe(0);
     });
 
     it("should propagate database errors", async () => {

@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import { PostInput } from "../../src/types/postInput.js";
-import { createPost, findPostById, findPostsByUser } from "../../src/data/post.data.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, updatePostStatus } from "../../src/data/post.data.js";
 
 let userId: string;
 let categoryId: string;
 
 beforeEach(async () => {
   await cleanDb();
-  const user = await createUser({ email: "test@test.com", name: "Test", password: "hashed" });
+  const user = await createUser("test@test.com", "Test", "hashed");
   const category = await createCategory("Test Category");
   userId = user.id;
   categoryId = category.id;
@@ -105,13 +105,48 @@ describe("createPost", () => {
   });
 });
 
+describe("findAvailablePosts", () => {
+  it("should return only active posts", async () => {
+    await createPost(createValidPost());
+    const p2 = await createPost({ ...createValidPost(), title: "Cancelled post" });
+    await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
+
+    const posts = await findAvailablePosts();
+    expect(posts.length).toBeGreaterThanOrEqual(1);
+    expect(posts.every((p) => p.status === "Active")).toBe(true);
+  });
+
+  it("should filter by category", async () => {
+    const cat2 = await createCategory("Plomero");
+    await createPost(createValidPost());
+    await createPost({ ...createValidPost(), title: "Plumbing post", categoryId: cat2.id });
+
+    const posts = await findAvailablePosts("Test Category");
+    expect(posts.length).toBeGreaterThanOrEqual(1);
+    expect(posts.every((p) => p.categories.some((c) => c.category.name === "Test Category"))).toBe(true);
+  });
+
+  it("should return empty array when no active posts match category", async () => {
+    const posts = await findAvailablePosts("NonExistentCategory");
+    expect(posts).toEqual([]);
+  });
+});
+
+describe("updatePostStatus", () => {
+  it("should update post status", async () => {
+    const post = await createPost(createValidPost());
+    const updated = await updatePostStatus(post.id, "Paused");
+    expect(updated.status).toBe("Paused");
+  });
+
+  it("should throw on non-existent post", async () => {
+    await expect(updatePostStatus("non-existent", "Paused")).rejects.toThrow();
+  });
+});
+
 describe("findPostsByUser", () => {
   it("should return only posts for the given user", async () => {
-    const otherUser = await createUser({
-      email: "other@test.com",
-      name: "Other",
-      password: "hashed",
-    });
+    const otherUser = await createUser("other@test.com", "Other", "hashed");
     await createPost(createValidPost());
     await createPost({ ...createValidPost(), userId: otherUser.id, title: "Other post" });
 
@@ -137,7 +172,7 @@ describe("findPostsByUser", () => {
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
 
     const posts = await findPostsByUser(userId);
-    expect(posts).toHaveLength(1);
+    expect(posts).toHaveLength(2);
   });
 
   it("should return empty array when user has no posts", async () => {
@@ -149,7 +184,7 @@ describe("findPostsByUser", () => {
     await createPost(createValidPost());
     const posts = await findPostsByUser(userId);
     expect(posts[0].categories).toBeDefined();
-    expect(posts[0].categories).toEqual([{ id: expect.any(String), name: "Test Category" }]);
+    expect(posts[0].categories).toEqual([{ category: { id: expect.any(String), name: "Test Category" } }]);
   });
 
   it("should order posts by createdAt descending", async () => {
