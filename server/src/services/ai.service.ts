@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, type Content } from '@google/generative-ai'
 import type { AiSuggestRequest, AiResponse } from '../types/aiSuggestion.js'
 import prisma from '../lib/prisma.js'
 
@@ -24,6 +24,43 @@ async function getCachedCategories(): Promise<{ id: string; name: string }[]> {
 export const clearCategoryCache = () => {
   categoriesCache = null
   categoriesCacheAt = 0
+}
+
+const TIMEOUT_MS = 8000
+const MAX_RETRIES = 1
+
+function extractJson(text: string): string {
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  return (jsonMatch ? jsonMatch[1] : text).trim()
+}
+
+async function generateWithRetry(contents: Content[], systemInstructions: string): Promise<string> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent(
+        {
+          systemInstruction: { role: 'user', parts: [{ text: systemInstructions }] },
+          contents,
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: attempt === MAX_RETRIES ? 0 : undefined,
+          },
+        },
+        { timeout: TIMEOUT_MS },
+      )
+
+      const raw = result.response.text()
+      const cleaned = extractJson(raw)
+      JSON.parse(cleaned)
+      return cleaned
+    } catch (e) {
+      if (attempt === MAX_RETRIES) {
+        console.error('[AI] Failed after retries:', e)
+        throw e
+      }
+    }
+  }
+  throw new Error('No se pudo generar respuesta')
 }
 
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
@@ -92,21 +129,8 @@ confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
       ],
     }))
 
-  const result = await model.generateContent({
-    systemInstruction: { role: 'user', parts: [{ text: systemInstructions }] },
-    contents,
-  })
-
-  const text = result.response.text()
-  const cleaned = text.trim()
-
-  let response: AiResponse
-
-  try{
-    response = JSON.parse(cleaned) as AiResponse
-  } catch {
-    throw new Error('Respuesta invalida de la IA')
-  }
+  const cleaned = await generateWithRetry(contents, systemInstructions)
+  const response = JSON.parse(cleaned) as AiResponse
 
   if (response.type === 'suggestion') {
     const valid = categories.find(c => c.id === response.data.suggestedCategoryId)
