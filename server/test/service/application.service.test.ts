@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/data/application.data.js"
 import * as postData from "../../src/data/post.data.js"
-import { acceptApplication } from "../../src/services/application.service.js"
+import { acceptApplication, rejectApplication } from "../../src/services/application.service.js"
 
 vi.mock("../../src/data/application.data.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -73,5 +73,36 @@ describe("acceptApplication", () => {
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe("rejectApplication", () => {
+  it("returns rejected application when valid", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+    vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...mockApplication, status: "Rejected" })
+
+    const result = await rejectApplication("client-1", "app-1")
+
+    expect(result.status).toBe("Rejected")
+    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Rejected")
+    expect(postData.updatePostStatus).not.toHaveBeenCalled()
+  })
+
+  it("throws 404 if application does not exist", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(null)
+
+    await expect(rejectApplication("client-1", "app-1")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("throws 403 if requester is not the post owner", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+
+    await expect(rejectApplication("otro-cliente", "app-1")).rejects.toMatchObject({ status: 403 })
+  })
+
+  it("throws 400 if application is not Pending", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...mockApplication, status: "Accepted" })
+
+    await expect(rejectApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
 })

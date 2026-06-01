@@ -41,3 +41,13 @@ export const acceptApplication = async (clientId: string, applicationId: string)
 
   return { id: accepted.id, status: accepted.status }
 }
+
+export const rejectApplication = async (clientId: string, applicationId: string) => {
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error("Application not found"), { status: 404 })
+  if (application.post.userId !== clientId) throw Object.assign(new Error("Forbidden"), { status: 403 })
+  if (application.status !== "Pending") throw Object.assign(new Error("Application is not pending"), { status: 400 })
+
+  const rejected = await updateApplicationStatus(applicationId, "Rejected")
+  return { id: rejected.id, status: rejected.status }
+}

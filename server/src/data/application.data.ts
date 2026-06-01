@@ -2,7 +2,7 @@ import prisma from "../lib/prisma.js"
 
 export const findApplicationsByWorker = (workerId: string) =>
   prisma.application.findMany({
-    where: { workerId },
+    where: { workerId, status: { not: "Rejected" } },
     include: {
       post: {
         include: {
