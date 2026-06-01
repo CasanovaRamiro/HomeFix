@@ -15,5 +15,25 @@ function getJwtCheck() {
 }
 
 export const jwtCheck = (req: Request, res: Response, next: NextFunction): void => {
-  getJwtCheck()(req, res, next)
+  getJwtCheck()(req, res, async () => {
+    const header = req.headers.authorization
+    if (header?.startsWith('Bearer ')) {
+      try {
+        const token = header.split(' ')[1]
+        const issuer = (process.env.AUTH0_ISSUER_BASE_URL || '').replace(/\/$/, '')
+        const resp = await fetch(`${issuer}/userinfo`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (resp.ok) {
+          const userinfo = await resp.json()
+          if (userinfo.email && req.auth?.payload) {
+            req.auth.payload['email'] = userinfo.email
+          }
+        }
+      } catch {
+        // continue without email
+      }
+    }
+    next()
+  })
 }

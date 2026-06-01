@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
@@ -5,12 +6,14 @@ import { useCategories } from '../hooks/useCategories'
 import { useCreatePost } from '../hooks/useCreatePost'
 import SuccessScreen from '../components/post/SuccessScreen'
 import SubmitButton from '../components/ui/SubmitButton'
+import FileUpload from '../components/ui/FileUpload'
 
 export default function CreatePost() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { categories, loading: loadingCategories } = useCategories()
   const { form, setForm, formError, formSubmitting, formSuccess, handleFocus, handleBlur, handleSubmit } = useCreatePost()
+  const [files, setFiles] = useState<File[]>([])
 
   const s = {
     main: { minHeight: '100vh', background: theme.background },
@@ -138,6 +141,11 @@ export default function CreatePost() {
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                 />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={s.formLabel}>Fotos / Videos (opcional)</label>
+                <FileUpload files={files} onFilesChange={setFiles} />
               </div>
 
               <SubmitButton loading={formSubmitting} loadingText="Publicando...">
