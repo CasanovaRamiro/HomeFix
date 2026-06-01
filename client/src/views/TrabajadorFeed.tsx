@@ -4,25 +4,26 @@ import { MapPin, Calendar, Briefcase, ArrowLeft, Tag } from 'lucide-react'
 import api from '../services/api'
 
 interface PostFeed {
-  id: number
-  titulo: string
-  descripcion: string
-  cliente: string
-  ubicacion: string
-  fecha_servicio: string
-  fecha_fin: string
-  categorias: string[]
+  id: string
+  title: string
+  description: string
+  address: string
+  startDate: string
+  endDate: string
+  categories: { id: string; name: string }[]
+  user: { id: string; name: string; surname: string }
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-AR', {
+  return new Date(dateStr).toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
 }
 
-function truncate(text: string, max: number) {
+function truncate(text: string | undefined, max: number) {
+  if (!text) return ''
   return text.length > max ? text.slice(0, max) + '...' : text
 }
 
@@ -87,22 +88,22 @@ export default function TrabajadorFeed() {
                   >
                     <div className="flex items-center gap-2 w-full">
                       <h3 className="text-base font-bold text-slate-900 flex-1">
-                        {p.titulo}
+                        {p.title}
                       </h3>
                     </div>
 
                     <p className="text-sm text-slate-500 leading-relaxed">
-                      {truncate(p.descripcion, 120)}
+                      {truncate(p.description, 120)}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {p.categorias.map((cat) => (
+                      {(p.categories ?? []).map((cat) => (
                         <span
-                          key={cat}
+                          key={cat.id}
                           className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
                         >
                           <Tag className="h-3 w-3" />
-                          {cat}
+                          {cat.name}
                         </span>
                       ))}
                     </div>
@@ -110,15 +111,15 @@ export default function TrabajadorFeed() {
                     <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-400">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5" />
-                        {p.ubicacion}
+                        {p.address}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(p.fecha_servicio)}
+                        {formatDate(p.startDate)}
                       </span>
                       <span className="text-slate-300">—</span>
                       <span className="flex items-center gap-1 text-slate-500">
-                        {p.cliente}
+                        {p.user.name} {p.user.surname}
                       </span>
                     </div>
                   </button>
