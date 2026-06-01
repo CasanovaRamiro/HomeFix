@@ -87,7 +87,7 @@ REGLAS:
 - Respuestas cortas (maximo 2 oraciones).
 - No preguntes detalles tecnicos irrelevantes.
 - No preguntes por fechas ni direccion, el usuario las completa despues en un formulario.
-- En possibleIssue: lenguaje simple, sin certeza absoluta.
+- En possibleIssue: lenguaje simple, sin certeza absoluta, a modo de resumen de lo hablado.
   Usa: "Posiblemente...", "Probablemente...", "Esto podria deberse a..."
 - Sin markdown. SOLO JSON valido. Sin texto extra.
 
