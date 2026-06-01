@@ -172,7 +172,7 @@ describe("findPostsByUser", () => {
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
 
     const posts = await findPostsByUser(userId);
-    expect(posts).toHaveLength(2);
+    expect(posts).toHaveLength(1);
   });
 
   it("should return empty array when user has no posts", async () => {
@@ -184,7 +184,7 @@ describe("findPostsByUser", () => {
     await createPost(createValidPost());
     const posts = await findPostsByUser(userId);
     expect(posts[0].categories).toBeDefined();
-    expect(posts[0].categories).toEqual([{ category: { id: expect.any(String), name: "Test Category" } }]);
+    expect(posts[0].categories).toEqual([{ id: expect.any(String), name: "Test Category" }]);
   });
 
   it("should order posts by createdAt descending", async () => {
