@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { post, getUserPosts, getPostById, finalizePost, listAvailablePosts,searchPostsByDistance } from '../services/post.service.js'
+import { createPost, getUserPosts, getPostById, finalizePost, listAvailablePosts,searchPostsByDistance } from '../services/post.service.js'
 import { syncAuth0User } from '../services/auth.service.js'
 
 const router = Router()
@@ -76,7 +76,7 @@ router.post('/create', async (req, res, next) => {
       return
     }
     const user = await syncAuth0User(claims)
-    const result = await post({...req.body, userId: user.id });
+    const result = await createPost({...req.body, userId: user.id });
     res.status(201).json(result);
   } catch (error) {
     const err = error as Error & { status?: number };
