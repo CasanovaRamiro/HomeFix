@@ -15,8 +15,6 @@ import postRoutes from './routes/post.routes.js'
 import aiRoutes from './routes/ai.routes.js'
 import categoryRoutes from './routes/category.routes.js'
 import applicationRoutes from './routes/application.routes.js'
-import workerDashboardRoutes from './routes/workerDashboard.routes.js'
-import { requireSession } from './middleware/session.middleware.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3000
@@ -29,12 +27,11 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRoutes)
 
 app.use('/users', jwtCheck, userRoutes)
-app.use('/posts', requireSession, postRoutes)
-app.use('/workers', requireSession, workerRoutes)
+app.use('/posts', jwtCheck, postRoutes)
+app.use('/workers', jwtCheck, workerRoutes)
 app.use('/ai', aiRoutes)
 app.use('/categories', categoryRoutes)
 app.use('/applications', applicationRoutes)
-app.use('/worker-dashboard', workerDashboardRoutes)
 
 app.use(errorHandler)
 

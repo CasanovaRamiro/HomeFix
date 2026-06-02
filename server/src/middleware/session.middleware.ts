@@ -7,24 +7,24 @@ export const requireSession = async (req: Request, res: Response, next: NextFunc
   const header = req.headers.authorization
   if (header?.startsWith('Bearer ')) {
     try {
-      const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'dev-secret') as JwtPayload & { sub?: string; id?: string; role?: string }
-      req.user = { id: decoded.sub ?? decoded.id!, role: decoded.role } as JwtPayload & { id: string; role?: string }
+      const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET || 'dev-secret') as JwtPayload & { sub?: string; id?: string }
+      req.user = { id: decoded.sub ?? decoded.id! } as JwtPayload & { id: string }
       next()
       return
     } catch {
       // fall through
     }
   }
-  const dev = await prisma.user.findFirst({ where: { role: UserRole.Worker }, select: { id: true, role: true } })
+  const dev = await prisma.user.findFirst({ where: { role: UserRole.Worker }, select: { id: true } })
   if (dev) {
-    req.user = { id: dev.id, role: dev.role } as JwtPayload & { id: string; role?: string }
+    req.user = { id: dev.id } as JwtPayload & { id: string }
     next()
     return
   }
 
-  const anyUser = await prisma.user.findFirst({ select: { id: true, role: true } })
+  const anyUser = await prisma.user.findFirst({ select: { id: true } })
   if (anyUser) {
-    req.user = { id: anyUser.id, role: anyUser.role } as JwtPayload & { id: string; role?: string }
+    req.user = { id: anyUser.id } as JwtPayload & { id: string }
     next()
     return
   }
