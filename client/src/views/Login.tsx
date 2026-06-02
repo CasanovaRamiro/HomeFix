@@ -1,11 +1,32 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Shield,
+} from 'lucide-react'
 import api from '../services/api'
 import { UserRole } from '../types/user'
+import logo from '../assets/homefix-logo.png'
+import heroBg from '../assets/hero-bg.jpg'
+import './auth.css'
+
+const STATS = [
+  { value: '15K+', label: 'Profesionales' },
+  { value: '50K+', label: 'Trabajos' },
+  { value: '4,9', label: 'Calificacion' },
+]
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -40,16 +61,143 @@ export default function Login() {
   }
 
   return (
-    <div className="center">
-      <form className="card" onSubmit={handleSubmit}>
-        <h2>Iniciar sesion</h2>
-        {error && <p className="error">{error}</p>}
-        {success && <p style={{ color: '#059669', fontSize: 13 }}>{success}</p>}
-        <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
-        <input type="password" placeholder="Contrasena" value={form.password} onChange={set('password')} required />
-        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Iniciando sesion...' : 'Iniciar sesion'}</button>
-        <p className="hint">¿No tienes cuenta? <Link to="/register">Registrate</Link></p>
-      </form>
+    <div className="au-root">
+      <main className="au-shell">
+        {/* ===== LEFT — form ===== */}
+        <section className="au-panel">
+          <div className="au-form-wrap">
+            <Link to="/" className="au-back">
+              <ArrowLeft /> Volver al inicio
+            </Link>
+
+            <Link to="/">
+              <img className="au-logo" src={logo} alt="HomeFix" />
+            </Link>
+
+            <div className="au-head">
+              <h1>Bienvenido de vuelta</h1>
+              <p>Ingresa tus credenciales para acceder a tu cuenta</p>
+            </div>
+
+            {error && (
+              <div className="au-error"><AlertCircle /> {error}</div>
+            )}
+            {success && (
+              <div className="au-success"><CheckCircle2 /> {success}</div>
+            )}
+
+            <form className="au-form" onSubmit={handleSubmit} noValidate>
+              <div className="au-field">
+                <label htmlFor="email">Correo electronico</label>
+                <div className="au-input-wrap">
+                  <Mail className="au-lead" />
+                  <input
+                    className="au-input"
+                    type="email"
+                    id="email"
+                    placeholder="tu@email.com"
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={set('email')}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="au-field">
+                <div className="au-label-row">
+                  <label htmlFor="password">Contrasena</label>
+                  <Link to="/forgot-password" className="au-forgot">Olvidaste tu contrasena?</Link>
+                </div>
+                <div className="au-input-wrap">
+                  <Lock className="au-lead" />
+                  <input
+                    className="au-input au-has-eye"
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    placeholder="Tu contrasena"
+                    autoComplete="current-password"
+                    value={form.password}
+                    onChange={set('password')}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="au-eye"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" className="au-btn-submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <span className="au-spinner" /> Iniciando sesion...
+                  </>
+                ) : (
+                  <>
+                    Iniciar Sesion <ArrowRight />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="au-divider"><span>o</span></div>
+
+            <p className="au-register">
+              No tienes una cuenta? <Link to="/register">Registrate gratis</Link>
+            </p>
+
+          
+          </div>
+        </section>
+
+        {/* ===== RIGHT — visual ===== */}
+        <aside className="au-visual">
+          <img className="au-visual-img" src={heroBg} alt="Profesional de HomeFix" />
+          <div className="au-visual-tint" />
+
+          <div className="au-visual-content">
+            <span className="au-secure-badge">
+              <Shield /> Plataforma 100% Segura
+            </span>
+
+            <div className="au-visual-mid">
+              <h2>Tu hogar merece las mejores manos</h2>
+              <p className="au-vsub">
+                Conectamos a mas de 15.000 profesionales verificados con familias que buscan
+                soluciones confiables para su hogar.
+              </p>
+
+              <div className="au-stats">
+                {STATS.map((s) => (
+                  <div className="au-stat" key={s.label}>
+                    <div className="au-stat-num">{s.value}</div>
+                    <div className="au-stat-label">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="au-testimonial">
+              <p className="au-testimonial-quote">
+                &ldquo;Encontre un electricista verificado en minutos. El proceso fue simple y el
+                trabajo impecable.&rdquo;
+              </p>
+              <div className="au-testimonial-by">
+                <span className="au-testimonial-avatar"><CheckCircle2 /></span>
+                <div>
+                  <div className="au-testimonial-name">Maria Gonzalez</div>
+                  <div className="au-testimonial-role">Cliente verificado</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
     </div>
   )
 }
