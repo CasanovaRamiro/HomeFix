@@ -49,7 +49,7 @@ export default function Navbar(): React.ReactElement | null {
 
   const homeRoute =
     user?.role === UserRole.Worker ? '/worker' :
-    user?.role === UserRole.Client    ? '/users'  :
+    user?.role === UserRole.Client    ? '/dashboard'  :
     isLanding ? '/' :
     '/login'
 
