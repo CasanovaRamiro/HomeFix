@@ -33,7 +33,7 @@ export default function WorkerLanding() {
 
   return (
     <main className="lp-root">
-      
+
 
       {/* HERO */}
       <section className="lp-hero lp-hero-worker">
