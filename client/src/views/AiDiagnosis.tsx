@@ -34,7 +34,7 @@ export default function AiDiagnosis() {
     badgeText: { color: theme.muted },
     h1: { fontSize: '36px', fontWeight: 700, color: theme.primaryDark, textWrap: 'balance' as const },
     desc: { fontSize: '18px', color: theme.muted, maxWidth: '672px', margin: '0 auto', textWrap: 'balance' as const },
-    infoCard: { padding: '32px', borderRadius: '16px', background: theme.card, border: `1px solid ${theme.border}`, textAlign: 'center' as const, transition: 'all 0.3s' },
+    infoCard: { padding: '32px', borderRadius: '16px', background: theme.card, border: `1px solid ${theme.border}`, textAlign: 'center' as const },
     infoCardIconWrap: { width: '56px', height: '56px', borderRadius: '12px', background: `${theme.accent}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' },
     infoCardIcon: { width: '28px', height: '28px', color: theme.accent },
     infoCardTitle: { fontSize: '18px', fontWeight: 600, color: theme.primaryDark },
@@ -112,10 +112,7 @@ export default function AiDiagnosis() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '80px' }}>
           {infoCards.map((card, idx) => (
-            <div key={idx} style={s.infoCard}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
-            >
+            <div key={idx} style={s.infoCard}>
               <div style={s.infoCardIconWrap}>
                 <card.icon style={s.infoCardIcon} />
               </div>
