@@ -7,8 +7,20 @@ const router = Router()
 
 router.get('/', async (req, res, next) => {
   try {
-    if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return }
-    if (req.user.role !== 'worker') { res.status(403).json({ error: 'Worker access required' }); return }
+    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
     const result = await listAvailablePosts()
     res.json(result)
   } catch (error) {
@@ -20,8 +32,20 @@ router.get('/', async (req, res, next) => {
 
 router.get('/available', async (req, res, next) => {
   try {
-    if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return }
-    if (req.user.role !== 'worker') { res.status(403).json({ error: 'Worker access required' }); return }
+    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
     const result = await listAvailablePosts(category)
     res.json(result)
@@ -34,12 +58,25 @@ router.get('/available', async (req, res, next) => {
 
 router.get('/search-location', async (req, res, next) => {
   try {
-    if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return }
-    if (req.user.role !== 'worker') { res.status(403).json({ error: 'Worker access required' }); return }
+    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
     const lat = Number(req.query.lat)
     const lng = Number(req.query.lng)
     const radius = Number(req.query.radius)
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
+    
     const posts = await searchPostsByDistance(lat, lng, radius, category)
     res.json(posts)
   } catch (error) {
