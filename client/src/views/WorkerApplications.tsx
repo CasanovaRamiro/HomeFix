@@ -20,6 +20,7 @@ interface Application {
   category?: string
   image?: string
   hasReview?: boolean
+  clientRating: number
 }
 
 const TABS = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas', 'Completadas'] as const
@@ -223,6 +224,12 @@ function ApplicationCard({ app, onCancelled }: { app: Application; onCancelled: 
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
             <ClientAvatar name={app.client} />
             <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12, marginLeft: 4 }}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <span key={i}>{i < Math.round(app.clientRating) ? '★' : '☆'}</span>
+              ))}
+              <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{app.clientRating}</span>
+            </span>
           </div>
 
           {/* Dates */}
@@ -374,10 +381,16 @@ export default function WorkerApplications() {
   const [notification, setNotification] = useState<string | null>(null)
   const navigate = useNavigate()
 
+  const mockClientRating = (seed: string): number => {
+    let sum = 0
+    for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i)
+    return Number((3.5 + ((sum % 100) / 100) * 1.5).toFixed(1))
+  }
+
   const fetchApplications = useCallback(async () => {
     try {
       const res = await api.get<Application[]>('/applications/my-applications')
-      const data = res.data
+      const data = res.data.map((a) => ({ ...a, clientRating: mockClientRating(a.postId) }))
       setApplications((prev) => {
         const prevMap = new Map(prev.map((a) => [a.id, a.status]))
         const changes: string[] = []
