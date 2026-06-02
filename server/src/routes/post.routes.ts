@@ -7,7 +7,7 @@ const router = Router()
 
 router.get('/', async (req, res, next) => {
   try {
-    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
 
     if (!claims?.sub) {
       res.status(401).json({ error: 'Unauthorized' })
@@ -32,7 +32,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/available', async (req, res, next) => {
   try {
-    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
 
     if (!claims?.sub) {
       res.status(401).json({ error: 'Unauthorized' })
@@ -58,7 +58,7 @@ router.get('/available', async (req, res, next) => {
 
 router.get('/search-location', async (req, res, next) => {
   try {
-    const claims = req.auth?.payload as { sub?: string; email?: string } | undefined
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
 
     if (!claims?.sub) {
       res.status(401).json({ error: 'Unauthorized' })
@@ -95,6 +95,7 @@ router.post('/create', async (req, res, next) => {
       name?: string
       nickname?: string
       phone_number?: string
+      role?: string
     } | undefined
     if(!claims?.sub) {
       res.status(401).json({ error: 'Unauthorized' })
@@ -131,6 +132,7 @@ router.post("/user-posts", async (req, res, next) => {
       name?: string
       nickname?: string
       phone_number?: string
+      role?: string
     } | undefined
 
     if (!claims?.sub) {
@@ -156,6 +158,7 @@ router.patch('/:id/finalize', async (req, res, next) => {
       name?: string
       nickname?: string
       phone_number?: string
+      role?: string
     } | undefined
 
     if (!claims?.sub) {

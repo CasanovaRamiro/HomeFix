@@ -1,6 +1,8 @@
 import { auth } from 'express-oauth2-jwt-bearer'
 import type { Request, Response, NextFunction } from 'express'
 
+export const ROLES_CLAIM = 'https://homefix/roles'
+
 let _jwtCheck: ReturnType<typeof auth> | null = null
 
 function getJwtCheck() {
@@ -26,12 +28,20 @@ export const jwtCheck = (req: Request, res: Response, next: NextFunction): void 
         })
         if (resp.ok) {
           const userinfo = await resp.json()
-          if (userinfo.email && req.auth?.payload) {
-            req.auth.payload['email'] = userinfo.email
+          if (req.auth?.payload) {
+            if (userinfo.email) req.auth.payload['email'] = userinfo.email
           }
         }
       } catch {
         // continue without email
+      }
+
+      // Alias the namespaced role claim to a convenient key
+      if (req.auth?.payload) {
+        const role = req.auth.payload[ROLES_CLAIM]
+        if (typeof role === 'string') {
+          req.auth.payload['role'] = role
+        }
       }
     }
     next()
