@@ -39,4 +39,5 @@ export interface TrabajoView {
   photo: string
   clientName: string
   clientSurname: string
+  clientRating: number
 }

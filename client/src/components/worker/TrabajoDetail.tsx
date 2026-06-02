@@ -1,4 +1,5 @@
 import type { TrabajoView } from '../../types/post'
+import StarRating from '../ui/StarRating'
 
 interface Props {
   selected: TrabajoView & { lat?: number | null; lng?: number | null }
@@ -27,6 +28,7 @@ export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostul
           <div>
             <div className="trabajo-detail-client-name">{selected.clientName} {selected.clientSurname}</div>
             <span className="trabajo-detail-client-label">Cliente</span>
+            <StarRating rating={selected.clientRating} />
           </div>
         </div>
         <h3>{selected.titulo}</h3>
