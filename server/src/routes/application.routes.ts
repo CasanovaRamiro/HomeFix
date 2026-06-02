@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { requireSession } from '../middleware/session.middleware.js'
-import { getMyApplications, applyToPost, acceptApplication, rejectApplication } from '../services/application.service.js'
+import { getMyApplications, applyToPost, acceptApplication, rejectApplication, cancelApplication } from '../services/application.service.js'
 
 const router = Router()
 
@@ -8,6 +8,16 @@ router.get('/my-applications', requireSession, async (req, res, next) => {
   try {
     const workerId = req.user!.id
     const result = await getMyApplications(workerId)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/:id', requireSession, async (req, res, next) => {
+  try {
+    const workerId = req.user!.id
+    const result = await cancelApplication(workerId, req.params['id'] as string)
     res.json(result)
   } catch (err) {
     next(err)

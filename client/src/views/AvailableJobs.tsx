@@ -15,7 +15,9 @@ import TrabajoDetail from '../components/worker/TrabajoDetail'
 import ApplyModal from '../components/worker/ApplyModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
-import { Briefcase, ArrowLeft } from 'lucide-react'
+import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+
+const PAGE_SIZE = 8
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
@@ -45,6 +47,7 @@ export default function AvailableJobs(): JSX.Element {
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
+  const [page, setPage] = useState(1)
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
     try {
@@ -72,11 +75,6 @@ export default function AvailableJobs(): JSX.Element {
       }
     } catch (err) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
-      if (axiosErr.response?.status === 401) {
-        localStorage.removeItem('token')
-        void navigate('/login')
-        return
-      }
       setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
       setTrabajos([])
     } finally {
@@ -115,10 +113,11 @@ export default function AvailableJobs(): JSX.Element {
     return resultado
   }, [trabajos, searchQuery, sortBy])
 
-  const logout = (): void => {
-    localStorage.removeItem('token')
-    void navigate('/login')
-  }
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1) }, [searchQuery, sortBy, category, locationFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtradosYOrdenados.length / PAGE_SIZE))
+  const paginated  = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
@@ -162,17 +161,6 @@ export default function AvailableJobs(): JSX.Element {
             >
               <ArrowLeft size={14} />
               Volver
-            </button>
-            <button
-              onClick={logout}
-              style={{
-                background: 'transparent', color: 'rgba(255,255,255,0.75)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                padding: '6px 16px', fontSize: 13, borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              Salir
             </button>
           </div>
 
@@ -226,22 +214,82 @@ export default function AvailableJobs(): JSX.Element {
               <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
             </div>
           )}
-          {!loading &&
-            filtradosYOrdenados.map((trabajo) => (
-              <TrabajoCard
-                key={trabajo.id}
-                trabajo={trabajo}
-                isSelected={selected?.id === trabajo.id}
-                isApplied={yaPostulado(trabajo.id)}
-                onClick={() => setSelected(trabajo)}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setSelected(trabajo)
-                  }
+          {!loading && paginated.map((trabajo) => (
+            <TrabajoCard
+              key={trabajo.id}
+              trabajo={trabajo}
+              isSelected={selected?.id === trabajo.id}
+              isApplied={yaPostulado(trabajo.id)}
+              onClick={() => setSelected(trabajo)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setSelected(trabajo)
+                }
+              }}
+            />
+          ))}
+
+          {/* Pagination */}
+          {!loading && totalPages > 1 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 6, marginTop: 8, paddingBottom: 8,
+            }}>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 36, height: 36, borderRadius: 8,
+                  border: '1.5px solid #E2E8F0', background: '#fff',
+                  cursor: page === 1 ? 'not-allowed' : 'pointer',
+                  opacity: page === 1 ? 0.4 : 1,
+                  transition: 'background 0.15s',
                 }}
-              />
-            ))}
+                onMouseEnter={(e) => { if (page !== 1) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
+              >
+                <ChevronLeft size={16} color="#475569" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    border: p === page ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
+                    background: p === page ? '#0F172A' : '#fff',
+                    color: p === page ? '#fff' : '#475569',
+                    fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
+                  onMouseLeave={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#fff' }}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 36, height: 36, borderRadius: 8,
+                  border: '1.5px solid #E2E8F0', background: '#fff',
+                  cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: page === totalPages ? 0.4 : 1,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { if (page !== totalPages) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
+              >
+                <ChevronRight size={16} color="#475569" />
+              </button>
+            </div>
+          )}
         </div>
 
         <aside>

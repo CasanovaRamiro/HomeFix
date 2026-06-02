@@ -6,9 +6,8 @@ export const findApplicationsByWorker = (workerId: string) =>
     include: {
       post: {
         include: {
-          user: {
-            select: { id: true, name: true, surname: true },
-          },
+          user: { select: { id: true, name: true, surname: true } },
+          categories: { include: { category: { select: { name: true } } } },
         },
       },
     },
@@ -43,4 +42,9 @@ export const rejectOtherApplications = (postId: string, acceptedApplicationId: s
 export const createApplication = (workerId: string, postId: string) =>
   prisma.application.create({
     data: { workerId, postId, status: "Pending" },
+  })
+
+export const deleteApplication = (workerId: string, applicationId: string) =>
+  prisma.application.deleteMany({
+    where: { id: applicationId, workerId, status: 'Pending' },
   })
