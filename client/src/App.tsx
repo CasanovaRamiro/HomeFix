@@ -20,6 +20,8 @@ import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
 
+import RegisterChoice from './views/RegisterChoice'
+
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
   localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -32,6 +34,7 @@ export default function App() {
         <Route path="/workerlanding" element={<WorkerLanding />} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup"          element={<RegisterChoice />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
         <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />

@@ -26,7 +26,7 @@ const CLIENT_LINKS: NavLinkDef[] = [
   { href: '/dashboard',    label: 'Mis Publicaciones',    icon: ClipboardList },
 ]
 
-const AUTH_ROUTES = ['/login', '/register']
+const AUTH_ROUTES = ['/login']
 
 export default function Navbar(): React.ReactElement | null {
   const theme = useTheme()
@@ -50,9 +50,8 @@ export default function Navbar(): React.ReactElement | null {
 
   const homeRoute =
     user?.role === UserRole.Worker ? '/worker' :
-    user?.role === UserRole.Client    ? '/dashboard'  :
-    isLanding ? '/' :
-    '/login'
+    user?.role === UserRole.Client ? '/dashboard' :
+    '/'
 
   const displayName    = user?.name ?? 'Mi cuenta'
   const displayInitial = displayName.charAt(0).toUpperCase()
@@ -135,7 +134,7 @@ export default function Navbar(): React.ReactElement | null {
                 <Link to="/login" style={{ color: theme.muted, textDecoration: 'none', fontSize: '14px', fontWeight: '500', padding: '8px 12px' }}>
                   Iniciar Sesión
                 </Link>
-                <Link to="/register" style={{ background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px' }}>
+                <Link to="/signup" style={{ background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px' }}>
                   Registrarse
                 </Link>
               </>
@@ -239,7 +238,7 @@ export default function Navbar(): React.ReactElement | null {
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.primaryDark}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Iniciar Sesión
                   </Link>
-                  <Link to="/register" onClick={() => { setMobileOpen(false) }}
+                  <Link to="/signup" onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', background: theme.accent, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Registrarse
                   </Link>

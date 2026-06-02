@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
+import {
+  Eye, EyeOff, Mail, Lock, User, Phone,
+  AlertCircle, ArrowRight, Check, CheckCircle2, ShieldCheck,
+} from 'lucide-react'
 import api from '../services/api'
 
 type RegisterResponse = {
@@ -10,7 +14,21 @@ type RegisterResponse = {
   message: string
 }
 
+const inputBase =
+  'w-full h-11 rounded-lg border bg-white text-sm text-slate-900 placeholder:text-slate-400 ' +
+  'outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20'
+
+const REQUIREMENTS = [
+  { key: 'length', label: 'Al menos 8 caracteres' },
+  { key: 'upper', label: 'Una letra mayúscula' },
+  { key: 'lower', label: 'Una letra minúscula' },
+  { key: 'number', label: 'Un número' },
+  { key: 'special', label: 'Un carácter especial' },
+] as const
+
 export default function Register() {
+  const navigate = useNavigate()
+
   const [form, setForm] = useState({
     name: '',
     lastName: '',
@@ -20,9 +38,10 @@ export default function Register() {
     phone: '',
   })
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
+  const [submitted, setSubmitted] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const [validations, setValidations] = useState({
     length: false,
@@ -44,22 +63,22 @@ export default function Register() {
 
   const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    setForm({ ...form, [field]: value })
-    if (field === 'password') {
-      validatePassword(value)
-    }
+    setForm((prev) => ({ ...prev, [field]: value }))
+    if (field === 'password') validatePassword(value)
+    if (error) setError('')
   }
+
+  const allValid = Object.values(validations).every(Boolean)
+  const passwordsMatch = form.confirmPassword.length > 0 && form.password === form.confirmPassword
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
-    setSuccess('')
 
-    if (!Object.values(validations).every(Boolean)) {
+    if (!allValid) {
       setError('La contraseña no cumple con todos los requisitos')
       return
     }
-
     if (form.password !== form.confirmPassword) {
       setError('Las contraseñas no coinciden')
       return
@@ -74,10 +93,9 @@ export default function Register() {
         password: form.password,
         phone: form.phone || undefined,
       }
-
-      const { data } = await api.post<RegisterResponse>('/auth/register', payload)
-      setSuccess(data.message || 'Registro exitoso. Ahora puedes iniciar sesion.')
-      setTimeout(() => navigate('/login'), 1200)
+      await api.post<RegisterResponse>('/auth/register', payload)
+      setSubmitted(true)
+      setTimeout(() => navigate('/login'), 2200)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? 'No se pudo completar el registro')
@@ -86,36 +104,261 @@ export default function Register() {
     }
   }
 
-  return (
-    <div className="center">
-      <form className="card" onSubmit={handleSubmit}>
-        <h2>Crear cuenta</h2>
-        {error && <p className="error">{error}</p>}
-        {success && <p style={{ color: '#059669', fontSize: 13 }}>{success}</p>}
-        <input type="text" placeholder="Nombre" value={form.name} onChange={set('name')} required />
-        <input type="text" placeholder="Apellido" value={form.lastName} onChange={set('lastName')} />
-        <input type="email" placeholder="Correo" value={form.email} onChange={set('email')} required />
-        <input type="password" placeholder="Contrasena" value={form.password} onChange={set('password')} required />
-        
-        <ul className="validation-list">
-          <li className={`validation-item ${validations.length ? 'valid' : ''}`}>Al menos 8 caracteres</li>
-          <li className={`validation-item ${validations.upper ? 'valid' : ''}`}>Al menos una mayuscula</li>
-          <li className={`validation-item ${validations.lower ? 'valid' : ''}`}>Al menos una minuscula</li>
-          <li className={`validation-item ${validations.number ? 'valid' : ''}`}>Al menos un numero</li>
-          <li className={`validation-item ${validations.special ? 'valid' : ''}`}>Al menos un caracter especial</li>
-        </ul>
+  // ===== Success view =====
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-md w-full space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+              <div className="relative mx-auto mb-6 w-20 h-20">
+                <span className="absolute inset-0 rounded-full bg-accent/15 animate-ping" />
+                <span className="relative flex items-center justify-center w-20 h-20 rounded-full bg-accent/10">
+                  <span className="flex items-center justify-center w-14 h-14 rounded-full bg-accent">
+                    <CheckCircle2 className="w-8 h-8 text-white" />
+                  </span>
+                </span>
+              </div>
 
-        <input
-          type="password"
-          placeholder="Confirmar contrasena"
-          value={form.confirmPassword}
-          onChange={set('confirmPassword')}
-          required
-        />
-        <input type="tel" placeholder="Telefono (opcional)" value={form.phone} onChange={set('phone')} />
-        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}</button>
-        <p className="hint">Ya tienes cuenta? <Link to="/login">Iniciar sesion</Link></p>
-      </form>
+              <h1 className="text-2xl font-bold text-slate-900">¡Cuenta creada con éxito!</h1>
+              <p className="mt-3 text-slate-500">
+                Tu cuenta fue creada correctamente
+                {form.email ? <> para <span className="font-medium text-slate-900">{form.email}</span></> : null}.
+                Te llevamos a iniciar sesión…
+              </p>
+
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                Ir a iniciar sesión
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="max-w-lg w-full space-y-6">
+          {/* Unified registration card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Role identity header — emerald = Cliente */}
+            <div className="bg-gradient-to-br from-accent to-emerald-600 text-white">
+            <div className="p-6 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                <User className="w-7 h-7" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/75">Estás creando una</p>
+                <h1 className="text-2xl font-extrabold leading-tight">Cuenta de Cliente</h1>
+                <p className="text-sm text-white/85 mt-0.5">Publica trabajos y contrata profesionales verificados.</p>
+              </div>
+            </div>
+            <div className="bg-black/10 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-white/80">¿Eres profesional?</span>
+              <Link to="/register/worker" className="inline-flex items-center gap-1 font-semibold text-white underline-offset-2">
+                <span className="text-white/80 hover:underline">Regístrate como profesional</span> <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            </div>
+
+            {/* Form body */}
+            <div className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Nombre + Apellido */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900">Nombre</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      placeholder="María"
+                      value={form.name}
+                      onChange={set('name')}
+                      required
+                      className={`${inputBase} pl-10 pr-3 border-slate-200`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900">Apellido</label>
+                  <input
+                    placeholder="González"
+                    value={form.lastName}
+                    onChange={set('lastName')}
+                    className={`${inputBase} px-3 border-slate-200`}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={form.email}
+                    onChange={set('email')}
+                    required
+                    className={`${inputBase} pl-10 pr-3 border-slate-200`}
+                  />
+                </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">
+                  Teléfono <span className="font-normal text-slate-400">(opcional)</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="tel"
+                    placeholder="+54 11 1234-5678"
+                    value={form.phone}
+                    onChange={set('phone')}
+                    className={`${inputBase} pl-10 pr-3 border-slate-200`}
+                  />
+                </div>
+              </div>
+
+              {/* Contraseña */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Contraseña</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mín 8 caracteres"
+                    value={form.password}
+                    onChange={set('password')}
+                    required
+                    className={`${inputBase} pl-10 pr-10 border-slate-200`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-slate-400 hover:text-slate-900"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Requirements checklist */}
+                {form.password && (
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1">
+                    {REQUIREMENTS.map((req) => {
+                      const ok = validations[req.key]
+                      return (
+                        <li
+                          key={req.key}
+                          className={`flex items-center gap-1.5 text-xs transition-colors ${
+                            ok ? 'text-accent-hover' : 'text-slate-400'
+                          }`}
+                        >
+                          <span
+                            className={`flex items-center justify-center w-3.5 h-3.5 rounded-full flex-shrink-0 ${
+                              ok ? 'bg-accent text-white' : 'bg-slate-200 text-transparent'
+                            }`}
+                          >
+                            <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                          </span>
+                          {req.label}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Confirmar contraseña */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Confirmar contraseña</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="Repite tu contraseña"
+                    value={form.confirmPassword}
+                    onChange={set('confirmPassword')}
+                    required
+                    className={`${inputBase} pl-10 pr-10 ${
+                      form.confirmPassword.length > 0 && !passwordsMatch ? 'border-red-500' : 'border-slate-200'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-slate-400 hover:text-slate-900"
+                  >
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {form.confirmPassword.length > 0 && !passwordsMatch && (
+                  <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+                )}
+                {passwordsMatch && (
+                  <p className="text-xs text-accent-hover flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Las contraseñas coinciden
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-75"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Creando cuenta…
+                  </>
+                ) : (
+                  <>
+                    Crear cuenta
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </form>
+            </div>
+          </div>
+
+          {/* Trust note */}
+          <div className="bg-slate-900/5 border border-slate-900/10 rounded-2xl p-4">
+            <div className="flex gap-3">
+              <ShieldCheck className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-500">
+                Tus datos están protegidos y encriptados. Nunca los compartiremos sin tu permiso.
+              </p>
+            </div>
+          </div>
+
+          {/* Login link */}
+          <p className="text-center text-slate-500 text-sm">
+            ¿Ya tienes cuenta?{' '}
+            <Link to="/login" className="text-accent hover:text-accent-hover font-semibold">
+              Inicia sesión
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }
