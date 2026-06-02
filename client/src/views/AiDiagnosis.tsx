@@ -236,12 +236,12 @@ export default function AiDiagnosis() {
                 <h2 style={{ ...s.resultTitle, marginBottom: '8px' }}>¡Solicitud publicada con éxito!</h2>
                 <p style={{ color: theme.muted, marginBottom: '24px' }}>Pronto recibirás respuestas de profesionales cercanos.</p>
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/dashboard')}
                   style={{ width: '100%', padding: '16px', borderRadius: '12px', fontWeight: 600, fontSize: '16px', border: 'none', cursor: 'pointer', background: theme.accent, color: '#FFFFFF', transition: 'all 0.3s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = theme.accentHover; e.currentTarget.style.transform = 'scale(1.02)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.transform = 'scale(1)' }}
                 >
-                  Volver al inicio
+                  volver al Inicio
                 </button>
               </div>
             ) : (
