@@ -1,13 +1,21 @@
 import { Router } from 'express'
-import { requireSession } from '../middleware/session.middleware.js'
+import { jwtCheck } from '../middleware/auth0.middleware.js'
+import { syncAuth0User } from '../services/auth.service.js'
 import { getWorkerDashboard } from '../services/workerDashboard.service.js'
 
 const router = Router()
 
-router.get('/', requireSession, async (req, res, next) => {
+router.use(jwtCheck)
+
+router.get('/', async (req, res, next) => {
   try {
-    const workerId = req.user!.id
-    const dashboard = await getWorkerDashboard(workerId)
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const dashboard = await getWorkerDashboard(user.id)
     res.json(dashboard)
   } catch (err) {
     next(err)

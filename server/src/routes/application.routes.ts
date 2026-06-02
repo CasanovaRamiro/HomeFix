@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../services/auth.service.js'
-import { getMyApplications, applyToPost, acceptApplication, rejectApplication } from '../services/application.service.js'
+import { getMyApplications, applyToPost, acceptApplication, rejectApplication, cancelApplication } from '../services/application.service.js'
 
 const router = Router()
 
@@ -22,10 +22,15 @@ router.get('/my-applications', async (req, res, next) => {
   }
 })
 
-router.delete('/:id', requireSession, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
-    const workerId = req.user!.id
-    const result = await cancelApplication(workerId, req.params['id'] as string)
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await cancelApplication(user.id, req.params.id)
     res.json(result)
   } catch (err) {
     next(err)
