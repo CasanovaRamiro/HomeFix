@@ -39,7 +39,7 @@ export default function ClientDashboard() {
       {/* Hero oscuro */}
       <div className="bg-primary-dark px-6 pt-12 pb-28 md:px-12">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-white">Mi Dashboard</h1>
+          <h1 className="text-4xl font-bold text-white">Mi Tablero</h1>
           <p className="text-slate-400 text-sm mt-2">Gestioná tus publicaciones y conversaciones</p>
         </div>
       </div>
