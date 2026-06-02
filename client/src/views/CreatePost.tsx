@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText } from 'lucide-react'
+import { FileText, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { useCreatePost } from '../hooks/useCreatePost'
@@ -33,6 +33,17 @@ export default function CreatePost() {
 
   return (
     <main style={s.main}>
+      <div style={{ padding: '20px 24px 0' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
       <div style={s.wrapper}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Bot, FileText } from 'lucide-react'
+import { Bot, FileText, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import OptionCard from '../components/post/OptionCard'
 
@@ -26,7 +26,18 @@ export default function PostOptions() {
 
   return (
     <main style={{ minHeight: '100vh', background: '#FFFFFF' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '100px 24px' }}>
+      <div style={{ padding: '20px 24px 0' }}>
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '48px 24px 100px' }}>
         <h1 style={{ fontSize: '36px', fontWeight: 700, color: theme.primaryDark, textAlign: 'center', marginBottom: '12px' }}>
           ¿Cómo querés crear tu publicación?
         </h1>

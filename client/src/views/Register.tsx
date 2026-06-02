@@ -3,9 +3,10 @@ import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone,
-  AlertCircle, ArrowRight, Check, CheckCircle2, ShieldCheck,
+  AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck,
 } from 'lucide-react'
 import api from '../services/api'
+import { useTheme } from '../hooks/useTheme'
 
 type RegisterResponse = {
   userId: string
@@ -28,6 +29,7 @@ const REQUIREMENTS = [
 
 export default function Register() {
   const navigate = useNavigate()
+  const theme = useTheme()
 
   const [form, setForm] = useState({
     name: '',
@@ -144,6 +146,17 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+      <div style={{ padding: '20px 24px 0' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-lg w-full space-y-6">
           {/* Unified registration card */}

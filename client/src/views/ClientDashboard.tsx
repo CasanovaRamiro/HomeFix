@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 
@@ -9,15 +8,12 @@ export default function ClientDashboard() {
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
 
-
   useEffect(() => {
     getUserPosts()
       .then(setPosts)
       .catch(() => setPosts([]))
       .finally(() => setLoading(false))
   }, [])
-
-  if (loading) return <LoadingSpinner />
 
   const activos     = posts.filter(p => p.status === 'Active' || p.status === 'In progress' || p.status === 'Paused').length
   const completados = posts.filter(p => p.status === 'Completed').length
@@ -62,10 +58,13 @@ export default function ClientDashboard() {
             <section>
               <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
                 <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
-                
               </div>
 
-              {ordered.length === 0 ? (
+              {loading ? (
+                <div className="bg-white border border-slate-200 rounded-xl px-6 py-16 text-center shadow-md">
+                  <div className="spinner mx-auto" />
+                </div>
+              ) : ordered.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-xl px-6 py-16 text-center shadow-md">
                   <p className="text-slate-400 text-sm">Todavía no tenés publicaciones.</p>
                 </div>
