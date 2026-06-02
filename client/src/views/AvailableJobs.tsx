@@ -7,7 +7,8 @@ import {
 } from '../lib/post'
 import { fetchAvailablePosts, searchPostsByLocation } from '../services/posts'
 import { applyToPost } from '../services/applications'
-import api from '../services/api'
+import api, { getWorker } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 import type { Post, TrabajoView } from '../types/post'
 import type { LocationFilter } from '../components/worker/types'
 import TrabajoCard from '../components/worker/TrabajoCard'
@@ -30,6 +31,8 @@ const loadStoredFilter = (): LocationFilter | null => {
 export default function AvailableJobs(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { user } = useAuth()
+  const [workerCategories, setWorkerCategories] = useState<string[]>([])
   const [category, setCategory] = useState<string>(
     () => localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
   )
@@ -92,6 +95,21 @@ export default function AvailableJobs(): JSX.Element {
     localStorage.setItem(WORKER_CATEGORY_KEY, category)
     void loadTrabajos()
   }, [category, loadTrabajos])
+
+  useEffect(() => {
+    if (user?.id) {
+      getWorker(user.id)
+        .then((worker) => {
+          const cats = worker.categories.map((c) => c.category.name)
+          setWorkerCategories(cats)
+          const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
+          if ((!saved || saved === DEFAULT_WORKER_CATEGORY) && cats.length > 0) {
+            setCategory(cats[0])
+          }
+        })
+        .catch(() => setWorkerCategories([]))
+    }
+  }, [user?.id])
 
   const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
     let resultado = [...trabajos]
@@ -203,6 +221,7 @@ export default function AvailableJobs(): JSX.Element {
           <FilterBar
             category={category}
             onCategoryChange={setCategory}
+            workerCategories={workerCategories}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             sortBy={sortBy}
