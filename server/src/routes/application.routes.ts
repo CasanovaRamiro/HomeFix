@@ -60,7 +60,7 @@ router.patch('/:applicationId/accept', async (req, res, next) => {
       return
     }
     const user = await syncAuth0User(claims)
-    const applicationId = req.params.applicationId as string
+    const applicationId = req.params.applicationId
     const result = await acceptApplication(user.id, applicationId)
     res.json(result)
   } catch (err) {
@@ -76,7 +76,7 @@ router.patch('/:applicationId/reject', async (req, res, next) => {
       return
     }
     const user = await syncAuth0User(claims)
-    const applicationId = req.params.applicationId as string
+    const applicationId = req.params.applicationId
     const result = await rejectApplication(user.id, applicationId)
     res.json(result)
   } catch (err) {
