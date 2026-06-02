@@ -49,7 +49,7 @@ export default function CreatePost() {
 
         <div style={s.formCard}>
           {formSuccess ? (
-            <SuccessScreen onGoHome={() => navigate('/')} />
+            <SuccessScreen onGoHome={() => navigate('/dashboard')} />
           ) : (
             <form onSubmit={handleSubmit}>
               {formError && <div style={{ ...s.errorBox, marginBottom: '16px' }}>{formError}</div>}
