@@ -1,0 +1,257 @@
+/* ============================================================
+   HomeFix Auth (Login) — self-contained styles.
+   Scoped under .au-root with .au-* classes so the app's global
+   button{} / a{} / input{} / body{} rules in index.css CANNOT
+   interfere. Same pattern as landing.css.
+   Layout: form (left, white) + visual (right, navy + photo).
+   ============================================================ */
+
+.au-root {
+  --au-navy: #13243B;
+  --au-navy-deep: #0F172A;
+  --au-emerald: #10B981;
+  --au-emerald-hover: #059669;
+  --au-bg: #FFFFFF;
+  --au-soft: #F8FAFC;
+  --au-fg: #13243B;
+  --au-muted: #64748B;
+  --au-border: #E2E8F0;
+  --au-danger: #EF4444;
+  --au-radius: 12px;
+  --au-radius-lg: 16px;
+
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--au-fg);
+}
+.au-root *, .au-root *::before, .au-root *::after { box-sizing: border-box; }
+
+/* Neutralise global element styles from index.css at low specificity. */
+.au-root :where(button) {
+  font-family: inherit; background: none; color: inherit;
+  border: none; padding: 0; border-radius: 0; font-size: inherit; cursor: pointer;
+}
+.au-root :where(input) {
+  font-family: inherit; width: auto; padding: 0; border: none;
+  border-radius: 0; font-size: inherit; outline: none; background: none; color: inherit;
+}
+.au-root :where(a) { color: inherit; text-decoration: none; }
+.au-root :where(h1, h2, h3, h4, p, ul, li) { margin: 0; padding: 0; }
+.au-root img { display: block; max-width: 100%; }
+
+/* ---------- shell ---------- */
+.au-shell {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  min-height: 100vh;
+  background: var(--au-bg);
+}
+
+/* =========================================================
+   LEFT — form panel
+   ========================================================= */
+.au-panel {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  background: var(--au-bg);
+}
+.au-form-wrap { width: 100%; max-width: 420px; }
+
+.au-back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--au-muted);
+  margin-bottom: 30px; padding: 8px 14px 8px 10px; margin-left: -10px;
+  border-radius: 999px; transition: color 0.15s, background 0.15s;
+}
+.au-back:hover { color: var(--au-navy); background: var(--au-soft); }
+.au-back svg { width: 18px; height: 18px; transition: transform 0.15s; }
+.au-back:hover svg { transform: translateX(-2px); }
+
+.au-logo { display: block; height: 46px; width: auto; margin-bottom: 36px; }
+
+.au-head { margin-bottom: 36px; }
+.au-head h1 {
+  font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.4rem);
+  font-weight: 700; letter-spacing: -0.02em; color: var(--au-navy); line-height: 1.1;
+}
+.au-head p { margin-top: 12px; font-size: 15px; color: var(--au-muted); }
+
+/* error / success */
+.au-error, .au-success {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 500;
+  border-radius: var(--au-radius); padding: 13px 14px; margin-bottom: 22px;
+}
+.au-error { color: var(--au-danger); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+.au-success { color: var(--au-emerald-hover); background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); }
+.au-error svg, .au-success svg { width: 18px; height: 18px; flex: none; }
+
+/* fields */
+.au-form { display: flex; flex-direction: column; gap: 22px; }
+.au-field { display: flex; flex-direction: column; gap: 9px; }
+.au-label-row { display: flex; align-items: center; justify-content: space-between; }
+.au-field label { font-size: 14px; font-weight: 600; color: var(--au-fg); }
+
+.au-input-wrap { position: relative; display: flex; align-items: center; }
+.au-input-wrap > svg.au-lead {
+  position: absolute; left: 16px; width: 20px; height: 20px;
+  color: var(--au-muted); pointer-events: none;
+}
+.au-input {
+  width: 100%; height: 56px; font-size: 15px; color: var(--au-fg);
+  padding: 0 16px 0 48px;
+  background: var(--au-soft);
+  border: 1px solid var(--au-border); border-radius: var(--au-radius);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.au-input::placeholder { color: #94a3b8; }
+.au-input:focus {
+  border-color: var(--au-emerald); background: #fff;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+}
+.au-input.au-has-eye { padding-right: 50px; }
+.au-eye {
+  position: absolute; right: 12px; display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; color: var(--au-muted); border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.au-eye:hover { color: var(--au-navy); }
+.au-eye svg { width: 20px; height: 20px; }
+
+.au-forgot { font-size: 14px; font-weight: 500; color: var(--au-emerald); transition: color 0.15s; }
+.au-forgot:hover { color: var(--au-emerald-hover); }
+
+/* submit */
+.au-btn-submit {
+  width: 100%; height: 56px; margin-top: 4px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 16px; font-weight: 600; color: #fff;
+  background: var(--au-emerald); border-radius: var(--au-radius);
+  box-shadow: 0 10px 24px rgba(16,185,129,0.22);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.05s;
+}
+.au-btn-submit:hover { background: var(--au-emerald-hover); box-shadow: 0 14px 30px rgba(16,185,129,0.30); }
+.au-btn-submit:active { transform: translateY(1px); }
+.au-btn-submit:disabled { opacity: 0.75; cursor: default; box-shadow: none; }
+.au-btn-submit svg { width: 20px; height: 20px; }
+
+/* divider */
+.au-divider {
+  position: relative; text-align: center; margin: 32px 0;
+}
+.au-divider::before {
+  content: ''; position: absolute; top: 50%; left: 0; right: 0;
+  height: 1px; background: var(--au-border);
+}
+.au-divider span {
+  position: relative; background: var(--au-bg); padding: 0 16px;
+  font-size: 12px; font-weight: 500; color: var(--au-muted); text-transform: uppercase;
+}
+
+/* register */
+.au-register { text-align: center; font-size: 15px; color: var(--au-muted); }
+.au-register a { font-weight: 600; color: var(--au-emerald); transition: color 0.15s; }
+.au-register a:hover { color: var(--au-emerald-hover); }
+
+/* demo credentials */
+.au-demo {
+  margin-top: 32px; padding: 18px;
+  background: var(--au-soft); border: 1px dashed var(--au-border); border-radius: var(--au-radius);
+}
+.au-demo-title {
+  font-size: 11px; font-weight: 700; color: var(--au-muted);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+}
+.au-demo-rows { display: flex; flex-direction: column; gap: 7px; }
+.au-demo-rows p {
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12px; color: var(--au-muted);
+}
+.au-demo-rows b { color: var(--au-fg); font-weight: 600; }
+
+/* =========================================================
+   RIGHT — visual panel
+   ========================================================= */
+.au-visual {
+  position: relative; overflow: hidden;
+  background: var(--au-navy-deep);
+  display: flex;
+}
+.au-visual-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  object-position: 18% center;
+}
+.au-visual-tint {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to right, rgba(15,23,42,0.94) 0%, rgba(15,23,42,0.82) 30%, rgba(19,36,59,0.42) 60%, rgba(19,36,59,0.18) 100%),
+    linear-gradient(to top, rgba(15,23,42,0.55) 0%, rgba(15,23,42,0) 32%);
+}
+.au-visual-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; justify-content: space-between;
+  width: 100%; padding: 56px;
+  color: #fff;
+}
+
+.au-secure-badge {
+  display: inline-flex; align-items: center; gap: 9px; width: fit-content;
+  padding: 9px 18px; border-radius: 999px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  font-size: 14px; font-weight: 500; color: #fff;
+}
+.au-secure-badge svg { width: 17px; height: 17px; color: var(--au-emerald); }
+
+.au-visual-mid { max-width: 420px; }
+.au-visual-mid h2 {
+  font-size: clamp(2rem, 1.3rem + 2vw, 2.9rem);
+  font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; color: #fff;
+  text-wrap: balance;
+}
+.au-visual-mid .au-vsub {
+  margin-top: 24px; font-size: 17px; line-height: 1.6;
+  color: rgba(255,255,255,0.78); max-width: 380px;
+}
+
+.au-stats { display: grid; grid-template-columns: repeat(3, auto); gap: 32px; margin-top: 44px; }
+.au-stat .au-stat-num { font-size: clamp(2rem, 1.4rem + 1.6vw, 2.6rem); font-weight: 700; color: #fff; line-height: 1; }
+.au-stat .au-stat-label { margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.6); }
+
+.au-testimonial {
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(10px); border-radius: var(--au-radius-lg);
+  padding: 26px;
+}
+.au-testimonial-quote { font-size: 16px; font-style: italic; line-height: 1.6; color: rgba(255,255,255,0.92); margin-bottom: 18px; }
+.au-testimonial-by { display: flex; align-items: center; gap: 13px; }
+.au-testimonial-avatar {
+  width: 42px; height: 42px; flex: none; border-radius: 50%;
+  background: rgba(16,185,129,0.22); display: flex; align-items: center; justify-content: center;
+  color: var(--au-emerald);
+}
+.au-testimonial-avatar svg { width: 21px; height: 21px; }
+.au-testimonial-name { font-size: 14px; font-weight: 600; color: #fff; }
+.au-testimonial-role { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+
+/* spinner */
+@keyframes au-spin { to { transform: rotate(360deg); } }
+.au-spinner {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+  animation: au-spin 0.6s linear infinite;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 1024px) {
+  .au-shell { grid-template-columns: 1fr; }
+  .au-visual { display: none; }
+  .au-panel { padding: 56px 24px; }
+}
+@media (max-width: 480px) {
+  .au-panel { padding: 44px 18px; }
+  .au-logo { margin-bottom: 32px; }
+  .au-head { margin-bottom: 28px; }
+}
