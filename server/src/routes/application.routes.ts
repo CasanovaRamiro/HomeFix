@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../services/auth.service.js'
-import { getMyApplications, applyToPost } from '../services/application.service.js'
+import { getMyApplications, applyToPost, acceptApplication, rejectApplication } from '../services/application.service.js'
 
 const router = Router()
 
@@ -52,22 +52,32 @@ router.post('/', async (req, res, next) => {
   }
 })
 
-router.patch('/:applicationId/accept', requireSession, async (req, res, next) => {
+router.patch('/:applicationId/accept', async (req, res, next) => {
   try {
-    const clientId = req.user!.id
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
     const applicationId = req.params.applicationId as string
-    const result = await acceptApplication(clientId, applicationId)
+    const result = await acceptApplication(user.id, applicationId)
     res.json(result)
   } catch (err) {
     next(err)
   }
 })
 
-router.patch('/:applicationId/reject', requireSession, async (req, res, next) => {
+router.patch('/:applicationId/reject', async (req, res, next) => {
   try {
-    const clientId = req.user!.id
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
     const applicationId = req.params.applicationId as string
-    const result = await rejectApplication(clientId, applicationId)
+    const result = await rejectApplication(user.id, applicationId)
     res.json(result)
   } catch (err) {
     next(err)
