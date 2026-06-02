@@ -10,7 +10,7 @@ import LandingFooter from '../components/landing/LandingFooter'
 import { fetchAvailablePosts } from '../services/posts'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
-import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY } from '../lib/post'
+import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +49,7 @@ interface MockEmergency {
   distance: number
   client: string
   location: string
+  clientRating: number
 }
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ const MOCK_EMERGENCIES: MockEmergency[] = [
     distance: 1.2,
     client: 'María Gómez',
     location: 'Palermo, Buenos Aires',
+    clientRating: 4.8,
   },
   {
     id: '2',
@@ -71,6 +73,7 @@ const MOCK_EMERGENCIES: MockEmergency[] = [
     distance: 2.4,
     client: 'Roberto Pérez',
     location: 'Villa Crespo, Buenos Aires',
+    clientRating: 4.5,
   },
   {
     id: '3',
@@ -80,6 +83,7 @@ const MOCK_EMERGENCIES: MockEmergency[] = [
     distance: 3.1,
     client: 'Laura Sánchez',
     location: 'Recoleta, Buenos Aires',
+    clientRating: 3.9,
   },
 ]
 
@@ -344,6 +348,12 @@ function EmergencyCard({ emergency }: { emergency: MockEmergency }) {
           <User size={12} color="#94A3B8" />
           {emergency.client}
         </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <span key={i}>{i < Math.round(emergency.clientRating) ? '★' : '☆'}</span>
+          ))}
+          <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{emergency.clientRating}</span>
+        </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8' }}>
           <MapPin size={12} />
           {emergency.location}
@@ -507,6 +517,7 @@ function JobCard({ post, index }: { post: Post; index: number }) {
   const date = post.startDate ? new Date(post.startDate).toISOString().slice(0, 10) : '—'
   const mockDistances = [1.8, 2.5, 3.1]
   const distance = mockDistances[index % mockDistances.length]
+  const trabajo = postToTrabajo(post)
 
   return (
     <div
@@ -556,6 +567,18 @@ function JobCard({ post, index }: { post: Post; index: number }) {
           <MapPin size={12} />
           <span>{post.address ?? 'Buenos Aires'}</span>
           <span style={{ color: '#10B981', fontWeight: 600, marginLeft: 4 }}>{distance} km</span>
+        </div>
+
+        {/* Client name + rating */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontSize: 12, color: '#475569' }}>
+          <User size={12} color="#94A3B8" />
+          <span>{trabajo.clientName}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
+            {Array.from({ length: 5 }, (_, i) => (
+              <span key={i}>{i < Math.round(trabajo.clientRating) ? '★' : '☆'}</span>
+            ))}
+            <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{trabajo.clientRating}</span>
+          </span>
         </div>
       </div>
 

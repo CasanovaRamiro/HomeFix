@@ -1,4 +1,5 @@
 import type { TrabajoView } from '../../types/post'
+import StarRating from '../ui/StarRating'
 
 interface Props {
   trabajo: TrabajoView & { lat?: number | null; lng?: number | null }
@@ -36,6 +37,7 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, o
             {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
           </div>
           <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+          <StarRating rating={trabajo.clientRating} />
         </div>
         <span className="trabajo-date">{trabajo.fechaServicio}</span>
       </div>
