@@ -21,7 +21,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
     <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-md">
 
       {/* Header */}
-      <div className="flex justify-between items-start gap-3">
+      <div className="flex justify-between items-center gap-3">
         <div className="min-w-0">
           <p className="font-bold text-slate-900 text-base truncate">
             {post.title}

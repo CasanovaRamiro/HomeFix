@@ -220,7 +220,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .post-header a:hover { opacity: 1; }
 
 /* Post Detail */
-.post-detail { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
+.post-detail { margin-top: 1.5rem; }
 
 .post-detail .info-card {
   background: var(--card-bg);

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import api from '../services/api'
-import PageHeader from '../components/ui/PageHeader'
 import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
@@ -51,9 +50,18 @@ export default function PostDetail() {
   if (loading) return <LoadingSpinner />
   if (error) return (
     <>
-      <PageHeader title="Detalle de publicación" backTo="/users" />
-      <div className="post-detail">
+      <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-white">Detalle de publicación</h1>
+          <Link to="/dashboard" className="!text-white text-sm hover:!text-slate-300 transition-colors inline-block mt-1">
+            ← Volver
+          </Link>
+        </div>
+      </div>
+      <div className="post-detail px-6 md:px-12">
+        <div className="max-w-7xl mx-auto">
         <p className="error">{error}</p>
+        </div>
       </div>
     </>
   )
@@ -61,16 +69,25 @@ export default function PostDetail() {
 
   return (
     <>
-      <PageHeader title="Detalle de publicación" backTo="/users" />
-      <div className="post-detail">
-      <PostCard post={post} />
+      <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-white">Detalle de publicación</h1>
+          <Link to="/dashboard" className="!text-white text-sm hover:!text-slate-300 transition-colors inline-block mt-1">
+            ← Volver
+          </Link>
+        </div>
+      </div>
+      <div className="post-detail px-6 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          <PostCard post={post} />
 
-      <h3 className="section-title">Postulantes ({MOCK_APPLICANTS.length})</h3>
+          <h3 className="section-title">Postulantes ({MOCK_APPLICANTS.length})</h3>
 
-      {MOCK_APPLICANTS.map((a) => (
-        <ApplicantCard key={a.name} applicant={a} />
-      ))}
-    </div>
+          {MOCK_APPLICANTS.map((a) => (
+            <ApplicantCard key={a.name} applicant={a} />
+          ))}
+        </div>
+      </div>
     </>
   )
 }

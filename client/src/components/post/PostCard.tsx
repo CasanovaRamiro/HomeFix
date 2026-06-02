@@ -17,7 +17,7 @@ export default function PostCard({ post }: PostCardProps) {
   return (
     <div className="info-card">
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
-        <h2>{post.title}</h2>
+        <h2 className="!mb-0">{post.title}</h2>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
 
@@ -29,7 +29,6 @@ export default function PostCard({ post }: PostCardProps) {
 
       <p className="desc">{post.description}</p>
 
-      <div className="info-row"><strong>Dirección:</strong> {post.address}</div>
       <div className="info-row">
         <strong>Fechas:</strong>{' '}
         {new Date(post.startDate).toLocaleDateString()} — {new Date(post.endDate).toLocaleDateString()}
@@ -38,13 +37,18 @@ export default function PostCard({ post }: PostCardProps) {
         <strong>Publicado:</strong> {new Date(post.createdAt).toLocaleDateString()}
       </div>
 
-      {post.status !== 'Cancelled' && (
-        <div className="post-actions">
-          <button className="btn-edit">Editar</button>
-          <button className="btn-pause">{post.status === 'Paused' ? 'Activar' : 'Pausar'}</button>
-          <button className="btn-cancel">Cancelar</button>
+      <div className="flex justify-between items-center" style={{ marginTop: '0.5rem' }}>
+        <div className="info-row" style={{ marginBottom: 0 }}>
+          <strong>Dirección:</strong> {post.address}
         </div>
-      )}
+        {post.status !== 'Cancelled' && (
+          <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+            <button className="btn-edit">Editar</button>
+            <button className="btn-pause">{post.status === 'Paused' ? 'Activar' : 'Pausar'}</button>
+            <button className="btn-cancel">Cancelar</button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
