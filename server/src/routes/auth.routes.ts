@@ -53,6 +53,10 @@ router.get('/me', async (req, res, next) => {
       phone_number?: string
     } | undefined
     const user = await syncAuth0User(claims ?? {})
+    if (!user) {
+      res.status(401).json({ error: 'User not found' })
+      return
+    }
     res.json(user)
   } catch (err) {
     const error = err as Error & { status?: number }

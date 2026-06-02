@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 import { cleanDb } from '../helpers/db.js'
+import { createUser } from '../../src/data/user.data.js'
 
 vi.mock('../../src/middleware/auth0.middleware.js', async () => {
   const mock = await import('../helpers/auth0Mock.js')
@@ -24,6 +25,13 @@ describe('GET /auth/me', () => {
   })
 
   it('returns 200 and syncs user when token is present', async () => {
+    await createUser({
+      name: 'Test User',
+      email: 'test@test.com',
+      password: 'Auth0Managed',
+      role: 'worker',
+    })
+
     const res = await request(app)
       .get('/auth/me')
       .set('Authorization', 'Bearer test-auth0-token')
@@ -108,6 +116,13 @@ describe('POST /auth/login', () => {
 })
 
 it('does not create duplicated user on second visit', async () => {
+  const created = await createUser({
+    name: 'Test User',
+    email: 'test@test.com',
+    password: 'Auth0Managed',
+    role: 'worker',
+  })
+
   const first = await request(app)
     .get('/auth/me')
     .set('Authorization', 'Bearer test-auth0-token')
@@ -119,4 +134,5 @@ it('does not create duplicated user on second visit', async () => {
   expect(first.status).toBe(200)
   expect(second.status).toBe(200)
   expect(second.body.id).toBe(first.body.id)
+  expect(second.body.id).toBe(created.id)
 })

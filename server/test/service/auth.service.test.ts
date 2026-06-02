@@ -38,14 +38,14 @@ describe('auth.service - syncAuth0User', () => {
       name: 'Jane',
     })
 
-    expect(result.email).toBe('jane@test.com')
-    expect(result).not.toHaveProperty('password')
+    expect(result!).not.toBeNull()
+    expect(result!.email).toBe('jane@test.com')
+    expect(result!).not.toHaveProperty('password')
     expect(userData.createUser).not.toHaveBeenCalled()
   })
 
-  it('creates a user when email does not exist', async () => {
+  it('returns null when email does not exist', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
 
     const result = await syncAuth0User({
       sub: 'auth0|abc123',
@@ -53,7 +53,8 @@ describe('auth.service - syncAuth0User', () => {
       name: 'Jane',
     })
 
-    expect(result.email).toBe('jane@test.com')
+    expect(result).toBeNull()
+    expect(userData.createUser).not.toHaveBeenCalled()
   })
 })
 
