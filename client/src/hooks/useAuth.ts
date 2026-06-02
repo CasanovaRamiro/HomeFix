@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { StoredUser } from '../types/user'
 
 interface AuthState {
@@ -5,7 +6,7 @@ interface AuthState {
   isLoggedIn: boolean
 }
 
-export function useAuth(): AuthState {
+function readAuth(): AuthState {
   const token = localStorage.getItem('token')
   if (!token) return { user: null, isLoggedIn: false }
   try {
@@ -15,4 +16,20 @@ export function useAuth(): AuthState {
   } catch {
     return { user: null, isLoggedIn: false }
   }
+}
+
+export function useAuth(): AuthState {
+  const [state, setState] = useState<AuthState>(readAuth)
+
+  useEffect(() => {
+    const handler = () => setState(readAuth())
+    window.addEventListener('auth-change', handler)
+    return () => window.removeEventListener('auth-change', handler)
+  }, [])
+
+  return state
+}
+
+export function emitAuthChange() {
+  window.dispatchEvent(new Event('auth-change'))
 }
