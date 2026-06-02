@@ -38,8 +38,9 @@ describe('auth.service - syncAuth0User', () => {
       name: 'Jane',
     })
 
-    expect(result.email).toBe('jane@test.com')
-    expect(result).not.toHaveProperty('password')
+    expect(result!).not.toBeNull()
+    expect(result!.email).toBe('jane@test.com')
+    expect(result!).not.toHaveProperty('password')
     expect(userData.createUser).not.toHaveBeenCalled()
   })
 
@@ -53,7 +54,11 @@ describe('auth.service - syncAuth0User', () => {
       name: 'Jane',
     })
 
-    expect(result.email).toBe('jane@test.com')
+    expect(result).not.toBeNull()
+    expect(result!.email).toBe('jane@test.com')
+    expect(userData.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'jane@test.com' })
+    )
   })
 })
 

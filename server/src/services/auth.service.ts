@@ -360,16 +360,16 @@ export const loginUser = async (input: LoginInput) => {
 
 export const syncAuth0User = async (claims: Auth0Claims) => {
   if (!claims.sub) throw new Error('Invalid Auth0 token: missing sub claim')
+  if (!claims.email) return null
 
-  const email = claims.email ?? `${claims.sub}@auth0.local`
-  const existing = await findByEmail(email)
+  const existing = await findByEmail(claims.email)
   if (existing) {
     const { password: _, ...safeUser } = existing
     return safeUser
   }
 
   const user = await createUser({
-    email,
+    email: claims.email,
     name: claims.name ?? claims.nickname ?? claims.sub,
     password: managedPassword,
     phone: claims.phone_number,

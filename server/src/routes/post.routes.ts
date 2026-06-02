@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
 
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (!user || user.role !== 'worker') {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -41,7 +41,7 @@ router.get('/available', async (req, res, next) => {
 
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (!user || user.role !== 'worker') {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -67,7 +67,7 @@ router.get('/search-location', async (req, res, next) => {
 
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (!user || user.role !== 'worker') {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -101,6 +101,10 @@ router.post('/create', async (req, res, next) => {
       return
     }
     const user = await syncAuth0User(claims)
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
     const result = await createPost({...req.body, userId: user.id });
     res.status(201).json(result);
   } catch (error) {
@@ -139,6 +143,10 @@ router.post("/user-posts", async (req, res, next) => {
     }
 
     const user = await syncAuth0User(claims);
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
     const posts = await getUserPosts(user.id);
     res.json(posts);
   } catch (error) {
@@ -164,6 +172,10 @@ router.patch('/:id/finalize', async (req, res, next) => {
     }
 
     const user = await syncAuth0User(claims)
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
     const result = await finalizePost(req.params.id, user.id)
     res.json(result)
   } catch (err) {
