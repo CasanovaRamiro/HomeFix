@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
-import jwt from 'jsonwebtoken'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 
 const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
@@ -48,7 +47,7 @@ beforeEach(async () => {
   const category = await createCategory('Test Category')
   userId = user.id
   categoryId = category.id
-  token = jwt.sign({ sub: userId, email: 'test@test.com', role: 'worker' }, 'test-secret')
+  token = 'test-token'
 })
 
 const postInput = (overrides: Record<string, unknown> = {}) => ({

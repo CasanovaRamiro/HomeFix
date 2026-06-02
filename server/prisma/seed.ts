@@ -1,7 +1,5 @@
 import prisma from '../src/lib/prisma.js'
-import * as bcrypt from 'bcryptjs'
-
-const SEED_PASSWORD = 'test1234'
+const MANAGED_PASSWORD = 'AUTH0_MANAGED_ACCOUNT'
 
 const JOB_IMAGES: Record<string, string[]> = {
   Electricista: [
@@ -44,7 +42,7 @@ async function clean() {
 async function main() {
   await clean()
 
-  const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10)
+  const passwordHash = MANAGED_PASSWORD
 
   // Tipo de documento
   const dni = await prisma.nationalIdType.create({

@@ -1,13 +1,21 @@
 import { Router } from 'express'
-import { requireSession } from '../middleware/session.middleware.js'
-import { getMyApplications, applyToPost, acceptApplication, rejectApplication, cancelApplication } from '../services/application.service.js'
+import { jwtCheck } from '../middleware/auth0.middleware.js'
+import { syncAuth0User } from '../services/auth.service.js'
+import { getMyApplications, applyToPost } from '../services/application.service.js'
 
 const router = Router()
 
-router.get('/my-applications', requireSession, async (req, res, next) => {
+router.use(jwtCheck)
+
+router.get('/my-applications', async (req, res, next) => {
   try {
-    const workerId = req.user!.id
-    const result = await getMyApplications(workerId)
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await getMyApplications(user.id)
     res.json(result)
   } catch (err) {
     next(err)
@@ -24,15 +32,20 @@ router.delete('/:id', requireSession, async (req, res, next) => {
   }
 })
 
-router.post('/', requireSession, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
-    const workerId = req.user!.id
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
     const { postId } = req.body
     if (!postId || typeof postId !== 'string') {
       res.status(400).json({ error: 'postId is required' })
       return
     }
-    const result = await applyToPost(workerId, postId)
+    const result = await applyToPost(user.id, postId)
     res.status(201).json(result)
   } catch (err) {
     next(err)

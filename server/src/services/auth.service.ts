@@ -1,8 +1,6 @@
 import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
 import { UserRole } from '../types/userRole.js'
-import * as bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 
 interface Auth0Claims {
   sub?: string
@@ -44,14 +42,6 @@ export const createHttpError = (status: number, message: string) => {
   return error
 }
 
-const validatePassword = (password: string) => {
-  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres'
-  if (!/[A-Z]/.test(password)) return 'La contraseña debe contener al menos una letra mayúscula'
-  if (!/[a-z]/.test(password)) return 'La contraseña debe contener al menos una letra minúscula'
-  if (!/[0-9]/.test(password)) return 'La contraseña debe contener al menos un número'
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'La contraseña debe contener al menos un carácter especial'
-  return null
-}
 
 const getRequiredEnv = (key: 'AUTH0_CLIENT_ID' | 'AUTH0_DB_CONNECTION') => {
   const value = process.env[key]
@@ -224,36 +214,24 @@ export const registerUser = async (input: RegisterInput) => {
   if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
   if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
-  const passwordError = validatePassword(password)
-  if (passwordError) throw createHttpError(400, passwordError)
-
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { auth0Id: string; email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({ email, password, name, lastName })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
+  const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  if (auth0User) {
-    const clientRoleId = process.env.AUTH0_CLIENT_ROLE_ID
-    if (clientRoleId) {
-      try {
-        await assignAuth0Role(auth0User.auth0Id, clientRoleId)
-      } catch {
-        console.error('Failed to assign client role in Auth0')
-      }
+  const clientRoleId = process.env.AUTH0_CLIENT_ROLE_ID
+  if (clientRoleId) {
+    try {
+      await assignAuth0Role(auth0User.auth0Id, clientRoleId)
+    } catch {
+      console.error('Failed to assign client role in Auth0')
     }
   }
-
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
     surname: lastName ?? '',
     role: UserRole.Client,
@@ -274,9 +252,6 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const password = input.password!
   const phone = input.phone?.trim() || undefined
 
-  const passwordError = validatePassword(password)
-  if (passwordError) throw createHttpError(400, passwordError)
-
   if (!input.categories || input.categories.length === 0) {
     throw createHttpError(400, 'Debes seleccionar al menos una especialidad')
   }
@@ -284,30 +259,21 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { auth0Id: string; email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({ email, password, name, lastName })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
+  const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  if (auth0User) {
-    const workerRoleId = process.env.AUTH0_WORKER_ROLE_ID
-    if (workerRoleId) {
-      try {
-        await assignAuth0Role(auth0User.auth0Id, workerRoleId)
-      } catch {
-        console.error('Failed to assign worker role in Auth0')
-      }
+  const workerRoleId = process.env.AUTH0_WORKER_ROLE_ID
+  if (workerRoleId) {
+    try {
+      await assignAuth0Role(auth0User.auth0Id, workerRoleId)
+    } catch {
+      console.error('Failed to assign worker role in Auth0')
     }
   }
-
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
     role: 'worker',
   })
@@ -341,43 +307,7 @@ export const loginUser = async (input: LoginInput) => {
   if (!email) throw createHttpError(400, 'Email is required')
   if (!password) throw createHttpError(400, 'Password is required')
 
-  let tokenData: Auth0TokenResponse | null = null
-  try {
-    tokenData = await loginWithAuth0(email, password)
-  } catch {
-    console.error('Auth0 no disponible, usando autenticación local')
-  }
-
-  if (!tokenData) {
-    const user = await findByEmail(email)
-    if (!user || user.password === managedPassword) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const isValid = await bcrypt.compare(password, user.password)
-    if (!isValid) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const localToken = jwt.sign(
-      { sub: user.id, email: user.email, name: user.name, role: user.role },
-      process.env.JWT_SECRET || 'dev-secret',
-      { expiresIn: '24h' },
-    )
-    return {
-      accessToken: localToken,
-      idToken: null,
-      tokenType: 'local',
-      expiresIn: 86400,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    }
-  }
-
+  const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
   const profileEmail = profile.email?.toLowerCase() ?? email
@@ -404,14 +334,7 @@ export const loginUser = async (input: LoginInput) => {
     idToken: tokenData.id_token,
     tokenType: tokenData.token_type,
     expiresIn: tokenData.expires_in,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      createdAt: user.createdAt,
-    },
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
   }
 }
 
