@@ -137,7 +137,7 @@ export default function Navbar(): React.ReactElement | null {
                 <Link to="/login" style={{ color: theme.muted, textDecoration: 'none', fontSize: '14px', fontWeight: '500', padding: '8px 12px' }}>
                   Iniciar Sesión
                 </Link>
-                <Link to="/register" style={{ background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px' }}>
+                <Link to={pathname === '/workerlanding' ? '/register/worker' : '/register'} style={{ background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px' }}>
                   Registrarse
                 </Link>
               </>
@@ -241,7 +241,7 @@ export default function Navbar(): React.ReactElement | null {
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.primaryDark}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Iniciar Sesión
                   </Link>
-                  <Link to="/register" onClick={() => { setMobileOpen(false) }}
+                  <Link to={pathname === '/workerlanding' ? '/register/worker' : '/register'} onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', background: theme.accent, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Registrarse
                   </Link>
