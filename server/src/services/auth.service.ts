@@ -1,8 +1,6 @@
 import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
 import { UserRole } from '../types/userRole.js'
-import * as bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 
 interface Auth0Claims {
   sub?: string
@@ -10,6 +8,7 @@ interface Auth0Claims {
   name?: string
   nickname?: string
   phone_number?: string
+  role?: string
 }
 
 const managedPassword = 'AUTH0_MANAGED_ACCOUNT'
@@ -43,14 +42,6 @@ export const createHttpError = (status: number, message: string) => {
   return error
 }
 
-const validatePassword = (password: string) => {
-  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres'
-  if (!/[A-Z]/.test(password)) return 'La contraseña debe contener al menos una letra mayúscula'
-  if (!/[a-z]/.test(password)) return 'La contraseña debe contener al menos una letra minúscula'
-  if (!/[0-9]/.test(password)) return 'La contraseña debe contener al menos un número'
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'La contraseña debe contener al menos un carácter especial'
-  return null
-}
 
 const getRequiredEnv = (key: 'AUTH0_CLIENT_ID' | 'AUTH0_DB_CONNECTION') => {
   const value = process.env[key]
@@ -87,6 +78,51 @@ const getIssuerBaseUrl = () => {
   return issuer.replace(/\/$/, '')
 }
 
+let _mgmtToken: { token: string; expiresAt: number } | null = null
+
+const getManagementToken = async (): Promise<string> => {
+  if (_mgmtToken && Date.now() < _mgmtToken.expiresAt) return _mgmtToken.token
+
+  const issuer = getIssuerBaseUrl()
+  const clientId = process.env.AUTH0_M2M_CLIENT_ID
+  const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET
+  if (!clientId) throw createHttpError(500, 'AUTH0_M2M_CLIENT_ID is not configured')
+  if (!clientSecret) throw createHttpError(500, 'AUTH0_M2M_CLIENT_SECRET is not configured')
+
+  const resp = await fetch(`${issuer}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      audience: `${issuer}/api/v2/`,
+    }),
+  })
+
+  if (!resp.ok) throw createHttpError(502, 'Failed to get Auth0 Management API token')
+
+  const data = (await resp.json()) as { access_token: string; expires_in: number }
+  _mgmtToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 }
+  return _mgmtToken.token
+}
+
+const assignAuth0Role = async (auth0UserId: string, roleId: string) => {
+  const issuer = getIssuerBaseUrl()
+  const token = await getManagementToken()
+
+  const resp = await fetch(`${issuer}/api/v2/users/${encodeURIComponent(auth0UserId)}/roles`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roles: [roleId] }),
+  })
+
+  if (!resp.ok) {
+    const text = await resp.text()
+    console.error('Failed to assign Auth0 role:', text)
+  }
+}
+
 const createAuth0User = async (payload: {
   email: string
   password: string
@@ -120,7 +156,7 @@ const createAuth0User = async (payload: {
 
   const data = (await response.json()) as Auth0SignupResponse
   return {
-    auth0Id: data._id,
+    auth0Id: `auth0|${data._id}`,
     email: data.email,
     emailVerified: data.email_verified,
   }
@@ -179,30 +215,24 @@ export const registerUser = async (input: RegisterInput) => {
   if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
   if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
-  const passwordError = validatePassword(password)
-  if (passwordError) throw createHttpError(400, passwordError)
-
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
+  const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const clientRoleId = process.env.AUTH0_CLIENT_ROLE_ID
+  if (clientRoleId) {
+    try {
+      await assignAuth0Role(auth0User.auth0Id, clientRoleId)
+    } catch {
+      console.error('Failed to assign client role in Auth0')
+    }
+  }
 
   const user = await createUser({
     name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
     surname: lastName ?? '',
     role: UserRole.Client,
@@ -223,9 +253,6 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const password = input.password!
   const phone = input.phone?.trim() || undefined
 
-  const passwordError = validatePassword(password)
-  if (passwordError) throw createHttpError(400, passwordError)
-
   if (!input.categories || input.categories.length === 0) {
     throw createHttpError(400, 'Debes seleccionar al menos una especialidad')
   }
@@ -233,24 +260,21 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
-    console.error('Auth0 no disponible, registrando solo localmente')
-  }
+  const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const workerRoleId = process.env.AUTH0_WORKER_ROLE_ID
+  if (workerRoleId) {
+    try {
+      await assignAuth0Role(auth0User.auth0Id, workerRoleId)
+    } catch {
+      console.error('Failed to assign worker role in Auth0')
+    }
+  }
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
     email,
-    password: passwordHash,
+    password: managedPassword,
     phone,
     role: 'worker',
   })
@@ -284,43 +308,7 @@ export const loginUser = async (input: LoginInput) => {
   if (!email) throw createHttpError(400, 'Email is required')
   if (!password) throw createHttpError(400, 'Password is required')
 
-  let tokenData: Auth0TokenResponse | null = null
-  try {
-    tokenData = await loginWithAuth0(email, password)
-  } catch {
-    console.error('Auth0 no disponible, usando autenticación local')
-  }
-
-  if (!tokenData) {
-    const user = await findByEmail(email)
-    if (!user || user.password === managedPassword) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const isValid = await bcrypt.compare(password, user.password)
-    if (!isValid) {
-      throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
-    }
-    const localToken = jwt.sign(
-      { sub: user.id, email: user.email, name: user.name, role: user.role },
-      process.env.JWT_SECRET || 'dev-secret',
-      { expiresIn: '24h' },
-    )
-    return {
-      accessToken: localToken,
-      idToken: null,
-      tokenType: 'local',
-      expiresIn: 86400,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    }
-  }
-
+  const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
   const profileEmail = profile.email?.toLowerCase() ?? email
@@ -347,14 +335,7 @@ export const loginUser = async (input: LoginInput) => {
     idToken: tokenData.id_token,
     tokenType: tokenData.token_type,
     expiresIn: tokenData.expires_in,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      createdAt: user.createdAt,
-    },
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
   }
 }
 
@@ -365,6 +346,14 @@ export const syncAuth0User = async (claims: Auth0Claims) => {
   const existing = await findByEmail(email)
   if (existing) {
     const { password: _, ...safeUser } = existing
+    // Sync role from Auth0 if the user still has the default placeholder role
+    if (claims.role && safeUser.role === 'user') {
+      return prisma.user.update({
+        where: { email },
+        data: { role: claims.role },
+        select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+      })
+    }
     return safeUser
   }
 
@@ -373,6 +362,7 @@ export const syncAuth0User = async (claims: Auth0Claims) => {
     name: claims.name ?? claims.nickname ?? claims.sub,
     password: managedPassword,
     phone: claims.phone_number,
+    role: claims.role,
   })
 
   return user

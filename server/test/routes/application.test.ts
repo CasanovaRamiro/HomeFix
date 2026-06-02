@@ -1,7 +1,33 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
-import jwt from 'jsonwebtoken'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
+
+const { getPayload, setPayload } = vi.hoisted(() => {
+  const payloads: Record<string, Record<string, string>> = {}
+  return {
+    getPayload: (token: string) => payloads[token],
+    setPayload: (token: string, payload: Record<string, string>) => { payloads[token] = payload },
+  }
+})
+
+vi.mock('../../src/middleware/auth0.middleware.js', () => ({
+  jwtCheck: (req: Request, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization
+    if (!header?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const payload = getPayload(header.split(' ')[1])
+    if (!payload) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    ;(req as Request & { auth?: unknown }).auth = { header: {}, token: '', payload }
+    next()
+  },
+}))
+
 import { app } from '../../src/index.js'
 
 let clientToken: string
@@ -18,8 +44,10 @@ beforeEach(async () => {
   clientId = client.id
   workerId = worker.id
   categoryId = category.id
-  clientToken = jwt.sign({ sub: clientId }, 'test-secret')
-  workerToken = jwt.sign({ sub: workerId }, 'test-secret')
+  clientToken = 'client-token'
+  workerToken = 'worker-token'
+  setPayload('client-token', { sub: clientId, email: 'client@test.com', role: 'client' })
+  setPayload('worker-token', { sub: workerId, email: 'worker@test.com', role: 'worker' })
 })
 
 const createActivePost = () =>
@@ -172,11 +200,11 @@ describe('PATCH /applications/:applicationId/accept', () => {
     const post = await createActivePost()
     const application = await createPendingApplication(post.id)
     const otroCliente = await createUser('otro@test.com', 'Otro', 'hashed', { role: 'client' })
-    const otroToken = jwt.sign({ sub: otroCliente.id }, 'test-secret')
+    setPayload('otro-token', { sub: otroCliente.id, email: 'otro@test.com', role: 'client' })
 
     const res = await request(app)
       .patch(`/applications/${application.id}/accept`)
-      .set('Authorization', `Bearer ${otroToken}`)
+      .set('Authorization', 'Bearer otro-token')
 
     expect(res.status).toBe(403)
   })
