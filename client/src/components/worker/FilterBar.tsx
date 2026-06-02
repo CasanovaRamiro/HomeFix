@@ -1,28 +1,9 @@
 import type { LocationFilter } from './types'
 
-// TODO: fetch categories from BE
-const CATEGORIAS_DISPONIBLES = [
-  '',
-  'Electricista',
-  'Plomero',
-  'Gasista',
-  'Pintor',
-  'Carpintero',
-  'Albañil',
-  'Cerrajero',
-  'Techista',
-  'Climatización',
-  'Jardinero',
-  'Fumigador',
-  'Vidriero',
-  'Instalador',
-  'Mudanzas',
-  'Limpieza',
-]
-
 interface Props {
   category: string
   onCategoryChange: (val: string) => void
+  workerCategories: string[]
   searchQuery: string
   onSearchChange: (val: string) => void
   sortBy: 'reciente' | 'antiguo'
@@ -34,6 +15,7 @@ interface Props {
 export default function FilterBar({
   category,
   onCategoryChange,
+  workerCategories,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -50,9 +32,10 @@ export default function FilterBar({
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
         >
-          {CATEGORIAS_DISPONIBLES.map((cat) => (
+          <option value="">Todos los rubros</option>
+          {workerCategories.map((cat) => (
             <option key={cat} value={cat}>
-              {cat === '' ? 'Todos los rubros' : cat}
+              {cat}
             </option>
           ))}
         </select>

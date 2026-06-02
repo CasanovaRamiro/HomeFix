@@ -48,7 +48,7 @@ export default function Login() {
         user: { id: string; name: string; email: string; role: UserRole }
       }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
-      localStorage.setItem('user', JSON.stringify({ name: data.user.name, role: data.user.role }))
+      localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, role: data.user.role }))
       const destination = data.user.role === UserRole.Worker ? '/worker' : '/dashboard'
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
