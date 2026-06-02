@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
-  CheckCircle2, User, MapPin, Clock, AlertCircle, X,
+  CheckCircle2, User, MapPin, AlertCircle, X,
+  Eye, ChevronRight, Shield, MessageSquare, FileText,
 } from 'lucide-react'
 import api from '../services/api'
+import LandingFooter from '../components/landing/LandingFooter'
+import { fetchAvailablePosts } from '../services/posts'
+import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
+import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY } from '../lib/post'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -463,13 +468,465 @@ function EmergencySection() {
   )
 }
 
+// ─── Application type (from /applications/my-applications) ───────────────────
+
+interface Application {
+  id: string
+  postId: string
+  title: string
+  client: string
+  location: string
+  appliedAt: string
+  serviceDate: string
+  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
+}
+
+// ─── Priority helpers ────────────────────────────────────────────────────────
+
+type Priority = 'Urgente' | 'Flexible' | 'Normal'
+
+function derivePriority(description: string): Priority {
+  const lower = description.toLowerCase()
+  if (lower.includes('urgent') || lower.includes('urgencia')) return 'Urgente'
+  if (lower.includes('flexible') || lower.includes('sin prisa') || lower.includes('cuando pueda')) return 'Flexible'
+  return 'Normal'
+}
+
+const PRIORITY_STYLES: Record<Priority, { bg: string; color: string }> = {
+  Urgente:  { bg: '#FEE2E2', color: '#DC2626' },
+  Normal:   { bg: '#FEF9C3', color: '#92400E' },
+  Flexible: { bg: '#D1FAE5', color: '#065F46' },
+}
+
+// ─── Jobs In Zone ─────────────────────────────────────────────────────────────
+
+function JobCard({ post, index }: { post: Post; index: number }) {
+  const navigate = useNavigate()
+  const priority = derivePriority(post.description)
+  const style = PRIORITY_STYLES[priority]
+  const date = post.startDate ? new Date(post.startDate).toISOString().slice(0, 10) : '—'
+  const mockDistances = [1.8, 2.5, 3.1]
+  const distance = mockDistances[index % mockDistances.length]
+
+  return (
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid #E2E8F0',
+        borderRadius: 16,
+        padding: '18px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        transition: 'box-shadow 0.2s',
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Badge + date */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{
+            background: style.bg, color: style.color,
+            fontSize: 11, fontWeight: 700,
+            padding: '2px 10px', borderRadius: 20,
+          }}>
+            {priority}
+          </span>
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>{date}</span>
+        </div>
+
+        {/* Title */}
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
+          {post.title}
+        </h3>
+
+        {/* Description */}
+        <p style={{
+          fontSize: 13, color: '#10B981', margin: '0 0 8px',
+          display: '-webkit-box', WebkitLineClamp: 1,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          {post.description}
+        </p>
+
+        {/* Location + distance */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94A3B8' }}>
+          <MapPin size={12} />
+          <span>{post.address ?? 'Buenos Aires'}</span>
+          <span style={{ color: '#10B981', fontWeight: 600, marginLeft: 4 }}>{distance} km</span>
+        </div>
+      </div>
+
+      {/* Ver button */}
+      <button
+        onClick={() => navigate('/worker/available-jobs')}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: '#0F172A', color: '#fff',
+          border: 'none', borderRadius: 10,
+          padding: '10px 16px', fontSize: 13, fontWeight: 600,
+          cursor: 'pointer', flexShrink: 0,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E293B' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#0F172A' }}
+      >
+        <Eye size={14} />
+        Ver
+      </button>
+    </div>
+  )
+}
+
+function JobsInZoneSection({ posts, loading }: { posts: Post[]; loading: boolean }) {
+  return (
+    <div>
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+          Trabajos en tu zona
+        </h2>
+        <Link
+          to="/worker/available-jobs"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 13, fontWeight: 600, color: '#64748B',
+            textDecoration: 'none', transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+        >
+          Ver todos <ChevronRight size={15} />
+        </Link>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && (
+          <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando trabajos...</p>
+        )}
+        {!loading && posts.length === 0 && (
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
+            padding: '28px 20px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+              No hay trabajos disponibles en tu zona por ahora.
+            </p>
+          </div>
+        )}
+        {!loading && posts.map((post, i) => (
+          <JobCard key={post.id} post={post} index={i} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+
+const VALIDATIONS = [
+  { label: 'Dni' },
+  { label: 'Antecedentes' },
+  { label: 'Matricula' },
+  { label: 'Domicilio' },
+]
+
+const QUICK_LINKS = [
+  { label: 'Buscar Trabajos',   icon: Briefcase,     href: '/worker/available-jobs' },
+  { label: 'Mi Perfil',         icon: User,           href: '/worker' },
+  { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
+  { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
+  { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
+]
+
+function Sidebar({ workerId }: { workerId: string }) {
+  const navigate = useNavigate()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Mis Validaciones */}
+      <div style={{
+        background: '#fff', border: '1px solid #E2E8F0',
+        borderRadius: 16, padding: '20px 20px 16px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Shield size={18} color="#64748B" />
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Mis Validaciones</span>
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#10B981' }}>
+            {VALIDATIONS.length}/{VALIDATIONS.length}
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {VALIDATIONS.map((v) => (
+            <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
+              <CheckCircle2 size={18} color="#10B981" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Accesos Rápidos */}
+      <div style={{
+        background: '#fff', border: '1px solid #E2E8F0',
+        borderRadius: 16, padding: '20px 20px 8px',
+      }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 16px' }}>
+          Accesos Rapidos
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {QUICK_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              to={link.href}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 4px', fontSize: 13, fontWeight: 500,
+                color: '#475569', textDecoration: 'none',
+                borderBottom: '1px solid #F1F5F9',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+            >
+              <link.icon size={15} color="#94A3B8" />
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Mejora tu perfil */}
+      <div style={{
+        background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)',
+        border: '1px solid #BBF7D0',
+        borderRadius: 16, padding: '20px',
+      }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 10px' }}>
+          Mejora tu perfil
+        </h3>
+        <p style={{ fontSize: 13, color: '#475569', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Los perfiles completos reciben hasta 3x mas solicitudes de trabajo.
+        </p>
+        <button
+          onClick={() => navigate(`/worker/${workerId}`)}
+          style={{
+            width: '100%', background: '#10B981', border: 'none',
+            borderRadius: 10, color: '#fff',
+            fontSize: 13, fontWeight: 700,
+            padding: '12px 0', cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+        >
+          Editar Perfil
+        </button>
+      </div>
+
+    </div>
+  )
+}
+
+// ─── Mis Postulaciones ───────────────────────────────────────────────────────
+
+const APP_STATUS_ES: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  Pending:   { label: 'Pendiente',  bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
+  Accepted:  { label: 'Aceptada',   bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' },
+  Rejected:  { label: 'Rechazada',  bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
+  Completed: { label: 'Completada', bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
+}
+
+function AppStatusBadge({ status }: { status: string }) {
+  const s = APP_STATUS_ES[status] ?? { label: status, bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' }
+  return (
+    <span style={{
+      background: s.bg, color: s.color,
+      border: `1px solid ${s.border}`,
+      fontSize: 11, fontWeight: 700,
+      padding: '3px 12px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0,
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+  // Pending first, then Accepted by most recent appliedAt
+  const sorted = [...apps]
+    .filter((a) => a.status === 'Pending' || a.status === 'Accepted')
+    .sort((a, b) => {
+      if (a.status === b.status) return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
+      return a.status === 'Pending' ? -1 : 1
+    })
+    .slice(0, 3)
+
+  return (
+    <div style={{ marginTop: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+          Mis Postulaciones
+        </h2>
+        <Link
+          to="/worker/my-applications"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 13, fontWeight: 600, color: '#64748B', textDecoration: 'none',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+        >
+          Ver todas <ChevronRight size={15} />
+        </Link>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando postulaciones...</p>}
+        {!loading && sorted.length === 0 && (
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
+            padding: '28px 20px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+              Aún no tenés postulaciones activas.
+            </p>
+          </div>
+        )}
+        {!loading && sorted.map((app) => {
+          const date = app.appliedAt?.substring(0, 10) ?? '—'
+          return (
+            <div key={app.id} style={{
+              background: '#fff', border: '1px solid #E2E8F0',
+              borderRadius: 16, padding: '16px 20px',
+              transition: 'box-shadow 0.2s',
+            }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                  {app.title}
+                </h3>
+                <AppStatusBadge status={app.status} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#10B981', fontWeight: 500 }}>
+                  Cliente: {app.client}
+                </span>
+                <span style={{ fontSize: 12, color: '#94A3B8' }}>{date}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Próximas Citas ───────────────────────────────────────────────────────────
+
+function formatCitaDate(iso: string): { date: string; time: string } {
+  if (!iso) return { date: '—', time: '—' }
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return { date: iso.substring(0, 10), time: '—' }
+  const date = d.toISOString().slice(0, 10)
+  const time = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return { date, time }
+}
+
+function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+  const citas = [...apps]
+    .filter((a) => a.status === 'Accepted' && a.serviceDate)
+    .sort((a, b) => new Date(a.serviceDate).getTime() - new Date(b.serviceDate).getTime())
+    .slice(0, 3)
+
+  return (
+    <div style={{ marginTop: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+          Proximas Citas
+        </h2>
+        <Link
+          to="/worker/my-applications"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 13, fontWeight: 600, color: '#64748B', textDecoration: 'none',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+        >
+          Ver todas <ChevronRight size={15} />
+        </Link>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando citas...</p>}
+        {!loading && citas.length === 0 && (
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
+            padding: '28px 20px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+              No tenés citas confirmadas próximas.
+            </p>
+          </div>
+        )}
+        {!loading && citas.map((app) => {
+          const { date, time } = formatCitaDate(app.serviceDate)
+          return (
+            <div key={app.id} style={{
+              background: '#fff', border: '1px solid #E2E8F0',
+              borderRadius: 16, padding: '18px 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+              transition: 'box-shadow 0.2s',
+            }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+            >
+              {/* Left: info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>
+                  {app.title}
+                </h3>
+                <p style={{ fontSize: 12, color: '#10B981', fontWeight: 500, margin: '0 0 4px' }}>
+                  Cliente: {app.client}
+                </p>
+                {app.location && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8' }}>
+                    <MapPin size={11} />
+                    {app.location}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: date + time */}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 2px' }}>{date}</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#10B981', margin: 0 }}>{time}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main View ───────────────────────────────────────────────────────────────
 
 export default function WorkerDashboard() {
-  const { user } = useAuth()
+  useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [nearbyJobs, setNearbyJobs] = useState<Post[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [applications, setApplications] = useState<Application[]>([])
+  const [appsLoading, setAppsLoading] = useState(true)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -482,9 +939,34 @@ export default function WorkerDashboard() {
     }
   }, [])
 
+  const fetchNearbyJobs = useCallback(async () => {
+    try {
+      const category = localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
+      const { data: posts } = await fetchAvailablePosts(category)
+      setNearbyJobs(posts.slice(0, 3))
+    } catch {
+      setNearbyJobs([])
+    } finally {
+      setJobsLoading(false)
+    }
+  }, [])
+
+  const fetchApplications = useCallback(async () => {
+    try {
+      const res = await api.get<Application[]>('/applications/my-applications')
+      setApplications(res.data)
+    } catch {
+      setApplications([])
+    } finally {
+      setAppsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     void fetchDashboard()
-  }, [fetchDashboard])
+    void fetchNearbyJobs()
+    void fetchApplications()
+  }, [fetchDashboard, fetchNearbyJobs, fetchApplications])
 
   if (loading) {
     return (
@@ -534,13 +1016,30 @@ export default function WorkerDashboard() {
     <div style={{
       minHeight: '100vh', background: '#F3F4F6',
       fontFamily: "'Montserrat', system-ui, sans-serif",
-      paddingBottom: 60,
+      paddingBottom: 80,
     }}>
       <ProfileHeader profile={data.profile} stats={data.stats} />
       <MetricsStrip stats={data.stats} />
       <EmergencySection />
 
+      {/* Central section: main content + sidebar */}
+      <div style={{
+        maxWidth: 1200, margin: '36px auto 0', padding: '0 24px',
+        display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start',
+      }}>
+        {/* Left column */}
+        <div>
+          <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} />
+          <MisPostulacionesSection apps={applications} loading={appsLoading} />
+          <ProximasCitasSection apps={applications} loading={appsLoading} />
+        </div>
+
+        {/* Right sidebar */}
+        <Sidebar workerId={data.profile.id} />
+      </div>
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <LandingFooter />
     </div>
   )
 }

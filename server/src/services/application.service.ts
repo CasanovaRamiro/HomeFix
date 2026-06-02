@@ -1,4 +1,4 @@
-import { findApplicationsByWorker, findApplication, createApplication } from "../data/application.data.js"
+import { findApplicationsByWorker, findApplication, createApplication, deleteApplication } from "../data/application.data.js"
 import { findPostById } from "../data/post.data.js"
 
 export const getMyApplications = async (workerId: string) => {
@@ -13,7 +13,15 @@ export const getMyApplications = async (workerId: string) => {
     appliedAt: a.createdAt.toISOString().split('T')[0],
     serviceDate: a.post.startDate.toISOString().split('T')[0],
     status: a.status,
+    category: a.post.categories[0]?.category.name ?? null,
   }))
+}
+
+export const cancelApplication = async (workerId: string, applicationId: string) => {
+  const result = await deleteApplication(workerId, applicationId)
+  if (result.count === 0)
+    throw Object.assign(new Error('Postulación no encontrada o no cancelable'), { status: 404 })
+  return { message: 'Postulación cancelada' }
 }
 
 export const applyToPost = async (workerId: string, postId: string) => {
