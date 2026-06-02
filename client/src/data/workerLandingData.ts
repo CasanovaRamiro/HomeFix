@@ -11,9 +11,9 @@ export interface WorkerTestimonial { author: string; trade: string; date: string
 // Headline numbers shown in the hero strip — kept worker-relevant.
 export const workerStats: WorkerStat[] = [
   { value: '0%', label: 'Comisión por registrarte' },
-  { value: '15.000+', label: 'Trabajos solicitados por mes' },
-  { value: '< 1 hs', label: 'Para recibir tu primera solicitud' },
-  { value: '2.500+', label: 'Profesionales ya trabajando' },
+  { value: '100%', label: 'Perfiles verificados' },
+  { value: '100%', label: 'Autonomía para elegir profesionales' },
+  { value: '24/7', label: 'Disponibilidad para solicitudes' },
 ]
 
 export const benefits: WorkerBenefit[] = [
