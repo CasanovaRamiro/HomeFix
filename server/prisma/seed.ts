@@ -304,16 +304,25 @@ async function main() {
 
   // Postulaciones de ejemplo
   await prisma.application.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[0], status: 'Accepted', createdAt: new Date('2026-05-08') },
+    data: { workerId: trabajador.id, postId: createdPostIds[0], status: 'Accepted',  createdAt: new Date('2026-05-08') },
   })
   await prisma.application.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[1], status: 'Accepted', createdAt: new Date('2026-05-06') },
+    data: { workerId: trabajador.id, postId: createdPostIds[1], status: 'Accepted',  createdAt: new Date('2026-05-06') },
   })
   await prisma.application.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[2], status: 'Rejected', createdAt: new Date('2026-05-04') },
+    data: { workerId: trabajador.id, postId: createdPostIds[2], status: 'Rejected',  createdAt: new Date('2026-05-04') },
   })
   await prisma.application.create({
-    data: { workerId: trabajador.id, postId: createdPostIds[3], status: 'Accepted', createdAt: new Date('2026-05-02') },
+    data: { workerId: trabajador.id, postId: createdPostIds[3], status: 'Accepted',  createdAt: new Date('2026-05-02') },
+  })
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[4], status: 'Pending',   createdAt: new Date('2026-05-30') },
+  })
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[5], status: 'Pending',   createdAt: new Date('2026-05-31') },
+  })
+  await prisma.application.create({
+    data: { workerId: trabajador.id, postId: createdPostIds[6], status: 'Completed', createdAt: new Date('2026-04-20') },
   })
 
   console.log('Seed OK')
