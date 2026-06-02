@@ -17,6 +17,7 @@ const toUserPostDTO = (post: UserPostSummary): UserPostDTO => ({
   endDate: post.endDate.toISOString(),
   categories: post.categories,
   worker: post.worker,
+  applicantCount: post.applicantCount,
 });
 
 const toPostDTO = (post: Awaited<ReturnType<typeof findAvailablePosts>>[number]): PostDTO => ({

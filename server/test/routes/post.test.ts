@@ -274,6 +274,7 @@ describe('POST /posts/user-posts', () => {
     expect(res.body).toHaveLength(1)
     expect(res.body[0].title).toBe('Dashboard Post')
     expect(res.body[0].categories).toEqual([{ id: expect.any(String), name: 'Test Category' }])
+    expect(res.body[0].applicantCount).toBe(0)
   })
 
   it('returns empty array when the user has no posts', async () => {

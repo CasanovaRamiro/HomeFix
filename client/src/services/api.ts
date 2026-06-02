@@ -56,6 +56,7 @@ export interface UserPost {
   endDate: string
   categories: { id: string; name: string }[]
   worker: { id: string; name: string } | null
+  applicantCount: number
 }
 
 export const getUserPosts = (): Promise<UserPost[]> =>

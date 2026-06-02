@@ -120,6 +120,7 @@ export type UserPostSummary = {
   endDate: Date;
   categories: { id: string; name: string }[];
   worker: { id: string; name: string } | null;
+  applicantCount: number;
 };
 
 export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]> => {
@@ -132,6 +133,7 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
         orderBy: { createdAt: "asc" },
         take: 1,
       },
+      _count: { select: { applications: true } },
     },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
@@ -150,6 +152,7 @@ export const findPostsByUser = async (userId: string): Promise<UserPostSummary[]
       name: pc.category.name,
     })),
     worker: post.applications[0]?.worker ?? null,
+    applicantCount: post._count.applications,
   }));
 };
 
