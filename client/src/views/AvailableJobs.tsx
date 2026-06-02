@@ -72,12 +72,11 @@ export default function AvailableJobs(): JSX.Element {
       }
     } catch (err) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
-      if (axiosErr.response?.status === 401) {
-        localStorage.removeItem('token')
-        void navigate('/login')
-        return
+      if (axiosErr.response?.status === 403) {
+        setError('No tienes permisos de trabajador para ver esta sección')
+      } else {
+        setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
       }
-      setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
       setTrabajos([])
     } finally {
       setLoading(false)
@@ -117,6 +116,7 @@ export default function AvailableJobs(): JSX.Element {
 
   const logout = (): void => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     void navigate('/login')
   }
 

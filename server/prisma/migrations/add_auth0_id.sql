@@ -1,0 +1,2 @@
+ALTER TABLE User ADD COLUMN auth0_id VARCHAR(191) NULL;
+ALTER TABLE User ADD UNIQUE INDEX User_auth0_id_key (auth0_id);

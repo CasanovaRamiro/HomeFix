@@ -24,6 +24,17 @@ describe('GET /auth/me', () => {
   })
 
   it('returns 200 and syncs user when token is present', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ _id: 'auth0|test123', email: 'test@test.com', email_verified: false }),
+    } as Response)
+
+    await request(app).post('/auth/register').send({
+      name: 'Test User',
+      email: 'test@test.com',
+      password: 'Password123!',
+    })
+
     const res = await request(app)
       .get('/auth/me')
       .set('Authorization', 'Bearer test-auth0-token')
@@ -108,6 +119,17 @@ describe('POST /auth/login', () => {
 })
 
 it('does not create duplicated user on second visit', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: true,
+    json: async () => ({ _id: 'auth0|test123', email: 'test@test.com', email_verified: false }),
+  } as Response)
+
+  await request(app).post('/auth/register').send({
+    name: 'Test User',
+    email: 'test@test.com',
+    password: 'Password123!',
+  })
+
   const first = await request(app)
     .get('/auth/me')
     .set('Authorization', 'Bearer test-auth0-token')

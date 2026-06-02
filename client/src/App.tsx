@@ -11,6 +11,7 @@ import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
 import TrabajadorFeed from './views/TrabajadorFeed'
 import MisPostulaciones from './views/MisPostulaciones'
+import WorkerPostDetail from './views/WorkerPostDetail'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
@@ -40,8 +41,9 @@ export default function App() {
         <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
         <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
-        <Route path="/worker" element={<TrabajadorFeed />} />
-        <Route path="/worker/my-applications" element={<MisPostulaciones />} />
+        <Route path="/worker" element={<PrivateRoute><TrabajadorFeed /></PrivateRoute>} />
+        <Route path="/worker/my-applications" element={<PrivateRoute><MisPostulaciones /></PrivateRoute>} />
+        <Route path="/worker/posts/:id" element={<PrivateRoute><WorkerPostDetail /></PrivateRoute>} />
         <Route
           path="/worker/available-jobs"
           element={

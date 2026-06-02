@@ -8,6 +8,19 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    const axiosError = error as { response?: { status?: number } }
+    if (axiosError.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error as Error)
+  }
+)
+
 export const getWorkers = (): Promise<Worker[]> =>
   api.get<Worker[]>('/workers').then((r) => r.data)
 

@@ -7,10 +7,14 @@ const publicFields = {
   phone: true,
   role: true,
   createdAt: true,
+  auth0Id: true,
 } as const
 
 export const findByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email } })
+
+export const findByAuth0Id = (auth0Id: string) =>
+  prisma.user.findUnique({ where: { auth0Id } })
 
 export const findAll = () =>
   prisma.user.findMany({ select: publicFields })
@@ -37,6 +41,7 @@ interface CreateUserInput {
   surname?: string
   nationalId?: string
   role?: string
+  auth0Id?: string
 }
 
 export const createUser = async (data: CreateUserInput) => {
@@ -52,10 +57,14 @@ export const createUser = async (data: CreateUserInput) => {
       nationalIdTypeId: dniId,
       addressId: addrId,
       role: data.role ?? 'user',
+      auth0Id: data.auth0Id,
     },
     select: publicFields,
   })
 }
+
+export const updateAuth0Id = (userId: string, auth0Id: string) =>
+  prisma.user.update({ where: { id: userId }, data: { auth0Id }, select: publicFields })
 
 export const addUserCategories = async (userId: string, categoryIds: string[]) => {
   return prisma.userCategory.createMany({

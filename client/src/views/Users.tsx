@@ -27,6 +27,7 @@ export default function Users() {
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     navigate('/login')
   }
 

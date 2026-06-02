@@ -1,4 +1,4 @@
-import { findByEmail, createUser, addUserCategories } from '../data/user.data.js'
+import { findByEmail, findByAuth0Id, createUser, addUserCategories, updateAuth0Id } from '../data/user.data.js'
 import prisma from '../lib/prisma.js'
 import { UserRole } from '../types/userRole.js'
 import * as bcrypt from 'bcryptjs'
@@ -185,19 +185,17 @@ export const registerUser = async (input: RegisterInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
+  const auth0Result = await createAuth0User({
+    email,
+    password,
+    name,
+    lastName,
+  }).catch(() => {
     console.error('Auth0 no disponible, registrando solo localmente')
-  }
+    return null as { auth0Id: string; email: string; emailVerified: boolean } | null
+  })
 
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const passwordHash = auth0Result ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name,
@@ -206,12 +204,13 @@ export const registerUser = async (input: RegisterInput) => {
     phone,
     surname: lastName ?? '',
     role: UserRole.Client,
+    auth0Id: auth0Result ? `auth0|${auth0Result.auth0Id}` : undefined,
   })
 
   return {
     userId: user.id,
-    email: auth0User?.email ?? email,
-    emailVerified: auth0User?.emailVerified ?? false,
+    email: auth0Result?.email ?? email,
+    emailVerified: auth0Result?.emailVerified ?? false,
     message: 'Usuario registrado exitosamente',
   }
 }
@@ -233,19 +232,17 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const existing = await findByEmail(email)
   if (existing) throw createHttpError(409, 'El correo electrónico ya está registrado')
 
-  let auth0User: { email: string; emailVerified: boolean } | null = null
-  try {
-    auth0User = await createAuth0User({
-      email,
-      password,
-      name,
-      lastName,
-    })
-  } catch {
+  const auth0Result = await createAuth0User({
+    email,
+    password,
+    name,
+    lastName,
+  }).catch(() => {
     console.error('Auth0 no disponible, registrando solo localmente')
-  }
+    return null as { auth0Id: string; email: string; emailVerified: boolean } | null
+  })
 
-  const passwordHash = auth0User ? managedPassword : await bcrypt.hash(password, 10)
+  const passwordHash = auth0Result ? managedPassword : await bcrypt.hash(password, 10)
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
@@ -253,6 +250,7 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
     password: passwordHash,
     phone,
     role: 'worker',
+    auth0Id: auth0Result ? `auth0|${auth0Result.auth0Id}` : undefined,
   })
 
   // Resolve categories to IDs and create associations
@@ -271,8 +269,8 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
 
   return {
     userId: user.id,
-    email: auth0User?.email ?? email,
-    emailVerified: auth0User?.emailVerified ?? false,
+    email: auth0Result?.email ?? email,
+    emailVerified: auth0Result?.emailVerified ?? false,
     message: 'Trabajador registrado exitosamente',
   }
 }
@@ -322,24 +320,27 @@ export const loginUser = async (input: LoginInput) => {
   }
 
   const profile = await getAuth0UserInfo(tokenData.access_token)
+  const auth0Sub = profile.sub ?? (tokenData.id_token ? (jwt.decode(tokenData.id_token) as { sub?: string } | null)?.sub : undefined)
 
   const profileEmail = profile.email?.toLowerCase() ?? email
   const existing = await findByEmail(profileEmail)
-  const user = existing
-    ? {
-        id: existing.id,
-        name: existing.name,
-        email: existing.email,
-        phone: existing.phone,
-        role: existing.role,
-        createdAt: existing.createdAt,
-      }
-    : await createUser({
-        email: profileEmail,
-        name: profile.name ?? profile.nickname ?? profile.sub ?? profileEmail,
-        password: managedPassword,
-        phone: profile.phone_number,
-      })
+  let user
+  if (existing) {
+    if (auth0Sub && existing.auth0Id !== auth0Sub) {
+      user = await updateAuth0Id(existing.id, auth0Sub)
+    } else {
+      const { password: _, ...safeUser } = existing
+      user = safeUser
+    }
+  } else {
+    user = await createUser({
+      email: profileEmail,
+      name: profile.name ?? profile.nickname ?? profile.sub ?? profileEmail,
+      password: managedPassword,
+      phone: profile.phone_number,
+      auth0Id: auth0Sub,
+    })
+  }
   if (!user) throw createHttpError(500, 'Could not resolve user')
 
   return {
@@ -361,19 +362,36 @@ export const loginUser = async (input: LoginInput) => {
 export const syncAuth0User = async (claims: Auth0Claims) => {
   if (!claims.sub) throw new Error('Invalid Auth0 token: missing sub claim')
 
-  const email = claims.email ?? `${claims.sub}@auth0.local`
+  if (!claims.email) {
+    const bySub = await findByAuth0Id(claims.sub)
+    if (bySub) {
+      const { password: _, ...safeUser } = bySub
+      return safeUser
+    }
+    throw Object.assign(
+      new Error('Email not available in token and no user linked to this Auth0 account. Re-login required.'),
+      { status: 401 }
+    )
+  }
+
+  const email = claims.email
   const existing = await findByEmail(email)
   if (existing) {
+    if (existing.auth0Id !== claims.sub) {
+      await updateAuth0Id(existing.id, claims.sub)
+    }
     const { password: _, ...safeUser } = existing
     return safeUser
   }
 
-  const user = await createUser({
-    email,
-    name: claims.name ?? claims.nickname ?? claims.sub,
-    password: managedPassword,
-    phone: claims.phone_number,
-  })
+  const bySub = await findByAuth0Id(claims.sub)
+  if (bySub) {
+    const { password: _, ...safeUser } = bySub
+    return safeUser
+  }
 
-  return user
+  throw Object.assign(
+    new Error('User not found. Please register first.'),
+    { status: 401 }
+  )
 }
