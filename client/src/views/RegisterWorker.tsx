@@ -180,7 +180,31 @@ export default function RegisterWorker() {
       {/* Main (the global <Navbar /> from App.tsx renders above this) */}
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-lg w-full space-y-6">
-          {/* Progress */}
+          {/* Unified registration card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Role identity header — navy = Profesional */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+            <div className="p-6 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Briefcase className="w-7 h-7" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/60">Estás creando una</p>
+                <h1 className="text-2xl font-extrabold leading-tight">Cuenta de Profesional</h1>
+                <p className="text-sm text-white/75 mt-0.5">Recibe solicitudes y haz crecer tu negocio.</p>
+              </div>
+            </div>
+            <div className="bg-white/10 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-white/70">¿Buscas contratar?</span>
+              <Link to="/register" className="inline-flex items-center gap-1 font-semibold text-white underline-offset-2 ">
+                <span className="text-white/70 hover:underline">Regístrate como cliente</span> <ArrowRight className="w-4 h-4 text-accent" />
+              </Link>
+            </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+            {/* Progress */}
           <div className="flex items-center justify-center gap-4">
             <div className={`flex items-center gap-2 ${step >= 1 ? 'text-accent' : 'text-slate-400'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400'}`}>
@@ -199,10 +223,6 @@ export default function RegisterWorker() {
 
           {/* Title */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900/10 text-slate-900 rounded-full text-sm font-medium">
-              <Briefcase className="w-4 h-4" />
-              Registro de Profesional
-            </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
               {step === 1 ? 'Ingresa tus datos' : 'Selecciona tus especialidades'}
             </h1>
@@ -213,8 +233,7 @@ export default function RegisterWorker() {
             </p>
           </div>
 
-          {/* Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               {step === 1 ? (
                 <>
@@ -384,18 +403,12 @@ export default function RegisterWorker() {
                                 </div>
                               )}
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
-                                  {meta ? (
-                                    <img src={meta.image} alt={cat.name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                      <Briefcase className="w-4 h-4" />
-                                    </div>
-                                  )}
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
+                                  <meta.Icon className={`w-5 h-5 ${meta.text}`} />
                                 </div>
                                 <div className="min-w-0">
                                   <p className="font-medium text-slate-900 text-sm truncate">{cat.name}</p>
-                                  {meta && <p className="text-xs text-slate-500">{meta.count}+ trabajos</p>}
+                                  {meta.count > 0 && <p className="text-xs text-slate-500">{meta.count}+ trabajos</p>}
                                 </div>
                               </div>
                             </button>
@@ -441,6 +454,7 @@ export default function RegisterWorker() {
                 </>
               )}
             </form>
+            </div>
           </div>
 
           {/* Step 2 info */}
