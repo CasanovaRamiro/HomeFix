@@ -17,7 +17,7 @@ router.get('/my-applications', requireSession, async (req, res, next) => {
 router.delete('/:id', requireSession, async (req, res, next) => {
   try {
     const workerId = req.user!.id
-    const result = await cancelApplication(workerId, req.params.id)
+    const result = await cancelApplication(workerId, req.params['id'] as string)
     res.json(result)
   } catch (err) {
     next(err)
