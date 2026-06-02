@@ -84,9 +84,10 @@ const getManagementToken = async (): Promise<string> => {
   if (_mgmtToken && Date.now() < _mgmtToken.expiresAt) return _mgmtToken.token
 
   const issuer = getIssuerBaseUrl()
-  const clientId = getRequiredEnv('AUTH0_CLIENT_ID')
-  const clientSecret = process.env.AUTH0_CLIENT_SECRET
-  if (!clientSecret) throw createHttpError(500, 'AUTH0_CLIENT_SECRET is not configured')
+  const clientId = process.env.AUTH0_M2M_CLIENT_ID
+  const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET
+  if (!clientId) throw createHttpError(500, 'AUTH0_M2M_CLIENT_ID is not configured')
+  if (!clientSecret) throw createHttpError(500, 'AUTH0_M2M_CLIENT_SECRET is not configured')
 
   const resp = await fetch(`${issuer}/oauth/token`, {
     method: 'POST',
