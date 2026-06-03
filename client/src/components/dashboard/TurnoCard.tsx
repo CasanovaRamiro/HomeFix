@@ -64,7 +64,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
 </div>
         <button
           onClick={() => navigate(`/posts/${post.id}`)}
-          className="flex items-center gap-2 bg-primary-dark text-white text-sm font-semibold rounded-lg px-4 py-2 hover:opacity-90! transition-opacity"
+          className="flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-blue-700! transition-colors"
         >
           <Eye size={16} /> Ver detalle
         </button>
