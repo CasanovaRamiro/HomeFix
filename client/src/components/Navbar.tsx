@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
-import { Menu, X, Home, Search, FileText, ClipboardList, Briefcase, User, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, LogOut, ChevronDown } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'

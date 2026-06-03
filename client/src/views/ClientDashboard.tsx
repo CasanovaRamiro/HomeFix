@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 
@@ -15,8 +14,6 @@ export default function ClientDashboard() {
       .catch(() => setPosts([]))
       .finally(() => setLoading(false))
   }, [])
-
-  if (loading) return <LoadingSpinner />
 
   const activos     = posts.filter(p => p.status === 'Active' || p.status === 'In progress' || p.status === 'Paused').length
   const completados = posts.filter(p => p.status === 'Completed').length
@@ -69,7 +66,11 @@ export default function ClientDashboard() {
                 <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
               </div>
 
-              {ordered.length === 0 ? (
+              {loading ? (
+                <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
+                  <div className="spinner mx-auto" />
+                </div>
+              ) : ordered.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
                   <p className="text-sm text-slate-400">Todavía no tenés publicaciones.</p>
                 </div>

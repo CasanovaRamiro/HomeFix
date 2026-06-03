@@ -79,83 +79,87 @@
 .trabajos-filters-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-end;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .filter-group label {
   font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  font-weight: 600;
+  color: #10B981;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .filter-group select,
 .filter-group input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  color: #fff;
-  padding: 8px 10px;
+  background: #fff;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  color: #0F172A;
+  padding: 9px 12px;
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   min-width: 0;
 }
 
 .filter-group select option {
-  color: #000;
+  color: #0F172A;
   background: #fff;
 }
 
 .filter-group select:hover,
 .filter-group input:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: #10B981;
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
-  border-color: var(--accent);
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .filter-group input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: #94A3B8;
 }
 
 .filter-category { flex: 0 0 170px; }
 .filter-search { flex: 1 1 180px; }
-.filter-sort { flex: 0 0 140px; }
+.filter-sort { flex: 0 0 150px; }
 .filter-location { flex: 0 0 auto; }
 
 .btn-filter-location {
-  background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 14px;
+  background: #fff;
+  color: #475569;
+  border: 1.5px solid #E2E8F0;
+  padding: 9px 16px;
   font-size: 13px;
-  border-radius: 6px;
+  font-weight: 500;
+  border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
+  font-family: inherit;
 }
 
 .btn-filter-location:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: #10B981;
+  color: #10B981;
 }
 
 .btn-filter-location.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #10B981;
+  border-color: #10B981;
   color: #fff;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
@@ -173,6 +177,7 @@
 
   .btn-filter-location {
     width: 100%;
+    text-align: center;
   }
 }
 

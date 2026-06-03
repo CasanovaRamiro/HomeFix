@@ -17,6 +17,7 @@ import ApplyModal from '../components/worker/ApplyModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import LandingFooter from '../components/landing/LandingFooter'
 
 const PAGE_SIZE = 8
 
@@ -166,8 +167,8 @@ export default function AvailableJobs(): JSX.Element {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
-      <div style={{ background: '#0F172A', width: '100%', paddingTop: 32, paddingBottom: 40 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button
@@ -190,7 +191,7 @@ export default function AvailableJobs(): JSX.Element {
               Trabajos disponibles
             </h1>
           </div>
-          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 24px 38px' }}>
+          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 0 38px' }}>
             {loading ? (
               'Cargando…'
             ) : (
@@ -207,7 +208,12 @@ export default function AvailableJobs(): JSX.Element {
               </>
             )}
           </p>
+        </div>
+      </div>
 
+      {/* FilterBar — fuera del header oscuro */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
           <FilterBar
             category={category}
             onCategoryChange={setCategory}
@@ -223,10 +229,10 @@ export default function AvailableJobs(): JSX.Element {
       </div>
 
       {error !== '' && (
-        <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1200, margin: '12px auto 0', padding: '0 24px' }}>{error}</p>
+        <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1280, margin: '12px auto 0', padding: '0 32px' }}>{error}</p>
       )}
 
-      <div style={{ maxWidth: 1200, margin: '24px auto 0', padding: '0 24px 2rem', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
+      <div className="aj-main-grid" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
           {!loading && filtradosYOrdenados.length === 0 && (
@@ -350,6 +356,19 @@ export default function AvailableJobs(): JSX.Element {
           onClose={() => setShowLocationModal(false)}
         />
       )}
+
+      <div style={{ marginTop: 48 }}>
+        <LandingFooter />
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .aj-main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.25rem; align-items: start; }
+        @media (max-width: 900px) { .aj-main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) {
+          .aj-main-grid { padding: 0 16px 2rem !important; margin-top: 16px !important; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle, Image, X } from 'lucide-react'
+import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle, Image, X, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useCreatePost } from '../hooks/useCreatePost'
 import { useDiagnosisChat } from '../hooks/useDiagnosisChat'
@@ -34,7 +34,7 @@ export default function AiDiagnosis() {
     badgeText: { color: theme.muted },
     h1: { fontSize: '36px', fontWeight: 700, color: theme.primaryDark, textWrap: 'balance' as const },
     desc: { fontSize: '18px', color: theme.muted, maxWidth: '672px', margin: '0 auto', textWrap: 'balance' as const },
-    infoCard: { padding: '32px', borderRadius: '16px', background: theme.card, border: `1px solid ${theme.border}`, textAlign: 'center' as const, transition: 'all 0.3s' },
+    infoCard: { padding: '32px', borderRadius: '16px', background: theme.card, border: `1px solid ${theme.border}`, textAlign: 'center' as const },
     infoCardIconWrap: { width: '56px', height: '56px', borderRadius: '12px', background: `${theme.accent}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' },
     infoCardIcon: { width: '28px', height: '28px', color: theme.accent },
     infoCardTitle: { fontSize: '18px', fontWeight: 600, color: theme.primaryDark },
@@ -85,6 +85,17 @@ export default function AiDiagnosis() {
 
   return (
     <main style={s.main}>
+      <div style={{ width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '16px 2rem 0' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
       <div style={s.wrapper}>
         <div style={{ textAlign: 'center', marginBottom: '80px' }}>
           <div style={{ marginBottom: '24px' }}>
@@ -101,10 +112,7 @@ export default function AiDiagnosis() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '80px' }}>
           {infoCards.map((card, idx) => (
-            <div key={idx} style={s.infoCard}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
-            >
+            <div key={idx} style={s.infoCard}>
               <div style={s.infoCardIconWrap}>
                 <card.icon style={s.infoCardIcon} />
               </div>

@@ -28,6 +28,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   clientName: post.user?.name ?? 'Cliente',
   clientSurname: post.user?.surname ?? '',
   clientRating: mockClientRating(post.userId ?? post.id),
+  address: post.address,
   lat: post.latitude,
   lng: post.longitude,
 })

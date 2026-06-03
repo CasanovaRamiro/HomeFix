@@ -100,16 +100,18 @@ function getInitials(name: string, surname?: string): string {
 function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: DashboardStats }) {
   const navigate = useNavigate()
   const firstName = profile.name.split(' ')[0]
-  const primaryCategory = profile.categories[0]?.name ?? 'Profesional'
-  const locationText = profile.location ?? 'Argentina'
+  const categoryText = profile.categories.length > 0
+    ? profile.categories.map((c) => c.name).join(' · ')
+    : 'Profesional'
+  const locationText = profile.location?.trim().replace(/,+$/, '').trim() || null
 
   return (
     <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="wd-header-row">
 
           {/* Left: Avatar + Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="wd-left-info">
             {/* Avatar */}
             <div style={{
               width: 72, height: 72, borderRadius: '50%',
@@ -128,7 +130,7 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
                 Hola, {firstName}
               </h1>
               <p style={{ fontSize: 14, color: '#94A3B8', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {primaryCategory} - {locationText}
+                {categoryText}{locationText ? ` · ${locationText}` : ''}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
                 {/* Verified badge */}
@@ -158,7 +160,7 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
           </div>
 
           {/* Right: Action buttons */}
-          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          <div className="wd-action-buttons">
             <button
               onClick={() => navigate(`/worker/${profile.id}`)}
               style={{
@@ -224,16 +226,7 @@ function MetricCard({
         borderRadius: 16,
         padding: '24px 20px',
         display: 'flex', alignItems: 'center', gap: 16,
-        transition: 'box-shadow 0.2s, transform 0.2s',
         cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none'
-        ;(e.currentTarget as HTMLElement).style.transform = 'none'
       }}
     >
       <div style={{
@@ -259,10 +252,10 @@ function MetricCard({
 function MetricsStrip({ stats }: { stats: DashboardStats }) {
   return (
     <div style={{
-      maxWidth: 1200, margin: '0 auto', padding: '0 24px',
+      maxWidth: 1280, margin: '0 auto', padding: '0 32px',
       marginTop: -28, position: 'relative', zIndex: 10,
     }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div className="wd-metrics-grid">
         <MetricCard
           icon={Briefcase}
           iconColor="#10B981"
@@ -390,11 +383,11 @@ function EmergencyCard({ emergency }: { emergency: MockEmergency }) {
 }
 
 function EmergencySection() {
-  const [isActive, setIsActive] = useState(true)
+  const [isActive, setIsActive] = useState(false)
 
   return (
     <div style={{
-      maxWidth: 1200, margin: '0 auto', padding: '0 24px',
+      maxWidth: 1280, margin: '0 auto', padding: '0 32px',
       marginTop: 36,
     }}>
       <div style={{
@@ -1039,17 +1032,13 @@ export default function WorkerDashboard() {
     <div style={{
       minHeight: '100vh', background: '#F3F4F6',
       fontFamily: "'Montserrat', system-ui, sans-serif",
-      paddingBottom: 80,
     }}>
       <ProfileHeader profile={data.profile} stats={data.stats} />
       <MetricsStrip stats={data.stats} />
       <EmergencySection />
 
       {/* Central section: main content + sidebar */}
-      <div style={{
-        maxWidth: 1200, margin: '36px auto 0', padding: '0 24px',
-        display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start',
-      }}>
+      <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
         <div>
           <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} />
@@ -1061,8 +1050,24 @@ export default function WorkerDashboard() {
         <Sidebar workerId={data.profile.id} />
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <LandingFooter />
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .wd-header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .wd-left-info { display: flex; align-items: center; gap: 20px; }
+        .wd-action-buttons { display: flex; gap: 10px; flex-shrink: 0; }
+        .wd-metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .wd-main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+        @media (max-width: 1024px) { .wd-main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) {
+          .wd-left-info { gap: 12px; }
+          .wd-action-buttons { width: 100%; }
+          .wd-metrics-grid { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
+      <div style={{ marginTop: 48 }}>
+        <LandingFooter />
+      </div>
     </div>
   )
 }
