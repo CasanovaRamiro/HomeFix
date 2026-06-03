@@ -9,7 +9,7 @@ interface PostCardProps {
   onViewReview?: () => void
 }
 
-const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' | 'info' }> = {
+const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' | 'info' | 'primary' }> = {
   Active: { label: 'Activa', variant: 'accent' },
   'In progress': { label: 'En desarrollo', variant: 'info' },
   Paused: { label: 'Pausada', variant: 'warning' },
