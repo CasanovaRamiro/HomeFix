@@ -21,6 +21,7 @@ import WorkerLanding from './views/WorkerLanding'
 import AvailableJobs from './views/AvailableJobs'
 import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
+import LeaveReview from './views/LeaveReview'
 
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
@@ -31,6 +32,8 @@ export default function App() {
     <BrowserRouter>
       <Navbar />
       <Routes>
+        <Route path="/review" element={<LeaveReview />} />
+        
         <Route path="/workerlanding" element={<WorkerLanding />} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
