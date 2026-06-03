@@ -48,3 +48,26 @@ export const deleteApplication = (workerId: string, applicationId: string) =>
   prisma.application.deleteMany({
     where: { id: applicationId, workerId, status: 'Pending' },
   })
+
+export const findApplicationsByPost = (postId: string) =>
+  prisma.application.findMany({
+    where: { postId },
+    include: {
+      worker: {
+        include: {
+          categories: {
+            include: {
+              category: { select: { name: true } },
+            },
+          },
+          address: true,
+          reviewsReceived: true,
+          applications: {
+            where: { status: "Completed" },
+            select: { id: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
