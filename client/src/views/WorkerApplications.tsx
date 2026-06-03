@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 8
@@ -387,34 +387,44 @@ export default function WorkerApplications() {
     return Number((3.5 + ((sum % 100) / 100) * 1.5).toFixed(1))
   }
 
-  const fetchApplications = useCallback(async () => {
-    try {
-      const res = await api.get<Application[]>('/applications/my-applications')
-      const data = res.data.map((a) => ({ ...a, clientRating: mockClientRating(a.postId) }))
-      setApplications((prev) => {
-        const prevMap = new Map(prev.map((a) => [a.id, a.status]))
-        const changes: string[] = []
-        for (const a of data) {
-          const old = prevMap.get(a.id)
-          const label = STATUS_CFG[a.status]?.label ?? a.status
-          if (old && old !== a.status) changes.push(`"${a.title}" → ${label}`)
-        }
-        if (changes.length > 0)
-          setNotification(`Estado actualizado: ${changes.join(', ')}`)
-        return data
-      })
-    } catch {
-      // silence
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    setLoading(true)
+    let cancelled = false
+
+    const fetchApplications = async () => {
+      try {
+        const res = await api.get<Application[]>('/applications/my-applications')
+        const data = res.data.map((a) => ({ ...a, clientRating: mockClientRating(a.postId) }))
+        if (cancelled) return
+        setApplications((prev) => {
+          const prevMap = new Map(prev.map((a) => [a.id, a.status]))
+          const changes: string[] = []
+          for (const a of data) {
+            const old = prevMap.get(a.id)
+            if (old && old !== a.status) {
+              const label = STATUS_CFG[a.status]?.label ?? a.status
+              changes.push(`"${a.title}" → ${label}`)
+            }
+          }
+          if (changes.length > 0) {
+            setTimeout(() => setNotification(`Estado actualizado: ${changes.join(', ')}`))
+          }
+          return data
+        })
+      } catch (err) {
+        console.warn('Error fetching applications:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchApplications()
+    const iv = setInterval(fetchApplications, 20_000)
+    return () => {
+      cancelled = true
+      clearInterval(iv)
     }
   }, [])
-
-  useEffect(() => {
-    void fetchApplications()
-    const iv = setInterval(() => { void fetchApplications() }, 20_000)
-    return () => clearInterval(iv)
-  }, [fetchApplications])
 
   const metrics = useMemo(() => ({
     total:      applications.length,
