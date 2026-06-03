@@ -1,4 +1,4 @@
-import { Calendar, Eye } from 'lucide-react'
+import { Calendar, Eye, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { UserPost } from '../../services/api'
 
@@ -37,14 +37,31 @@ export default function TurnoCard({ post }: { post: UserPost }) {
 
       <hr className="border-slate-100 my-4" />
 
+      {/* Postulantes */}
+    {post.status === 'Active' && (
+  <div className="flex items-center gap-2 mb-3">
+    <Users size={14} className="text-slate-400" />
+    {post.applicantCount > 0 ? (
+      <span className="text-sm font-semibold text-slate-700">
+        {post.applicantCount} {post.applicantCount === 1 ? 'Trabajador postulado' : 'Trabajadores postulados'}
+      </span>
+    ) : (
+      <span className="text-sm text-slate-400">
+        Todavía no hay trabajadores postulados
+      </span>
+    )}
+  </div>
+)}
+
       {/* Fecha + Botón */}
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 tracking-widest uppercase mb-1">
-            <Calendar size={10} /> Fecha de publicación
-          </p>
-          <p className="font-bold text-slate-900 text-sm">{fmtDate(post.startDate)}</p>
-        </div>
+       <div className="flex items-center gap-2">
+ 
+  <p className="flex items-center gap-1 text-sm text-slate-400">
+  <Calendar size={14} /> Fecha de publicación
+</p>
+  <p className="font-bold text-slate-900 text-sm">{fmtDate(post.startDate)}</p>
+</div>
         <button
           onClick={() => navigate(`/posts/${post.id}`)}
           className="flex items-center gap-2 bg-primary-dark text-white text-sm font-semibold rounded-lg px-4 py-2 hover:opacity-90! transition-opacity"

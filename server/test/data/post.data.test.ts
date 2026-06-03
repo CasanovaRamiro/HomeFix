@@ -153,6 +153,24 @@ describe("findPostsByUser", () => {
     const posts = await findPostsByUser(userId);
     expect(posts).toHaveLength(1);
     expect(posts[0].title).toBe("Test Post");
+    expect(posts[0].applicantCount).toBeDefined();
+    expect(posts[0].applicantCount).toBe(0);
+  });
+
+  it("should return applicant count matching the number of applications", async () => {
+    const post = await createPost(createValidPost());
+    const worker1 = await createUser("worker1@test.com", "Worker1", "hashed1");
+    const worker2 = await createUser("worker2@test.com", "Worker2", "hashed2");
+    await prisma.application.createMany({
+      data: [
+        { workerId: worker1.id, postId: post.id },
+        { workerId: worker2.id, postId: post.id },
+      ],
+    });
+
+    const posts = await findPostsByUser(userId);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].applicantCount).toBe(2);
   });
 
   it("should return Active, In progress, Paused and Completed posts", async () => {

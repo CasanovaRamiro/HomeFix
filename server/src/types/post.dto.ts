@@ -14,6 +14,7 @@ export interface UserPostDTO {
   endDate: string
   categories: PostCategoryDTO[]
   worker: { id: string; name: string } | null
+  applicantCount: number
 }
 
 export interface PostDTO {
