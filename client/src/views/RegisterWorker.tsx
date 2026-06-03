@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import api from '../services/api'
 import { emitAuthChange } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
 
