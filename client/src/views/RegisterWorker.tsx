@@ -603,6 +603,14 @@ export default function RegisterWorker() {
                   </button>
                 </div>
 
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="w-full mt-3 h-12 rounded-lg border border-slate-200 bg-white text-slate-500 font-medium flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors"
+                >
+                  Omitir KYC e iniciar sesión
+                </button>
+
                 {/* Security Footer */}
                 <div className="flex items-center justify-center gap-2 text-slate-400 text-xs pt-2">
                   <Shield className="w-4 h-4" />
