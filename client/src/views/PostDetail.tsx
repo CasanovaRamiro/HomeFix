@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import api from '../services/api'
+import api, { pausePost, cancelPost } from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
 import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import type { Post } from '../types/post'
 
 export default function PostDetail() {
@@ -15,6 +16,7 @@ export default function PostDetail() {
   const [applicants, setApplicants] = useState<PostApplicant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -91,6 +93,25 @@ export default function PostDetail() {
   )
   if (!post) return null
 
+  const handlePause = async () => {
+    try {
+      const res = await pausePost(post.id)
+      setPost({ ...post, status: res.data.status })
+    } catch {
+      alert('No se pudo cambiar el estado de la publicación')
+    }
+  }
+
+  const handleCancel = async () => {
+    try {
+      const res = await cancelPost(post.id)
+      setPost({ ...post, status: res.data.status })
+      setShowCancelModal(false)
+    } catch {
+      alert('No se pudo cancelar la publicación')
+    }
+  }
+
   return (
     <>
       <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
@@ -109,6 +130,8 @@ export default function PostDetail() {
             onComplete={handleComplete}
             onReopen={handleReopen}
             onViewReview={() => navigate('/review')}
+            onPause={handlePause}
+            onCancel={() => setShowCancelModal(true)}
           />
 
           <h3 className="section-title">Postulantes ({applicants.length})</h3>
@@ -138,6 +161,15 @@ export default function PostDetail() {
           ))}
         </div>
       </div>
+
+      <ConfirmModal
+        open={showCancelModal}
+        title="¿Estás seguro de que quieres cancelar la publicación?"
+        confirmLabel="Sí, quiero cancelarla"
+        cancelLabel="No, deseo mantenerla"
+        onConfirm={handleCancel}
+        onCancel={() => setShowCancelModal(false)}
+      />
     </>
   )
 }
