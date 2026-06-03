@@ -215,7 +215,7 @@ describe('post.service - pausePost', () => {
     endDate: new Date('2026-06-15'),
     status: 'Active' as const,
     createdAt: new Date("2026-05-25"),
-    images: [] as string[],
+    images: [],
     latitude: null,
     longitude: null,
     categories: [
@@ -288,7 +288,7 @@ describe('post.service - finalizePost', () => {
     endDate: new Date('2026-06-15'),
     status: 'Paused' as const,
     createdAt: new Date("2026-05-25"),
-    images: [] as string[],
+    images: [],
     latitude: null,
     longitude: null,
     categories: [
