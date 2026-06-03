@@ -273,6 +273,8 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .post-detail .post-actions .btn-edit { background: var(--primary); }
 .post-detail .post-actions .btn-pause { background: #f59e0b; }
 .post-detail .post-actions .btn-pause:hover { background: #d97706; }
+.post-detail .post-actions .btn-pause.activating { background: #10b981; }
+.post-detail .post-actions .btn-pause.activating:hover { background: #059669; }
 .post-detail .post-actions .btn-cancel { background: var(--danger); }
 .post-detail .post-actions .btn-cancel:hover { background: #dc2626; }
 

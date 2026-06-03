@@ -204,6 +204,79 @@ describe("post.service - searchPostsByDistance", () => {
     await expect(postService.searchPostsByDistance(NaN, 0, 10)).rejects.toThrow("lat, lng, and radius must be finite numbers");
   });
 });
+describe('post.service - pausePost', () => {
+  const activePost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active' as const,
+    createdAt: new Date("2026-05-25"),
+    images: [] as string[],
+    latitude: null,
+    longitude: null,
+    categories: [
+      {
+        category: { id: 'uuid-category-1', name: "Plomeria" },
+      },
+    ],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User', phone: null },
+  }
+
+  it('pausa un post activo', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Paused', updatedAt: new Date() })
+
+    const result = await postService.pausePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Paused')
+    expect(result.status).toBe('Paused')
+  })
+
+  it('activa un post pausado', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Active', updatedAt: new Date() })
+
+    const result = await postService.pausePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(result.status).toBe('Active')
+  })
+
+  it('lanza 404 si el post no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.pausePost('no-existe', 'user-uuid-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si el post pertenece a otro usuario', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+
+    await expect(postService.pausePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si el post está en estado In progress', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'In progress' })
+
+    await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('lanza 400 si el post está en estado Completed', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Completed' })
+
+    await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('lanza 400 si el post está en estado Cancelled', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Cancelled' })
+
+    await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
 describe('post.service - finalizePost', () => {
   const mockPost = {
     id: 'uuid-1',
@@ -213,9 +286,9 @@ describe('post.service - finalizePost', () => {
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-15'),
-    status: 'Paused',
+    status: 'Paused' as const,
     createdAt: new Date("2026-05-25"),
-    images: [],
+    images: [] as string[],
     latitude: null,
     longitude: null,
     categories: [

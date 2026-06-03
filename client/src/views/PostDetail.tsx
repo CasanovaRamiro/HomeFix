@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import api from '../services/api'
+import api, { pausePost } from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
 import PostCard from '../components/post/PostCard'
@@ -56,6 +56,15 @@ export default function PostDetail() {
   )
   if (!post) return null
 
+  const handlePause = async () => {
+    try {
+      const res = await pausePost(post.id)
+      setPost({ ...post, status: res.data.status })
+    } catch {
+      alert('No se pudo cambiar el estado de la publicación')
+    }
+  }
+
   return (
     <>
       <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
@@ -68,7 +77,7 @@ export default function PostDetail() {
       </div>
       <div className="post-detail px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
-          <PostCard post={post} />
+          <PostCard post={post} onPause={handlePause} />
 
           <h3 className="section-title">Postulantes ({applicants.length})</h3>
 

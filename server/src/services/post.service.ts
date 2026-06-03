@@ -94,6 +94,25 @@ export const getUserPosts = async (userId: string): Promise<UserPostDTO[]> => {
   return posts.map(toUserPostDTO);
 };
 
+export const pausePost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status !== 'Active' && post.status !== 'Paused') {
+    throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
+  }
+
+  const newStatus = post.status === 'Active' ? 'Paused' : 'Active'
+  return updatePostStatus(postId, newStatus)
+}
+
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId);
 

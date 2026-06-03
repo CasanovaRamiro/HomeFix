@@ -3,6 +3,7 @@ import type { Post } from '../../types/post'
 
 interface PostCardProps {
   post: Post
+  onPause?: (id: string) => void
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' }> = {
@@ -11,7 +12,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' 
   Cancelled: { label: 'Cancelada', variant: 'danger' },
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, onPause }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
 
   return (
@@ -44,7 +45,9 @@ export default function PostCard({ post }: PostCardProps) {
         {post.status !== 'Cancelled' && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
             <button className="btn-edit">Editar</button>
-            <button className="btn-pause">{post.status === 'Paused' ? 'Activar' : 'Pausar'}</button>
+            <button className={`btn-pause${post.status === 'Paused' ? ' activating' : ''}`} onClick={() => onPause?.(post.id)}>
+              {post.status === 'Paused' ? 'Activar' : 'Pausar'}
+            </button>
             <button className="btn-cancel">Cancelar</button>
           </div>
         )}
