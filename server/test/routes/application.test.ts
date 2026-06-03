@@ -126,7 +126,7 @@ describe('PATCH /applications/:applicationId/accept', () => {
     expect(updatedPost!.status).toBe('In progress')
   })
 
-  it('rechaza automáticamente las otras aplicaciones pendientes', async () => {
+  it('no rechaza otras aplicaciones pendientes al aceptar una', async () => {
     const post = await createActivePost()
     const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
     const application = await createPendingApplication(post.id)
@@ -138,8 +138,8 @@ describe('PATCH /applications/:applicationId/accept', () => {
       .patch(`/applications/${application.id}/accept`)
       .set('Authorization', `Bearer ${clientToken}`)
 
-    const rejected = await prisma.application.findUnique({ where: { id: otherApplication.id } })
-    expect(rejected!.status).toBe('Rejected')
+    const unchanged = await prisma.application.findUnique({ where: { id: otherApplication.id } })
+    expect(unchanged!.status).toBe('Pending')
   })
 
   it('retorna 404 si la aplicación no existe', async () => {

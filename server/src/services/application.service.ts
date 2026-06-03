@@ -1,4 +1,4 @@
-import { findApplicationsByWorker, findApplication, createApplication, findApplicationById, updateApplicationStatus, rejectOtherApplications, deleteApplication, findApplicationsByPost } from "../data/application.data.js"
+import { findApplicationsByWorker, findApplication, createApplication, findApplicationById, updateApplicationStatus, deleteApplication, findApplicationsByPost } from "../data/application.data.js"
 import { findPostById, updatePostStatus } from "../data/post.data.js"
 
 export const getMyApplications = async (workerId: string) => {
@@ -45,7 +45,6 @@ export const acceptApplication = async (clientId: string, applicationId: string)
 
   const accepted = await updateApplicationStatus(applicationId, "Accepted")
   await updatePostStatus(application.postId, "In progress")
-  await rejectOtherApplications(application.postId, applicationId)
 
   return { id: accepted.id, status: accepted.status }
 }

@@ -9,7 +9,6 @@ vi.mock("../../src/data/application.data.js", () => ({
   createApplication: vi.fn(),
   findApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn(),
-  rejectOtherApplications: vi.fn(),
 }))
 
 vi.mock("../../src/data/post.data.js", () => ({
@@ -38,14 +37,12 @@ describe("acceptApplication", () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
     vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...mockApplication, status: "Accepted" })
     vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
-    vi.mocked(applicationData.rejectOtherApplications).mockResolvedValue({ count: 0 })
 
     const result = await acceptApplication("client-1", "app-1")
 
     expect(result.status).toBe("Accepted")
     expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Accepted")
     expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "In progress")
-    expect(applicationData.rejectOtherApplications).toHaveBeenCalledWith("post-1", "app-1")
   })
 
   it("throws 404 if application does not exist", async () => {
@@ -70,6 +67,15 @@ describe("acceptApplication", () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
       post: { userId: "client-1", status: "In progress" },
+    })
+
+    await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("throws 400 if post is Paused", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      post: { userId: "client-1", status: "Paused" },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })

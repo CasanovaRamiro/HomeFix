@@ -62,4 +62,8 @@ export interface UserPost {
 export const getUserPosts = (): Promise<UserPost[]> =>
   api.post<UserPost[]>('/posts/user-posts').then((r) => r.data)
 
+export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
+
+export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
+
 export default api

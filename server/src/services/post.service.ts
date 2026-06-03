@@ -1,4 +1,5 @@
-import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js";
+import { createPost as createPostData, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../data/post.data.js"
+import { findAcceptedApplication, updateApplicationStatus } from "../data/application.data.js"
 import type { UserPostSummary } from "../data/post.data.js";
 import type { PostDTO, UserPostDTO } from "../types/post.dto.js";
 
@@ -94,6 +95,43 @@ export const getUserPosts = async (userId: string): Promise<UserPostDTO[]> => {
   return posts.map(toUserPostDTO);
 };
 
+export const pausePost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status !== 'Active' && post.status !== 'Paused') {
+    throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
+  }
+
+  const newStatus = post.status === 'Active' ? 'Paused' : 'Active'
+  return updatePostStatus(postId, newStatus)
+}
+
+export const cancelPost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status === 'Completed' || post.status === 'Cancelled') {
+    throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
+  }
+
+  return updatePostStatus(postId, 'Cancelled')
+}
+
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId);
 
@@ -110,4 +148,45 @@ export const finalizePost = async (postId: string, userId: string) => {
   }
 
   return updatePostStatus(postId, 'Completed');
+};
+
+export const completePost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status !== 'In progress') {
+    throw Object.assign(new Error('Post must be in progress to be completed'), { status: 400 })
+  }
+
+  return updatePostStatus(postId, 'Completed')
+}
+
+export const reopenPost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status !== 'In progress') {
+    throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
+  }
+
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    await updateApplicationStatus(accepted.id, 'Pending')
+  }
+
+  return updatePostStatus(postId, 'Active')
 };
