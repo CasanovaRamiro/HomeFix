@@ -303,8 +303,22 @@ describe('post.service - reopenPost', () => {
 
   it('reabre el post y resetea la aplicación aceptada a Pending', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
-    vi.mocked(findAcceptedApplication).mockResolvedValue({ id: 'app-1', status: 'Accepted' })
-    vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Pending' })
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1',
+      status: 'Accepted',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workerId: 'worker-uuid',
+      postId: 'uuid-1',
+    })
+    vi.mocked(updateApplicationStatus).mockResolvedValue({
+      id: 'app-1',
+      status: 'Pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workerId: 'worker-uuid',
+      postId: 'uuid-1',
+    })
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
