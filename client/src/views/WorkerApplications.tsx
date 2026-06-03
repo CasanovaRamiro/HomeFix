@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft, ChevronRight } from 'lucide-react'
+import LandingFooter from '../components/landing/LandingFooter'
 
 const PAGE_SIZE = 8
 import { useNavigate } from 'react-router-dom'
@@ -359,14 +360,12 @@ function ApplicationCard({ app, onCancelled }: { app: Application; onCancelled: 
 function MetricCard({ value, label, valueColor }: { value: number; label: string; valueColor: string }) {
   return (
     <div style={{
-      background: '#1E293B', border: '1px solid rgba(255,255,255,0.07)',
+      background: '#fff', border: '1px solid #E2E8F0',
       borderRadius: 16, padding: '20px',
-      display: 'flex', alignItems: 'center', gap: 16,
+      display: 'flex', flexDirection: 'column', gap: 4,
     }}>
-      <div>
-        <p style={{ fontSize: 32, fontWeight: 700, color: valueColor, margin: '0 0 4px', lineHeight: 1 }}>{value}</p>
-        <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, fontWeight: 500 }}>{label}</p>
-      </div>
+      <p style={{ fontSize: 28, fontWeight: 700, color: valueColor, margin: 0, lineHeight: 1.1 }}>{value}</p>
+      <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontWeight: 500 }}>{label}</p>
     </div>
   )
 }
@@ -467,7 +466,7 @@ export default function WorkerApplications() {
 
       {/* Dark header */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
 
           {/* Back */}
           <button onClick={() => navigate('/worker')} style={{
@@ -487,23 +486,25 @@ export default function WorkerApplications() {
               Mis Postulaciones
             </h1>
           </div>
-          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 32px 36px' }}>
+          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 0 36px' }}>
             Seguí el estado de tus ofertas enviadas
           </p>
+        </div>
+      </div>
 
-          {/* Metric cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
-            <MetricCard value={metrics.total}     label="Total"       valueColor="#fff"     />
-            <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#F59E0B"  />
-            <MetricCard value={metrics.accepted}  label="Aceptadas"   valueColor="#10B981"  />
-            <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#EF4444"  />
-            <MetricCard value={metrics.completed} label="Completadas" valueColor="#3B82F6"  />
-          </div>
+      {/* Metrics strip — fuera del header, solapado */}
+      <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
+        <div className="wa-metrics-grid">
+          <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A"  />
+          <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#D97706"  />
+          <MetricCard value={metrics.accepted}  label="Aceptadas"   valueColor="#059669"  />
+          <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#DC2626"  />
+          <MetricCard value={metrics.completed} label="Completadas" valueColor="#2563EB"  />
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 60px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '36px 32px 60px' }}>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -547,7 +548,7 @@ export default function WorkerApplications() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+            <div className="wa-cards-grid">
               {paginated.map((a) => (
                 <ApplicationCard
                   key={`${a.id}-${a.postId}`}
@@ -618,7 +619,21 @@ export default function WorkerApplications() {
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .wa-metrics-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+        .wa-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        @media (max-width: 900px) {
+          .wa-metrics-grid { grid-template-columns: repeat(3, 1fr); }
+          .wa-cards-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 560px) {
+          .wa-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+      `}</style>
+      <div style={{ marginTop: 48 }}>
+        <LandingFooter />
+      </div>
     </div>
   )
 }
