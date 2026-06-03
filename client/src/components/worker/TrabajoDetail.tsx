@@ -40,6 +40,10 @@ export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostul
             <dd>{selected.categoria}</dd>
           </div>
           <div>
+            <dt>Ubicación</dt>
+            <dd>{selected.address}</dd>
+          </div>
+          <div>
             <dt>Fecha servicio</dt>
             <dd>{selected.fechaServicio}</dd>
           </div>
