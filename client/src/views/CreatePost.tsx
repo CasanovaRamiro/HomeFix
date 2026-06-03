@@ -98,6 +98,15 @@ export default function CreatePost() {
                   ))}
                 </select>
               </div>
+              <button
+                type="button"
+                onClick={() => navigate('/diagnosis')}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', fontWeight: 600, fontSize: '16px', border: 'none', cursor: 'pointer', background: theme.accent, color: '#FFFFFF', transition: 'all 0.3s', marginBottom: '24px' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.background = theme.accentHover }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = theme.accent }}
+              >
+                No se explicar mi problema. Necesito asistencia
+              </button>
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={s.formLabel}>Descripción del problema</label>
