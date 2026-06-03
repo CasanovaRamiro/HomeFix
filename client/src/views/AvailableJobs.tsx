@@ -144,8 +144,10 @@ export default function AvailableJobs(): JSX.Element {
     setEnviando(true)
     try {
       await applyToPost(selected.id)
+      setPostulacionesIds((prev) => [...prev, selected.id])
       navigate('/worker/my-applications')
-    } catch {
+    } catch (err) {
+      console.warn('Error al postularse:', err)
       setEnviando(false)
     }
   }
