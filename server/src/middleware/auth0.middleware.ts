@@ -16,24 +16,57 @@ function getJwtCheck() {
   return _jwtCheck
 }
 
+interface CachedUserInfo {
+  email?: string
+  name?: string
+  nickname?: string
+  expiresAt: number
+}
+
+// Cache userinfo by sub to avoid hitting Auth0's /userinfo rate limit on every request
+const userinfoCache = new Map<string, CachedUserInfo>()
+const CACHE_TTL_MS = 5 * 60 * 1000
+
 export const jwtCheck = (req: Request, res: Response, next: NextFunction): void => {
   getJwtCheck()(req, res, async () => {
     const header = req.headers.authorization
     if (header?.startsWith('Bearer ')) {
-      try {
-        const token = header.split(' ')[1]
-        const issuer = (process.env.AUTH0_ISSUER_BASE_URL || '').replace(/\/$/, '')
-        const resp = await fetch(`${issuer}/userinfo`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (resp.ok) {
-          const userinfo = await resp.json()
+      const sub = req.auth?.payload?.sub
+
+      if (sub) {
+        const cached = userinfoCache.get(sub)
+        if (cached && Date.now() < cached.expiresAt) {
           if (req.auth?.payload) {
-            if (userinfo.email) req.auth.payload['email'] = userinfo.email
+            if (cached.email) req.auth.payload['email'] = cached.email
+            if (cached.name) req.auth.payload['name'] = cached.name
+            if (cached.nickname) req.auth.payload['nickname'] = cached.nickname
+          }
+        } else {
+          try {
+            const token = header.split(' ')[1]
+            const issuer = (process.env.AUTH0_ISSUER_BASE_URL || '').replace(/\/$/, '')
+            const resp = await fetch(`${issuer}/userinfo`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (resp.ok) {
+              const userinfo = await resp.json() as { email?: string; name?: string; nickname?: string }
+              const entry: CachedUserInfo = {
+                email: userinfo.email,
+                name: userinfo.name,
+                nickname: userinfo.nickname,
+                expiresAt: Date.now() + CACHE_TTL_MS,
+              }
+              userinfoCache.set(sub, entry)
+              if (req.auth?.payload) {
+                if (userinfo.email) req.auth.payload['email'] = userinfo.email
+                if (userinfo.name) req.auth.payload['name'] = userinfo.name
+                if (userinfo.nickname) req.auth.payload['nickname'] = userinfo.nickname
+              }
+            }
+          } catch {
+            // continue without userinfo
           }
         }
-      } catch {
-        // continue without email
       }
 
       // Alias the namespaced role claim to a convenient key

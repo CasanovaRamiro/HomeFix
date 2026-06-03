@@ -1,41 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../services/api'
+import { getPostApplicants } from '../services/applications'
+import type { PostApplicant } from '../services/applications'
 import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import type { Post } from '../types/post'
 
-const MOCK_APPLICANTS = [
-  {
-    id: '1',
-    name: 'Juan Pérez',
-    category: 'Plomero',
-    address: 'San Isidro',
-    rating: 4.8,
-    reviewCount: 47,
-    jobCount: 159,
-  },
-  {
-    id: '1',
-    name: 'Luis Fernández',
-    category: 'Plomero',
-    address: 'Miraflores',
-    rating: 4.5,
-    reviewCount: 23,
-    jobCount: 89,
-  },
-]
-
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>()
   const [post, setPost] = useState<Post | null>(null)
+  const [applicants, setApplicants] = useState<PostApplicant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get<Post>(`/posts/${id}`)
-      .then(({ data }) => setPost(data))
+    if (!id) return
+    Promise.all([
+      api.get<Post>(`/posts/${id}`),
+      getPostApplicants(id).catch(() => []),
+    ])
+      .then(([postRes, applicantsData]) => {
+        setPost(postRes.data)
+        setApplicants(Array.isArray(applicantsData) ? applicantsData : applicantsData.data ?? [])
+      })
       .catch((err) => {
         const axiosErr = err as { response?: { status?: number } }
         if (axiosErr.response?.status === 404) {
@@ -81,10 +70,25 @@ export default function PostDetail() {
         <div className="max-w-7xl mx-auto">
           <PostCard post={post} />
 
-          <h3 className="section-title">Postulantes ({MOCK_APPLICANTS.length})</h3>
+          <h3 className="section-title">Postulantes ({applicants.length})</h3>
 
-          {MOCK_APPLICANTS.map((a) => (
-            <ApplicantCard key={a.name} applicant={a} />
+          {applicants.length === 0 && (
+            <p className="text-slate-400 text-sm mt-2">Todavía no hay trabajadores postulados</p>
+          )}
+
+          {applicants.map((a) => (
+            <ApplicantCard
+              key={a.workerId}
+              applicant={{
+                id: a.workerId,
+                name: a.name,
+                category: a.category ?? '',
+                address: a.address,
+                rating: a.rating,
+                reviewCount: a.reviewCount,
+                jobCount: a.jobCount,
+              }}
+            />
           ))}
         </div>
       </div>

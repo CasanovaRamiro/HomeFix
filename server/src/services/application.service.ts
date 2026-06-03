@@ -1,4 +1,4 @@
-import { findApplicationsByWorker, findApplication, createApplication, findApplicationById, updateApplicationStatus, rejectOtherApplications, deleteApplication } from "../data/application.data.js"
+import { findApplicationsByWorker, findApplication, createApplication, findApplicationById, updateApplicationStatus, rejectOtherApplications, deleteApplication, findApplicationsByPost } from "../data/application.data.js"
 import { findPostById, updatePostStatus } from "../data/post.data.js"
 
 export const getMyApplications = async (workerId: string) => {
@@ -58,4 +58,30 @@ export const rejectApplication = async (clientId: string, applicationId: string)
 
   const rejected = await updateApplicationStatus(applicationId, "Rejected")
   return { id: rejected.id, status: rejected.status }
+}
+
+export const getPostApplications = async (clientId: string, postId: string) => {
+  const post = await findPostById(postId)
+  if (!post) throw Object.assign(new Error("Post not found"), { status: 404 })
+  if (post.userId !== clientId) throw Object.assign(new Error("Forbidden"), { status: 403 })
+
+  const applications = await findApplicationsByPost(postId)
+
+  return applications.map((a) => {
+    const reviews = a.worker.reviewsReceived
+    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0)
+    const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0
+
+    return {
+      applicationId: a.id,
+      workerId: a.worker.id,
+      name: `${a.worker.name} ${a.worker.surname}`.trim(),
+      category: a.worker.categories[0]?.category.name ?? null,
+      address: a.worker.address?.city ?? '',
+      rating: Math.round(avgRating * 10) / 10,
+      reviewCount: reviews.length,
+      jobCount: a.worker.applications.length,
+      status: a.status,
+    }
+  })
 }

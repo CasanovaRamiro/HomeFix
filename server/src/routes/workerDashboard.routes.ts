@@ -9,7 +9,7 @@ router.use(jwtCheck)
 
 router.get('/', async (req, res, next) => {
   try {
-    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const claims = req.auth?.payload as { sub?: string; email?: string; name?: string; nickname?: string; role?: string } | undefined
     if (!claims?.sub) {
       res.status(401).json({ error: 'Unauthorized' })
       return

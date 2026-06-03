@@ -4,9 +4,10 @@ import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check, CheckCircle2,
+  CreditCard,
 } from 'lucide-react'
 import api from '../services/api'
-import { useTheme } from '../hooks/useTheme'
+import { emitAuthChange } from '../hooks/useAuth'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
 
@@ -47,6 +48,7 @@ export default function RegisterWorker() {
     confirmPassword: '',
   })
   const [selected, setSelected] = useState<string[]>([])
+  const [kycMethod, setKycMethod] = useState<'automatic' | 'manual'>('automatic')
 
   const handleChange = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -88,15 +90,20 @@ export default function RegisterWorker() {
     if (validateStep1()) setStep(2)
   }
 
-  const handleSubmit = async (ev: FormEvent<HTMLFormElement>) => {
+  const handleSubmitStep2 = (ev: FormEvent<HTMLFormElement>) => {
     ev.preventDefault()
     if (selected.length === 0) {
       setErrors({ categorias: 'Debes seleccionar al menos una categoría' })
       return
     }
+    setErrors({})
+    setStep(3)
+  }
+
+  const handleFinalSubmit = async () => {
     try {
       setIsSubmitting(true)
-      const { data } = await api.post<RegisterResponse>('/auth/register/worker', {
+      await api.post<RegisterResponse>('/auth/register/worker', {
         name: form.name,
         lastName: form.lastName,
         email: form.email,
@@ -105,9 +112,18 @@ export default function RegisterWorker() {
         categories: selected,
       })
       setErrors({})
-      // Cuenta creada — mostrar pantalla de éxito.
-      void data
-      setSubmitted(true)
+      const { data: loginData } = await api.post<{
+        accessToken: string
+        user: { id: string; name: string; role: string }
+      }>('/auth/login', { email: form.email, password: form.password })
+      localStorage.setItem('token', loginData.accessToken)
+      localStorage.setItem('user', JSON.stringify(loginData.user))
+      emitAuthChange()
+      if (kycMethod === 'automatic') {
+        navigate('/kyc')
+      } else {
+        setSubmitted(true)
+      }
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
@@ -150,7 +166,9 @@ export default function RegisterWorker() {
                 <div className="text-sm">
                   <p className="font-medium text-slate-900">Siguiente paso: verifica tu identidad</p>
                   <p className="text-slate-500 mt-1">
-                    Para empezar a recibir trabajos deberás completar la verificación de identidad desde tu panel.
+                    {kycMethod === 'automatic'
+                      ? 'Deberás completar la verificación automática (DNI + Reconocimiento Facial) al iniciar sesión.'
+                      : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
                   </p>
                 </div>
               </div>
@@ -227,26 +245,51 @@ export default function RegisterWorker() {
             <div className={`w-12 h-0.5 ${step > 1 ? 'bg-accent' : 'bg-slate-200'}`} />
             <div className={`flex items-center gap-2 ${step >= 2 ? 'text-accent' : 'text-slate-400'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400'}`}>
-                2
+                {step > 2 ? <Check className="w-4 h-4" /> : '2'}
               </div>
               <span className="text-sm font-medium hidden sm:inline">Especialidades</span>
+            </div>
+            <div className={`w-12 h-0.5 ${step > 2 ? 'bg-accent' : 'bg-slate-200'}`} />
+            <div className={`flex items-center gap-2 ${step >= 3 ? 'text-accent' : 'text-slate-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 3 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400'}`}>
+                3
+              </div>
+              <span className="text-sm font-medium hidden sm:inline">Verificación</span>
             </div>
           </div>
 
           {/* Title */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {step === 1 ? 'Ingresa tus datos' : 'Selecciona tus especialidades'}
-            </h1>
-            <p className="text-slate-500">
-              {step === 1
-                ? 'Completa tu información personal para crear tu cuenta'
-                : 'Elige las categorías en las que te especializas'}
-            </p>
+            {step === 3 ? (
+              <>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-xs font-semibold">
+                  <Shield className="w-3.5 h-3.5" />
+                  Verificación KYC
+                </div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f172a] leading-tight">
+                  Elige tu método de verificación
+                </h1>
+                <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+                  Para garantizar la seguridad de nuestra comunidad, necesitamos verificar tu identidad.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                  {step === 1 ? 'Ingresa tus datos' : 'Selecciona tus especialidades'}
+                </h1>
+                <p className="text-slate-500">
+                  {step === 1
+                    ? 'Completa tu información personal para crear tu cuenta'
+                    : 'Elige las categorías en las que te especializas'}
+                </p>
+              </>
+            )}
           </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Step 1 & 2: Form */}
+            {step <= 2 && (
+            <form onSubmit={handleSubmitStep2} className="space-y-5">
               {step === 1 ? (
                 <>
                   {/* Nombre + Apellido */}
@@ -447,25 +490,125 @@ export default function RegisterWorker() {
                     </button>
                     <button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1 h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-75"
+                      className="flex-1 h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
                     >
-                      {isSubmitting ? (
-                        <>
-                          <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          Creando…
-                        </>
-                      ) : (
-                        <>
-                          Crear cuenta
-                          <ArrowRight className="w-5 h-5" />
-                        </>
-                      )}
+                      Continuar
+                      <ArrowRight className="w-5 h-5" />
                     </button>
                   </div>
                 </>
               )}
             </form>
+            )}
+
+            {/* Step 3: KYC Method Selection */}
+            {step === 3 && (
+              <div className="space-y-4">
+                {/* Option 1: DNI + Reconocimiento Facial */}
+                <button
+                  type="button"
+                  onClick={() => setKycMethod('automatic')}
+                  className={`w-full relative p-5 rounded-2xl border-2 text-left cursor-pointer transition-all flex gap-4 ${
+                    kycMethod === 'automatic'
+                      ? 'border-accent bg-accent/5 shadow-sm ring-2 ring-accent/10'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {kycMethod === 'automatic' && (
+                    <div className="absolute top-4 right-4 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  <div className="w-12 h-12 bg-emerald-50 text-emerald-500 border border-emerald-100 rounded-xl flex-shrink-0 flex items-center justify-center">
+                    <CreditCard className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">DNI + Reconocimiento Facial</h3>
+                    <p className="text-slate-500 text-sm mt-1">
+                      Sube fotos de tu DNI (frente y dorso) y una selfie para verificación automática.
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-xs font-semibold text-emerald-600">
+                      <span className="flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" /> Rápido
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" /> Automático
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Option 2: DNI Manual + Prueba de Vida */}
+                <button
+                  type="button"
+                  onClick={() => setKycMethod('manual')}
+                  className={`w-full relative p-5 rounded-2xl border-2 text-left cursor-pointer transition-all flex gap-4 ${
+                    kycMethod === 'manual'
+                      ? 'border-accent bg-accent/5 shadow-sm ring-2 ring-accent/10'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  {kycMethod === 'manual' && (
+                    <div className="absolute top-4 right-4 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  <div className="w-12 h-12 bg-slate-100 text-slate-500 border border-slate-200 rounded-xl flex-shrink-0 flex items-center justify-center">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">DNI Manual + Prueba de Vida</h3>
+                    <p className="text-slate-500 text-sm mt-1">
+                      Ingresa tu número de DNI manualmente y completa una prueba de vida en video.
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-xs font-semibold text-emerald-600">
+                      <span className="flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" /> Alternativo
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" /> Seguro
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Action buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="flex-1 h-12 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Atrás
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleFinalSubmit}
+                    className="flex-1 h-12 bg-[#7dddc5] hover:bg-[#6ecbb3] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-70"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        Registrando…
+                      </>
+                    ) : (
+                      <>
+                        Continuar con verificación
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Security Footer */}
+                <div className="flex items-center justify-center gap-2 text-slate-400 text-xs pt-2">
+                  <Shield className="w-4 h-4" />
+                  <span>Integración con Didit KYC - Datos encriptados de extremo a extremo</span>
+                </div>
+              </div>
+            )}
             </div>
           </div>
 

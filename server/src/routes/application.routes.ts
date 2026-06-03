@@ -1,11 +1,26 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../services/auth.service.js'
-import { getMyApplications, applyToPost, acceptApplication, rejectApplication, cancelApplication } from '../services/application.service.js'
+import { getMyApplications, applyToPost, acceptApplication, rejectApplication, cancelApplication, getPostApplications } from '../services/application.service.js'
 
 const router = Router()
 
 router.use(jwtCheck)
+
+router.get('/post/:postId', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await getPostApplications(user.id, req.params.postId)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
 
 router.get('/my-applications', async (req, res, next) => {
   try {
