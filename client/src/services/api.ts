@@ -64,4 +64,6 @@ export const getUserPosts = (): Promise<UserPost[]> =>
 
 export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
 
+export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
+
 export default api

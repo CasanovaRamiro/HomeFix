@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createPost, getUserPosts, getPostById, finalizePost, pausePost, listAvailablePosts,searchPostsByDistance } from '../services/post.service.js'
+import { createPost, getUserPosts, getPostById, finalizePost, pausePost, cancelPost, listAvailablePosts,searchPostsByDistance } from '../services/post.service.js'
 import { syncAuth0User } from '../services/auth.service.js'
 
 const router = Router()
@@ -168,6 +168,30 @@ router.patch('/:id/pause', async (req, res, next) => {
 
     const user = await syncAuth0User(claims)
     const result = await pausePost(req.params.id, user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.patch('/:id/cancel', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as {
+      sub?: string
+      email?: string
+      name?: string
+      nickname?: string
+      phone_number?: string
+      role?: string
+    } | undefined
+
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const user = await syncAuth0User(claims)
+    const result = await cancelPost(req.params.id, user.id)
     res.json(result)
   } catch (err) {
     next(err)

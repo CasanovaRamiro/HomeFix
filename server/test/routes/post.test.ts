@@ -397,6 +397,112 @@ describe('PATCH /posts/:id/pause', () => {
   })
 })
 
+describe('PATCH /posts/:id/cancel', () => {
+  let postId: string
+
+  beforeEach(async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Trabajo a cancelar',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+    postId = post.id
+  })
+
+  it('devuelve 200 y status Cancelled cuando el post está Active', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Cancelled')
+  })
+
+  it('devuelve 200 y status Cancelled cuando el post está Paused', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Paused' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Cancelled')
+  })
+
+  it('devuelve 200 y status Cancelled cuando el post está In progress', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'In progress' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Cancelled')
+  })
+
+  it('returns 400 when post is Completed', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Completed' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when post is already Cancelled', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Cancelled' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 403 when post belongs to another user', async () => {
+    const otro = await createUser('otro@test.com', 'Otro', 'hashed')
+    const postAjeno = await prisma.post.create({
+      data: {
+        userId: otro.id,
+        title: 'Post ajeno',
+        description: 'Test',
+        address: 'Otra calle',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${postAjeno.id}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 404 when post does not exist', async () => {
+    const res = await request(app)
+      .patch('/posts/id-inexistente/cancel')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).patch(`/posts/${postId}/cancel`)
+    expect(res.status).toBe(401)
+  })
+})
+
 describe('PATCH /posts/:id/finalize', () => {
   let postId: string
 

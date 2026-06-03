@@ -113,6 +113,24 @@ export const pausePost = async (postId: string, userId: string) => {
   return updatePostStatus(postId, newStatus)
 }
 
+export const cancelPost = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+
+  if (!post) {
+    throw Object.assign(new Error('Post not found'), { status: 404 })
+  }
+
+  if (post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+
+  if (post.status === 'Completed' || post.status === 'Cancelled') {
+    throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
+  }
+
+  return updatePostStatus(postId, 'Cancelled')
+}
+
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId);
 
