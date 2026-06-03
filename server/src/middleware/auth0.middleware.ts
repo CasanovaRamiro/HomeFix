@@ -30,6 +30,8 @@ export const jwtCheck = (req: Request, res: Response, next: NextFunction): void 
           const userinfo = await resp.json()
           if (req.auth?.payload) {
             if (userinfo.email) req.auth.payload['email'] = userinfo.email
+            if (userinfo.name) req.auth.payload['name'] = userinfo.name
+            if (userinfo.nickname) req.auth.payload['nickname'] = userinfo.nickname
           }
         }
       } catch {
