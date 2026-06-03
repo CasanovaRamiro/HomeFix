@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 interface BadgeProps {
-  variant?: 'primary' | 'accent' | 'outline' | 'danger' | 'warning'
+  variant?: 'primary' | 'accent' | 'outline' | 'danger' | 'warning' | 'info'
   children: ReactNode
 }
 

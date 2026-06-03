@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance, type PostWithCategories, type UserPostSummary } from "../../src/data/post.data.js";
+import { findAcceptedApplication, updateApplicationStatus } from "../../src/data/application.data.js";
 import * as postService from "../../src/services/post.service.js";
 import type { PostInput } from "../../src/types/postInput.js";
 
@@ -10,6 +11,11 @@ vi.mock("../../src/data/post.data.js", () => ({
   updatePostStatus: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
+}));
+
+vi.mock("../../src/data/application.data.js", () => ({
+  findAcceptedApplication: vi.fn(),
+  updateApplicationStatus: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -253,6 +259,84 @@ describe('post.service - finalizePost', () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
 
     await expect(postService.finalizePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('post.service - completePost', () => {
+  const mockPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    status: 'In progress',
+  }
+
+  it('completa el post cuando está In progress', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost as never)
+    vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Completed' } as never)
+
+    await postService.completePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+  })
+
+  it('lanza 404 si el post no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.completePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si el post pertenece a otro usuario', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost as never)
+    await expect(postService.completePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si el post no está In progress', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' } as never)
+    await expect(postService.completePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('post.service - reopenPost', () => {
+  const mockInProgress = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    status: 'In progress',
+  }
+
+  it('reabre el post y resetea la aplicación aceptada a Pending', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({ id: 'app-1', status: 'Accepted' })
+    vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Pending' })
+    vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
+
+    await postService.reopenPost('uuid-1', 'user-uuid-1')
+
+    expect(updateApplicationStatus).toHaveBeenCalledWith('app-1', 'Pending')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+  })
+
+  it('funciona aunque no haya aplicación aceptada', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
+    vi.mocked(findAcceptedApplication).mockResolvedValue(null)
+    vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
+
+    await postService.reopenPost('uuid-1', 'user-uuid-1')
+
+    expect(updateApplicationStatus).not.toHaveBeenCalled()
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+  })
+
+  it('lanza 404 si el post no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si el post pertenece a otro usuario', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
+    await expect(postService.reopenPost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si el post no está In progress', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockInProgress, status: 'Active' } as never)
+    await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 })
 
