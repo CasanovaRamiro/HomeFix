@@ -13,6 +13,7 @@ import {
   Shield,
 } from 'lucide-react'
 import api from '../services/api'
+import { emitAuthChange } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 import logo from '../assets/homefix-logo.png'
 import heroBg from '../assets/hero-bg.jpg'
@@ -49,6 +50,7 @@ export default function Login() {
       }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, role: data.user.role }))
+      emitAuthChange()
       const destination = data.user.role === UserRole.Worker ? '/worker' : '/dashboard'
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
