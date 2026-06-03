@@ -179,7 +179,7 @@ export default function RegisterWorker() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-      <div style={{ padding: '20px 24px 0' }}>
+      <div style={{ width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '16px 2rem 0' }}>
         <button
           onClick={() => navigate(-1)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
