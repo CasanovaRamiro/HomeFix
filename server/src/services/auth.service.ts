@@ -342,15 +342,41 @@ export const loginUser = async (input: LoginInput) => {
 export const syncAuth0User = async (claims: Auth0Claims) => {
   if (!claims.sub) throw new Error('Invalid Auth0 token: missing sub claim')
 
-  const email = claims.email ?? `${claims.sub}@auth0.local`
+  const fallbackEmail = `${claims.sub}@auth0.local`
+  const email = claims.email ?? fallbackEmail
+
+  // When we have the real email, migrate any ghost user sitting under the fallback address —
+  // but only when no real user with that email exists yet (to avoid a unique-key collision).
+  if (claims.email) {
+    const realUserExists = await findByEmail(claims.email)
+    if (!realUserExists) {
+      const ghost = await findByEmail(fallbackEmail)
+      if (ghost) {
+        const goodName = claims.name ?? claims.nickname
+        await prisma.user.update({
+          where: { email: fallbackEmail },
+          data: {
+            email: claims.email,
+            ...(goodName && ghost.name === claims.sub ? { name: goodName } : {}),
+          },
+        })
+      }
+    }
+  }
+
   const existing = await findByEmail(email)
   if (existing) {
     const { password: _, ...safeUser } = existing
-    // Sync role from Auth0 if the user still has the default placeholder role
-    if (claims.role && safeUser.role === 'user') {
+    const updates: Record<string, string> = {}
+    if (claims.role && safeUser.role === 'user') updates.role = claims.role
+    // Fix name if it is still the raw Auth0 sub placeholder
+    const goodName = claims.name ?? claims.nickname
+    if (goodName && safeUser.name === claims.sub) updates.name = goodName
+
+    if (Object.keys(updates).length > 0) {
       return prisma.user.update({
         where: { email },
-        data: { role: claims.role },
+        data: updates,
         select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
       })
     }
