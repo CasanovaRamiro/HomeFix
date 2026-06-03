@@ -40,4 +40,5 @@ export interface TrabajoView {
   clientName: string
   clientSurname: string
   clientRating: number
+  address: string
 }
