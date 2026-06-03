@@ -10,7 +10,7 @@
    Uses the recomposed hero (worker on the right, navy text zone on the left).
    Overlay is dark on the left and fully clears on the right so the person's
    face is never covered by the headline. */
-.lp-root .lp-hero-worker .lp-hero-bg { background-position: 62% center; }
+.lp-root .lp-hero-worker .lp-hero-bg { background-position: 62% 22%; }
 .lp-root .lp-hero-worker .lp-hero-overlay {
   background: linear-gradient(to right,
     rgba(19,36,59,.92) 0%,
