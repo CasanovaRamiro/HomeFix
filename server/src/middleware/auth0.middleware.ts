@@ -31,7 +31,7 @@ export const jwtCheck = (req: Request, res: Response, next: NextFunction): void 
   getJwtCheck()(req, res, async () => {
     const header = req.headers.authorization
     if (header?.startsWith('Bearer ')) {
-      const sub = req.auth?.payload?.sub as string | undefined
+      const sub = req.auth?.payload?.sub
 
       if (sub) {
         const cached = userinfoCache.get(sub)
