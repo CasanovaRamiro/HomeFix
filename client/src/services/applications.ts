@@ -23,3 +23,6 @@ export const applyToPost = (postId: string) =>
 
 export const getPostApplicants = (postId: string) =>
   api.get<PostApplicant[]>(`/applications/post/${postId}`)
+
+export const acceptApplication = (applicationId: string): Promise<ApplicationResponse> =>
+  api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`).then(r => r.data)

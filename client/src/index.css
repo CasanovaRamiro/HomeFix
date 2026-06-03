@@ -270,11 +270,18 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   border-top: 1px solid var(--border);
 }
 .post-detail .post-actions button { font-size: 13px; padding: 6px 16px; }
-.post-detail .post-actions .btn-edit { background: var(--primary); }
+.post-detail .post-actions .btn-edit { background: #6b7280; }
+.post-detail .post-actions .btn-edit:hover { background: #4b5563; }
 .post-detail .post-actions .btn-pause { background: #f59e0b; }
 .post-detail .post-actions .btn-pause:hover { background: #d97706; }
 .post-detail .post-actions .btn-cancel { background: var(--danger); }
 .post-detail .post-actions .btn-cancel:hover { background: #dc2626; }
+.post-detail .post-actions .btn-finished { background: #16a34a; }
+.post-detail .post-actions .btn-finished:hover { background: #15803d; }
+.post-detail .post-actions .btn-reopen { background: #2563eb; }
+.post-detail .post-actions .btn-reopen:hover { background: #1d4ed8; }
+.post-detail .post-actions .btn-primary { background: var(--primary); }
+.post-detail .post-actions .btn-primary:hover { background: var(--primary-light); }
 
 /* Badge */
 .badge {
@@ -290,6 +297,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
 .badge-danger { background: var(--danger); color: #fff; }
 .badge-warning { background: #f59e0b; color: #fff; }
+.badge-info { background: #2563eb; color: #fff; }
 
 /* Star Rating */
 .star-rating { display: inline-flex; align-items: center; gap: 2px; }

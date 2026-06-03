@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
@@ -10,6 +10,7 @@ import type { Post } from '../types/post'
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [post, setPost] = useState<Post | null>(null)
   const [applicants, setApplicants] = useState<PostApplicant[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +36,40 @@ export default function PostDetail() {
       })
       .finally(() => setLoading(false))
   }, [id])
+
+  const handleComplete = async () => {
+    try {
+      await api.patch(`/posts/${id}/complete`)
+      navigate('/review')
+    } catch {
+      // error handling
+    }
+  }
+
+  const handleReopen = async () => {
+    try {
+      await api.patch(`/posts/${id}/reopen`)
+      const [postRes, applicantsData] = await Promise.all([
+        api.get<Post>(`/posts/${id}`),
+        getPostApplicants(id!).catch(() => []),
+      ])
+      setPost(postRes.data)
+      setApplicants(Array.isArray(applicantsData) ? applicantsData : applicantsData.data ?? [])
+    } catch {
+      // error handling
+    }
+  }
+
+  const refresh = () => {
+    if (!id) return
+    Promise.all([
+      api.get<Post>(`/posts/${id}`),
+      getPostApplicants(id).catch(() => []),
+    ]).then(([postRes, applicantsData]) => {
+      setPost(postRes.data)
+      setApplicants(Array.isArray(applicantsData) ? applicantsData : applicantsData.data ?? [])
+    })
+  }
 
   if (loading) return <LoadingSpinner />
   if (error) return (
@@ -68,7 +103,13 @@ export default function PostDetail() {
       </div>
       <div className="post-detail px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
-          <PostCard post={post} />
+          <PostCard
+            post={post}
+            hasAcceptedWorker={applicants.some(a => a.status === 'Accepted')}
+            onComplete={handleComplete}
+            onReopen={handleReopen}
+            onViewReview={() => navigate('/review')}
+          />
 
           <h3 className="section-title">Postulantes ({applicants.length})</h3>
 
@@ -88,6 +129,11 @@ export default function PostDetail() {
                 reviewCount: a.reviewCount,
                 jobCount: a.jobCount,
               }}
+              applicationId={a.applicationId}
+              applicationStatus={a.status}
+              postStatus={post.status}
+              postTitle={post.title}
+              onHire={refresh}
             />
           ))}
         </div>
