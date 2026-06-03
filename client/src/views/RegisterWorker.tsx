@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import api from '../services/api'
 import { emitAuthChange } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
 
@@ -30,6 +31,7 @@ const strengthLabels = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Excelente']
 
 export default function RegisterWorker() {
   const navigate = useNavigate()
+  const theme = useTheme()
   const { categories, loading: loadingCategories } = useCategories()
 
   const [step, setStep] = useState(1)
@@ -196,7 +198,17 @@ export default function RegisterWorker() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-      {/* Main (the global <Navbar /> from App.tsx renders above this) */}
+      <div style={{ width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '16px 2rem 0' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-lg w-full space-y-6">
           {/* Unified registration card */}

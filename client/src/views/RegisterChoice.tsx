@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  User, Briefcase, CheckCircle2, ArrowRight, Shield, Star, Zap,
+  User, Briefcase, CheckCircle2, ArrowRight, ArrowLeft, Shield, Star, Zap,
 } from 'lucide-react'
 import type { ElementType } from 'react'
+import { useTheme } from '../hooks/useTheme'
 
 type Role = {
   id: 'cliente' | 'profesional'
@@ -51,9 +52,21 @@ const ROLES: Role[] = [
 
 export default function RegisterChoice() {
   const navigate = useNavigate()
+  const theme = useTheme()
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+      <div style={{ width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '16px 2rem 0' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: theme.muted, padding: '8px 14px 8px 10px', marginLeft: '-10px', borderRadius: '999px', transition: 'color 0.15s, background 0.15s', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.color = theme.primaryDark; e.currentTarget.style.background = theme.hover }}
+          onMouseLeave={e => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = 'transparent' }}
+        >
+          <ArrowLeft style={{ width: '18px', height: '18px' }} />
+          Volver
+        </button>
+      </div>
       <main className="flex-1 flex items-center justify-center px-6 py-14 sm:py-16">
         <div className="max-w-4xl w-full">
           {/* Title block */}
