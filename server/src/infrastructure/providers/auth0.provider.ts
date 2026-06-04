@@ -1,14 +1,15 @@
 import { createHttpError } from '../../lib/errors.js'
 import type { Auth0SignupResponse, Auth0TokenResponse, Auth0UserInfoResponse } from '../types/auth0.types.js'
+import { env } from '../../lib/envConfig.js'
 
 const getIssuerBaseUrl = () => {
-  const issuer = process.env.AUTH0_ISSUER_BASE_URL
+  const issuer = env.AUTH0_ISSUER_BASE_URL
   if (!issuer) throw createHttpError(500, 'AUTH0_ISSUER_BASE_URL is not configured')
   return issuer.replace(/\/$/, '')
 }
 
 const getRequiredEnv = (key: 'AUTH0_CLIENT_ID' | 'AUTH0_DB_CONNECTION') => {
-  const value = process.env[key]
+  const value = env[key]
   if (!value) {
     throw createHttpError(500, `${key} is not configured`)
   }
@@ -21,8 +22,8 @@ export const getManagementToken = async (): Promise<string> => {
   if (_mgmtToken && Date.now() < _mgmtToken.expiresAt) return _mgmtToken.token
 
   const issuer = getIssuerBaseUrl()
-  const clientId = process.env.AUTH0_M2M_CLIENT_ID
-  const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET
+  const clientId = env.AUTH0_M2M_CLIENT_ID
+  const clientSecret = env.AUTH0_M2M_CLIENT_SECRET
   if (!clientId) throw createHttpError(500, 'AUTH0_M2M_CLIENT_ID is not configured')
   if (!clientSecret) throw createHttpError(500, 'AUTH0_M2M_CLIENT_SECRET is not configured')
 
@@ -100,7 +101,7 @@ export const createAuth0User = async (payload: {
 }
 
 export const loginWithAuth0 = async (email: string, password: string): Promise<Auth0TokenResponse> => {
-  const audience = process.env.AUTH0_AUDIENCE
+  const audience = env.AUTH0_AUDIENCE
   if (!audience) throw createHttpError(500, 'AUTH0_AUDIENCE is not configured')
 
   const response = await fetch(`${getIssuerBaseUrl()}/oauth/token`, {

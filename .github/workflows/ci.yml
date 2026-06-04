@@ -121,11 +121,26 @@ jobs:
       - name: Type check server
         working-directory: server
         run: pnpm run typecheck
+        env:
+          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
+          AUTH0_AUDIENCE: ci-placeholder
+          AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
+          GEMINI_API_KEY: ci-placeholder
 
       - name: Apply migrations to test DB
         working-directory: server
         run: pnpm run db:migrate:test
+        env:
+          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
+          AUTH0_AUDIENCE: ci-placeholder
+          AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
+          GEMINI_API_KEY: ci-placeholder
 
       - name: Run tests
         working-directory: server
         run: pnpm test
+        env:
+          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
+          AUTH0_AUDIENCE: ci-placeholder
+          AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
+          GEMINI_API_KEY: ci-placeholder
