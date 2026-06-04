@@ -24,7 +24,7 @@ const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
   }
 })
 
-vi.mock('../../src/middleware/auth0.middleware.js', () => ({
+vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
   jwtCheck: (req: Request, res: Response, next: NextFunction) => {
     if (!req.headers.authorization?.startsWith('Bearer ')) {
       res.status(401).json({ error: 'Unauthorized' })

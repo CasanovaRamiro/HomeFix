@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 
-vi.mock("../../src/middleware/auth0.middleware.js", async () => {
+vi.mock("../../src/presentation/middleware/auth0.middleware.js", async () => {
   const mock = await import("../helpers/auth0Mock.js");
   return { jwtCheck: mock.jwtCheck };
 });
 
-vi.mock("../../src/services/ai.service.js", () => ({
+vi.mock("../../src/domain/services/ai.service.js", () => ({
   suggestPost: vi.fn(),
 }));
 
 import { app } from "../../src/index.js";
-import { suggestPost } from "../../src/services/ai.service.js";
+import { suggestPost } from "../../src/domain/services/ai.service.js";
 
 const token = "test-auth0-token";
 

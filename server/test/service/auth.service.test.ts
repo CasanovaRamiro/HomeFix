@@ -1,13 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { UserRole } from '../../src/types/userRole.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
-vi.mock('../../src/data/user.data.js', () => ({
+vi.mock('../../src/infrastructure/database/user.database.js', () => ({
   findByEmail: vi.fn(),
   createUser: vi.fn<(args: { name: string; email: string; password: string; nationalId?: string; phone?: string; surname?: string }) => Promise<{ id: string; name: string; email: string; phone: string | null; role: string }>>(),
+  updateUserByEmail: vi.fn(),
+  addUserCategories: vi.fn(),
 }))
 
-import * as userData from '../../src/data/user.data.js'
-import { loginUser, registerUser, syncAuth0User, type RegisterInput } from '../../src/services/auth.service.js'
+vi.mock('../../src/infrastructure/database/category.database.js', () => ({
+  upsertCategoryByName: vi.fn(),
+  listCategories: vi.fn(),
+}))
+
+import * as userData from '../../src/infrastructure/database/user.database.js'
+import { loginUser, registerUser, syncAuth0User, type RegisterInput } from '../../src/domain/services/auth.service.js'
 
 const mockUser = {
   id: 'uuid-jane',

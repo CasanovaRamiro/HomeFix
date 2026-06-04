@@ -11,7 +11,7 @@ const { getPayload, setPayload } = vi.hoisted(() => {
   }
 })
 
-vi.mock('../../src/middleware/auth0.middleware.js', () => ({
+vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
   jwtCheck: (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization
     if (!header?.startsWith('Bearer ')) {

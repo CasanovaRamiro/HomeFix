@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
-import { PostInput } from "../../src/types/postInput.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, updatePostStatus } from "../../src/data/post.data.js";
+import type { CreatePostInput } from "../../src/domain/types/post.types.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -14,7 +14,7 @@ beforeEach(async () => {
   categoryId = category.id;
 });
 
-const createValidPost = (): PostInput => ({
+const createValidPost = (): CreatePostInput => ({
   userId,
   description: "Test description",
   startDate: new Date("2026-06-01T00:00:00.000Z"),
@@ -32,7 +32,7 @@ describe("findPostById", () => {
     expect(result).not.toBeNull();
     expect(result!.title).toBe("Test Post");
     expect(result!.categories).toHaveLength(1);
-    expect(result!.categories[0].category.name).toBe("Test Category");
+    expect(result!.categories[0].name).toBe("Test Category");
   });
 
   it("should return null for non-existent post", async () => {
@@ -123,7 +123,7 @@ describe("findAvailablePosts", () => {
 
     const posts = await findAvailablePosts("Test Category");
     expect(posts.length).toBeGreaterThanOrEqual(1);
-    expect(posts.every((p) => p.categories.some((c) => c.category.name === "Test Category"))).toBe(true);
+    expect(posts.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
   });
 
   it("should return empty array when no active posts match category", async () => {

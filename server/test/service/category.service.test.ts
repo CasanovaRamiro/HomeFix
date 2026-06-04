@@ -10,7 +10,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
   },
 }))
 
-import { listCategories } from '../../src/services/category.service.js'
+import { listCategories } from '../../src/domain/services/category.service.js'
 
 beforeEach(() => vi.clearAllMocks())
 

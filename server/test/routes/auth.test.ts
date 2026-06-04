@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 import { cleanDb } from '../helpers/db.js'
 
-vi.mock('../../src/middleware/auth0.middleware.js', async () => {
+vi.mock('../../src/presentation/middleware/auth0.middleware.js', async () => {
   const mock = await import('../helpers/auth0Mock.js')
   return { jwtCheck: mock.jwtCheck }
 })

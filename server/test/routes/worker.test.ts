@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-vi.mock('../../src/middleware/auth0.middleware.js', async () => {
+vi.mock('../../src/presentation/middleware/auth0.middleware.js', async () => {
   const mock = await import('../helpers/auth0Mock.js')
   return { jwtCheck: mock.jwtCheck }
 })
@@ -8,7 +8,7 @@ vi.mock('../../src/middleware/auth0.middleware.js', async () => {
 import request from 'supertest'
 import { app } from '../../src/index.js'
 import { cleanDb, prisma, createUser } from '../helpers/db.js'
-import { UserRole } from '../../src/types/userRole.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
@@ -78,7 +78,7 @@ describe('GET /workers/:id', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.categories).toHaveLength(1)
-    expect(res.body.categories[0].category.name).toBe('Plumbing')
+    expect(res.body.categories[0].name).toBe('Plumbing')
   })
 
   it('returns 404 when the worker id does not exist', async () => {
