@@ -1,8 +1,5 @@
-import 'dotenv/config'
-import { validateEnv } from './lib/env.js'
+import { env } from './lib/envConfig.js'
 import { jwtCheck } from './presentation/middleware/auth0.middleware.js'
-
-validateEnv()
 
 import express from 'express'
 import cors from 'cors'
@@ -18,9 +15,9 @@ import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 
 export const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = env.PORT
 
-app.use(cors({ origin: process.env.CORS_ORIGIN }))
+app.use(cors({ origin: env.CORS_ORIGIN }))
 app.use(express.json())
 app.use(morgan('dev'))
 
@@ -36,6 +33,6 @@ app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use(errorHandler)
 
-if (process.env.NODE_ENV !== 'test') {
+if (env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 }
