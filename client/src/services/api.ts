@@ -60,6 +60,9 @@ export interface UserPost {
   applicantCount: number
 }
 
+export const createReview = (data: { postId: string; rating: number; description?: string }) =>
+  api.post('/reviews', data)
+
 export const getUserPosts = (): Promise<UserPost[]> =>
   api.post<UserPost[]>('/posts/user-posts').then((r) => r.data)
 

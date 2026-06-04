@@ -32,7 +32,7 @@ export default function App() {
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/review" element={<LeaveReview />} />
+        <Route path="/review" element={<PrivateRoute><LeaveReview /></PrivateRoute>} />
         
         <Route path="/workerlanding" element={<WorkerLanding />} />
         <Route path="/" element={<Landing />} />

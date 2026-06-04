@@ -42,7 +42,21 @@ export default function PostDetail() {
   const handleComplete = async () => {
     try {
       await api.patch(`/posts/${id}/complete`)
-      navigate('/review')
+      const accepted = applicants.find(a => a.status === 'Accepted')
+      navigate('/review', {
+        state: {
+          postId: post?.id,
+          titulo: post?.title,
+          fecha: post?.endDate,
+          ubicacion: post?.address,
+          trabajador: {
+            id: accepted?.workerId ?? '',
+            nombre: accepted?.name ?? '',
+            categoria: accepted?.category ?? '',
+            verificado: false,
+          },
+        },
+      })
     } catch {
       // error handling
     }
