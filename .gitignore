@@ -143,3 +143,5 @@ CLAUDE.md
 .idea/
 client/package-lock.json
 package-lock.json
+
+didit-workflow.http

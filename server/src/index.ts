@@ -16,6 +16,7 @@ import aiRoutes from './routes/ai.routes.js'
 import categoryRoutes from './routes/category.routes.js'
 import applicationRoutes from './routes/application.routes.js'
 import workerDashboardRoutes from './routes/workerDashboard.routes.js'
+import kycRoutes from './routes/kyc.routes.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3000
@@ -34,6 +35,7 @@ app.use('/ai', aiRoutes)
 app.use('/categories', categoryRoutes)
 app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
+app.use('/kyc', jwtCheck, kycRoutes)
 app.use(errorHandler)
 
 if (process.env.NODE_ENV !== 'test') {

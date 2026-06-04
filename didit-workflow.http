@@ -1,0 +1,15 @@
+### Crear workflow de KYC en Didit
+POST https://verification.didit.me/v3/workflows/
+x-api-key: t65Z63neTznz9igVLZiVN2eqFqsy4tCO98FRjazD0Tw
+Content-Type: application/json
+
+{
+  "workflow_label": "HomeFix Worker KYC",
+  "features": [
+    { "feature": "OCR" },
+    { "feature": "DATABASE_VALIDATION" },
+    { "feature": "LIVENESS" },
+    { "feature": "FACE_MATCH" },
+    { "feature": "IP_ANALYSIS" }
+  ]
+}
