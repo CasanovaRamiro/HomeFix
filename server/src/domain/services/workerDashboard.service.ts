@@ -18,7 +18,7 @@ export const getWorkerDashboard = async (workerId: string) => {
     countCompletedJobs(workerId),
   ])
 
-  const categoryIds = profile.categories.map((c) => c.category.id)
+  const categoryIds = profile.categories.map((c) => c.id)
   const newJobs = await countNewJobsForWorker(categoryIds)
 
   const appCounts: Record<string, number> = {}
@@ -33,10 +33,6 @@ export const getWorkerDashboard = async (workerId: string) => {
   const answered = totalApplications - pendingApplications
   const responseRate = totalApplications > 0 ? Math.round((answered / totalApplications) * 100) : 100
 
-  const location = profile.address
-    ? `${profile.address.city}, ${profile.address.state}`
-    : null
-
   return {
     profile: {
       id: profile.id,
@@ -46,8 +42,8 @@ export const getWorkerDashboard = async (workerId: string) => {
       phone: profile.phone,
       bio: profile.bio,
       createdAt: profile.createdAt,
-      location,
-      categories: profile.categories.map((c) => c.category),
+      location: profile.location,
+      categories: profile.categories,
     },
     stats: {
       totalJobs: completedJobs,

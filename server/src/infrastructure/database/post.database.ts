@@ -124,10 +124,11 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
   }))
 }
 
-export const updatePostStatus = (id: string, status: string) =>
+export const updatePostStatus = (id: string, status: string): Promise<{ id: string; status: string }> =>
   prisma.post.update({
     where: { id },
     data: { status },
+    select: { id: true, status: true },
   })
 
 export const searchByDistance = async (

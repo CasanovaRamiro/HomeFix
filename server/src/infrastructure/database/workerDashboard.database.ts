@@ -1,8 +1,9 @@
 import prisma from '../../lib/prisma.js'
 import { UserRole } from '../../domain/types/userRole.js'
+import type { DomainWorkerProfile } from '../../domain/types/workerDashboard.types.js'
 
-export const findWorkerProfile = (workerId: string) =>
-  prisma.user.findFirst({
+export const findWorkerProfile = async (workerId: string): Promise<DomainWorkerProfile | null> => {
+  const raw = await prisma.user.findFirst({
     where: { id: workerId, role: UserRole.Worker },
     select: {
       id: true,
@@ -23,6 +24,21 @@ export const findWorkerProfile = (workerId: string) =>
       },
     },
   })
+
+  if (!raw) return null
+
+  return {
+    id: raw.id,
+    name: raw.name,
+    surname: raw.surname,
+    email: raw.email,
+    phone: raw.phone,
+    bio: raw.bio,
+    createdAt: raw.createdAt,
+    location: raw.address ? `${raw.address.city}, ${raw.address.state}` : null,
+    categories: raw.categories.map((c) => c.category),
+  }
+}
 
 export const countWorkerReviews = async (workerId: string) => {
   const result = await prisma.workerReview.aggregate({
