@@ -20,6 +20,8 @@ const reviewFields = {
   },
 } satisfies Prisma.WorkerReviewSelect
 
+export type ReviewResult = Prisma.WorkerReviewGetPayload<{ select: typeof reviewFields }>
+
 export const findReviewsByWorkerId = async (workerId: string): Promise<DomainWorkerReview[]> => {
   const raw = await prisma.workerReview.findMany({
     where: { workerId },

@@ -21,6 +21,8 @@ const workerFields = {
   },
 } satisfies Prisma.UserSelect
 
+export type WorkerResult = Prisma.UserGetPayload<{ select: typeof workerFields }>
+
 export const findWorkerById = async (id: string): Promise<DomainWorker | null> => {
   const raw = await prisma.user.findFirst({
     where: { id, role: UserRole.Worker },

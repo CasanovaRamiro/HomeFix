@@ -1,4 +1,5 @@
-import type { WorkerResult, ReviewResult } from '../types/worker.types.js'
+import type { WorkerResult } from '../database/worker.database.js'
+import type { ReviewResult } from '../database/review.database.js'
 import type { DomainWorker, DomainWorkerReview } from '../../domain/types/worker.types.js'
 
 export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
