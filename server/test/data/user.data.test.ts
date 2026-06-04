@@ -26,7 +26,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
   },
 }))
 
-import { findByEmail, findAll, createUser } from '../../src/data/user.data.js'
+import { findByEmail, findAll, createUser } from '../../src/infrastructure/database/user.database.js'
 
 const mockUser = {
   id: 1,

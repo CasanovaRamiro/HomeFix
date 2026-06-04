@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, prisma, createUser } from '../helpers/db.js'
-import { findWorkerById, findAllWorkers } from '../../src/data/worker.data.js'
-import { UserRole } from '../../src/types/userRole.js'
+import { findWorkerById, findAllWorkers } from '../../src/infrastructure/database/worker.database.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
@@ -53,7 +53,7 @@ describe('findWorkerById', () => {
     const worker = await findWorkerById(created.id)
 
     expect(worker!.categories).toHaveLength(1)
-    expect(worker!.categories[0].category.name).toBe('Plumbing')
+    expect(worker!.categories[0].name).toBe('Plumbing')
   })
 
   it('returns an empty categories array when the worker has none', async () => {
@@ -121,6 +121,6 @@ describe('findAllWorkers', () => {
     const workers = await findAllWorkers()
 
     expect(workers[0].categories).toHaveLength(1)
-    expect(workers[0].categories[0].category.name).toBe('Electrical')
+    expect(workers[0].categories[0].name).toBe('Electrical')
   })
 })

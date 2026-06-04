@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../src/data/worker.data.js', () => ({
+vi.mock('../../src/infrastructure/database/worker.database.js', () => ({
   findAllWorkers: vi.fn(),
   findWorkerById: vi.fn(),
 }))
 
-import * as workerData from '../../src/data/worker.data.js'
-import { listWorkers, getWorker } from '../../src/services/worker.service.js'
-import { UserRole } from '../../src/types/userRole.js'
+import * as workerData from '../../src/infrastructure/database/worker.database.js'
+import { listWorkers, getWorker } from '../../src/domain/services/worker.service.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 const mockWorker = {
   id: 'uuid-worker-1',
@@ -17,9 +17,7 @@ const mockWorker = {
   bio: null as string | null,
   role: UserRole.Worker,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
-  categories: [
-    { category: { id: 'uuid-category-1', name: 'Plumbing' } },
-  ],
+  categories: [{ id: 'uuid-category-1', name: 'Plumbing' }],
 }
 
 beforeEach(() => vi.clearAllMocks())

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { postServiceValidator } from "../../src/middleware/postServiceValidator.js";
-import { PostInput } from "../../src/types/postInput.js";
+import { validatePostInput } from "../../src/domain/services/post.service.js";
+import type { CreatePostInput } from "../../src/domain/types/post.types.js";
 
-const validPostData:PostInput = {
+const validPostData: CreatePostInput = {
   userId: 'uuid-user-1',
   title: "Tubo roto en cocina",
   description: "El tubo bajo el lavaplatos está roto",
@@ -15,7 +15,7 @@ const validPostData:PostInput = {
 describe("postServiceValidator", () => {
   it("should throw error when no categories are selected", () => {
     expect(() =>
-      postServiceValidator({
+      validatePostInput({
         ...validPostData,
         categoryId: null as unknown as string,
       }),
@@ -24,7 +24,7 @@ describe("postServiceValidator", () => {
 
   it("should throw error when title is missing", () => {
     expect(() =>
-      postServiceValidator({
+      validatePostInput({
         ...validPostData,
         title: "",
       }),
@@ -33,7 +33,7 @@ describe("postServiceValidator", () => {
 
   it("should throw error when description is missing", () => {
     expect(() =>
-      postServiceValidator({
+      validatePostInput({
         ...validPostData,
         description: "",
       }),
@@ -42,7 +42,7 @@ describe("postServiceValidator", () => {
 
   it("should throw error when address is missing", () => {
     expect(() =>
-      postServiceValidator({
+      validatePostInput({
         ...validPostData,
         address: "",
       }),
@@ -51,7 +51,7 @@ describe("postServiceValidator", () => {
 
   it('should fail when endDate is before startDate', () => {
     expect(() =>
-      postServiceValidator({
+      validatePostInput({
         ...validPostData,
         startDate: new Date("2026-06-30T00:00:00.000Z"),
         endDate: new Date("2026-06-01T00:00:00.000Z"),

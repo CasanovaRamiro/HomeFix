@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import * as applicationData from "../../src/data/application.data.js"
-import * as postData from "../../src/data/post.data.js"
-import { acceptApplication, rejectApplication } from "../../src/services/application.service.js"
+import * as applicationData from "../../src/infrastructure/database/application.database.js"
+import * as postData from "../../src/infrastructure/database/post.database.js"
+import { acceptApplication, rejectApplication } from "../../src/domain/services/application.service.js"
 
-vi.mock("../../src/data/application.data.js", () => ({
+vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
   findApplication: vi.fn(),
   createApplication: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock("../../src/data/application.data.js", () => ({
   updateApplicationStatus: vi.fn(),
 }))
 
-vi.mock("../../src/data/post.data.js", () => ({
+vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findPostById: vi.fn(),
   updatePostStatus: vi.fn(),
   createPost: vi.fn(),

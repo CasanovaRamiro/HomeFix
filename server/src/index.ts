@@ -1,21 +1,21 @@
 import 'dotenv/config'
 import { validateEnv } from './lib/env.js'
-import { jwtCheck } from './middleware/auth0.middleware.js'
+import { jwtCheck } from './presentation/middleware/auth0.middleware.js'
 
 validateEnv()
 
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
-import authRoutes from './routes/auth.routes.js'
-import userRoutes from './routes/user.routes.js'
-import workerRoutes from './routes/worker.routes.js'
-import { errorHandler } from './middleware/error.middleware.js'
-import postRoutes from './routes/post.routes.js'
-import aiRoutes from './routes/ai.routes.js'
-import categoryRoutes from './routes/category.routes.js'
-import applicationRoutes from './routes/application.routes.js'
-import workerDashboardRoutes from './routes/workerDashboard.routes.js'
+import authRoutes from './presentation/routes/auth.routes.js'
+import userRoutes from './presentation/routes/user.routes.js'
+import workerRoutes from './presentation/routes/worker.routes.js'
+import { errorHandler } from './presentation/middleware/error.middleware.js'
+import postRoutes from './presentation/routes/post.routes.js'
+import aiRoutes from './presentation/routes/ai.routes.js'
+import categoryRoutes from './presentation/routes/category.routes.js'
+import applicationRoutes from './presentation/routes/application.routes.js'
+import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3000

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { suggestPost,clearCategoryCache } from "../../src/services/ai.service.js";
-import { AiMessage } from "../../src/types/aiSuggestion.js";
+import { suggestPost,clearCategoryCache } from "../../src/domain/services/ai.service.js";
+import { AiMessage } from "../../src/presentation/types/ai.types.js";
 
 const mockFindMany = vi.hoisted(() => vi.fn());
 

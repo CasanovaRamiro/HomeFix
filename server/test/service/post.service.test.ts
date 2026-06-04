@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance, type PostWithCategories, type UserPostSummary } from "../../src/data/post.data.js";
-import { findAcceptedApplication, updateApplicationStatus } from "../../src/data/application.data.js";
-import * as postService from "../../src/services/post.service.js";
-import type { PostInput } from "../../src/types/postInput.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
+import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
+import * as postService from "../../src/domain/services/post.service.js";
+import type { CreatePostInput, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
-vi.mock("../../src/data/post.data.js", () => ({
+vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   createPost: vi.fn(),
   findPostsByUser: vi.fn(),
   findPostById: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock("../../src/data/post.data.js", () => ({
   searchByDistance: vi.fn(),
 }));
 
-vi.mock("../../src/data/application.data.js", () => ({
+vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   updateApplicationStatus: vi.fn(),
 }));
@@ -21,7 +21,7 @@ vi.mock("../../src/data/application.data.js", () => ({
 beforeEach(() => vi.clearAllMocks());
 
 describe("post.service - createPost", () => {
-  const inputData: PostInput = {
+  const inputData: CreatePostInput = {
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
     description: "El tubo bajo el lavaplatos está roto",
@@ -30,7 +30,7 @@ describe("post.service - createPost", () => {
     address: "Calle Principal 123, Apt 4B",
     categoryId: 'uuid-category-1',
   };
-  const createdPostMock: PostWithCategories = {
+  const createdPostMock: DomainPost = {
     id: 'uuid-post-1',
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
@@ -61,7 +61,7 @@ describe("post.service - createPost", () => {
 });
 
 describe("post.service - getPostById", () => {
-  const postDetailMock: PostWithCategories = {
+  const postDetailMock: DomainPost = {
     id: 'uuid-post-1',
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
@@ -74,11 +74,7 @@ describe("post.service - getPostById", () => {
     images: [],
     latitude: null,
     longitude: null,
-    categories: [
-      {
-        category: { id: 'uuid-category-1', name: "Plomeria" },
-      },
-    ],
+    categories: [{ id: 'uuid-category-1', name: "Plomeria" }],
     user: { id: 'uuid-user-1', name: "Test User", surname: "Test" },
   };
 
@@ -104,7 +100,7 @@ describe("post.service - getPostById", () => {
 });
 
 describe("post.service - getUserPosts", () => {
-  const userPostsMock: UserPostSummary[] = [
+  const userPostsMock: DomainUserPost[] = [
     {
       id: 'uuid-post-1',
       title: "Test Post",
@@ -139,7 +135,7 @@ describe("post.service - getUserPosts", () => {
 });
 
 describe("post.service - listAvailablePosts", () => {
-  const mockPost = {
+  const mockPost: DomainPost = {
     id: "uuid-1",
     userId: "uuid-user-1",
     title: "Reparación de caño",
@@ -152,7 +148,7 @@ describe("post.service - listAvailablePosts", () => {
     images: [],
     latitude: null,
     longitude: null,
-    categories: [{ category: { id: "uuid-cat-1", name: "Plomero" } }],
+    categories: [{ id: "uuid-cat-1", name: "Plomero" }],
     user: { id: "uuid-user-1", name: "Test", surname: "User" },
   };
 
@@ -210,8 +206,9 @@ describe("post.service - searchPostsByDistance", () => {
     await expect(postService.searchPostsByDistance(NaN, 0, 10)).rejects.toThrow("lat, lng, and radius must be finite numbers");
   });
 });
+
 describe('post.service - pausePost', () => {
-  const activePost = {
+  const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
     title: 'Reparación de caño',
@@ -219,22 +216,18 @@ describe('post.service - pausePost', () => {
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-15'),
-    status: 'Active' as const,
+    status: 'Active',
     createdAt: new Date("2026-05-25"),
     images: [],
     latitude: null,
     longitude: null,
-    categories: [
-      {
-        category: { id: 'uuid-category-1', name: "Plomeria" },
-      },
-    ],
-    user: { id: 'user-uuid-1', name: 'Test', surname: 'User', phone: null },
+    categories: [{ id: 'uuid-category-1', name: "Plomeria" }],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
   }
 
   it('pausa un post activo', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Paused', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Paused', updatedAt: new Date() } as never)
 
     const result = await postService.pausePost('uuid-1', 'user-uuid-1')
 
@@ -244,7 +237,7 @@ describe('post.service - pausePost', () => {
 
   it('activa un post pausado', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Active', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Active', updatedAt: new Date() } as never)
 
     const result = await postService.pausePost('uuid-1', 'user-uuid-1')
 
@@ -284,7 +277,7 @@ describe('post.service - pausePost', () => {
 })
 
 describe('post.service - cancelPost', () => {
-  const activePost = {
+  const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
     title: 'Reparación de caño',
@@ -292,22 +285,18 @@ describe('post.service - cancelPost', () => {
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-15'),
-    status: 'Active' as const,
+    status: 'Active',
     createdAt: new Date("2026-05-25"),
     images: [],
     latitude: null,
     longitude: null,
-    categories: [
-      {
-        category: { id: 'uuid-category-1', name: "Plomeria" },
-      },
-    ],
-    user: { id: 'user-uuid-1', name: 'Test', surname: 'User', phone: null },
+    categories: [{ id: 'uuid-category-1', name: "Plomeria" }],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
   }
 
   it('cancela un post activo', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
@@ -317,7 +306,7 @@ describe('post.service - cancelPost', () => {
 
   it('cancela un post pausado', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
@@ -327,7 +316,7 @@ describe('post.service - cancelPost', () => {
 
   it('cancela un post en In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'In progress' })
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
@@ -361,7 +350,7 @@ describe('post.service - cancelPost', () => {
 })
 
 describe('post.service - finalizePost', () => {
-  const mockPost = {
+  const mockPost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
     title: 'Reparación de caño',
@@ -369,23 +358,19 @@ describe('post.service - finalizePost', () => {
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-15'),
-    status: 'Paused' as const,
+    status: 'Paused',
     createdAt: new Date("2026-05-25"),
     images: [],
     latitude: null,
     longitude: null,
-    categories: [
-      {
-        category: { id: 'uuid-category-1', name: "Plomeria" },
-      },
-    ],
-    user: { id: 'user-uuid-1', name: 'Test', surname: 'User', phone: null },
+    categories: [{ id: 'uuid-category-1', name: "Plomeria" }],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
   }
 
   it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
 
-    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed', updatedAt: new Date() })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed', updatedAt: new Date() } as never)
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
@@ -503,5 +488,3 @@ describe('post.service - reopenPost', () => {
     await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 })
-
-
