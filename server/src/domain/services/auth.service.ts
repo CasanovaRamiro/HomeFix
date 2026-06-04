@@ -1,4 +1,5 @@
 import { createHttpError } from '../../lib/errors.js'
+import { env } from '../../lib/envConfig.js'
 import { findByEmail, createUser, addUserCategories, updateUserByEmail } from '../../infrastructure/database/user.database.js'
 import { upsertCategoryByName } from '../../infrastructure/database/category.database.js'
 import { createAuth0User, loginWithAuth0, getAuth0UserInfo, assignAuth0Role } from '../../infrastructure/providers/auth0.provider.js'
@@ -51,7 +52,7 @@ export const registerUser = async (input: RegisterInput) => {
 
   const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  const clientRoleId = process.env.AUTH0_CLIENT_ROLE_ID
+  const clientRoleId = env.AUTH0_CLIENT_ROLE_ID
   if (clientRoleId) {
     try {
       await assignAuth0Role(auth0User.auth0Id, clientRoleId)
@@ -94,7 +95,7 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
 
   const auth0User = await createAuth0User({ email, password, name, lastName })
 
-  const workerRoleId = process.env.AUTH0_WORKER_ROLE_ID
+  const workerRoleId = env.AUTH0_WORKER_ROLE_ID
   if (workerRoleId) {
     try {
       await assignAuth0Role(auth0User.auth0Id, workerRoleId)

@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI, type Content } from '@google/generative-ai'
+import { env } from '../../lib/envConfig.js'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' })
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
+const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL })
 
 const TIMEOUT_MS = 8000
 const MAX_RETRIES = 1
