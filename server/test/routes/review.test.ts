@@ -3,26 +3,11 @@ import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
 
-const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
-  const payload: Record<string, string | undefined> = {
-    sub: 'auth0|test123',
-    email: 'client@test.com',
-    name: 'Client User',
-  }
-  return {
-    mockPayload: payload,
-    setMockPayload: (p: Record<string, string | undefined>) => {
-      Object.keys(payload).forEach(k => delete payload[k])
-      Object.assign(payload, p)
-    },
-    resetMockPayload: () => {
-      Object.keys(payload).forEach(k => delete payload[k])
-      payload.sub = 'auth0|test123'
-      payload.email = 'client@test.com'
-      payload.name = 'Client User'
-    },
-  }
-})
+const mockPayload = vi.hoisted(() => ({
+  sub: 'auth0|test123',
+  email: 'client@test.com',
+  name: 'Client User',
+}))
 
 vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
   jwtCheck: (req: Request, res: Response, next: NextFunction) => {
@@ -41,8 +26,6 @@ let token: string
 let clientId: string
 let workerId: string
 let postId: string
-let applicationId: string
-
 beforeEach(async () => {
   await cleanDb()
   const client = await createUser('client@test.com', 'Client', 'hashed', { role: 'client' })
@@ -64,14 +47,13 @@ beforeEach(async () => {
   })
   postId = post.id
 
-  const application = await prisma.application.create({
+  await prisma.application.create({
     data: {
       workerId,
       postId,
       status: 'Accepted',
     },
   })
-  applicationId = application.id
 })
 
 describe('POST /reviews', () => {
