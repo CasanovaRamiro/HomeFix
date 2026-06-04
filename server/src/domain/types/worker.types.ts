@@ -16,7 +16,7 @@ export interface DomainWorkerReview {
   mediaUrls: string | null
   createdAt: Date
   reviewer: { id: string; name: string }
-  jobApplication: {
+  application: {
     postId: string
     post: { id: string; title: string }
   }

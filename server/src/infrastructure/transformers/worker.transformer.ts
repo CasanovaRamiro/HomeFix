@@ -20,5 +20,5 @@ export const toDomainWorkerReview = (r: ReviewResult): DomainWorkerReview => ({
   mediaUrls: r.mediaUrls,
   createdAt: r.createdAt,
   reviewer: r.reviewer,
-  jobApplication: r.jobApplication,
+  application: r.application,
 })

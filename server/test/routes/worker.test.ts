@@ -117,12 +117,12 @@ describe('GET /workers/:id/reviews', () => {
         endDate: new Date('2026-06-02'),
       },
     })
-    const application = await prisma.jobApplication.create({
-      data: { workerId: worker.id, postId: post.id },
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: post.id, status: 'Accepted' },
     })
     await prisma.workerReview.create({
       data: {
-        jobApplicationId: application.id,
+        applicationId: application.id,
         reviewerId: client.id,
         workerId: worker.id,
         description: 'Great work!',
@@ -139,7 +139,7 @@ describe('GET /workers/:id/reviews', () => {
     expect(res.body[0].rating).toBe(5)
     expect(res.body[0].description).toBe('Great work!')
     expect(res.body[0].reviewer.name).toBe('Carlos')
-    expect(res.body[0].jobApplication.post.title).toBe('Fix pipes')
+    expect(res.body[0].application.post.title).toBe('Fix pipes')
   })
 
   it('returns an empty array when the worker has no reviews', async () => {

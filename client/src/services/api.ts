@@ -40,7 +40,7 @@ export interface WorkerReview {
   mediaUrls: string | null
   createdAt: string
   reviewer: { id: string; name: string }
-  jobApplication: {
+  application: {
     postId: string
     post: { id: string; title: string }
   }
