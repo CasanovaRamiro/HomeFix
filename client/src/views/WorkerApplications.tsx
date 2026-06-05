@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
+import ReviewStarRating from '../components/review/ReviewStarRating'
+import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
 
 const PAGE_SIZE = 8
 import { useNavigate } from 'react-router-dom'
@@ -13,6 +15,7 @@ interface Application {
   postId: string
   title: string
   client: string
+  clientId: string | null
   location: string
   appliedAt: string
   serviceDate: string
@@ -20,7 +23,7 @@ interface Application {
   description?: string
   category?: string
   image?: string
-  hasReview?: boolean
+  hasReview: boolean
   clientRating: number
 }
 
@@ -163,9 +166,156 @@ function CancelModal({
   )
 }
 
+// ─── Review Modal ──────────────────────────────────────────────────────────────
+
+function ReviewModal({
+  applicationId,
+  clientName,
+  onClose,
+  onSuccess,
+}: {
+  applicationId: string
+  clientName: string
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const { submitting, submitted, error, submit } = useLeaveClientReview()
+  const [rating, setRating] = useState(0)
+  const [description, setDescription] = useState('')
+
+  const handleSubmit = async () => {
+    if (rating === 0) return
+    await submit({ applicationId, rating, description: description || undefined })
+  }
+
+  if (submitted) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }} onClick={onClose}>
+        <div style={{
+          background: '#fff', borderRadius: 20,
+          padding: '32px 28px', maxWidth: 420, width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center',
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: '#ECFDF5', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+          }}>
+            <Star size={26} color="#10B981" fill="#10B981" />
+          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 10px' }}>
+            ¡Reseña enviada!
+          </h2>
+          <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 28px', lineHeight: 1.6 }}>
+            Tu reseña sobre <strong>{clientName}</strong> se ha publicado correctamente.
+          </p>
+          <button
+            onClick={() => { onSuccess(); onClose() }}
+            style={{
+              width: '100%', padding: '12px 0', borderRadius: 10,
+              border: 'none', background: '#0F172A', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#fff', borderRadius: 20,
+        padding: '32px 28px', maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+      }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', textAlign: 'center' }}>
+          Calificar a {clientName}
+        </h2>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 24px', textAlign: 'center' }}>
+          ¿Cómo fue tu experiencia trabajando con este cliente?
+        </p>
+
+        <div style={{ marginBottom: 24 }}>
+          <ReviewStarRating value={rating} onChange={setRating} />
+        </div>
+
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Contanos cómo fue tu experiencia (opcional)"
+          maxLength={500}
+          rows={4}
+          style={{
+            width: '100%', padding: '12px 14px', borderRadius: 10,
+            border: '1.5px solid #E2E8F0', fontSize: 13, color: '#0F172A',
+            fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box',
+            outline: 'none', lineHeight: 1.5,
+          }}
+        />
+        <div style={{ fontSize: 11, color: '#94A3B8', textAlign: 'right', marginTop: 4 }}>
+          {description.length}/500
+        </div>
+
+        {error && (
+          <p style={{ fontSize: 13, color: '#DC2626', margin: '12px 0 0', textAlign: 'center' }}>
+            {error}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 10,
+              border: '1.5px solid #E2E8F0', background: '#fff',
+              color: '#475569', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || rating === 0}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 10,
+              border: 'none',
+              background: submitting || rating === 0 ? '#93C5FD' : '#2563EB',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+              cursor: submitting || rating === 0 ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#1D4ED8' }}
+            onMouseLeave={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#2563EB' }}
+          >
+            {submitting ? 'Enviando...' : 'Enviar reseña'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Application Card ─────────────────────────────────────────────────────────
 
-function ApplicationCard({ app, onCancelled }: { app: Application; onCancelled: (id: string) => void }) {
+function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application; onCancelled: (id: string) => void; onReviewClick: (app: Application) => void }) {
   const appliedAt   = app.appliedAt?.substring(0, 10)   ?? ''
   const serviceDate = app.serviceDate?.substring(0, 10) ?? ''
   const [showCancel, setShowCancel] = useState(false)
@@ -334,13 +484,15 @@ function ApplicationCard({ app, onCancelled }: { app: Application; onCancelled: 
                 Ver reseña
               </button>
             ) : (
-              <button style={{
-                width: '100%', background: '#2563EB', border: 'none',
-                borderRadius: 10, color: '#fff',
-                fontSize: 13, fontWeight: 600, padding: '11px 0',
-                cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', gap: 8, transition: 'background 0.15s',
-              }}
+              <button
+                onClick={() => onReviewClick(app)}
+                style={{
+                  width: '100%', background: '#2563EB', border: 'none',
+                  borderRadius: 10, color: '#fff',
+                  fontSize: 13, fontWeight: 600, padding: '11px 0',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: 8, transition: 'background 0.15s',
+                }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1D4ED8' }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#2563EB' }}
               >
@@ -378,6 +530,7 @@ export default function WorkerApplications() {
   const [page, setPage]                 = useState(1)
   const [loading, setLoading]           = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
+  const [reviewTarget, setReviewTarget] = useState<{ appId: string; clientName: string } | null>(null)
   const navigate = useNavigate()
 
   const mockClientRating = (seed: string): number => {
@@ -393,7 +546,12 @@ export default function WorkerApplications() {
     const fetchApplications = async () => {
       try {
         const res = await api.get<Application[]>('/applications/my-applications')
-        const data = res.data.map((a) => ({ ...a, clientRating: mockClientRating(a.postId) }))
+        const data = res.data.map((a) => ({
+          clientId: null as string | null,
+          hasReview: false,
+          ...a,
+          clientRating: mockClientRating(a.postId),
+        }))
         if (cancelled) return
         setApplications((prev) => {
           const prevMap = new Map(prev.map((a) => [a.id, a.status]))
@@ -554,6 +712,7 @@ export default function WorkerApplications() {
                   key={`${a.id}-${a.postId}`}
                   app={a}
                   onCancelled={(id) => setApplications((prev) => prev.filter((x) => x.id !== id))}
+                  onReviewClick={(app) => setReviewTarget({ appId: app.id, clientName: app.client })}
                 />
               ))}
             </div>
@@ -634,6 +793,19 @@ export default function WorkerApplications() {
       <div style={{ marginTop: 48 }}>
         <LandingFooter />
       </div>
+
+      {reviewTarget && (
+        <ReviewModal
+          applicationId={reviewTarget.appId}
+          clientName={reviewTarget.clientName}
+          onClose={() => setReviewTarget(null)}
+          onSuccess={() => {
+            setApplications((prev) => prev.map((a) =>
+              a.id === reviewTarget.appId ? { ...a, hasReview: true } : a
+            ))
+          }}
+        />
+      )}
     </div>
   )
 }
