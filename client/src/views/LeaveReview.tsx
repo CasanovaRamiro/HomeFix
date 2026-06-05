@@ -33,7 +33,7 @@ export default function LeaveReview() {
     trabajador: { id: '', nombre: 'Trabajador', categoria: '', verificado: false },
   }
   const { trabajador } = target
-  const { submitting, submitted, submit } = useLeaveReview()
+  const { submitting, submitted, error, submit } = useLeaveReview()
 
   const [workerData, setWorkerData] = useState<{ name: string; category: string } | null>(null)
 
@@ -207,6 +207,13 @@ export default function LeaveReview() {
           </section>
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mx-auto max-w-xl px-5 pt-3 sm:px-6">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* Barra de acciones */}
       <div className="sticky bottom-0 border-t border-border bg-card/85 backdrop-blur">
