@@ -12,7 +12,11 @@ router.post('/', validateReviewBody, async (req, res, next) => {
     const result = await createReview(req.body.postId, user.id, req.body)
     res.status(201).json(result)
   } catch (error) {
-    const err = error as Error & { status?: number }
+    const err = error as Error & { status?: number; code?: string }
+    if (err.code === 'P2002') {
+      res.status(409).json({ error: 'Ya dejaste una reseña para este trabajo' })
+      return
+    }
     if (!err.status) err.status = 400
     next(err)
   }

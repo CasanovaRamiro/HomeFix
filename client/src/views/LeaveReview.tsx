@@ -129,6 +129,9 @@ export default function LeaveReview() {
       {/* Body */}
       <div className="flex-1">
         <div className="mx-auto -mt-3 max-w-xl space-y-4 px-5 py-6 sm:px-6">
+          {error && (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+          )}
           {/* Resumen del trabajador */}
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-4">
