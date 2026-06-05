@@ -779,12 +779,33 @@ function Sidebar({ workerId }: { workerId: string }) {
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {VALIDATIONS.map((v) => (
-            <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
-              <CheckCircle2 size={18} color="#10B981" />
-            </div>
-          ))}
+          {VALIDATIONS.map((v) => {
+            if (v.label === 'Dni') {
+              return (
+                <button
+                  key={v.label}
+                  type="button"
+                  onClick={() => navigate('/kyc')}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', background: 'transparent', border: 'none', padding: 0,
+                    cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+                >
+                  <span style={{ fontSize: 13 }}>Dni</span>
+                  <ChevronRight size={18} color="#94A3B8" />
+                </button>
+              )
+            }
+            return (
+              <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
+                <CheckCircle2 size={18} color="#10B981" />
+              </div>
+            )
+          })}
         </div>
       </div>
 
