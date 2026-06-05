@@ -206,7 +206,7 @@ export const syncAuth0User = async (claims: Auth0Claims) => {
     name: claims.name ?? claims.nickname ?? claims.sub,
     password: managedPassword,
     phone: claims.phone_number,
-    role: claims.role,
+    role: claims.role ?? UserRole.Client,
   })
 
   return user

@@ -22,6 +22,7 @@ import AvailableJobs from './views/AvailableJobs'
 import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
+import AuthCallback from './views/AuthCallback'
 
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/signup"          element={<RegisterChoice />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/kyc" element={<KycVerification />} />
         <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
         <Route path="/users" element={<Users />} />
