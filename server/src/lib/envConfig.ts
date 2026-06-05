@@ -33,4 +33,6 @@ export const env = {
   get CLOUDINARY_CLOUD_NAME() { return process.env.CLOUDINARY_CLOUD_NAME! },
   get CLOUDINARY_API_KEY() { return process.env.CLOUDINARY_API_KEY! },
   get CLOUDINARY_API_SECRET() { return process.env.CLOUDINARY_API_SECRET! },
+  get DIDIT_API_KEY() { return process.env.DIDIT_API_KEY },
+  get DIDIT_WORKFLOW_ID() { return process.env.DIDIT_WORKFLOW_ID },
 }
