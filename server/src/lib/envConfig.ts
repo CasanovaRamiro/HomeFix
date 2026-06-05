@@ -35,4 +35,6 @@ export const env = {
   get CLOUDINARY_API_SECRET() { return process.env.CLOUDINARY_API_SECRET! },
   get TELEGRAM_BOT_TOKEN() { return process.env.TELEGRAM_BOT_TOKEN },
   get FRONTEND_URL() { return process.env.CORS_ORIGIN || 'http://localhost:5173' },
+  get DIDIT_API_KEY() { return process.env.DIDIT_API_KEY },
+  get DIDIT_WORKFLOW_ID() { return process.env.DIDIT_WORKFLOW_ID },
 }

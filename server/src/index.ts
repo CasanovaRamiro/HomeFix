@@ -11,11 +11,13 @@ import postRoutes from './presentation/routes/post.routes.js'
 import workerRoutes from './presentation/routes/worker.routes.js'
 
 import { errorHandler } from './presentation/middleware/error.middleware.js'
+import postRoutes from './presentation/routes/post.routes.js'
 import aiRoutes from './presentation/routes/ai.routes.js'
 import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
+import kycRoutes from './presentation/routes/kyc.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
 import telegramRoutes from './presentation/routes/telegram.routes.js'
 import { startBot } from './presentation/telegram/bot.js'
@@ -40,6 +42,7 @@ app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/upload', jwtCheck, uploadRoutes)
 app.use('/telegram', telegramRoutes)
+app.use('/kyc', jwtCheck, kycRoutes)
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {
