@@ -81,7 +81,7 @@ describe('validateClientReviewInput', () => {
 
 describe('createClientReview (service)', () => {
   it('should create a client review successfully', async () => {
-    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as any)
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
     vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
     vi.mocked(createClientReviewData).mockResolvedValue(mockReview)
 
@@ -112,7 +112,7 @@ describe('createClientReview (service)', () => {
   })
 
   it('should throw 403 when user is not the application worker', async () => {
-    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as any)
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
 
     await expect(
       createClientReview(applicationId, 'other-worker-id', { applicationId, rating: 5 }),
@@ -124,7 +124,7 @@ describe('createClientReview (service)', () => {
     vi.mocked(findApplicationById).mockResolvedValue({
       ...mockApplication,
       post: { userId: clientId, status: 'Active' },
-    } as any)
+    } as never)
 
     await expect(
       createClientReview(applicationId, workerId, { applicationId, rating: 5 }),
@@ -136,7 +136,7 @@ describe('createClientReview (service)', () => {
   })
 
   it('should throw 400 when a client review already exists', async () => {
-    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as any)
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
     vi.mocked(findClientReviewByApplicationId).mockResolvedValue(mockReview)
 
     await expect(
@@ -149,7 +149,7 @@ describe('createClientReview (service)', () => {
   })
 
   it('should create a review without description', async () => {
-    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as any)
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
     vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
     vi.mocked(createClientReviewData).mockResolvedValue({ ...mockReview, rating: 5, description: '' })
 
