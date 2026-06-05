@@ -19,7 +19,7 @@ import ClientDashboard from './views/ClientDashboard'
 import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
-import KycVerification from './views/KycVerification'
+import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
 
@@ -40,7 +40,7 @@ export default function App() {
         <Route path="/signup"          element={<RegisterChoice />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
-        <Route path="/kyc" element={<KycVerification />} />
+        <Route path="/kyc" element={<KycVerify />} />
         <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
         <Route path="/users" element={<Users />} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
