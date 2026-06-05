@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { env } from '../lib/envConfig'
+import type { ReviewInput } from '../types/review'
 
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
@@ -60,7 +61,7 @@ export interface UserPost {
   applicantCount: number
 }
 
-export const createReview = (data: { postId: string; rating: number; description?: string }) =>
+export const createReview = (data: ReviewInput) =>
   api.post('/reviews', data)
 
 export const getUserPosts = (): Promise<UserPost[]> =>

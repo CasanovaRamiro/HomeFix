@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import api from '../services/api'
+import type { ReviewInput } from '../types/review'
 
 export function useLeaveReview() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
-  const submit = async (data: { postId: string; rating: number; description?: string }) => {
+  const submit = async (data: ReviewInput) => {
     setSubmitting(true)
     setError('')
     try {
