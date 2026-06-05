@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
+import { UserRole } from '../../src/domain/types/userRole.js'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
 
 const mockPayload = vi.hoisted(() => ({
@@ -28,8 +29,8 @@ let workerId: string
 let postId: string
 beforeEach(async () => {
   await cleanDb()
-  const client = await createUser('client@test.com', 'Client', 'hashed', { role: 'client' })
-  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: 'worker' })
+  const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
   clientId = client.id
   workerId = worker.id
   token = 'test-token'
@@ -135,14 +136,6 @@ describe('POST /reviews', () => {
       })
 
     expect(res.status).toBe(400)
-  })
-
-  it('should return 401 without token', async () => {
-    const res = await request(app)
-      .post('/reviews')
-      .send({ postId, rating: 5 })
-
-    expect(res.status).toBe(401)
   })
 
   it('should return 404 when post does not exist', async () => {

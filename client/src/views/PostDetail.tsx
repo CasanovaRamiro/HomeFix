@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import api, { pausePost, cancelPost } from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
+import { ApplicationStatus } from '../types/application'
 import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
@@ -42,7 +43,7 @@ export default function PostDetail() {
   const handleComplete = async () => {
     try {
       await api.patch(`/posts/${id}/complete`)
-      const accepted = applicants.find(a => a.status === 'Accepted')
+      const accepted = applicants.find(a => a.status === ApplicationStatus.Accepted)
       navigate('/review', {
         state: {
           postId: post?.id,
@@ -140,7 +141,7 @@ export default function PostDetail() {
         <div className="max-w-7xl mx-auto">
           <PostCard
             post={post}
-            hasAcceptedWorker={applicants.some(a => a.status === 'Accepted')}
+            hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
             onComplete={handleComplete}
             onReopen={handleReopen}
             onViewReview={() => navigate('/review')}

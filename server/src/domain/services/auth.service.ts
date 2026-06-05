@@ -27,7 +27,7 @@ interface LoginInput {
   password?: string
 }
 
-interface Auth0Claims {
+export interface Auth0Claims {
   sub?: string
   email?: string
   name?: string

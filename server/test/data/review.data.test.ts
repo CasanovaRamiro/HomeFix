@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 import { createReview } from '../../src/infrastructure/database/review.database.js'
 
 let clientId: string
@@ -9,8 +10,8 @@ let applicationId: string
 
 beforeEach(async () => {
   await cleanDb()
-  const client = await createUser('client@test.com', 'Client', 'hashed', { role: 'client' })
-  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: 'worker' })
+  const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
   clientId = client.id
   workerId = worker.id
 
