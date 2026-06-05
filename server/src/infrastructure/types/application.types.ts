@@ -11,6 +11,7 @@ export interface PrismaApplicationWithPost {
     user: { id: string; name: string; surname: string }
     categories: { category: { name: string } }[]
   }
+  clientReview: { id: string } | null
 }
 
 export interface PrismaApplicationWithWorker {

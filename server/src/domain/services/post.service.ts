@@ -94,6 +94,10 @@ export const finalizePost = async (postId: string, userId: string) => {
   if (post.status !== 'Paused') {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
   }
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    await updateApplicationStatus(accepted.id, 'Completed')
+  }
   return updatePostStatus(postId, 'Completed')
 }
 
@@ -103,6 +107,10 @@ export const completePost = async (postId: string, userId: string) => {
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
   if (post.status !== 'In progress') {
     throw Object.assign(new Error('Post must be in progress to be completed'), { status: 400 })
+  }
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    await updateApplicationStatus(accepted.id, 'Completed')
   }
   return updatePostStatus(postId, 'Completed')
 }

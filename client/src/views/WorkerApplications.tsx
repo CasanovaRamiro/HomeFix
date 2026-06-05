@@ -547,8 +547,6 @@ export default function WorkerApplications() {
       try {
         const res = await api.get<Application[]>('/applications/my-applications')
         const data = res.data.map((a) => ({
-          clientId: null as string | null,
-          hasReview: false,
           ...a,
           clientRating: mockClientRating(a.postId),
         }))

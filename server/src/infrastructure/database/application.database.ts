@@ -12,6 +12,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
           categories: { include: { category: { select: { name: true } } } },
         },
       },
+      clientReview: { select: { id: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -49,7 +50,7 @@ export const deleteApplication = (workerId: string, applicationId: string) =>
 
 export const findAcceptedApplication = (postId: string) =>
   prisma.application.findFirst({
-    where: { postId, status: 'Accepted' },
+    where: { postId, status: { in: ['Accepted', 'Completed'] } },
   })
 
 export const findApplicationsByPost = async (postId: string): Promise<DomainPostApplication[]> => {

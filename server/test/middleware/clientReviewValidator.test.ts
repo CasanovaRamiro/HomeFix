@@ -1,0 +1,86 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Request, Response, NextFunction } from 'express'
+import { validateClientReviewBody } from '../../src/presentation/middleware/clientReview.middleware.js'
+
+function createReq(body: Record<string, unknown>): Request {
+  return { body } as Request
+}
+
+let req: Request
+let res: Response
+let next: NextFunction
+let statusMock: ReturnType<typeof vi.fn>
+let jsonMock: ReturnType<typeof vi.fn>
+
+beforeEach(() => {
+  req = createReq({ applicationId: 'app-1', rating: 5, description: 'Great client!' })
+  statusMock = vi.fn().mockReturnThis()
+  jsonMock = vi.fn().mockReturnThis()
+  res = { status: statusMock, json: jsonMock } as unknown as Response
+  next = vi.fn()
+})
+
+describe('validateClientReviewBody', () => {
+  it('should call next when input is valid', () => {
+    validateClientReviewBody(req, res, next)
+    expect(next).toHaveBeenCalled()
+    expect(statusMock).not.toHaveBeenCalled()
+  })
+
+  it('should call next when description is optional', () => {
+    req.body = { applicationId: 'app-1', rating: 5 }
+    validateClientReviewBody(req, res, next)
+    expect(next).toHaveBeenCalled()
+  })
+
+  it('should return 400 when applicationId is missing', () => {
+    req.body = { rating: 5 }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'applicationId is required' })
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should return 400 when rating is 0', () => {
+    req.body = { applicationId: 'app-1', rating: 0 }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'Rating must be an integer between 1 and 5' })
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should return 400 when rating is 6', () => {
+    req.body = { applicationId: 'app-1', rating: 6 }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should return 400 when rating is not an integer', () => {
+    req.body = { applicationId: 'app-1', rating: 3.5 }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should return 400 when description exceeds 500 characters', () => {
+    req.body = { applicationId: 'app-1', rating: 5, description: 'a'.repeat(501) }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'Description must not exceed 500 characters' })
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it('should accept description with exactly 500 characters', () => {
+    req.body = { applicationId: 'app-1', rating: 5, description: 'a'.repeat(500) }
+    validateClientReviewBody(req, res, next)
+    expect(next).toHaveBeenCalled()
+  })
+
+  it('should return 400 when description is not a string', () => {
+    req.body = { applicationId: 'app-1', rating: 5, description: 123 }
+    validateClientReviewBody(req, res, next)
+    expect(statusMock).toHaveBeenCalledWith(400)
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'Description must be a string' })
+  })
+})
