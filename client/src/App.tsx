@@ -40,7 +40,7 @@ export default function App() {
         <Route path="/signup"          element={<RegisterChoice />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
-        <Route path="/kyc" element={<KycVerify />} />
+        <Route path="/kyc" element={<PrivateRoute><KycVerify /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
         <Route path="/users" element={<Users />} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
