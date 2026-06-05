@@ -31,7 +31,7 @@ async function clean() {
   await prisma.post.deleteMany()
   await prisma.category.deleteMany()
   await prisma.userCategory.deleteMany()
-  await prisma.jobApplication.deleteMany()
+
   await prisma.workerReview.deleteMany()
   await prisma.application.deleteMany()
   await prisma.user.deleteMany()

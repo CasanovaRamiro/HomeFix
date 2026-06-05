@@ -91,32 +91,32 @@ model JobApplication {
   createdAt DateTime      @default(now())
   worker    User          @relation("WorkerApplications", fields: [workerId], references: [id], onDelete: Cascade)
   post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  review    WorkerReview?
 }
 
 model WorkerReview {
-  id               String         @id @default(uuid())
-  jobApplicationId String         @unique
-  reviewerId       String
-  workerId         String
-  description      String         @db.Text
-  rating           Int
-  mediaUrls        String?        @db.Text
-  createdAt        DateTime       @default(now())
-  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
-  reviewer         User           @relation("ReviewsGiven", fields: [reviewerId], references: [id])
-  worker           User           @relation("ReviewsReceived", fields: [workerId], references: [id])
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  reviewerId    String
+  workerId      String
+  description   String      @db.Text
+  rating        Int
+  mediaUrls     String?     @db.Text
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer      User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  worker        User        @relation("ReviewsReceived", fields: [workerId], references: [id])
 }
 
 model Application {
-  id        String   @id @default(uuid())
+  id        String         @id @default(uuid())
   workerId  String
   postId    String
-  status    String   @default("Pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  worker    User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  status    String         @default("Pending")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  post      Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  worker    User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  review    WorkerReview?
 
   @@unique([workerId, postId])
 }

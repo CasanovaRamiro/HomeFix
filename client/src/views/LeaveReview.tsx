@@ -1,13 +1,15 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { BadgeCheck, CheckCircle, Loader2, Star } from 'lucide-react'
 import FileUpload from '../components/ui/FileUpload'
 import ReviewStarRating from '../components/review/ReviewStarRating'
+import { useLeaveReview } from '../hooks/useLeaveReview'
+import { getWorker } from '../services/api'
 
 const MAX_CHARS = 500
 
 export interface ReviewTarget {
-  trabajoId: string
+  postId: string
   titulo: string
   fecha: string
   ubicacion: string
@@ -20,49 +22,50 @@ export interface ReviewTarget {
   }
 }
 
-// Mock — reemplazá por datos del trabajo finalizado (props / loader / fetch)
-const MOCK: ReviewTarget = {
-  trabajoId: '1',
-  titulo: 'Reparación de tubería en cocina',
-  fecha: '10 de mayo de 2026',
-  ubicacion: 'Recoleta, Buenos Aires',
-  trabajador: {
-    id: '7',
-    nombre: 'Pedro',
-    categoria: 'Plomería',
-    imagen:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces',
-    verificado: true,
-  },
-}
-
-export default function LeaveReview({ target = MOCK }: { target?: ReviewTarget }) {
+export default function LeaveReview() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const target = (location.state as ReviewTarget | null) ?? {
+    postId: '',
+    titulo: 'Sin trabajo',
+    fecha: '',
+    ubicacion: '',
+    trabajador: { id: '', nombre: 'Trabajador', categoria: '', verificado: false },
+  }
   const { trabajador } = target
+  const { submitting, submitted, error, submit } = useLeaveReview()
+
+  const [workerData, setWorkerData] = useState<{ name: string; category: string } | null>(null)
+
+  useEffect(() => {
+    if (!trabajador.id) return
+    getWorker(trabajador.id)
+      .then((w) => {
+        setWorkerData({
+          name: w.name,
+          category: (w.categories[0] as { name?: string } | undefined)?.name ?? '',
+        })
+      })
+      .catch(() => {})
+  }, [trabajador.id])
+
+  const workerNombre = workerData?.name ?? trabajador.nombre
+  const workerCategoria = workerData?.category ?? trabajador.categoria
 
   const [rating, setRating] = useState(0)
   const [comentario, setComentario] = useState('')
   const [fotos, setFotos] = useState<File[]>([])
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  const initials = trabajador.nombre
+  const initials = workerNombre
     .split(' ')
     .map((w) => w[0])
     .slice(0, 2)
     .join('')
 
   const handleSubmit = async () => {
-    if (rating === 0) return
-    setSubmitting(true)
-    try {
-      // TODO: enviar a tu API — p.ej. reviewsService.create({ ... })
-      await new Promise((r) => setTimeout(r, 1200))
-      setSubmitted(true)
-    } finally {
-      setSubmitting(false)
-    }
+    if (rating === 0 || !target.postId) return
+    await submit({ postId: target.postId, rating, description: comentario || undefined })
   }
 
   /* ── Pantalla de agradecimiento ─────────────────────────────── */
@@ -80,7 +83,7 @@ export default function LeaveReview({ target = MOCK }: { target?: ReviewTarget }
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             Tu opinión ayuda a{' '}
-            <span className="font-semibold text-primary-dark">{trabajador.nombre}</span> y a otros
+            <span className="font-semibold text-primary-dark">{workerNombre}</span> y a otros
             clientes a tomar mejores decisiones.
           </p>
           <div className="mt-5 flex items-center justify-center gap-1">
@@ -132,7 +135,7 @@ export default function LeaveReview({ target = MOCK }: { target?: ReviewTarget }
               {trabajador.imagen && !imgError ? (
                 <img
                   src={trabajador.imagen}
-                  alt={trabajador.nombre}
+                  alt={workerNombre}
                   onError={() => setImgError(true)}
                   className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover object-top ring-1 ring-black/5"
                 />
@@ -144,14 +147,14 @@ export default function LeaveReview({ target = MOCK }: { target?: ReviewTarget }
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h2 className="truncate text-base font-bold text-primary-dark">
-                    {trabajador.nombre}
+                    {workerNombre}
                   </h2>
                   {trabajador.verificado && (
                     <BadgeCheck className="h-[18px] w-[18px] flex-shrink-0 text-accent" />
                   )}
                 </div>
                 <span className="mt-0.5 inline-block rounded-md bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
-                  {trabajador.categoria}
+                  {workerCategoria}
                 </span>
                 <p className="mt-1.5 truncate text-[13px] text-muted">{target.titulo}</p>
               </div>
@@ -204,6 +207,13 @@ export default function LeaveReview({ target = MOCK }: { target?: ReviewTarget }
           </section>
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mx-auto max-w-xl px-5 pt-3 sm:px-6">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* Barra de acciones */}
       <div className="sticky bottom-0 border-t border-border bg-card/85 backdrop-blur">

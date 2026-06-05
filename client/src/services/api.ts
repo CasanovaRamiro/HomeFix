@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { env } from '../lib/envConfig'
+import type { ReviewInput } from '../types/review'
 
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
@@ -40,7 +41,7 @@ export interface WorkerReview {
   mediaUrls: string | null
   createdAt: string
   reviewer: { id: string; name: string }
-  jobApplication: {
+  application: {
     postId: string
     post: { id: string; title: string }
   }
@@ -59,6 +60,9 @@ export interface UserPost {
   worker: { id: string; name: string } | null
   applicantCount: number
 }
+
+export const createReview = (data: ReviewInput) =>
+  api.post('/reviews', data)
 
 export const getUserPosts = (): Promise<UserPost[]> =>
   api.post<UserPost[]>('/posts/user-posts').then((r) => r.data)
