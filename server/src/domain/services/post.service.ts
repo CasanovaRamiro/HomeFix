@@ -7,6 +7,8 @@ import {
   searchByDistance,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
+import { ApplicationStatus } from '../types/applicationStatus.js'
+import { PostStatus } from '../types/postStatus.js'
 import type { CreatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 
 export const validatePostInput = (input: CreatePostInput) => {
@@ -105,14 +107,14 @@ export const completePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'In progress') {
+  if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be completed'), { status: 400 })
   }
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
-    await updateApplicationStatus(accepted.id, 'Completed')
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
   }
-  return updatePostStatus(postId, 'Completed')
+  return updatePostStatus(postId, ApplicationStatus.Completed)
 }
 
 export const reopenPost = async (postId: string, userId: string) => {

@@ -1,5 +1,6 @@
 import { findApplicationById } from '../../infrastructure/database/application.database.js'
 import { createClientReview as createClientReviewData, findClientReviewByApplicationId } from '../../infrastructure/database/clientReview.database.js'
+import { PostStatus } from '../types/postStatus.js'
 import type { CreateClientReviewInput, DomainClientReview } from '../types/clientReview.types.js'
 
 export const validateClientReviewInput = (input: CreateClientReviewInput) => {
@@ -28,7 +29,7 @@ export const createClientReview = async (
     throw Object.assign(new Error('Forbidden'), { status: 403 })
   }
 
-  if (application.post.status !== 'Completed') {
+  if (application.post.status !== PostStatus.Completed) {
     throw Object.assign(new Error('Post must be completed before reviewing'), { status: 400 })
   }
 

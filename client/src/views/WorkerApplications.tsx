@@ -3,6 +3,7 @@ import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft
 import LandingFooter from '../components/landing/LandingFooter'
 import ReviewStarRating from '../components/review/ReviewStarRating'
 import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
+import { ApplicationStatus } from '../types/application'
 
 const PAGE_SIZE = 8
 import { useNavigate } from 'react-router-dom'
@@ -19,7 +20,7 @@ interface Application {
   location: string
   appliedAt: string
   serviceDate: string
-  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
+  status: ApplicationStatus
   description?: string
   category?: string
   image?: string
@@ -32,10 +33,10 @@ type Tab = (typeof TABS)[number]
 
 const TAB_TO_STATUS: Record<Tab, string> = {
   Todas:       '',
-  Pendientes:  'Pending',
-  Aceptadas:   'Accepted',
-  Rechazadas:  'Rejected',
-  Completadas: 'Completed',
+  Pendientes:  ApplicationStatus.Pending,
+  Aceptadas:   ApplicationStatus.Accepted,
+  Rechazadas:  ApplicationStatus.Rejected,
+  Completadas: ApplicationStatus.Completed,
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -48,10 +49,10 @@ function getInitials(name: string): string {
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 const STATUS_CFG: Record<string, { bg: string; color: string; border: string; label: string }> = {
-  Accepted:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Aceptada'   },
-  Rejected:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Rechazada'  },
-  Pending:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pendiente'  },
-  Completed: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Completada' },
+  [ApplicationStatus.Accepted]:  { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Aceptada'   },
+  [ApplicationStatus.Rejected]:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Rechazada'  },
+  [ApplicationStatus.Pending]:   { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pendiente'  },
+  [ApplicationStatus.Completed]: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Completada' },
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -425,9 +426,9 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
       </div>
 
       {/* Action button — varies by status */}
-      {app.status !== 'Rejected' && (
+      {app.status !== ApplicationStatus.Rejected && (
         <div style={{ padding: '0 20px 20px' }}>
-          {app.status === 'Accepted' && (
+          {app.status === ApplicationStatus.Accepted && (
             <button style={{
               width: '100%', background: '#10B981', border: 'none',
               borderRadius: 10, color: '#fff',
@@ -442,7 +443,7 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
             </button>
           )}
 
-          {app.status === 'Pending' && (
+          {app.status === ApplicationStatus.Pending && (
             <button
               onClick={() => setShowCancel(true)}
               style={{
@@ -468,7 +469,7 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
             </button>
           )}
 
-          {app.status === 'Completed' && (
+          {app.status === ApplicationStatus.Completed && (
             app.hasReview ? (
               <button style={{
                 width: '100%', background: '#EFF6FF',
@@ -583,10 +584,10 @@ export default function WorkerApplications() {
 
   const metrics = useMemo(() => ({
     total:      applications.length,
-    pending:    applications.filter((a) => a.status === 'Pending').length,
-    accepted:   applications.filter((a) => a.status === 'Accepted').length,
-    rejected:   applications.filter((a) => a.status === 'Rejected').length,
-    completed:  applications.filter((a) => a.status === 'Completed').length,
+    pending:    applications.filter((a) => a.status === ApplicationStatus.Pending).length,
+    accepted:   applications.filter((a) => a.status === ApplicationStatus.Accepted).length,
+    rejected:   applications.filter((a) => a.status === ApplicationStatus.Rejected).length,
+    completed:  applications.filter((a) => a.status === ApplicationStatus.Completed).length,
   }), [applications])
 
   const filtered = useMemo(() => {
