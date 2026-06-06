@@ -5,7 +5,7 @@ const TIMEOUT_MS = 10_000
 
 interface DiditSessionResponse {
   session_id?: string
-  session_url?: string
+  url?: string
   workflow_id?: string
   vendor_data?: string
   status?: string
@@ -22,6 +22,7 @@ export const createDiditSession = async (
 ): Promise<{ sessionUrl: string; sessionId: string }> => {
   const apiKey = env.DIDIT_API_KEY
   const workflowId = env.DIDIT_WORKFLOW_ID
+  const callbackUrl = env.DIDIT_CALLBACK_URL
 
   if (!apiKey) throw createHttpError(500, 'DIDIT_API_KEY is not configured')
   if (!workflowId) throw createHttpError(500, 'DIDIT_WORKFLOW_ID is not configured')
@@ -41,6 +42,8 @@ export const createDiditSession = async (
       body: JSON.stringify({
         workflow_id: workflowId,
         vendor_data: vendorData,
+        expected_details: { id_country: 'ARG' },
+        ...(callbackUrl ? { callback: callbackUrl, callback_method: 'both' } : {}),
       }),
       signal: controller.signal,
     })
@@ -58,10 +61,10 @@ export const createDiditSession = async (
   }
 
   const data = (await response.json()) as DiditSessionResponse
-  if (!data.session_url || !data.session_id) {
-    console.error('[KYC] Didit response missing session_url/session_id:', data)
+  if (!data.url || !data.session_id) {
+    console.error('[KYC] Didit response missing url/session_id:', data)
     throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
   }
 
-  return { sessionUrl: data.session_url, sessionId: data.session_id }
+  return { sessionUrl: data.url, sessionId: data.session_id }
 }
