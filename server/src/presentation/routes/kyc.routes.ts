@@ -1,10 +1,9 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { startKycVerification } from '../../domain/services/kyc.service.js'
 
 const router = Router()
 
-router.post('/session', jwtCheck, async (req, res, next) => {
+router.post('/session', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { email?: string; sub?: string } | undefined
     const email = claims?.email
