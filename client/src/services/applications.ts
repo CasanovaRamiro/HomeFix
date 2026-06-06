@@ -29,4 +29,4 @@ export const acceptApplication = (applicationId: string): Promise<ApplicationRes
   api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`).then(r => r.data)
 
 export const createClientReview = (data: ClientReviewInput) =>
-  api.post('/client-reviews', data)
+  api.post('/reviews/client', data)
