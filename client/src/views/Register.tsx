@@ -362,7 +362,7 @@ export default function Register() {
             {/* Google button */}
             <button
               type="button"
-              onClick={() => void loginWithGoogle()}
+              onClick={() => void loginWithGoogle(true)}
               className="w-full h-12 flex items-center justify-center gap-3 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all"
             >
               <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">

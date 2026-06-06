@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { exchangeCodeForTokens } from '../lib/auth0'
 import { emitAuthChange } from '../hooks/useAuth'
 import api from '../services/api'
@@ -8,14 +9,25 @@ import { UserRole } from '../types/user'
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [error, setError] = useState('')
+  const didRun = useRef(false)
 
   useEffect(() => {
+    if (didRun.current) return
+    didRun.current = true
+
     const params = new URLSearchParams(window.location.search)
     const code = params.get('code')
     const errorParam = params.get('error')
     const errorDescription = params.get('error_description')
 
     if (errorParam) {
+      if (errorParam === 'access_denied') {
+        const isRegister = sessionStorage.getItem('pkce_register') === '1'
+        sessionStorage.removeItem('pkce_register')
+        sessionStorage.removeItem('pkce_verifier')
+        navigate(isRegister ? '/register' : '/login', { replace: true })
+        return
+      }
       setError(decodeURIComponent(errorDescription ?? errorParam))
       return
     }
@@ -29,14 +41,20 @@ export default function AuthCallback() {
       try {
         const tokens = await exchangeCodeForTokens(code)
 
+        const isRegister = sessionStorage.getItem('pkce_register') === '1'
+        sessionStorage.removeItem('pkce_register')
+
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${tokens.access_token}`,
+        }
+        if (isRegister) headers['x-auth-source'] = 'register'
+
         const { data: user } = await api.get<{
           id: string
           name: string
           email: string
           role: string
-        }>('/auth/me', {
-          headers: { Authorization: `Bearer ${tokens.access_token}` },
-        })
+        }>('/auth/me', { headers })
 
         localStorage.setItem('token', tokens.access_token)
         localStorage.setItem('user', JSON.stringify({ id: user.id, name: user.name, role: user.role }))
@@ -45,6 +63,10 @@ export default function AuthCallback() {
         navigate(user.role === UserRole.Worker ? '/worker' : '/dashboard', { replace: true })
       } catch (err) {
         console.error('Auth callback error:', err)
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          navigate('/login?google=unregistered', { replace: true })
+          return
+        }
         setError('No se pudo completar el inicio de sesión con Google. Intenta de nuevo.')
       }
     })()

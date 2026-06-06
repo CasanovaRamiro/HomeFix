@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
   Mail,
@@ -33,6 +33,8 @@ export default function Login() {
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const googleUnregistered = searchParams.get('google') === 'unregistered'
 
   const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [field]: e.target.value })
@@ -163,6 +165,21 @@ export default function Login() {
               </svg>
               Continuar con Google
             </button>
+
+            {googleUnregistered && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+                </svg>
+                <span>
+                  Este correo de Google no está registrado.{' '}
+                  <Link to="/register" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+                    Registrate gratis
+                  </Link>{' '}
+                  para continuar.
+                </span>
+              </div>
+            )}
 
             <p className="au-register" style={{ marginTop: '20px' }}>
               No tienes una cuenta? <Link to="/register">Registrate gratis</Link>

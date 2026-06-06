@@ -19,11 +19,12 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
     .replace(/=/g, '')
 }
 
-export async function loginWithGoogle() {
+export async function loginWithGoogle(isRegister?: boolean) {
   const verifier = generateCodeVerifier()
   const challenge = await generateCodeChallenge(verifier)
 
   sessionStorage.setItem('pkce_verifier', verifier)
+  if (isRegister) sessionStorage.setItem('pkce_register', '1')
 
   const params = new URLSearchParams({
     response_type: 'code',
