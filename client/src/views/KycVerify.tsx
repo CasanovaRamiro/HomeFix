@@ -56,7 +56,7 @@ const STATUS_COPY: Record<string, StatusCopy> = {
     title: 'La verificación expiró',
     description: 'Volvé a iniciar el proceso para validarte cuando quieras.',
   },
-  'Not Finished': {
+  Abandoned: {
     icon: Clock,
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-600',
@@ -101,7 +101,7 @@ function toneForStatus(rawStatus: string | null): Tone {
 export default function KycVerify() {
   const [searchParams] = useSearchParams()
   const diditStatus = searchParams.get('status')
-  const sessionId = searchParams.get('session_id')
+  const sessionId = searchParams.get('verificationSessionId')
   const showResult = Boolean(diditStatus || sessionId)
 
   const [state, setState] = useState<ViewState>('idle')
