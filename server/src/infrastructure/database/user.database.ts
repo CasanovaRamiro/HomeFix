@@ -1,5 +1,8 @@
+import { Prisma } from '@prisma/client'
 import prisma from '../../lib/prisma.js'
 import type { CreateUserInput, DomainUser } from '../../domain/types/user.types.js'
+import type { DomainClientReview } from '../../domain/types/review.types.js'
+import type { DomainWorkerReview } from '../../domain/types/worker.types.js'
 
 const publicFields = {
   id: true,
@@ -15,6 +18,77 @@ export const findByEmail = (email: string) =>
 
 export const findAll = (): Promise<DomainUser[]> =>
   prisma.user.findMany({ select: publicFields })
+
+const clientReviewFields = {
+  id: true,
+  rating: true,
+  description: true,
+  createdAt: true,
+  reviewer: { select: { id: true, name: true } },
+  client: { select: { id: true, name: true } },
+} satisfies Prisma.ClientReviewSelect
+
+type ClientReviewResult = Prisma.ClientReviewGetPayload<{ select: typeof clientReviewFields }>
+
+const toDomainClientReview = (r: ClientReviewResult): DomainClientReview => ({
+  id: r.id,
+  rating: r.rating,
+  description: r.description,
+  createdAt: r.createdAt,
+  reviewer: r.reviewer,
+  client: r.client,
+})
+
+const workerReviewFields = {
+  id: true,
+  rating: true,
+  description: true,
+  mediaUrls: true,
+  createdAt: true,
+  reviewer: { select: { id: true, name: true } },
+  application: {
+    select: {
+      postId: true,
+      post: { select: { id: true, title: true } },
+    },
+  },
+} satisfies Prisma.WorkerReviewSelect
+
+type WorkerReviewResult = Prisma.WorkerReviewGetPayload<{ select: typeof workerReviewFields }>
+
+const toDomainWorkerReview = (r: WorkerReviewResult): DomainWorkerReview => ({
+  id: r.id,
+  rating: r.rating,
+  description: r.description,
+  mediaUrls: r.mediaUrls,
+  createdAt: r.createdAt,
+  reviewer: r.reviewer,
+  application: r.application,
+})
+
+export const findClientReviewsByUserId = (userId: string): Promise<DomainClientReview[]> =>
+  prisma.clientReview
+    .findMany({ where: { clientId: userId }, select: clientReviewFields, orderBy: { createdAt: 'desc' } })
+    .then((raw) => raw.map(toDomainClientReview))
+
+export const findWorkerReviewsByUserId = (userId: string): Promise<DomainWorkerReview[]> =>
+  prisma.workerReview
+    .findMany({ where: { workerId: userId }, select: workerReviewFields, orderBy: { createdAt: 'desc' } })
+    .then((raw) => raw.map(toDomainWorkerReview))
+
+export const getWorkerReviewAggregate = (userId: string) =>
+  prisma.workerReview.aggregate({
+    where: { workerId: userId },
+    _avg: { rating: true },
+    _count: true,
+  })
+
+export const getClientReviewAggregate = (userId: string) =>
+  prisma.clientReview.aggregate({
+    where: { clientId: userId },
+    _avg: { rating: true },
+    _count: true,
+  })
 
 const createDefaultDeps = async () => {
   const dni = await prisma.nationalIdType.upsert({
