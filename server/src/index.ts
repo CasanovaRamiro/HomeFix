@@ -14,7 +14,6 @@ import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
-import clientReviewRoutes from './presentation/routes/clientReview.routes.js'
 
 export const app = express()
 const PORT = env.PORT
@@ -34,7 +33,6 @@ app.use('/categories', categoryRoutes)
 app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
-app.use('/client-reviews', jwtCheck, clientReviewRoutes)
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {

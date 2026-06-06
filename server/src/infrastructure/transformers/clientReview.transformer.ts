@@ -1,5 +1,5 @@
-import type { ClientReviewResult } from '../database/clientReview.database.js'
-import type { DomainClientReview } from '../../domain/types/clientReview.types.js'
+import type { ClientReviewResult } from '../database/review.database.js'
+import type { DomainClientReview } from '../../domain/types/review.types.js'
 
 export const toDomainClientReview = (r: ClientReviewResult): DomainClientReview => ({
   id: r.id,

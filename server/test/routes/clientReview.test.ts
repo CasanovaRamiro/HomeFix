@@ -56,10 +56,10 @@ beforeEach(async () => {
   applicationId = application.id
 })
 
-describe('POST /client-reviews', () => {
+describe('POST /reviews/client', () => {
   it('should create a client review with valid data', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -77,7 +77,7 @@ describe('POST /client-reviews', () => {
 
   it('should create a client review without description', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -90,7 +90,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 400 when rating is invalid', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -102,7 +102,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 400 when rating exceeds 5', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -114,7 +114,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 400 when applicationId is missing', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         rating: 5,
@@ -126,7 +126,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 400 when description exceeds 500 characters', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -139,7 +139,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 404 when application does not exist', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId: 'non-existent-id',
@@ -168,7 +168,7 @@ describe('POST /client-reviews', () => {
     })
 
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId: activeApplication.id,
@@ -191,7 +191,7 @@ describe('POST /client-reviews', () => {
     })
 
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .set('Authorization', `Bearer ${token}`)
       .send({
         applicationId,
@@ -205,7 +205,7 @@ describe('POST /client-reviews', () => {
 
   it('should return 401 without authorization token', async () => {
     const res = await request(app)
-      .post('/client-reviews')
+      .post('/reviews/client')
       .send({
         applicationId,
         rating: 5,
