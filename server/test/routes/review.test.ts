@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { UserRole } from '../../src/domain/types/userRole.js'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
+import type { JWTPayload } from 'express-oauth2-jwt-bearer'
 import type { Auth0Claims } from '../../src/domain/services/auth.service.js'
 
 let currentUser: Auth0Claims = {
@@ -17,7 +18,7 @@ vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
       res.status(401).json({ error: 'Unauthorized' })
       return
     }
-    ;(req as Request & { auth?: { payload: Auth0Claims } }).auth = { header: {}, token: '', payload: currentUser }
+    ;(req as Request & { auth?: { payload: JWTPayload & Auth0Claims } }).auth = { header: {}, token: '', payload: currentUser as JWTPayload & Auth0Claims }
     next()
   },
 }))
