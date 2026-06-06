@@ -6,9 +6,31 @@ import { emitAuthChange } from '../hooks/useAuth'
 import api from '../services/api'
 import { UserRole } from '../types/user'
 
+function getInitialError(): string {
+  const params = new URLSearchParams(window.location.search)
+  const errorParam = params.get('error')
+  if (!errorParam || errorParam === 'access_denied') return ''
+  const errorDescription = params.get('error_description')
+  return decodeURIComponent(errorDescription ?? errorParam)
+}
+
+function getCode(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const errorParam = params.get('error')
+  if (errorParam) return null
+  const code = params.get('code')
+  if (!code) return null
+  return code
+}
+
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string>(() => {
+    const urlError = getInitialError()
+    if (urlError) return urlError
+    if (!getCode()) return 'No se recibió código de autorización de Google.'
+    return ''
+  })
   const didRun = useRef(false)
 
   useEffect(() => {
@@ -16,9 +38,7 @@ export default function AuthCallback() {
     didRun.current = true
 
     const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
     const errorParam = params.get('error')
-    const errorDescription = params.get('error_description')
 
     if (errorParam) {
       if (errorParam === 'access_denied') {
@@ -26,16 +46,12 @@ export default function AuthCallback() {
         sessionStorage.removeItem('pkce_register')
         sessionStorage.removeItem('pkce_verifier')
         navigate(isRegister ? '/register' : '/login', { replace: true })
-        return
       }
-      setError(decodeURIComponent(errorDescription ?? errorParam))
       return
     }
 
-    if (!code) {
-      setError('No se recibió código de autorización de Google.')
-      return
-    }
+    const code = params.get('code')
+    if (!code) return
 
     ;(async () => {
       try {
