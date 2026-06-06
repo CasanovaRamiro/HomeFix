@@ -29,4 +29,5 @@ export const env = {
   get GEMINI_MODEL() { return process.env.GEMINI_MODEL || 'gemini-2.5-flash' },
   get DIDIT_API_KEY() { return process.env.DIDIT_API_KEY },
   get DIDIT_WORKFLOW_ID() { return process.env.DIDIT_WORKFLOW_ID },
+  get DIDIT_CALLBACK_URL() { return process.env.DIDIT_CALLBACK_URL },
 }

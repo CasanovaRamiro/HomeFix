@@ -14,6 +14,7 @@
     "db:migrate:test": "cross-env DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "didit:create-workflow": "tsx scripts/createDiditWorkflow.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
