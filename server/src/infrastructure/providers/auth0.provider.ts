@@ -89,6 +89,7 @@ export const createAuth0User = async (payload: {
     if (response.status === 400 && /password|weak/i.test(text)) {
       throw createHttpError(400, 'Password does not meet Auth0 policy')
     }
+    console.error('Auth0 signup error:', response.status, text)
     throw createHttpError(502, 'Failed to create user in Auth0')
   }
 
