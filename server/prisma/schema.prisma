@@ -25,9 +25,11 @@ model User {
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")
-  reviewsGiven    WorkerReview[]   @relation("ReviewsGiven")
-  reviewsReceived WorkerReview[]   @relation("ReviewsReceived")
-  applications    Application[]
+  reviewsGiven          WorkerReview[]   @relation("ReviewsGiven")
+  reviewsReceived       WorkerReview[]   @relation("ReviewsReceived")
+  clientReviewsGiven    ClientReview[]    @relation("ClientReviewsGiven")
+  clientReviewsReceived ClientReview[]    @relation("ClientReviewsReceived")
+  applications          Application[]
   nationalId       String
   nationalIdTypeId String  @map("national_id_type_id")
   addressId        String  @map("address_id")
@@ -108,17 +110,31 @@ model WorkerReview {
 }
 
 model Application {
-  id        String         @id @default(uuid())
-  workerId  String
-  postId    String
-  status    String         @default("Pending")
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  post      Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
-  worker    User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
-  review    WorkerReview?
+  id            String         @id @default(uuid())
+  workerId      String
+  postId        String
+  status        String         @default("Pending")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  worker        User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  review        WorkerReview?
+  clientReview  ClientReview?
 
   @@unique([workerId, postId])
+}
+
+model ClientReview {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  reviewerId    String
+  clientId      String
+  description   String      @db.Text
+  rating        Int
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer      User        @relation("ClientReviewsGiven", fields: [reviewerId], references: [id])
+  client        User        @relation("ClientReviewsReceived", fields: [clientId], references: [id])
 }
 
 model PostImage {

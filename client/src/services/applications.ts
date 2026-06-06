@@ -1,4 +1,5 @@
 import api from './api'
+import type { ClientReviewInput } from '../types/clientReview'
 
 export interface ApplicationResponse {
   id: string
@@ -26,3 +27,6 @@ export const getPostApplicants = (postId: string) =>
 
 export const acceptApplication = (applicationId: string): Promise<ApplicationResponse> =>
   api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`).then(r => r.data)
+
+export const createClientReview = (data: ClientReviewInput) =>
+  api.post('/reviews/client', data)
