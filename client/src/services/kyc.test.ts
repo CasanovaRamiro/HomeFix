@@ -1,0 +1,47 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import api from './api'
+import { startKycVerification, type KycSessionResponse } from './kyc'
+
+vi.mock('./api', () => ({
+  default: {
+    post: vi.fn(),
+  },
+}))
+
+describe('startKycVerification', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('hace POST a /kyc/session', async () => {
+    const response: KycSessionResponse = {
+      sessionUrl: 'https://verify.didit.me/session/sess-1',
+      sessionId: 'sess-1',
+    }
+    vi.mocked(api.post).mockResolvedValue({ data: response } as never)
+
+    await startKycVerification()
+
+    expect(api.post).toHaveBeenCalledTimes(1)
+    expect(api.post).toHaveBeenCalledWith('/kyc/session')
+  })
+
+  it('devuelve sessionUrl y sessionId del response', async () => {
+    const response: KycSessionResponse = {
+      sessionUrl: 'https://verify.didit.me/session/sess-1',
+      sessionId: 'sess-1',
+    }
+    vi.mocked(api.post).mockResolvedValue({ data: response } as never)
+
+    const result = await startKycVerification()
+
+    expect(result).toEqual(response)
+  })
+
+  it('propaga el error cuando la API falla', async () => {
+    const err = new Error('boom')
+    vi.mocked(api.post).mockRejectedValue(err)
+
+    await expect(startKycVerification()).rejects.toBe(err)
+  })
+})
