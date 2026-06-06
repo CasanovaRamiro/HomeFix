@@ -8,6 +8,7 @@ const DIDIT_URL = "https://verification.didit.me/v3/session/"
 beforeEach(() => {
   vi.stubEnv("DIDIT_API_KEY", "test-api-key")
   vi.stubEnv("DIDIT_WORKFLOW_ID", "test-workflow-id")
+  vi.stubEnv("DIDIT_CALLBACK_URL", "")
   vi.stubGlobal("fetch", mockFetch)
   mockFetch.mockReset()
 })
@@ -24,7 +25,7 @@ describe("createDiditSession", () => {
       status: 200,
       json: async () => ({
         session_id: "sess-123",
-        session_url: "https://verification.didit.me/session/sess-123",
+        url: "https://verify.didit.me/session/sess-123",
       }),
     })
 
@@ -42,6 +43,56 @@ describe("createDiditSession", () => {
     expect(JSON.parse(init.body)).toEqual({
       workflow_id: "test-workflow-id",
       vendor_data: "user-uuid-abc",
+      expected_details: { id_country: "ARG" },
+    })
+  })
+
+  it("includes callback and callback_method when DIDIT_CALLBACK_URL is set", async () => {
+    vi.stubEnv("DIDIT_CALLBACK_URL", "http://localhost:5173/kyc")
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        session_id: "sess-1",
+        url: "https://verify.didit.me/session/sess-1",
+      }),
+    })
+
+    await createDiditSession("user-1")
+
+    const [, init] = mockFetch.mock.calls[0]
+    expect(JSON.parse(init.body)).toEqual({
+      workflow_id: "test-workflow-id",
+      vendor_data: "user-1",
+      expected_details: { id_country: "ARG" },
+      callback: "http://localhost:5173/kyc",
+      callback_method: "both",
+    })
+  })
+
+  it("omits callback when DIDIT_CALLBACK_URL is not set", async () => {
+    vi.stubEnv("DIDIT_CALLBACK_URL", "")
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        session_id: "sess-1",
+        url: "https://verify.didit.me/session/sess-1",
+      }),
+    })
+
+    await createDiditSession("user-1")
+
+    const [, init] = mockFetch.mock.calls[0]
+    const body = JSON.parse(init.body)
+    expect(body).not.toHaveProperty("callback")
+    expect(body).not.toHaveProperty("callback_method")
+    expect(body).toEqual({
+      workflow_id: "test-workflow-id",
+      vendor_data: "user-1",
+      expected_details: { id_country: "ARG" },
     })
   })
 
@@ -51,7 +102,7 @@ describe("createDiditSession", () => {
       status: 200,
       json: async () => ({
         session_id: "sess-1",
-        session_url: "https://verification.didit.me/session/sess-1",
+        url: "https://verify.didit.me/session/sess-1",
       }),
     })
 
@@ -68,7 +119,7 @@ describe("createDiditSession", () => {
       status: 200,
       json: async () => ({
         session_id: "sess-xyz",
-        session_url: "https://verification.didit.me/session/sess-xyz",
+        url: "https://verify.didit.me/session/sess-xyz",
       }),
     })
 
@@ -76,7 +127,7 @@ describe("createDiditSession", () => {
 
     expect(result).toEqual({
       sessionId: "sess-xyz",
-      sessionUrl: "https://verification.didit.me/session/sess-xyz",
+      sessionUrl: "https://verify.didit.me/session/sess-xyz",
     })
   })
 
@@ -145,7 +196,7 @@ describe("createDiditSession", () => {
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it("throws 502 when response is missing session_url", async () => {
+  it("throws 502 when response is missing url", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -162,7 +213,7 @@ describe("createDiditSession", () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ session_url: "https://verification.didit.me/session/x" }),
+      json: async () => ({ url: "https://verify.didit.me/session/x" }),
     })
 
     await expect(createDiditSession("user-1")).rejects.toMatchObject({
