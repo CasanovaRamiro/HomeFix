@@ -54,7 +54,7 @@ router.get('/me', async (req, res, next) => {
       phone_number?: string
     } | undefined
     const isRegistration = req.headers['x-auth-source'] === 'register'
-    const user = await syncAuth0User(claims ?? {}, isRegistration)
+    const user = await syncAuth0User(claims, isRegistration)
     res.json(user)
   } catch (err) {
     const error = err as Error & { status?: number }
