@@ -21,19 +21,11 @@ import uploadRoutes from './presentation/routes/upload.routes.js'
 export const app = express()
 const PORT = env.PORT
 
-declare global {
-  namespace Express {
-    interface Request {
-      rawBody?: string
-    }
-  }
-}
-
 app.use(cors({ origin: env.CORS_ORIGIN }))
 app.use(express.json({
   verify: (req, _res, buf) => {
     if (buf && buf.length) {
-      req.rawBody = buf.toString('utf8')
+      Object.assign(req, { rawBody: buf.toString('utf8') })
     }
   },
 }))
