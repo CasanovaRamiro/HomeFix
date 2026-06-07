@@ -71,4 +71,16 @@ export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
 
 export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
 
+export interface UpdatePostData {
+  title: string
+  categoryId: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+}
+
+export const updatePost = (id: string, data: UpdatePostData) =>
+  api.patch(`/posts/${id}`, data)
+
 export default api
