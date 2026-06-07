@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
+import { getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import type { CreatePostInput, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
@@ -17,6 +18,10 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   updateApplicationStatus: vi.fn(),
+}));
+
+vi.mock("../../src/domain/services/user.service.js", () => ({
+  getUserRating: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -81,6 +86,7 @@ describe("post.service - getPostById", () => {
 
   it("should return a post by id", async () => {
     vi.mocked(findPostById).mockResolvedValue(postDetailMock);
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 });
 
     const result = await postService.getPostById('uuid-post-1');
 
@@ -88,6 +94,7 @@ describe("post.service - getPostById", () => {
     expect(result).toBeDefined();
     expect(result!.id).toBe('uuid-post-1');
     expect(result!.title).toBe('Tubo roto en cocina');
+    expect(result!.clientRating).toBe(4.5);
   });
 
   it("should return null when post does not exist", async () => {
@@ -153,6 +160,10 @@ describe("post.service - listAvailablePosts", () => {
     user: { id: "uuid-user-1", name: "Test", surname: "User" },
   };
 
+  beforeEach(() => {
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 })
+  })
+
   it("should return available posts without category filter", async () => {
     vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
 
@@ -161,6 +172,7 @@ describe("post.service - listAvailablePosts", () => {
     expect(findAvailablePosts).toHaveBeenCalledWith(undefined);
     expect(result).toHaveLength(1);
     expect(result[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
+    expect(result[0].clientRating).toBe(4.5);
   });
 
   it("should filter available posts by category", async () => {
@@ -170,6 +182,7 @@ describe("post.service - listAvailablePosts", () => {
 
     expect(findAvailablePosts).toHaveBeenCalledWith("Plomero");
     expect(result).toHaveLength(1);
+    expect(result[0].clientRating).toBe(4.5);
   });
 
   it("should return empty array when no posts match", async () => {

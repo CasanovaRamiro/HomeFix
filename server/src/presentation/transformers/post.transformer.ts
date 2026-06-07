@@ -16,6 +16,7 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   longitude: post.longitude,
   categories: post.categories,
   user: post.user,
+  clientRating: post.clientRating ?? 0,
 })
 
 export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({

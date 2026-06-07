@@ -9,12 +9,6 @@ export const formatPostDate = (value: string): string => {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const mockClientRating = (seed: string): number => {
-  let sum = 0
-  for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i)
-  return Number((3.5 + ((sum % 100) / 100) * 1.5).toFixed(1))
-}
-
 export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; lng?: number | null } => ({
   id: post.id,
   titulo: post.title,
@@ -27,7 +21,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   photo: post.images[0]?.url ?? '',
   clientName: post.user?.name ?? 'Cliente',
   clientSurname: post.user?.surname ?? '',
-  clientRating: mockClientRating(post.userId ?? post.id),
+  clientRating: post.clientRating ?? 0,
   address: post.address,
   lat: post.latitude,
   lng: post.longitude,

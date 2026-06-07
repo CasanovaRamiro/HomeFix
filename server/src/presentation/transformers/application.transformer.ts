@@ -12,4 +12,5 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   status: app.status,
   category: app.category,
   hasReview: app.hasReview,
+  clientRating: app.clientRating,
 })

@@ -7,6 +7,13 @@ export interface DomainUser {
   createdAt: Date
 }
 
+export type ReviewTarget = 'worker' | 'client'
+
+export interface DomainUserRating {
+  averageRating: number
+  reviewCount: number
+}
+
 export interface CreateUserInput {
   name: string
   email: string
