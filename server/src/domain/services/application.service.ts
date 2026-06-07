@@ -8,13 +8,13 @@ import {
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
 import { findPostById, updatePostStatus } from '../../infrastructure/database/post.database.js'
-import { getUserRating } from './user.service.js'
+import { getClientRating } from './user.service.js'
 import type { DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
 
 export const getMyApplications = async (workerId: string): Promise<DomainMyApplication[]> => {
   const apps = await findApplicationsByWorker(workerId)
   return Promise.all(apps.map(async (app) => {
-    const rating = app.clientId ? await getUserRating(app.clientId) : { averageRating: 0, reviewCount: 0 }
+    const rating = app.clientId ? await getClientRating(app.clientId) : { averageRating: 0, reviewCount: 0 }
     return { ...app, clientRating: rating.averageRating }
   }))
 }

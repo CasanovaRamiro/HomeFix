@@ -13,6 +13,7 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   status: a.status,
   category: a.post.categories[0]?.category.name ?? null,
   hasReview: a.clientReview !== null,
+  clientRating: 0,
 })
 
 export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainPostApplication => {
