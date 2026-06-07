@@ -19,12 +19,6 @@ const router = Router()
 router.get('/', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
 
     if (user.role !== 'worker') {
