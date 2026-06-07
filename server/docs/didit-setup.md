@@ -12,7 +12,7 @@ Guía para configurar la verificación de identidad con [Didit](https://docs.did
 2. Ir a **API Keys** en el dashboard y generar una key de tipo *Live* o *Sandbox* (recomendamos Sandbox para desarrollo).
 3. Copiar la key. **No la commitees** — va en `.env`.
 
-> ⚠️ Las keys de Sandbox consumen créditos igual que las de Live. No abuses en pruebas.
+> Las keys de Sandbox consumen créditos igual que las de Live. No abuses en pruebas.
 
 ---
 
