@@ -10,6 +10,7 @@ import {
   searchPostsByDistance,
   completePost,
   reopenPost,
+  updatePost,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
@@ -38,12 +39,6 @@ router.get('/', async (req, res, next) => {
 router.get('/available', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
 
     if (user.role !== 'worker') {
@@ -64,12 +59,6 @@ router.get('/available', async (req, res, next) => {
 router.get('/search-location', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
 
     if (user.role !== 'worker') {
@@ -137,12 +126,6 @@ router.post('/user-posts', async (req, res, next) => {
       phone_number?: string
       role?: string
     } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
     const posts = await getUserPosts(user.id)
     res.json(posts.map(toUserPostDTO))
@@ -163,12 +146,6 @@ router.patch('/:id/pause', async (req, res, next) => {
       phone_number?: string
       role?: string
     } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
     const result = await pausePost(req.params.id, user.id)
     res.json(result)
@@ -187,12 +164,6 @@ router.patch('/:id/cancel', async (req, res, next) => {
       phone_number?: string
       role?: string
     } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
     const result = await cancelPost(req.params.id, user.id)
     res.json(result)
@@ -211,12 +182,6 @@ router.patch('/:id/finalize', async (req, res, next) => {
       phone_number?: string
       role?: string
     } | undefined
-
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
-
     const user = await syncAuth0User(claims)
     const result = await finalizePost(req.params.id, user.id)
     res.json(result)
@@ -251,6 +216,23 @@ router.patch('/:id/reopen', async (req, res, next) => {
     const result = await reopenPost(req.params.id, user.id)
     res.json(result)
   } catch (err) {
+    next(err)
+  }
+})
+
+router.patch('/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await updatePost(req.params.id, user.id, req.body)
+    res.json(toPostDTO(result))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
     next(err)
   }
 })

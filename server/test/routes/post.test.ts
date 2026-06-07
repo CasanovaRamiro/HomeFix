@@ -578,3 +578,143 @@ describe('PATCH /posts/:id/finalize', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('PATCH /posts/:id (update)', () => {
+  let postId: string
+
+  beforeEach(async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Post original',
+        description: 'Descripción original',
+        address: 'Calle original 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+    postId = post.id
+  })
+
+  it('actualiza un post activo', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Título editado',
+        description: 'Descripción editada',
+        startDate: '2026-06-01',
+        endDate: '2026-06-20',
+        address: 'Nueva dirección 456',
+        categoryId,
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Título editado')
+    expect(res.body.description).toBe('Descripción editada')
+    expect(res.body.address).toBe('Nueva dirección 456')
+  })
+
+  it('actualiza un post pausado', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Paused' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Título editado',
+        description: 'Descripción editada',
+        startDate: '2026-06-01',
+        endDate: '2026-06-20',
+        address: 'Nueva dirección 456',
+        categoryId,
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Título editado')
+  })
+
+  it('returns 400 si el post está In progress', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'In progress' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 si el post está Completed', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Completed' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 si el post está Cancelled', async () => {
+    await prisma.post.update({ where: { id: postId }, data: { status: 'Cancelled' } })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 403 para post ajeno', async () => {
+    const otro = await createUser('otro@test.com', 'Otro', 'hashed')
+    const postAjeno = await prisma.post.create({
+      data: {
+        userId: otro.id,
+        title: 'Post ajeno',
+        description: 'Test',
+        address: 'Otra calle',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${postAjeno.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 404 si el post no existe', async () => {
+    const res = await request(app)
+      .patch('/posts/id-inexistente')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 400 si faltan campos obligatorios', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: '', description: '', startDate: '', endDate: '', address: '', categoryId: '' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 401 sin token', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}`)
+      .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
+
+    expect(res.status).toBe(401)
+  })
+})

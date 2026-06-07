@@ -38,3 +38,13 @@ export interface CreatePostInput {
   address: string
   categoryId: string
 }
+
+export interface UpdatePostInput {
+  userId: string
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  categoryId: string
+}
