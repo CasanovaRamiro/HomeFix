@@ -17,7 +17,7 @@ import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
-import kycRoutes from './presentation/routes/kyc.routes.js'
+import kycRoutes, { webhookRouter } from './presentation/routes/kyc.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
 import telegramRoutes from './presentation/routes/telegram.routes.js'
 import { startBot } from './presentation/telegram/bot.js'
@@ -25,8 +25,22 @@ import { startBot } from './presentation/telegram/bot.js'
 export const app = express()
 const PORT = env.PORT
 
+declare global {
+  namespace Express {
+    interface Request {
+      rawBody?: string
+    }
+  }
+}
+
 app.use(cors({ origin: env.CORS_ORIGIN }))
-app.use(express.json())
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    if (buf && buf.length) {
+      req.rawBody = buf.toString('utf8')
+    }
+  },
+}))
 app.use(morgan('dev'))
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
@@ -40,6 +54,7 @@ app.use('/categories', categoryRoutes)
 app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
+app.use('/kyc', webhookRouter)
 app.use('/upload', jwtCheck, uploadRoutes)
 app.use('/telegram', telegramRoutes)
 app.use('/kyc', jwtCheck, kycRoutes)

@@ -71,3 +71,46 @@ export const getKycStatus = async (
     kycSessionId: user.kycSessionId ?? null,
   }
 }
+
+export interface WebhookPayload {
+  event_id: string
+  webhook_type: string
+  timestamp: number
+  session_id: string
+  status: string
+  vendor_data?: string
+}
+
+export const handleKycWebhook = async (
+  payload: WebhookPayload,
+): Promise<{ processed: boolean }> => {
+  if (payload.webhook_type !== 'status.updated') {
+    return { processed: false }
+  }
+
+  const email = payload.vendor_data
+  if (!email) {
+    console.warn('[KYC] Webhook sin vendor_data, ignorando:', payload.event_id)
+    return { processed: false }
+  }
+
+  const user = await findByEmail(email)
+  if (!user) {
+    console.warn('[KYC] Webhook para usuario inexistente:', email)
+    return { processed: false }
+  }
+
+  const mappedStatus = DIDIT_STATUS_MAP[payload.status] ?? 'IN_REVIEW'
+  const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
+    ? new Date()
+    : null
+
+  await updateUserKycStatus(email, {
+    kycStatus: mappedStatus,
+    kycVerifiedAt: now,
+    kycSessionId: payload.session_id,
+  })
+
+  console.log(`[KYC] Webhook procesado: ${email} → ${mappedStatus} (event: ${payload.event_id})`)
+  return { processed: true }
+}
