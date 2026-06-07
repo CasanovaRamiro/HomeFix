@@ -107,6 +107,8 @@ describe('GET /applications/my-applications', () => {
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(2)
+    expect(res.body[0]).toHaveProperty('clientRating', 0)
+    expect(res.body[1]).toHaveProperty('clientRating', 0)
   })
 })
 

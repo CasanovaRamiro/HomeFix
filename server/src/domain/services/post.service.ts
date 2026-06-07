@@ -3,11 +3,15 @@ import {
   findPostById,
   findPostsByUser,
   updatePostStatus,
+  updatePost as updatePostData,
   findAvailablePosts,
   searchByDistance,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
-import type { CreatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+import { ApplicationStatus } from '../types/applicationStatus.js'
+import { PostStatus } from '../types/postStatus.js'
+import { getUserRating } from './user.service.js'
+import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 
 export const validatePostInput = (input: CreatePostInput) => {
   if (!input.categoryId) {
@@ -36,8 +40,15 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
   })
 }
 
-export const listAvailablePosts = (category?: string): Promise<DomainPost[]> =>
-  findAvailablePosts(category)
+const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => {
+  const rating = await getUserRating(post.userId)
+  return { ...post, clientRating: rating.averageRating }
+}
+
+export const listAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
+  const posts = await findAvailablePosts(category)
+  return Promise.all(posts.map(enrichWithClientRating))
+}
 
 export const searchPostsByDistance = async (
   lat: number,
@@ -57,11 +68,15 @@ export const searchPostsByDistance = async (
   if (lng < -180 || lng > 180) {
     throw new Error('longitude must be between -180 and 180')
   }
-  return searchByDistance(lat, lng, radiusKm, category)
+  const posts = await searchByDistance(lat, lng, radiusKm, category)
+  return Promise.all(posts.map(enrichWithClientRating))
 }
 
-export const getPostById = (id: string): Promise<DomainPost | null> =>
-  findPostById(id)
+export const getPostById = async (id: string): Promise<DomainPost | null> => {
+  const post = await findPostById(id)
+  if (!post) return null
+  return enrichWithClientRating(post)
+}
 
 export const getUserPosts = (userId: string): Promise<DomainUserPost[]> =>
   findPostsByUser(userId)
@@ -94,6 +109,10 @@ export const finalizePost = async (postId: string, userId: string) => {
   if (post.status !== 'Paused') {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
   }
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    await updateApplicationStatus(accepted.id, 'Completed')
+  }
   return updatePostStatus(postId, 'Completed')
 }
 
@@ -101,10 +120,14 @@ export const completePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'In progress') {
+  if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be completed'), { status: 400 })
   }
-  return updatePostStatus(postId, 'Completed')
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
+  }
+  return updatePostStatus(postId, ApplicationStatus.Completed)
 }
 
 export const reopenPost = async (postId: string, userId: string) => {
@@ -119,4 +142,24 @@ export const reopenPost = async (postId: string, userId: string) => {
     await updateApplicationStatus(accepted.id, 'Pending')
   }
   return updatePostStatus(postId, 'Active')
+}
+
+export const updatePost = async (postId: string, userId: string, input: Omit<UpdatePostInput, 'userId'>) => {
+  const post = await findPostById(postId)
+  if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
+  if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  const nonEditable = [PostStatus.InProgress, PostStatus.Completed, PostStatus.Cancelled]
+  if (nonEditable.includes(post.status as PostStatus)) {
+    throw Object.assign(new Error(`Post cannot be edited in its current state (${post.status})`), { status: 400 })
+  }
+
+  validatePostInput({ ...input, userId })
+
+  return updatePostData(postId, {
+    ...input,
+    userId,
+    startDate: new Date(input.startDate),
+    endDate: new Date(input.endDate),
+  })
 }

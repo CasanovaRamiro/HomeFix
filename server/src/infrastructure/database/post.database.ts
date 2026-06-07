@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma.js'
-import type { CreatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
+import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
 
@@ -130,6 +130,25 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
     data: { status },
     select: { id: true, status: true },
   })
+
+export const updatePost = async (id: string, data: UpdatePostInput): Promise<DomainPost> => {
+  const raw = await prisma.$transaction(async (tx) => {
+    await tx.postCategory.deleteMany({ where: { postId: id } })
+    await tx.postCategory.create({ data: { postId: id, categoryId: data.categoryId } })
+    return tx.post.update({
+      where: { id },
+      data: {
+        title: data.title,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        address: data.address,
+      },
+      select: postFields,
+    })
+  }) as unknown as PrismaPostFull
+  return toDomainPost(raw)
+}
 
 export const searchByDistance = async (
   lat: number,

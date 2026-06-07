@@ -9,6 +9,7 @@ interface PostCardProps {
   onViewReview?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
+  onEdit?: (id: string) => void
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' | 'info' | 'primary' }> = {
@@ -19,7 +20,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' 
   Completed: { label: 'Completada', variant: 'primary' },
 }
 
-export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen, onViewReview, onPause, onCancel }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
 
   return (
@@ -62,7 +63,7 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-            <button className="btn-outline">Editar</button>
+            <button className="btn-outline" onClick={() => onEdit?.(post.id)}>Editar</button>
             <button className={`btn-pause${post.status === 'Paused' ? ' activating' : ''}`} onClick={() => onPause?.(post.id)}>
               {post.status === 'Paused' ? 'Activar' : 'Pausar'}
             </button>

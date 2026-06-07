@@ -167,8 +167,8 @@ export const loginUser = async (input: LoginInput) => {
   }
 }
 
-export const syncAuth0User = async (claims: Auth0Claims, isRegistration = false) => {
-  if (!claims.sub) throw new Error('Invalid Auth0 token: missing sub claim')
+export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistration = false) => {
+  if (!claims?.sub) throw Object.assign(new Error('Invalid Auth0 token: missing sub claim'), { status: 401 })
 
   const fallbackEmail = `${claims.sub}@auth0.local`
   const email = claims.email ?? fallbackEmail

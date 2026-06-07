@@ -13,6 +13,7 @@ export interface DomainPost {
   longitude: number | null
   categories: { id: string; name: string }[]
   user: { id: string; name: string; surname: string }
+  clientRating?: number
 }
 
 export interface DomainUserPost {
@@ -30,6 +31,16 @@ export interface DomainUserPost {
 }
 
 export interface CreatePostInput {
+  userId: string
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  categoryId: string
+}
+
+export interface UpdatePostInput {
   userId: string
   title: string
   description: string

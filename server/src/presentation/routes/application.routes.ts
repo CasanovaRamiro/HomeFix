@@ -18,10 +18,6 @@ router.use(jwtCheck)
 router.get('/post/:postId', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const result = await getPostApplications(user.id, req.params.postId)
     res.json(result)
@@ -33,10 +29,6 @@ router.get('/post/:postId', async (req, res, next) => {
 router.get('/my-applications', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const result = await getMyApplications(user.id)
     res.json(result.map(toMyApplicationDTO))
@@ -48,10 +40,6 @@ router.get('/my-applications', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const result = await cancelApplication(user.id, req.params.id)
     res.json(result)
@@ -63,10 +51,6 @@ router.delete('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const { postId } = req.body
     if (!postId || typeof postId !== 'string') {
@@ -83,10 +67,6 @@ router.post('/', async (req, res, next) => {
 router.patch('/:applicationId/accept', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const result = await acceptApplication(user.id, req.params.applicationId)
     res.json(result)
@@ -98,10 +78,6 @@ router.patch('/:applicationId/accept', async (req, res, next) => {
 router.patch('/:applicationId/reject', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const result = await rejectApplication(user.id, req.params.applicationId)
     res.json(result)

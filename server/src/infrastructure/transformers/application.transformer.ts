@@ -6,11 +6,14 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   postId: a.postId,
   title: a.post.title,
   client: `${a.post.user.name} ${a.post.user.surname}`.trim(),
+  clientId: a.post.user.id,
   location: a.post.address,
   appliedAt: a.createdAt,
   serviceDate: a.post.startDate,
   status: a.status,
   category: a.post.categories[0]?.category.name ?? null,
+  hasReview: a.clientReview !== null,
+  clientRating: 0,
 })
 
 export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainPostApplication => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import api, { pausePost, cancelPost } from '../services/api'
+import api, { pausePost, cancelPost, updatePost } from '../services/api'
+import type { UpdatePostData } from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
 import { ApplicationStatus } from '../types/application'
@@ -8,6 +9,8 @@ import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import { useCategories } from '../hooks/useCategories'
+import { useTheme } from '../hooks/useTheme'
 import type { Post } from '../types/post'
 
 export default function PostDetail() {
@@ -18,6 +21,12 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState<UpdatePostData>({ title: '', categoryId: '', description: '', startDate: '', endDate: '', address: '' })
+  const [editError, setEditError] = useState('')
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const { categories } = useCategories()
+  const theme = useTheme()
 
   useEffect(() => {
     if (!id) return
@@ -88,6 +97,38 @@ export default function PostDetail() {
     })
   }
 
+  const openEditModal = () => {
+    if (!post) return
+    const categoryId = post.categories[0]?.id ?? ''
+    setEditForm({ title: post.title, categoryId, description: post.description, startDate: post.startDate.slice(0, 10), endDate: post.endDate.slice(0, 10), address: post.address })
+    setEditError('')
+    setShowEditModal(true)
+  }
+
+  const handleEditSave = async () => {
+    const { title, categoryId, description, startDate, endDate, address } = editForm
+    if (!title.trim() || !categoryId || !description.trim() || !startDate || !endDate || !address.trim()) {
+      setEditError('Todos los campos son obligatorios')
+      return
+    }
+    if (new Date(endDate) <= new Date(startDate)) {
+      setEditError('La fecha de fin debe ser posterior a la fecha de inicio')
+      return
+    }
+    setEditSubmitting(true)
+    setEditError('')
+    try {
+      await updatePost(post!.id, editForm)
+      setShowEditModal(false)
+      refresh()
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setEditError(axiosErr.response?.data?.error ?? 'Error al guardar los cambios')
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner />
   if (error) return (
     <>
@@ -147,6 +188,7 @@ export default function PostDetail() {
             onViewReview={() => navigate('/review')}
             onPause={handlePause}
             onCancel={() => setShowCancelModal(true)}
+            onEdit={openEditModal}
           />
 
           <h3 className="section-title">Postulantes ({applicants.length})</h3>
@@ -185,6 +227,75 @@ export default function PostDetail() {
         onConfirm={handleCancel}
         onCancel={() => setShowCancelModal(false)}
       />
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto py-8">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-primary-dark px-6 py-6">
+              <h2 className="text-2xl font-bold text-white">Editar publicación</h2>
+            </div>
+
+            <div className="p-6">
+              {editError && (
+                <div style={{ padding: '12px', borderRadius: '8px', fontSize: '14px', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', marginBottom: '16px' }}>
+                  {editError}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Título</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Categoría</label>
+                <select value={editForm.categoryId} onChange={e => setEditForm(p => ({ ...p, categoryId: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, boxSizing: 'border-box', cursor: 'pointer' }}>
+                  <option value="">Seleccioná una categoría</option>
+                  {categories.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Descripción</label>
+                <textarea value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                  rows={4} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, resize: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Fecha inicio</label>
+                  <input type="date" value={editForm.startDate} onChange={e => setEditForm(p => ({ ...p, startDate: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Fecha fin</label>
+                  <input type="date" value={editForm.endDate} onChange={e => setEditForm(p => ({ ...p, endDate: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Dirección</label>
+                <input type="text" value={editForm.address} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button onClick={handleEditSave} disabled={editSubmitting}
+                  style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer', background: theme.accent, color: '#fff', opacity: editSubmitting ? 0.6 : 1 }}>
+                  {editSubmitting ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+                <button onClick={() => setShowEditModal(false)}
+                  style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer', background: theme.border, color: theme.primaryDark }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -16,10 +16,6 @@ router.get('/', async (req, res, next) => {
       nickname?: string
       role?: string
     } | undefined
-    if (!claims?.sub) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
     const user = await syncAuth0User(claims)
     const dashboard = await getWorkerDashboard(user.id)
     res.json(dashboard)

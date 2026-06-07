@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { findPostById } from '../../src/infrastructure/database/post.database.js'
-import { findAcceptedApplication } from '../../src/infrastructure/database/application.database.js'
-import { createReview as createReviewData } from '../../src/infrastructure/database/review.database.js'
-import { createReview, validateReviewInput } from '../../src/domain/services/review.service.js'
-import type { CreateReviewInput } from '../../src/domain/types/review.types.js'
+import { findAcceptedApplication, findApplicationById } from '../../src/infrastructure/database/application.database.js'
+import { createReview as createReviewData, createClientReview as createClientReviewData, findClientReviewByApplicationId } from '../../src/infrastructure/database/review.database.js'
+import { createWorkerReview, createClientReview } from '../../src/domain/services/review.service.js'
+import type { CreateReviewInput, DomainClientReview } from '../../src/domain/types/review.types.js'
 import type { DomainWorkerReview } from '../../src/domain/types/worker.types.js'
 
 vi.mock('../../src/infrastructure/database/post.database.js', () => ({
@@ -12,10 +12,13 @@ vi.mock('../../src/infrastructure/database/post.database.js', () => ({
 
 vi.mock('../../src/infrastructure/database/application.database.js', () => ({
   findAcceptedApplication: vi.fn(),
+  findApplicationById: vi.fn(),
 }))
 
 vi.mock('../../src/infrastructure/database/review.database.js', () => ({
   createReview: vi.fn(),
+  createClientReview: vi.fn(),
+  findClientReviewByApplicationId: vi.fn(),
 }))
 
 beforeEach(() => vi.clearAllMocks())
@@ -69,39 +72,45 @@ const mockReview: DomainWorkerReview = {
   },
 }
 
-describe('validateReviewInput', () => {
-  it('should throw 400 when rating is less than 1', () => {
-    expect(() => validateReviewInput({ ...validInput, rating: 0 })).toThrow('Rating must be an integer between 1 and 5')
+describe('createWorkerReview (validation)', () => {
+  it('should throw 400 when rating is less than 1', async () => {
+    await expect(createWorkerReview(postId, userId, { ...validInput, rating: 0 })).rejects.toMatchObject({ status: 400, message: 'Rating must be an integer between 1 and 5' })
   })
 
-  it('should throw 400 when rating is greater than 5', () => {
-    expect(() => validateReviewInput({ ...validInput, rating: 6 })).toThrow('Rating must be an integer between 1 and 5')
+  it('should throw 400 when rating is greater than 5', async () => {
+    await expect(createWorkerReview(postId, userId, { ...validInput, rating: 6 })).rejects.toMatchObject({ status: 400, message: 'Rating must be an integer between 1 and 5' })
   })
 
-  it('should throw 400 when rating is not an integer', () => {
-    expect(() => validateReviewInput({ ...validInput, rating: 3.5 })).toThrow('Rating must be an integer between 1 and 5')
+  it('should throw 400 when rating is not an integer', async () => {
+    await expect(createWorkerReview(postId, userId, { ...validInput, rating: 3.5 })).rejects.toMatchObject({ status: 400, message: 'Rating must be an integer between 1 and 5' })
   })
 
-  it('should throw 400 when description exceeds 500 characters', () => {
-    expect(() => validateReviewInput({ ...validInput, description: 'a'.repeat(501) })).toThrow('Description must not exceed 500 characters')
+  it('should throw 400 when description exceeds 500 characters', async () => {
+    await expect(createWorkerReview(postId, userId, { ...validInput, description: 'a'.repeat(501) })).rejects.toMatchObject({ status: 400, message: 'Description must not exceed 500 characters' })
   })
 
-  it('should not throw with valid input', () => {
-    expect(() => validateReviewInput(validInput)).not.toThrow()
+  it('should not throw with valid input', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(createReviewData).mockResolvedValue(mockReview)
+    await expect(createWorkerReview(postId, userId, validInput)).resolves.toBeDefined()
   })
 
-  it('should not throw when description is omitted', () => {
-    expect(() => validateReviewInput({ postId, rating: 5 })).not.toThrow()
+  it('should not throw when description is omitted', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(createReviewData).mockResolvedValue(mockReview)
+    await expect(createWorkerReview(postId, userId, { postId, rating: 5 })).resolves.toBeDefined()
   })
 })
 
-describe('createReview', () => {
+describe('createWorkerReview', () => {
   it('should create a review successfully', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
     vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
     vi.mocked(createReviewData).mockResolvedValue(mockReview)
 
-    const result = await createReview(postId, userId, validInput)
+    const result = await createWorkerReview(postId, userId, validInput)
 
     expect(findPostById).toHaveBeenCalledWith(postId)
     expect(findAcceptedApplication).toHaveBeenCalledWith(postId)
@@ -119,21 +128,21 @@ describe('createReview', () => {
   it('should throw 404 when post is not found', async () => {
     vi.mocked(findPostById).mockResolvedValue(null)
 
-    await expect(createReview(postId, userId, validInput)).rejects.toMatchObject({ status: 404 })
+    await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 404 })
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
   it('should throw 403 when user does not own the post', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
 
-    await expect(createReview(postId, 'other-user-id', validInput)).rejects.toMatchObject({ status: 403 })
+    await expect(createWorkerReview(postId, 'other-user-id', validInput)).rejects.toMatchObject({ status: 403 })
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
   it('should throw 400 when post is not completed', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
 
-    await expect(createReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'Post must be completed before reviewing' })
+    await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'Post must be completed before reviewing' })
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
@@ -141,7 +150,7 @@ describe('createReview', () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
     vi.mocked(findAcceptedApplication).mockResolvedValue(null)
 
-    await expect(createReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'No accepted application found for this post' })
+    await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'No accepted application found for this post' })
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
@@ -151,7 +160,7 @@ describe('createReview', () => {
     vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
     vi.mocked(createReviewData).mockResolvedValue({ ...mockReview, rating: 4, description: '' })
 
-    const result = await createReview(postId, userId, inputWithoutDesc)
+    const result = await createWorkerReview(postId, userId, inputWithoutDesc)
 
     expect(createReviewData).toHaveBeenCalledWith({
       applicationId: mockAcceptedApp.id,
@@ -162,5 +171,124 @@ describe('createReview', () => {
       mediaUrls: undefined,
     })
     expect(result.rating).toBe(4)
+  })
+})
+
+const workerId2 = 'worker-uuid-1'
+const clientId2 = 'client-uuid-1'
+const applicationId2 = 'app-uuid-1'
+const postId2 = 'post-uuid-1'
+
+const mockApplication = {
+  id: applicationId2,
+  workerId: workerId2,
+  postId: postId2,
+  status: 'Accepted',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  post: {
+    userId: clientId2,
+    status: 'Completed',
+  },
+}
+
+const mockClientReview: DomainClientReview = {
+  id: 'review-uuid-1',
+  rating: 4,
+  description: 'Great client',
+  createdAt: new Date(),
+  reviewer: { id: workerId2, name: 'Worker Test' },
+  client: { id: clientId2, name: 'Client Test' },
+}
+
+describe('createClientReview', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('should create a client review successfully', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+    vi.mocked(createClientReviewData).mockResolvedValue(mockClientReview)
+
+    const result = await createClientReview(applicationId2, workerId2, {
+      applicationId: applicationId2,
+      rating: 4,
+      description: 'Great client',
+    })
+
+    expect(findApplicationById).toHaveBeenCalledWith(applicationId2)
+    expect(createClientReviewData).toHaveBeenCalledWith({
+      applicationId: applicationId2,
+      reviewerId: workerId2,
+      clientId: clientId2,
+      rating: 4,
+      description: 'Great client',
+    })
+    expect(result).toEqual(mockClientReview)
+  })
+
+  it('should throw 404 when application is not found', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(null)
+
+    await expect(
+      createClientReview(applicationId2, workerId2, { applicationId: applicationId2, rating: 5 }),
+    ).rejects.toMatchObject({ status: 404, message: 'Application not found' })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('should throw 403 when user is not the application worker', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+
+    await expect(
+      createClientReview(applicationId2, 'other-worker-id', { applicationId: applicationId2, rating: 5 }),
+    ).rejects.toMatchObject({ status: 403, message: 'Forbidden' })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('should throw 400 when post is not completed', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      post: { userId: clientId2, status: 'Active' },
+    } as never)
+
+    await expect(
+      createClientReview(applicationId2, workerId2, { applicationId: applicationId2, rating: 5 }),
+    ).rejects.toMatchObject({
+      status: 400,
+      message: 'Post must be completed before reviewing',
+    })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('should throw 400 when a client review already exists', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(mockClientReview)
+
+    await expect(
+      createClientReview(applicationId2, workerId2, { applicationId: applicationId2, rating: 5 }),
+    ).rejects.toMatchObject({
+      status: 400,
+      message: 'A review already exists for this application',
+    })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('should create a review without description', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+    vi.mocked(createClientReviewData).mockResolvedValue({ ...mockClientReview, rating: 5, description: '' })
+
+    const result = await createClientReview(applicationId2, workerId2, {
+      applicationId: applicationId2,
+      rating: 5,
+    })
+
+    expect(createClientReviewData).toHaveBeenCalledWith({
+      applicationId: applicationId2,
+      reviewerId: workerId2,
+      clientId: clientId2,
+      rating: 5,
+      description: undefined,
+    })
+    expect(result.rating).toBe(5)
   })
 })

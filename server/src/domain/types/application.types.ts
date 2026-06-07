@@ -3,11 +3,14 @@ export interface DomainMyApplication {
   postId: string
   title: string
   client: string
+  clientId: string
   location: string
   appliedAt: Date
   serviceDate: Date
   status: string
   category: string | null
+  hasReview: boolean
+  clientRating: number
 }
 
 export interface DomainPostApplication {

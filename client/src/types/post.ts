@@ -22,6 +22,7 @@ export interface PostDTO {
     name: string
     surname: string
   }
+  clientRating: number
 }
 
 export type Post = PostDTO
