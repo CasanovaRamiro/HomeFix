@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import type { CreatePostInput, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
@@ -9,6 +9,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findPostsByUser: vi.fn(),
   findPostById: vi.fn(),
   updatePostStatus: vi.fn(),
+  updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
 }));
@@ -486,5 +487,79 @@ describe('post.service - reopenPost', () => {
   it('lanza 400 si el post no está In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockInProgress, status: 'Active' } as never)
     await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('post.service - updatePost', () => {
+  const activePost: DomainPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ id: 'uuid-category-1', name: "Plomeria" }],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
+  }
+
+  const updateInput = {
+    title: 'Título editado',
+    description: 'Descripción editada',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-20'),
+    address: 'Nueva dirección 456',
+    categoryId: 'uuid-category-1',
+  }
+
+  it('edita un post activo', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, title: 'Título editado' })
+
+    const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
+
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput })
+    expect(result.title).toBe('Título editado')
+  })
+
+  it('edita un post pausado', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
+    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, status: 'Paused', title: 'Título editado' })
+
+    const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
+
+    expect(result.title).toBe('Título editado')
+  })
+
+  it('lanza 404 si el post no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.updatePost('no-existe', 'user-uuid-1', updateInput)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si no es el owner', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    await expect(postService.updatePost('uuid-1', 'otro-usuario', updateInput)).rejects.toMatchObject({ status: 403 })
+  })
+
+  for (const status of ['In progress', 'Completed', 'Cancelled']) {
+    it(`lanza 400 si el post está ${status}`, async () => {
+      vi.mocked(findPostById).mockResolvedValue({ ...activePost, status })
+      await expect(postService.updatePost('uuid-1', 'user-uuid-1', updateInput)).rejects.toMatchObject({ status: 400 })
+    })
+  }
+
+  it('lanza error si el título está vacío', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    await expect(postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, title: '' })).rejects.toThrow('title is required')
+  })
+
+  it('lanza error si endDate <= startDate', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    await expect(postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, endDate: new Date('2026-05-01') })).rejects.toThrow('endDate must be after startDate')
   })
 })

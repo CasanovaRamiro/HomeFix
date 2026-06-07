@@ -3,13 +3,14 @@ import {
   findPostById,
   findPostsByUser,
   updatePostStatus,
+  updatePost as updatePostData,
   findAvailablePosts,
   searchByDistance,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
-import type { CreatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 
 export const validatePostInput = (input: CreatePostInput) => {
   if (!input.categoryId) {
@@ -129,4 +130,24 @@ export const reopenPost = async (postId: string, userId: string) => {
     await updateApplicationStatus(accepted.id, 'Pending')
   }
   return updatePostStatus(postId, 'Active')
+}
+
+export const updatePost = async (postId: string, userId: string, input: Omit<UpdatePostInput, 'userId'>) => {
+  const post = await findPostById(postId)
+  if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
+  if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  const nonEditable = [PostStatus.InProgress, PostStatus.Completed, PostStatus.Cancelled]
+  if (nonEditable.includes(post.status as PostStatus)) {
+    throw Object.assign(new Error(`Post cannot be edited in its current state (${post.status})`), { status: 400 })
+  }
+
+  validatePostInput({ ...input, userId })
+
+  return updatePostData(postId, {
+    ...input,
+    userId,
+    startDate: new Date(input.startDate),
+    endDate: new Date(input.endDate),
+  })
 }

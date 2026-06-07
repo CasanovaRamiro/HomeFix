@@ -57,7 +57,7 @@ router.get('/me', async (req, res, next) => {
     res.json(user)
   } catch (err) {
     const error = err as Error & { status?: number }
-    error.status = 400
+    if (!error.status) error.status = 400
     next(error)
   }
 })
