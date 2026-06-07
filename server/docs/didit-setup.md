@@ -2,7 +2,7 @@
 
 Guía para configurar la verificación de identidad con [Didit](https://docs.didit.me) en entorno local.
 
-> Estado actual: **MVP sin webhook y sin persistencia**. El usuario inicia la verificación, completa el flow en Didit y vuelve a la app con el resultado en query params. El backend no guarda el status en la DB (queda como TODO).
+> Estado actual: **MVP con persistencia y webhook**. El status se guarda en la DB y se actualiza vía confirm-first (frontend) + webhook (backend).
 
 ---
 
@@ -79,6 +79,9 @@ DIDIT_WORKFLOW_ID=<uuid-del-workflow>
 # al crear cada session y Didit redirige ahí con ?status=...&verificationSessionId=...
 # En desarrollo típicamente apunta al front local.
 DIDIT_CALLBACK_URL=http://localhost:5173/kyc
+
+# Webhook (opcional para MVP, requerido para producción)
+DIDIT_WEBHOOK_SECRET=<secret-shared-key-del-destination>
 ```
 
 En `client/.env`:
@@ -123,11 +126,53 @@ Lista completa en la [API reference de Didit](https://docs.didit.me/reference/se
 
 ---
 
-## 5. Limitaciones del MVP
+## 5. Webhook (producción)
 
-- **Sin webhook**: el backend no recibe notificaciones de Didit. El status se lee solo del query param al volver.
-- **Sin persistencia**: `User.kycStatus` no se actualiza en la DB. La app no puede mostrar "ya validaste" sin volver a iniciar el flow.
-- **Sin validación server-side**: el query param `status` es trusted por el front. Un user técnico podría forzar `?status=Approved` — la UI no tiene cómo verificarlo contra Didit.
+El webhook recibe notificaciones en tiempo real cuando el status de una sesión cambia. Es el patrón recomendado por Didit.
+
+### Configurar en Didit
+
+1. Ir a **Business Console → API & Webhooks → Add destination**
+2. Ingresar la URL: `https://<tu-dominio>/kyc/webhook`
+3. Seleccionar evento: `status.updated`
+4. Copiar el `secret_shared_key` → pegarlo en `DIDIT_WEBHOOK_SECRET`
+
+### Verificar firmas
+
+El endpoint `POST /kyc/webhook` verifica la firma HMAC-SHA256 de Didit:
+
+- **Primero**: intenta `X-Signature-V2` (canonical JSON con keys sorteadas)
+- **Fallback**: `X-Signature-Simple` (firma sobre `timestamp:session_id:status:webhook_type`)
+- **Rechaza**: requests con timestamp mayor a 300 segundos (replay attack)
+
+### Probar localmente
+
+Sin ngrok no se puede recibir webhooks de Didit en local. Opciones:
+
+1. **Try Webhook** (recomendado): en Business Console → API & Webhooks → Try Webhook, enviar payloads de prueba a tu URL de producción.
+2. **ngrok** (alternativa): `ngrok http 3000` y configurar la URL pública en Didit.
+3. **curl manual**: enviar un request firmado al endpoint para verificar que la verificación HMAC funciona.
+
+### Ejemplo de payload
+
+```json
+{
+  "event_id": "9c0c8b8a-...",
+  "webhook_type": "status.updated",
+  "session_id": "aaaaaaaa-...",
+  "status": "Approved",
+  "vendor_data": "user@example.com",
+  "timestamp": 1774970000,
+  "decision": { "...": "..." }
+}
+```
+
+Documentación completa: https://docs.didit.me/integration/webhooks
+
+---
+
+## 6. Limitaciones del MVP
+
+- **Webhook sin ngrok**: no se puede testear localmente sin ngrok. El endpoint funciona en producción.
 - **API key compartida**: todos los workers usan el mismo workflow. No hay segregación por tenant.
-
-Cerrar estos puntos es el siguiente paso natural del feature.
+- **Sin retry manual**: si el webhook falla 2 veces, Didit deja de reintentar. No hay mecanismo de reconciliación (excepto polling manual con `GET /kyc/status`).
