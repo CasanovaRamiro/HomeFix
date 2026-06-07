@@ -534,12 +534,6 @@ export default function WorkerApplications() {
   const [reviewTarget, setReviewTarget] = useState<{ appId: string; clientName: string } | null>(null)
   const navigate = useNavigate()
 
-  const mockClientRating = (seed: string): number => {
-    let sum = 0
-    for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i)
-    return Number((3.5 + ((sum % 100) / 100) * 1.5).toFixed(1))
-  }
-
   useEffect(() => {
     setLoading(true)
     let cancelled = false
@@ -547,10 +541,7 @@ export default function WorkerApplications() {
     const fetchApplications = async () => {
       try {
         const res = await api.get<Application[]>('/applications/my-applications')
-        const data = res.data.map((a) => ({
-          ...a,
-          clientRating: mockClientRating(a.postId),
-        }))
+        const data = res.data
         if (cancelled) return
         setApplications((prev) => {
           const prevMap = new Map(prev.map((a) => [a.id, a.status]))

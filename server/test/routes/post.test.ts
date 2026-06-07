@@ -83,6 +83,7 @@ describe('GET /posts/available', () => {
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
     expect(res.body[0].title).toBe('Plumber job')
+    expect(res.body[0].clientRating).toBe(0)
   })
 
   it('returns empty array when no posts match the category', async () => {
@@ -114,6 +115,7 @@ describe('GET /posts/available', () => {
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
+    expect(res.body[0].clientRating).toBe(0)
   })
 
   it('returns 401 without token', async () => {
@@ -146,6 +148,7 @@ describe('GET /posts/search-location', () => {
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
     expect(res.body[0].title).toBe('Nearby job')
+    expect(res.body[0].clientRating).toBe(0)
   })
 
   it('returns empty array when no posts within radius', async () => {
@@ -190,6 +193,7 @@ describe('GET /posts/:id', () => {
     expect(res.body.title).toBe('Test Post')
     expect(res.body.categories).toHaveLength(1)
     expect(res.body.categories[0].name).toBe('Test Category')
+    expect(res.body.clientRating).toBe(0)
   })
 
   it('includes description and address', async () => {
@@ -199,6 +203,7 @@ describe('GET /posts/:id', () => {
     expect(res.status).toBe(200)
     expect(res.body.description).toBe('Test description')
     expect(res.body.address).toBe('123 Test St')
+    expect(res.body.clientRating).toBe(0)
   })
 
   it('returns 404 for non-existent post', async () => {

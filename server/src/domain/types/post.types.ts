@@ -13,6 +13,7 @@ export interface DomainPost {
   longitude: number | null
   categories: { id: string; name: string }[]
   user: { id: string; name: string; surname: string }
+  clientRating?: number
 }
 
 export interface DomainUserPost {

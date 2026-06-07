@@ -10,6 +10,7 @@ export interface DomainMyApplication {
   status: string
   category: string | null
   hasReview: boolean
+  clientRating: number
 }
 
 export interface DomainPostApplication {
