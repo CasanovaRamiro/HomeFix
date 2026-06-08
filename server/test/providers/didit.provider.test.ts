@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { createDiditSession, getSessionStatus } from "../../src/infrastructure/providers/didit.provider.js"
+import { createDiditSession, getSessionStatus, getDecision } from "../../src/infrastructure/providers/didit.provider.js"
 
 const mockFetch = vi.fn()
 
@@ -325,6 +325,118 @@ describe("getSessionStatus", () => {
     })
 
     await expect(getSessionStatus("sess-1")).rejects.toMatchObject({
+      status: 502,
+      message: "Respuesta inválida del servicio de verificación",
+    })
+  })
+})
+
+describe("getDecision", () => {
+  it("sends a GET to /decision/ endpoint and returns mapped data", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        session_id: "sess-decision-1",
+        status: "Approved",
+        session_kind: "user",
+        vendor_data: "user-uuid-42",
+        id_verifications: [{ status: "Approved", full_name: "Juan Pérez" }],
+        liveness_checks: [{ status: "Approved", score: 89 }],
+        face_matches: [{ status: "Approved", score: 94 }],
+        aml_screenings: [{ status: "Approved", total_hits: 0 }],
+      }),
+    })
+
+    const result = await getDecision("sess-decision-1")
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    const [url, init] = mockFetch.mock.calls[0]
+    expect(url).toBe("https://verification.didit.me/v3/session/sess-decision-1/decision/")
+    expect(init.method).toBe("GET")
+    expect(init.headers).toMatchObject({ "x-api-key": "test-api-key" })
+    expect(result).toEqual({
+      sessionId: "sess-decision-1",
+      status: "Approved",
+      sessionKind: "user",
+      vendorData: "user-uuid-42",
+      idVerifications: [{ status: "Approved", full_name: "Juan Pérez" }],
+      livenessChecks: [{ status: "Approved", score: 89 }],
+      faceMatches: [{ status: "Approved", score: 94 }],
+      amlScreenings: [{ status: "Approved", total_hits: 0 }],
+    })
+  })
+
+  it("defaults arrays to empty when fields are missing", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        session_id: "sess-1",
+        status: "In Review",
+        session_kind: "user",
+      }),
+    })
+
+    const result = await getDecision("sess-1")
+
+    expect(result.vendorData).toBeNull()
+    expect(result.idVerifications).toEqual([])
+    expect(result.livenessChecks).toEqual([])
+    expect(result.faceMatches).toEqual([])
+    expect(result.amlScreenings).toEqual([])
+  })
+
+  it("throws 404 when Didit returns 404", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      text: async () => "Not Found",
+    })
+
+    await expect(getDecision("sess-nonexistent")).rejects.toMatchObject({
+      status: 404,
+      message: "La sesión de verificación no existe",
+    })
+  })
+
+  it("throws 502 when Didit returns 5xx", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => "Internal Server Error",
+    })
+
+    await expect(getDecision("sess-1")).rejects.toMatchObject({ status: 502 })
+  })
+
+  it("throws 502 when fetch itself throws", async () => {
+    mockFetch.mockRejectedValue(new Error("network error"))
+
+    await expect(getDecision("sess-1")).rejects.toMatchObject({
+      status: 502,
+      message: "No se pudo contactar al servicio de verificación",
+    })
+  })
+
+  it("throws 500 when DIDIT_API_KEY is not set", async () => {
+    vi.stubEnv("DIDIT_API_KEY", "")
+
+    await expect(getDecision("sess-1")).rejects.toMatchObject({
+      status: 500,
+      message: "DIDIT_API_KEY is not configured",
+    })
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it("throws 502 when response is missing session_id", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: "Approved" }),
+    })
+
+    await expect(getDecision("sess-1")).rejects.toMatchObject({
       status: 502,
       message: "Respuesta inválida del servicio de verificación",
     })

@@ -1,5 +1,5 @@
 import { findByEmail, updateUserKycStatus } from '../../infrastructure/database/user.database.js'
-import { createDiditSession, getSessionStatus } from '../../infrastructure/providers/didit.provider.js'
+import { createDiditSession, getSessionStatus, getDecision } from '../../infrastructure/providers/didit.provider.js'
 
 export type KycStatus = 'NOT_STARTED' | 'IN_REVIEW' | 'APPROVED' | 'DECLINED' | 'EXPIRED'
 
@@ -69,6 +69,31 @@ export const getKycStatus = async (
     kycStatus: (user.kycStatus as KycStatus) ?? 'NOT_STARTED',
     kycVerifiedAt: user.kycVerifiedAt ?? null,
     kycSessionId: user.kycSessionId ?? null,
+  }
+}
+
+export interface KycDecision {
+  sessionId: string
+  status: KycStatus
+  sessionKind: string
+  vendorData: string | null
+  idVerifications: unknown[]
+  livenessChecks: unknown[]
+  faceMatches: unknown[]
+  amlScreenings: unknown[]
+}
+
+export const getKycDecision = async (sessionId: string): Promise<KycDecision> => {
+  const decision = await getDecision(sessionId)
+  return {
+    sessionId: decision.sessionId,
+    status: DIDIT_STATUS_MAP[decision.status] ?? 'IN_REVIEW',
+    sessionKind: decision.sessionKind,
+    vendorData: decision.vendorData,
+    idVerifications: decision.idVerifications,
+    livenessChecks: decision.livenessChecks,
+    faceMatches: decision.faceMatches,
+    amlScreenings: decision.amlScreenings,
   }
 }
 

@@ -69,6 +69,68 @@ export const createDiditSession = async (
   return { sessionUrl: data.url, sessionId: data.session_id }
 }
 
+export interface DiditDecision {
+  sessionId: string
+  status: string
+  sessionKind: string
+  vendorData: string | null
+  idVerifications: unknown[]
+  livenessChecks: unknown[]
+  faceMatches: unknown[]
+  amlScreenings: unknown[]
+}
+
+export const getDecision = async (sessionId: string): Promise<DiditDecision> => {
+  const apiKey = env.DIDIT_API_KEY
+  if (!apiKey) throw createHttpError(500, 'DIDIT_API_KEY is not configured')
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(`${DIDIT_API_BASE}/v3/session/${sessionId}/decision/`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        Accept: 'application/json',
+      },
+      signal: controller.signal,
+    })
+  } catch (e) {
+    clearTimeout(timeout)
+    console.error('[KYC] Didit getDecision failed:', e)
+    throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
+  }
+  clearTimeout(timeout)
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    console.error('[KYC] Didit getDecision returned non-OK:', response.status, text)
+    if (response.status === 404) {
+      throw createHttpError(404, 'La sesión de verificación no existe')
+    }
+    throw createHttpError(502, 'El servicio de verificación rechazó la solicitud')
+  }
+
+  const data = (await response.json()) as Record<string, unknown>
+  if (!data.session_id) {
+    console.error('[KYC] Didit getDecision missing session_id:', data)
+    throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
+  }
+
+  return {
+    sessionId: data.session_id as string,
+    status: (data.status as string) ?? 'UNKNOWN',
+    sessionKind: (data.session_kind as string) ?? 'user',
+    vendorData: (data.vendor_data as string) ?? null,
+    idVerifications: (data.id_verifications as unknown[]) ?? [],
+    livenessChecks: (data.liveness_checks as unknown[]) ?? [],
+    faceMatches: (data.face_matches as unknown[]) ?? [],
+    amlScreenings: (data.aml_screenings as unknown[]) ?? [],
+  }
+}
+
 export const getSessionStatus = async (
   sessionId: string,
 ): Promise<{ sessionId: string; status: string; url: string }> => {
