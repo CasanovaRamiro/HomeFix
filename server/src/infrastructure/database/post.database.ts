@@ -97,11 +97,12 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     include: {
       categories: { include: { category: true } },
       applications: {
+        where: { status: { in: ['Accepted', 'Completed'] } },
         include: {
           worker: { select: { id: true, name: true } },
           review: { select: { id: true } },
         },
-        orderBy: { createdAt: 'asc' },
+        take: 1,
       },
       _count: { select: { applications: true } },
     },

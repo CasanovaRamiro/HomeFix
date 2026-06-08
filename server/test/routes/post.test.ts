@@ -282,6 +282,35 @@ describe('POST /posts/user-posts', () => {
     expect(res.body[0].applicantCount).toBe(0)
   })
 
+  it('returns the accepted worker, not the first applicant', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Post con múltiples postulantes',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'In progress',
+        categories: { create: { categoryId } },
+      },
+    })
+    const first = await createUser('first@test.com', 'First', 'hashed', { role: 'worker' })
+    const accepted = await createUser('accepted@test.com', 'Accepted', 'hashed', { role: 'worker' })
+    await prisma.application.create({ data: { postId: post.id, workerId: first.id, status: 'Rejected' } })
+    await prisma.application.create({ data: { postId: post.id, workerId: accepted.id, status: 'Accepted' } })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.worker.id).toBe(accepted.id)
+    expect(found.worker.name).toBe('Accepted')
+  })
+
   it('returns hasReview: false for a completed post without a review', async () => {
     const post = await prisma.post.create({
       data: {
