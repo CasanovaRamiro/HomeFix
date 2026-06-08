@@ -50,7 +50,7 @@ describe('auth.service - syncAuth0User', () => {
     expect(userData.createUser).not.toHaveBeenCalled()
   })
 
-  it('creates a user when email does not exist', async () => {
+  it('creates a user when email does not exist and isRegistration is true', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
     vi.mocked(userData.createUser).mockResolvedValue(mockUser)
 
@@ -58,9 +58,28 @@ describe('auth.service - syncAuth0User', () => {
       sub: 'auth0|abc123',
       email: 'jane@test.com',
       name: 'Jane',
-    })
+    }, true)
 
     expect(result.email).toBe('jane@test.com')
+  })
+
+  it('throws 404 when email does not exist and isRegistration is false', async () => {
+    vi.mocked(userData.findByEmail).mockResolvedValue(null)
+
+    await expect(
+      syncAuth0User({ sub: 'auth0|abc123', email: 'jane@test.com', name: 'Jane' })
+    ).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('creates user with role client when isRegistration is true', async () => {
+    vi.mocked(userData.findByEmail).mockResolvedValue(null)
+    vi.mocked(userData.createUser).mockResolvedValue({ ...mockUser, role: UserRole.Client })
+
+    await syncAuth0User({ sub: 'auth0|abc123', email: 'jane@test.com', name: 'Jane' }, true)
+
+    expect(userData.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ role: UserRole.Client })
+    )
   })
 })
 

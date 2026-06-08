@@ -23,14 +23,42 @@ describe('GET /auth/me', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns 200 and syncs user when token is present', async () => {
+  it('returns 200 and creates user when registering via Google', async () => {
     const res = await request(app)
       .get('/auth/me')
       .set('Authorization', 'Bearer test-auth0-token')
+      .set('x-auth-source', 'register')
 
     expect(res.status).toBe(200)
     expect(res.body.email).toBe('test@test.com')
     expect(res.body).toHaveProperty('id')
+  })
+
+  it('returns 404 when user is not registered and no register header', async () => {
+    const res = await request(app)
+      .get('/auth/me')
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('does not create user when x-auth-source is truthy but not "register"', async () => {
+    const res = await request(app)
+      .get('/auth/me')
+      .set('Authorization', 'Bearer test-auth0-token')
+      .set('x-auth-source', 'true')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('created Google user has role client', async () => {
+    const res = await request(app)
+      .get('/auth/me')
+      .set('Authorization', 'Bearer test-auth0-token')
+      .set('x-auth-source', 'register')
+
+    expect(res.status).toBe(200)
+    expect(res.body.role).toBe('client')
   })
 })
 
@@ -111,6 +139,7 @@ it('does not create duplicated user on second visit', async () => {
   const first = await request(app)
     .get('/auth/me')
     .set('Authorization', 'Bearer test-auth0-token')
+    .set('x-auth-source', 'register')
 
   const second = await request(app)
     .get('/auth/me')

@@ -167,7 +167,7 @@ export const loginUser = async (input: LoginInput) => {
   }
 }
 
-export const syncAuth0User = async (claims: Auth0Claims | undefined) => {
+export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistration = false) => {
   if (!claims?.sub) throw Object.assign(new Error('Invalid Auth0 token: missing sub claim'), { status: 401 })
 
   const fallbackEmail = `${claims.sub}@auth0.local`
@@ -201,12 +201,16 @@ export const syncAuth0User = async (claims: Auth0Claims | undefined) => {
     return safeUser
   }
 
+  if (!isRegistration) {
+    throw createHttpError(404, 'No encontramos una cuenta con este correo. Por favor registrate primero.')
+  }
+
   const user = await createUser({
     email,
     name: claims.name ?? claims.nickname ?? claims.sub,
     password: managedPassword,
     phone: claims.phone_number,
-    role: claims.role,
+    role: UserRole.Client,
   })
 
   return user
