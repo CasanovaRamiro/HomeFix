@@ -28,7 +28,8 @@ export const getWorkerReviews = (id: string): Promise<WorkerReview[]> =>
   api.get<WorkerReview[]>(`/workers/${id}/reviews`).then((r) => r.data)
 
 export interface WorkerCategory {
-  category: { id: string; name: string }
+  id: string
+  name: string
 }
 
 export interface Worker {

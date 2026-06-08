@@ -72,7 +72,7 @@ export default function WorkerHeader({ worker }: Props) {
         {/* Categories */}
         {worker.categories.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-            {worker.categories.map(({ category }) => (
+            {worker.categories.map((category) => (
               <span key={category.id} style={{
                 background: '#EFF6FF', color: '#1D4ED8',
                 fontSize: 12, fontWeight: 600,

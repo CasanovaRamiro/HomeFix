@@ -11,11 +11,12 @@ vi.mock("../../src/domain/services/kyc.service.js", () => ({
   startKycVerification: vi.fn(),
   confirmKyc: vi.fn(),
   getKycStatus: vi.fn(),
+  getKycDecision: vi.fn(),
   handleKycWebhook: vi.fn(),
 }))
 
 import { app } from "../../src/index.js"
-import { startKycVerification, confirmKyc, getKycStatus, handleKycWebhook } from "../../src/domain/services/kyc.service.js"
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from "../../src/domain/services/kyc.service.js"
 
 const token = "test-auth0-token"
 const WEBHOOK_SECRET = "test-webhook-secret-key"
@@ -203,6 +204,73 @@ describe("GET /kyc/status", () => {
       .set("Authorization", `Bearer ${token}`)
 
     expect(res.status).toBe(404)
+  })
+})
+
+describe("GET /kyc/decision/:sessionId", () => {
+  it("returns 401 without an auth token", async () => {
+    const res = await request(app).get("/kyc/decision/sess-1")
+
+    expect(res.status).toBe(401)
+  })
+
+  it("returns 200 with the full decision from Didit", async () => {
+    vi.mocked(getKycDecision).mockResolvedValue({
+      sessionId: "sess-decision-1",
+      status: "APPROVED",
+      sessionKind: "user",
+      vendorData: "user-uuid-42",
+      idVerifications: [{ status: "Approved", full_name: "Juan Pérez" }],
+      livenessChecks: [{ status: "Approved", score: 89 }],
+      faceMatches: [{ status: "Approved", score: 94 }],
+      amlScreenings: [],
+    })
+
+    const res = await request(app)
+      .get("/kyc/decision/sess-decision-1")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.sessionId).toBe("sess-decision-1")
+    expect(res.body.status).toBe("APPROVED")
+    expect(res.body.idVerifications).toEqual([{ status: "Approved", full_name: "Juan Pérez" }])
+    expect(getKycDecision).toHaveBeenCalledWith("sess-decision-1")
+  })
+
+  it("returns 404 when the session does not exist in Didit", async () => {
+    const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
+    err.status = 404
+    vi.mocked(getKycDecision).mockRejectedValue(err)
+
+    const res = await request(app)
+      .get("/kyc/decision/sess-nonexistent")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it("returns 502 when Didit API is unreachable", async () => {
+    const err = new Error("El servicio de verificación rechazó la solicitud") as Error & {
+      status?: number
+    }
+    err.status = 502
+    vi.mocked(getKycDecision).mockRejectedValue(err)
+
+    const res = await request(app)
+      .get("/kyc/decision/sess-1")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(502)
+  })
+
+  it("returns 500 when the service throws an error without a status", async () => {
+    vi.mocked(getKycDecision).mockRejectedValue(new Error("Unexpected"))
+
+    const res = await request(app)
+      .get("/kyc/decision/sess-1")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(500)
   })
 })
 

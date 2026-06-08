@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const { mockFindByEmail, mockUpdateUserKycStatus, mockCreateDiditSession, mockGetSessionStatus } = vi.hoisted(() => ({
+const { mockFindByEmail, mockUpdateUserKycStatus, mockCreateDiditSession, mockGetSessionStatus, mockGetDecision } = vi.hoisted(() => ({
   mockFindByEmail: vi.fn(),
   mockUpdateUserKycStatus: vi.fn(),
   mockCreateDiditSession: vi.fn(),
   mockGetSessionStatus: vi.fn(),
+  mockGetDecision: vi.fn(),
 }))
 
 vi.mock("../../src/infrastructure/database/user.database.js", () => ({
@@ -15,9 +16,10 @@ vi.mock("../../src/infrastructure/database/user.database.js", () => ({
 vi.mock("../../src/infrastructure/providers/didit.provider.js", () => ({
   createDiditSession: mockCreateDiditSession,
   getSessionStatus: mockGetSessionStatus,
+  getDecision: mockGetDecision,
 }))
 
-import { startKycVerification, confirmKyc, getKycStatus } from "../../src/domain/services/kyc.service.js"
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecision } from "../../src/domain/services/kyc.service.js"
 
 describe("startKycVerification", () => {
   beforeEach(() => {
@@ -287,5 +289,90 @@ describe("getKycStatus", () => {
       status: 404,
       message: "Usuario autenticado no encontrado en la base de datos",
     })
+  })
+})
+
+describe("getKycDecision", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("fetches the decision from Didit and maps the status", async () => {
+    mockGetDecision.mockResolvedValue({
+      sessionId: "sess-decision-1",
+      status: "Approved",
+      sessionKind: "user",
+      vendorData: "user-uuid-42",
+      idVerifications: [{ status: "Approved", full_name: "Juan Pérez" }],
+      livenessChecks: [{ status: "Approved", score: 89 }],
+      faceMatches: [{ status: "Approved", score: 94 }],
+      amlScreenings: [],
+    })
+
+    const result = await getKycDecision("sess-decision-1")
+
+    expect(mockGetDecision).toHaveBeenCalledWith("sess-decision-1")
+    expect(result).toEqual({
+      sessionId: "sess-decision-1",
+      status: "APPROVED",
+      sessionKind: "user",
+      vendorData: "user-uuid-42",
+      idVerifications: [{ status: "Approved", full_name: "Juan Pérez" }],
+      livenessChecks: [{ status: "Approved", score: 89 }],
+      faceMatches: [{ status: "Approved", score: 94 }],
+      amlScreenings: [],
+    })
+  })
+
+  it("maps Declined status", async () => {
+    mockGetDecision.mockResolvedValue({
+      sessionId: "sess-2",
+      status: "Declined",
+      sessionKind: "user",
+      vendorData: null,
+      idVerifications: [],
+      livenessChecks: [],
+      faceMatches: [],
+      amlScreenings: [],
+    })
+
+    const result = await getKycDecision("sess-2")
+    expect(result.status).toBe("DECLINED")
+  })
+
+  it("maps unknown statuses to IN_REVIEW", async () => {
+    mockGetDecision.mockResolvedValue({
+      sessionId: "sess-3",
+      status: "Something Strange",
+      sessionKind: "user",
+      vendorData: null,
+      idVerifications: [],
+      livenessChecks: [],
+      faceMatches: [],
+      amlScreenings: [],
+    })
+
+    const result = await getKycDecision("sess-3")
+    expect(result.status).toBe("IN_REVIEW")
+  })
+
+  it("propagates 404 from the provider", async () => {
+    const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
+    err.status = 404
+    mockGetDecision.mockRejectedValue(err)
+
+    await expect(getKycDecision("sess-nonexistent")).rejects.toMatchObject({
+      status: 404,
+    })
+  })
+
+  it("propagates 502 from the provider", async () => {
+    const err = new Error("El servicio de verificación rechazó la solicitud") as Error & {
+      status?: number
+    }
+    err.status = 502
+    mockGetDecision.mockRejectedValue(err)
+
+    await expect(getKycDecision("sess-1")).rejects.toMatchObject({ status: 502 })
   })
 })

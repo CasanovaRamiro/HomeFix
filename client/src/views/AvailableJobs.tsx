@@ -99,7 +99,7 @@ export default function AvailableJobs(): JSX.Element {
     if (user?.id) {
       getWorker(user.id)
         .then((worker) => {
-          const cats = worker.categories.map((c) => c.category.name)
+          const cats = worker.categories.map((c) => c.name)
           setWorkerCategories(cats)
           const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
           if ((!saved || saved === DEFAULT_WORKER_CATEGORY) && cats.length > 0) {

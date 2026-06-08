@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import crypto from 'crypto'
-import { startKycVerification, confirmKyc, getKycStatus, handleKycWebhook } from '../../domain/services/kyc.service.js'
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from '../../domain/services/kyc.service.js'
 import { env } from '../../lib/envConfig.js'
 
 const router = Router()
@@ -58,6 +58,24 @@ router.get('/status', async (req, res, next) => {
     }
 
     const result = await getKycStatus(email)
+    res.json(result)
+  } catch (e) {
+    const err = e as Error & { status?: number }
+    if (!err.status) err.status = 500
+    next(err)
+  }
+})
+
+router.get('/decision/:sessionId', async (req, res, next) => {
+  try {
+    const { sessionId } = req.params
+    if (!sessionId) {
+      const err = new Error('sessionId es requerido') as Error & { status?: number }
+      err.status = 400
+      throw err
+    }
+
+    const result = await getKycDecision(sessionId)
     res.json(result)
   } catch (e) {
     const err = e as Error & { status?: number }
