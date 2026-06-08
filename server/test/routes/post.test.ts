@@ -282,6 +282,71 @@ describe('POST /posts/user-posts', () => {
     expect(res.body[0].applicantCount).toBe(0)
   })
 
+  it('returns hasReview: false for a completed post without a review', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Completed No Review',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Completed',
+        categories: { create: { categoryId } },
+      },
+    })
+    const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: 'worker' })
+    await prisma.application.create({
+      data: { postId: post.id, workerId: worker.id, status: 'Completed' },
+    })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.hasReview).toBe(false)
+  })
+
+  it('returns hasReview: true for a completed post that has been reviewed', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Completed With Review',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 2',
+        status: 'Completed',
+        categories: { create: { categoryId } },
+      },
+    })
+    const worker = await createUser('worker2@test.com', 'Worker2', 'hashed', { role: 'worker' })
+    const application = await prisma.application.create({
+      data: { postId: post.id, workerId: worker.id, status: 'Completed' },
+    })
+    await prisma.workerReview.create({
+      data: {
+        applicationId: application.id,
+        reviewerId: userId,
+        workerId: worker.id,
+        rating: 5,
+        description: 'Great work',
+      },
+    })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.hasReview).toBe(true)
+  })
+
   it('returns empty array when the user has no posts', async () => {
     const res = await request(app)
       .post('/posts/user-posts')
