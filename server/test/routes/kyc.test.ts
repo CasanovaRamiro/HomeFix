@@ -176,7 +176,7 @@ describe("GET /kyc/status", () => {
     vi.mocked(getKycStatus).mockResolvedValue({
       kycStatus: "APPROVED",
       kycVerifiedAt: verifiedAt,
-      kycSessionId: "sess-abc",
+      diditVerificationId: "sess-abc",
     })
 
     const res = await request(app)
@@ -187,7 +187,7 @@ describe("GET /kyc/status", () => {
     expect(res.body).toEqual({
       kycStatus: "APPROVED",
       kycVerifiedAt: verifiedAt.toISOString(),
-      kycSessionId: "sess-abc",
+      diditVerificationId: "sess-abc",
     })
     expect(getKycStatus).toHaveBeenCalledWith("test@test.com")
   })

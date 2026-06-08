@@ -15,7 +15,18 @@ export interface KycConfirmResponse {
 export interface KycStatusResponse {
   kycStatus: KycStatus
   kycVerifiedAt: string | null
-  kycSessionId: string | null
+  diditVerificationId: string | null
+}
+
+export interface KycDecision {
+  sessionId: string
+  status: KycStatus
+  sessionKind: string
+  vendorData: string | null
+  idVerifications: unknown[]
+  livenessChecks: unknown[]
+  faceMatches: unknown[]
+  amlScreenings: unknown[]
 }
 
 export const startKycVerification = (): Promise<KycSessionResponse> =>
@@ -26,3 +37,6 @@ export const confirmKycSession = (sessionId: string, email: string): Promise<Kyc
 
 export const fetchKycStatus = (): Promise<KycStatusResponse> =>
   api.get<KycStatusResponse>('/kyc/status').then((r) => r.data)
+
+export const getKycDecision = (sessionId: string): Promise<KycDecision> =>
+  api.get<KycDecision>(`/kyc/decision/${sessionId}`).then((r) => r.data)
