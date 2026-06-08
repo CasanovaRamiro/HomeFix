@@ -118,14 +118,14 @@ export default function KycVerify() {
       const email = user?.email
       if (!email) {
         setConfirmError('No se pudo identificar tu usuario')
-        return
+      } else {
+        confirmKycSession(rawSessionId, email)
+          .then((res) => setConfirmedStatus(res.status))
+          .catch((err) => {
+            const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+            setConfirmError(msg ?? 'Error al confirmar la verificación')
+          })
       }
-      confirmKycSession(rawSessionId, email)
-        .then((res) => setConfirmedStatus(res.status))
-        .catch((err) => {
-          const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-          setConfirmError(msg ?? 'Error al confirmar la verificación')
-        })
     }
   }, [])
 

@@ -807,7 +807,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
     }
 
     if (kycStatus === 'DECLINED' || kycStatus === 'EXPIRED') {
-      const B = badge!
+      const B = badge
       return (
         <button
           type="button"
@@ -834,7 +834,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
     }
 
     if (kycStatus === 'IN_REVIEW') {
-      const B = badge!
+      const B = badge
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>

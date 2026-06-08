@@ -89,10 +89,10 @@ function sortKeys(obj: unknown): unknown {
   if (obj !== null && typeof obj === 'object') {
     return Object.keys(obj as Record<string, unknown>)
       .sort()
-      .reduce((acc, key) => {
-        ;(acc as Record<string, unknown>)[key] = sortKeys((obj as Record<string, unknown>)[key])
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = sortKeys((obj as Record<string, unknown>)[key])
         return acc
-      }, {} as Record<string, unknown>)
+      }, {})
   }
   return obj
 }
@@ -137,10 +137,10 @@ function verifySignatureSimple(
   if (Math.abs(now - parseInt(timestamp, 10)) > 300) return false
 
   const canonical = [
-    body.timestamp ?? '',
-    body.session_id ?? '',
-    body.status ?? '',
-    body.webhook_type ?? '',
+    (body.timestamp as string) ?? '',
+    (body.session_id as string) ?? '',
+    (body.status as string) ?? '',
+    (body.webhook_type as string) ?? '',
   ].join(':')
   const expected = crypto.createHmac('sha256', secret).update(canonical).digest('hex')
 
