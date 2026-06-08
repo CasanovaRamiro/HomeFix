@@ -9,7 +9,6 @@ import authRoutes from './presentation/routes/auth.routes.js'
 import userRoutes from './presentation/routes/user.routes.js'
 import postRoutes from './presentation/routes/post.routes.js'
 import workerRoutes from './presentation/routes/worker.routes.js'
-
 import { errorHandler } from './presentation/middleware/error.middleware.js'
 import postRoutes from './presentation/routes/post.routes.js'
 import aiRoutes from './presentation/routes/ai.routes.js'
@@ -17,7 +16,7 @@ import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
-import kycRoutes, { webhookRouter } from './presentation/routes/kyc.routes.js'
+import kycRoutes, { confirmRouter, webhookRouter } from './presentation/routes/kyc.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
 import telegramRoutes from './presentation/routes/telegram.routes.js'
 import { startBot } from './presentation/telegram/bot.js'
@@ -49,6 +48,7 @@ app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/kyc', webhookRouter)
 app.use('/upload', jwtCheck, uploadRoutes)
 app.use('/telegram', telegramRoutes)
+app.use('/kyc', confirmRouter)
 app.use('/kyc', jwtCheck, kycRoutes)
 app.use(errorHandler)
 

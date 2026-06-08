@@ -21,8 +21,8 @@ export interface KycStatusResponse {
 export const startKycVerification = (): Promise<KycSessionResponse> =>
   api.post<KycSessionResponse>('/kyc/session').then((r) => r.data)
 
-export const confirmKycSession = (sessionId: string): Promise<KycConfirmResponse> =>
-  api.post<KycConfirmResponse>('/kyc/confirm', { sessionId }).then((r) => r.data)
+export const confirmKycSession = (sessionId: string, email: string): Promise<KycConfirmResponse> =>
+  api.post<KycConfirmResponse>('/kyc/confirm', { sessionId, email }).then((r) => r.data)
 
 export const fetchKycStatus = (): Promise<KycStatusResponse> =>
   api.get<KycStatusResponse>('/kyc/status').then((r) => r.data)
