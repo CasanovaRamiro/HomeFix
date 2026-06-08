@@ -108,7 +108,7 @@ describe("confirmKyc", () => {
     email: "foo@bar.com",
     kycStatus: null,
     kycVerifiedAt: null,
-    kycSessionId: null,
+    diditVerificationId: null,
   }
 
   beforeEach(() => {
@@ -129,7 +129,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
       kycStatus: "APPROVED",
       kycVerifiedAt: expect.any(Date),
-      kycSessionId: "sess-abc",
+      diditVerificationId: "sess-abc",
     })
     expect(result).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
   })
@@ -147,7 +147,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
       kycStatus: "DECLINED",
       kycVerifiedAt: expect.any(Date),
-      kycSessionId: "sess-declined",
+      diditVerificationId: "sess-declined",
     })
   })
 
@@ -164,7 +164,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
       kycStatus: "IN_REVIEW",
       kycVerifiedAt: null,
-      kycSessionId: "sess-review",
+      diditVerificationId: "sess-review",
     })
   })
 
@@ -181,7 +181,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
       kycStatus: "EXPIRED",
       kycVerifiedAt: expect.any(Date),
-      kycSessionId: "sess-abandoned",
+      diditVerificationId: "sess-abandoned",
     })
   })
 
@@ -198,7 +198,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
       kycStatus: "IN_REVIEW",
       kycVerifiedAt: null,
-      kycSessionId: "sess-weird",
+      diditVerificationId: "sess-weird",
     })
   })
 
@@ -252,7 +252,7 @@ describe("getKycStatus", () => {
       email: "foo@bar.com",
       kycStatus: "APPROVED",
       kycVerifiedAt: new Date("2026-06-07T12:00:00Z"),
-      kycSessionId: "sess-abc",
+      diditVerificationId: "sess-abc",
     })
 
     const result = await getKycStatus("foo@bar.com")
@@ -260,7 +260,7 @@ describe("getKycStatus", () => {
     expect(result).toEqual({
       kycStatus: "APPROVED",
       kycVerifiedAt: new Date("2026-06-07T12:00:00Z"),
-      kycSessionId: "sess-abc",
+      diditVerificationId: "sess-abc",
     })
   })
 
@@ -270,7 +270,7 @@ describe("getKycStatus", () => {
       email: "foo@bar.com",
       kycStatus: null,
       kycVerifiedAt: null,
-      kycSessionId: null,
+      diditVerificationId: null,
     })
 
     const result = await getKycStatus("foo@bar.com")
@@ -278,7 +278,7 @@ describe("getKycStatus", () => {
     expect(result).toEqual({
       kycStatus: "NOT_STARTED",
       kycVerifiedAt: null,
-      kycSessionId: null,
+      diditVerificationId: null,
     })
   })
 

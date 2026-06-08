@@ -51,7 +51,7 @@ export const confirmKyc = async (
   await updateUserKycStatus(email, {
     kycStatus: mappedStatus,
     kycVerifiedAt: now,
-    kycSessionId: sessionId,
+    diditVerificationId: sessionId,
   })
 
   return { status: mappedStatus, sessionId }
@@ -59,7 +59,7 @@ export const confirmKyc = async (
 
 export const getKycStatus = async (
   email: string,
-): Promise<{ kycStatus: KycStatus; kycVerifiedAt: Date | null; kycSessionId: string | null }> => {
+): Promise<{ kycStatus: KycStatus; kycVerifiedAt: Date | null; diditVerificationId: string | null }> => {
   const user = await findByEmail(email)
   if (!user) {
     throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
@@ -68,7 +68,7 @@ export const getKycStatus = async (
   return {
     kycStatus: (user.kycStatus as KycStatus) ?? 'NOT_STARTED',
     kycVerifiedAt: user.kycVerifiedAt ?? null,
-    kycSessionId: user.kycSessionId ?? null,
+    diditVerificationId: user.diditVerificationId ?? null,
   }
 }
 
@@ -133,7 +133,7 @@ export const handleKycWebhook = async (
   await updateUserKycStatus(email, {
     kycStatus: mappedStatus,
     kycVerifiedAt: now,
-    kycSessionId: payload.session_id,
+    diditVerificationId: payload.session_id,
   })
 
   console.log(`[KYC] Webhook procesado: ${email} → ${mappedStatus} (event: ${payload.event_id})`)

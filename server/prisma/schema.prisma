@@ -39,7 +39,7 @@ model User {
 
   kycStatus       String    @default("NOT_STARTED")
   kycVerifiedAt   DateTime?
-  kycSessionId    String?
+  diditVerificationId String?
 
 }
 

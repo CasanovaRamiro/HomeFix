@@ -34,7 +34,7 @@ const mockUser = {
   addressId: 'uuid-addr',
   kycStatus: 'NOT_STARTED',
   kycVerifiedAt: null,
-  kycSessionId: null,
+  diditVerificationId: null,
 }
 
 describe('auth.service - syncAuth0User', () => {
