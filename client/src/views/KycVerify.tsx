@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { startKycVerification, confirmKycSession } from '../services/kyc'
+import { useAuth } from '../hooks/useAuth'
 
 type ViewState = 'idle' | 'loading' | 'error'
 
@@ -109,11 +110,17 @@ export default function KycVerify() {
   const [confirmedStatus, setConfirmedStatus] = useState<string | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const startedRef = useRef(false)
+  const { user } = useAuth()
 
   useEffect(() => {
     if (showResult && rawSessionId && !startedRef.current) {
       startedRef.current = true
-      confirmKycSession(rawSessionId)
+      const email = user?.email
+      if (!email) {
+        setConfirmError('No se pudo identificar tu usuario')
+        return
+      }
+      confirmKycSession(rawSessionId, email)
         .then((res) => setConfirmedStatus(res.status))
         .catch((err) => {
           const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error

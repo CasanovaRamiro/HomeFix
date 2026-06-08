@@ -4,6 +4,7 @@ import { startKycVerification, confirmKyc, getKycStatus, handleKycWebhook } from
 import { env } from '../../lib/envConfig.js'
 
 const router = Router()
+const confirmRouter = Router()
 const webhookRouter = Router()
 
 function getEmail(req: import('express').Request): string | undefined {
@@ -29,18 +30,11 @@ router.post('/session', async (req, res, next) => {
   }
 })
 
-router.post('/confirm', async (req, res, next) => {
+confirmRouter.post('/confirm', async (req, res, next) => {
   try {
-    const email = getEmail(req)
-    if (!email) {
-      const err = new Error('Token autenticado sin email') as Error & { status?: number }
-      err.status = 400
-      throw err
-    }
-
-    const { sessionId } = req.body as { sessionId?: string }
-    if (!sessionId) {
-      const err = new Error('sessionId es requerido') as Error & { status?: number }
+    const { sessionId, email } = req.body as { sessionId?: string; email?: string }
+    if (!sessionId || !email) {
+      const err = new Error('sessionId y email son requeridos') as Error & { status?: number }
       err.status = 400
       throw err
     }
@@ -177,4 +171,4 @@ webhookRouter.post('/webhook', async (req, res) => {
 })
 
 export default router
-export { webhookRouter }
+export { confirmRouter, webhookRouter }

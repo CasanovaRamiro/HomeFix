@@ -15,7 +15,7 @@ import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
-import kycRoutes, { webhookRouter } from './presentation/routes/kyc.routes.js'
+import kycRoutes, { confirmRouter, webhookRouter } from './presentation/routes/kyc.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
 
 export const app = express()
@@ -44,6 +44,7 @@ app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/kyc', webhookRouter)
 app.use('/upload', jwtCheck, uploadRoutes)
+app.use('/kyc', confirmRouter)
 app.use('/kyc', jwtCheck, kycRoutes)
 app.use(errorHandler)
 

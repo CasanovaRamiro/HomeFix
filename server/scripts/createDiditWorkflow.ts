@@ -12,13 +12,7 @@ const DIDIT_BASE = 'https://verification.didit.me'
 const FEATURES = [
   {
     feature: 'OCR',
-    config: {
-      documents_allowed: {
-        ARG: {
-          ID: { enabled: 1, sides: 2 },
-        },
-      },
-    },
+    config: {},
   },
   { feature: 'LIVENESS', config: { face_liveness_method: 'PASSIVE' } },
   { feature: 'FACE_MATCH' },

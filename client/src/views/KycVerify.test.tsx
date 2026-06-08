@@ -10,6 +10,13 @@ vi.mock('../services/kyc', () => ({
   confirmKycSession: vi.fn(),
 }))
 
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'user-1', name: 'Test', email: 'test@test.com', role: 'worker' },
+    isLoggedIn: true,
+  }),
+}))
+
 vi.mock('../lib/envConfig', () => ({
   env: { VITE_API_URL: 'http://localhost:3000' },
 }))
@@ -132,7 +139,7 @@ describe('KycVerify', () => {
 
       expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
       expect(await screen.findByText('Aprobada')).toBeInTheDocument()
-      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-abc')
+      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-abc', 'test@test.com')
     })
 
     it('muestra el status mapeado desde el backend', async () => {
