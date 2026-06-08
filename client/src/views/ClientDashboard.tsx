@@ -26,9 +26,13 @@ export default function ClientDashboard() {
     { label: 'Sin leer',              value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
   ]
 
-  const inProgress = posts.filter(p => p.status !== 'Completed')
-  const completed  = posts.filter(p => p.status === 'Completed')
-  const ordered    = [...inProgress, ...completed]
+  // Show only actionable posts: exclude Cancelled and Completed posts that already have a review
+  const visible = posts.filter(p =>
+    p.status !== 'Cancelled' && !(p.status === 'Completed' && p.hasReview)
+  )
+  const inProgressPosts = visible.filter(p => p.status === 'In progress')
+  const rest            = visible.filter(p => p.status !== 'In progress')
+  const ordered         = [...inProgressPosts, ...rest]
 
   return (
     <div className="min-h-screen bg-slate-100">

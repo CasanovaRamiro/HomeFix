@@ -97,9 +97,11 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     include: {
       categories: { include: { category: true } },
       applications: {
-        include: { worker: { select: { id: true, name: true } } },
+        include: {
+          worker: { select: { id: true, name: true } },
+          review: { select: { id: true } },
+        },
         orderBy: { createdAt: 'asc' },
-        take: 1,
       },
       _count: { select: { applications: true } },
     },
@@ -121,6 +123,7 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     })),
     worker: post.applications[0]?.worker ?? null,
     applicantCount: post._count.applications,
+    hasReview: post.applications.some((a) => a.review !== null),
   }))
 }
 

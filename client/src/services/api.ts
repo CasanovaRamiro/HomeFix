@@ -59,6 +59,7 @@ export interface UserPost {
   categories: { id: string; name: string }[]
   worker: { id: string; name: string } | null
   applicantCount: number
+  hasReview: boolean
 }
 
 export const createReview = (data: ReviewInput) =>
