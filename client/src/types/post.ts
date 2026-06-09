@@ -1,3 +1,11 @@
+export enum PostStatus {
+  Active = 'Active',
+  InProgress = 'In progress',
+  Paused = 'Paused',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled',
+}
+
 export interface PostCategoryDTO {
   id: string
   name: string

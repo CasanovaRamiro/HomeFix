@@ -15,6 +15,7 @@ export interface UserPostDTO {
   categories: PostCategoryDTO[]
   worker: { id: string; name: string } | null
   applicantCount: number
+  hasReview: boolean
 }
 
 export interface PostDTO {
