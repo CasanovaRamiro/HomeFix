@@ -13,6 +13,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
+  deletePostImages: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({

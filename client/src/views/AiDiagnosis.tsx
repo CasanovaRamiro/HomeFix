@@ -285,7 +285,7 @@ export default function AiDiagnosis() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ marginTop: '32px' }}>
+                <form onSubmit={handleSubmit(files)} style={{ marginTop: '32px' }}>
                   <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                     <h3 style={{ fontSize: '20px', fontWeight: 600, color: theme.primaryDark, marginBottom: '8px' }}>Completá los datos faltantes</h3>
                     <p style={{ fontSize: '14px', color: theme.muted }}>Completá la siguiente información para publicar tu solicitud</p>

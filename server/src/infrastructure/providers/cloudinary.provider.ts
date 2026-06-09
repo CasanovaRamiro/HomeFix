@@ -12,7 +12,7 @@ export const uploadImage = async (file: { buffer: Buffer; mimetype: string; orig
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: 'ofix', resource_type: 'image' },
       (err, result) => {
-        if (err || !result) reject(err ?? new Error('Upload failed'))
+        if (err || !result) reject(err instanceof Error ? err : new Error('Upload failed'))
         else resolve(result.secure_url)
       },
     )
