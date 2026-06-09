@@ -21,6 +21,7 @@ export default function ClientDashboard() {
 
   const activos     = posts.filter(p => p.status === PostStatus.Active || p.status === PostStatus.InProgress || p.status === PostStatus.Paused).length
   const completados = posts.filter(p => p.status === PostStatus.Completed).length
+  const emergencyCount = posts.filter(p => p.isEmergency && p.status !== PostStatus.Completed && p.status !== PostStatus.Cancelled).length
 
   // Identidad Cliente = azul. Cada métrica conserva su color semántico.
   const stats = [
