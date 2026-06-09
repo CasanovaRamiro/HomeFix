@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,7 +18,7 @@ model User {
   surname      String
   password        String
   phone           String?
-  bio             String?          @db.Text
+  bio             String?
   role            String           @default("client")
   createdAt       DateTime         @default(now())
   active          Boolean          @default(true)
@@ -46,7 +46,7 @@ model Post {
   startDate       DateTime
   endDate         DateTime
   title           String
-  description     String          @db.Text
+  description     String
   address         String
   status          String           @default("Active")
   latitude        Float?
@@ -101,9 +101,9 @@ model WorkerReview {
   applicationId String      @unique
   reviewerId    String
   workerId      String
-  description   String      @db.Text
+  description   String
   rating        Int
-  mediaUrls     String?     @db.Text
+  mediaUrls     String?
   createdAt     DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   reviewer      User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
@@ -130,7 +130,7 @@ model ClientReview {
   applicationId String      @unique
   reviewerId    String
   clientId      String
-  description   String      @db.Text
+  description   String
   rating        Int
   createdAt     DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
