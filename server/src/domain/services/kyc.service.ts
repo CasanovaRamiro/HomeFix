@@ -46,7 +46,7 @@ export const startKycVerification = async (
   if (user.kycStatus === 'IN_REVIEW') {
     throw createHttpError(409, 'Ya tenés una verificación en curso')
   }
-  return createDiditSession(user.id)
+  return createDiditSession(user.email)
 }
 
 export const confirmKyc = async (
