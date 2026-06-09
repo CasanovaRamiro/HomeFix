@@ -161,7 +161,7 @@ export default function PostDetail() {
 
   const handleChat = async (workerId: string) => {
     try {
-      const conv = await createConversation(post!.id, workerId)
+      const conv = await createConversation(post.id, workerId)
       window.dispatchEvent(new CustomEvent('chat:open', { detail: { conversationId: conv.id } }))
     } catch {
       alert('No se pudo iniciar la conversación')
