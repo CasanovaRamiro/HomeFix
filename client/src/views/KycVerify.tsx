@@ -9,9 +9,10 @@ import {
   XCircle,
   Loader2,
   FileCheck,
+  RotateCcw,
   type LucideIcon,
 } from 'lucide-react'
-import { startKycVerification, confirmKycSession } from '../services/kyc'
+import { startKycVerification, confirmKycSession, fetchKycStatus } from '../services/kyc'
 import { useAuth } from '../hooks/useAuth'
 
 type ViewState = 'idle' | 'loading' | 'error'
@@ -33,7 +34,7 @@ const STATUS_COPY: Record<string, StatusCopy> = {
     iconColor: 'text-emerald-600',
     title: 'Identidad validada',
     description:
-      'Recibimos tu validación. En breve la vamos a confirmar en tu cuenta y te avisaremos por mail.',
+      'Tu verificación fue aprobada. Ya podés empezar a recibir trabajos.',
   },
   'In Review': {
     icon: Clock,
@@ -99,6 +100,53 @@ function toneForStatus(rawStatus: string | null): Tone {
   return 'unknown'
 }
 
+function StatusScreen({
+  displayStatus,
+  onRetry,
+  retryLabel,
+}: {
+  displayStatus: string
+  onRetry?: () => void
+  retryLabel?: string
+}) {
+  const copy = resolveStatusCopy(displayStatus)
+  const tone = toneForStatus(displayStatus)
+  const badge = TONE_BADGE[tone]
+  const Icon = copy.icon
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
+      <div className="max-w-md w-full space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+          <div className={`mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center ${copy.iconBg}`}>
+            <Icon className={`w-8 h-8 ${copy.iconColor}`} />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
+          <p className="mt-3 text-slate-500">{copy.description}</p>
+          <span className={`mt-4 inline-block text-xs font-semibold px-3 py-1 rounded-full ${badge.bg} ${badge.color}`}>
+            {badge.label}
+          </span>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-6 inline-flex items-center justify-center gap-2 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              {retryLabel ?? 'Reintentar'}
+            </button>
+          )}
+          <Link
+            to="/worker"
+            className="mt-3 inline-flex items-center justify-center gap-2 w-full h-12 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-colors"
+          >
+            Volver a mi panel
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function KycVerify() {
   const [searchParams] = useSearchParams()
   const rawStatus = searchParams.get('status')
@@ -109,8 +157,26 @@ export default function KycVerify() {
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [confirmedStatus, setConfirmedStatus] = useState<string | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null)
+  const [checkingStatus, setCheckingStatus] = useState(!showResult)
   const startedRef = useRef(false)
   const { user } = useAuth()
+
+  useEffect(() => {
+    if (showResult || !user?.email) {
+      setCheckingStatus(false)
+      return
+    }
+
+    fetchKycStatus()
+      .then((res) => {
+        setCurrentStatus(res.kycStatus)
+      })
+      .catch(() => {
+        setCurrentStatus(null)
+      })
+      .finally(() => setCheckingStatus(false))
+  }, [])
 
   useEffect(() => {
     if (showResult && rawSessionId && !startedRef.current) {
@@ -131,53 +197,61 @@ export default function KycVerify() {
 
   const isConfirming = showResult && !confirmedStatus && !confirmError
   const displayStatus = confirmedStatus ?? rawStatus
-  const handleResult = Boolean(confirmedStatus || confirmError)
 
-  if (isConfirming) {
+  if (checkingStatus || isConfirming) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
         <div className="max-w-md w-full space-y-4 text-center">
           <Loader2 className="mx-auto w-10 h-10 animate-spin text-slate-400" />
-          <p className="text-slate-500">Confirmando tu verificación…</p>
+          <p className="text-slate-500">{isConfirming ? 'Confirmando tu verificación…' : 'Cargando…'}</p>
         </div>
       </div>
     )
   }
 
-  if (handleResult) {
-    const copy = resolveStatusCopy(displayStatus)
-    const tone = toneForStatus(displayStatus)
-    const badge = TONE_BADGE[tone]
-    const Icon = copy.icon
+  if (showResult && (confirmedStatus || confirmError)) {
+    const retryConfirm = () => {
+      if (!rawSessionId || !user?.email) return
+      setConfirmError(null)
+      setConfirmedStatus(null)
+      startedRef.current = false
+      confirmKycSession(rawSessionId, user.email)
+        .then((res) => setConfirmedStatus(res.status))
+        .catch((err) => {
+          const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+          setConfirmError(msg ?? 'Error al confirmar la verificación')
+        })
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
-        <div className="max-w-md w-full space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-            <div className={`mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center ${copy.iconBg}`}>
-              <Icon className={`w-8 h-8 ${copy.iconColor}`} />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
-            <p className="mt-3 text-slate-500">{copy.description}</p>
-            {confirmError && (
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-xs text-left">
-                {confirmError}
-              </div>
-            )}
-            <span className={`mt-4 inline-block text-xs font-semibold px-3 py-1 rounded-full ${badge.bg} ${badge.color}`}>
-              {badge.label}
-            </span>
-            {rawSessionId && (
-              <p className="mt-4 text-xs text-slate-400 font-mono break-all">ID de sesión: {rawSessionId}</p>
-            )}
-            <Link
-              to="/worker"
-              className="mt-6 inline-flex items-center justify-center gap-2 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg transition-colors"
-            >
-              Volver a mi panel
-            </Link>
-          </div>
-        </div>
-      </div>
+      <StatusScreen
+        displayStatus={displayStatus ?? ''}
+        onRetry={confirmError ? retryConfirm : undefined}
+        retryLabel="Reintentar confirmación"
+      />
+    )
+  }
+
+  if (currentStatus && currentStatus !== 'NOT_STARTED') {
+    const canRetry = currentStatus === 'DECLINED' || currentStatus === 'EXPIRED'
+    const handleRetryDirect = canRetry ? async () => {
+      setCurrentStatus(null)
+      setState('loading')
+      try {
+        const { sessionUrl } = await startKycVerification()
+        window.location.href = sessionUrl
+      } catch (e) {
+        const err = e as { response?: { data?: { error?: string } } }
+        setErrorMessage(err.response?.data?.error ?? 'No se pudo iniciar la verificación')
+        setState('error')
+      }
+    } : undefined
+    return (
+      <StatusScreen
+        displayStatus={currentStatus}
+        onRetry={handleRetryDirect}
+        retryLabel="Iniciar nueva verificación"
+      />
     )
   }
 

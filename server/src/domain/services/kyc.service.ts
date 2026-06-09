@@ -3,6 +3,16 @@ import { createDiditSession, getSessionStatus, getDecision } from '../../infrast
 
 export type KycStatus = 'NOT_STARTED' | 'IN_REVIEW' | 'APPROVED' | 'DECLINED' | 'EXPIRED'
 
+const KYC_STATUS_LABELS: Record<KycStatus, string> = {
+  NOT_STARTED: 'no iniciada',
+  IN_REVIEW: 'en revisión',
+  APPROVED: 'aprobada',
+  DECLINED: 'rechazada',
+  EXPIRED: 'expirada',
+}
+
+const NOTIFIABLE_STATUSES: KycStatus[] = ['APPROVED', 'DECLINED']
+
 const DIDIT_STATUS_MAP: Record<string, KycStatus> = {
   Approved: 'APPROVED',
   Declined: 'DECLINED',
@@ -149,5 +159,30 @@ export const handleKycWebhook = async (
   })
 
   console.log(`[KYC] Webhook procesado: ${email} → ${mappedStatus} (event: ${payload.event_id})`)
+
+  if (NOTIFIABLE_STATUSES.includes(mappedStatus)) {
+    notifyKycStatus(email, user.name ?? email, mappedStatus).catch((err) => {
+      console.error('[KYC] Error enviando notificación:', err)
+    })
+  }
+
   return { processed: true }
+}
+
+async function notifyKycStatus(
+  toEmail: string,
+  userName: string,
+  status: KycStatus,
+): Promise<void> {
+  const label = KYC_STATUS_LABELS[status]
+  console.log(`[KYC][EMAIL] Notificación → ${toEmail}: tu verificación fue ${label}`)
+
+  // TODO: integrar con proveedor de email (SendGrid, SES, etc.)
+  // Ejemplo futuro con SendGrid:
+  // await sendGridMail.send({
+  //   from: 'noreply@homefix.com',
+  //   to: toEmail,
+  //   subject: `HomeFix - Verificación ${label}`,
+  //   text: `Hola ${userName}, tu verificación de identidad fue ${label}.`,
+  // })
 }

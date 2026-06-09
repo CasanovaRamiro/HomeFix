@@ -3,6 +3,22 @@ import crypto from 'crypto'
 import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from '../../domain/services/kyc.service.js'
 import { env } from '../../lib/envConfig.js'
 
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 10
+const confirmHits = new Map<string, { count: number; resetAt: number }>()
+
+function rateLimitConfirm(ip: string): boolean {
+  const now = Date.now()
+  const entry = confirmHits.get(ip)
+  if (!entry || now > entry.resetAt) {
+    confirmHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false
+  entry.count++
+  return true
+}
+
 const router = Router()
 const confirmRouter = Router()
 const webhookRouter = Router()
@@ -32,6 +48,12 @@ router.post('/session', async (req, res, next) => {
 
 confirmRouter.post('/confirm', async (req, res, next) => {
   try {
+    const ip = (req.ip ?? req.socket.remoteAddress ?? 'unknown').replace('::ffff:', '')
+    if (!rateLimitConfirm(ip)) {
+      res.status(429).json({ error: 'Demasiadas solicitudes, intentá de nuevo en un minuto' })
+      return
+    }
+
     const { sessionId, email } = req.body as { sessionId?: string; email?: string }
     if (!sessionId || !email) {
       const err = new Error('sessionId y email son requeridos') as Error & { status?: number }
