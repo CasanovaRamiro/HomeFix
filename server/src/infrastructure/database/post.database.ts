@@ -160,29 +160,33 @@ export const searchByDistance = async (
 
   const categoryFilter = hasCategory
     ? `AND EXISTS (
-        SELECT 1 FROM PostCategory pc2
-        JOIN Category c2 ON c2.id = pc2.categoryId
-        WHERE pc2.postId = p.id AND c2.name = ?
+        SELECT 1 FROM "PostCategory" pc2
+        JOIN "Category" c2 ON c2.id = pc2."categoryId"
+        WHERE pc2."postId" = p.id AND c2.name = $3
       )`
     : ''
 
+  const radiusParam = hasCategory ? '$4' : '$3'
+
   const sql = `
-    SELECT p.id,
-      (6371 * ACOS(LEAST(GREATEST(
-        COS(RADIANS(?)) * COS(RADIANS(p.latitude)) *
-        COS(RADIANS(p.longitude) - RADIANS(?)) +
-        SIN(RADIANS(?)) * SIN(RADIANS(p.latitude))
-      , -1), 1))) AS distance
-    FROM Post p
-    WHERE p.status = 'Active'
-      AND p.latitude IS NOT NULL
-      AND p.longitude IS NOT NULL
-      ${categoryFilter}
-    HAVING distance <= ?
+    SELECT id, distance FROM (
+      SELECT p.id,
+        (6371 * ACOS(LEAST(GREATEST(
+          COS(RADIANS($1)) * COS(RADIANS(p.latitude)) *
+          COS(RADIANS(p.longitude) - RADIANS($2)) +
+          SIN(RADIANS($1)) * SIN(RADIANS(p.latitude))
+        , -1), 1))) AS distance
+      FROM "Post" p
+      WHERE p.status = 'Active'
+        AND p.latitude IS NOT NULL
+        AND p.longitude IS NOT NULL
+        ${categoryFilter}
+    ) sub
+    WHERE distance <= ${radiusParam}
     ORDER BY distance
   `
 
-  const params: (string | number)[] = [lat, lng, lat]
+  const params: (string | number)[] = [lat, lng]
   if (hasCategory) {
     params.push(category!.trim())
   }
