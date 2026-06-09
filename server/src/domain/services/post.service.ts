@@ -12,6 +12,7 @@ import { findAcceptedApplication, updateApplicationStatus } from '../../infrastr
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { getUserRating } from './user.service.js'
+import { EMERGENCY_DURATION_MS } from '../constants.js'
 import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 
 export const validatePostInput = (input: CreatePostInput) => {
@@ -41,10 +42,14 @@ export const validatePostInput = (input: CreatePostInput) => {
 export const createPost = async (input: CreatePostInput): Promise<DomainPost> => {
   validatePostInput(input)
   const now = new Date()
+  const emergencyExpiresAt = input.isEmergency === true
+    ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
+    : null
   return createPostData({
     ...input,
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
-    endDate: input.isEmergency === true ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : new Date(input.endDate as Date | string),
+    endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
+    emergencyExpiresAt,
   })
 }
 
@@ -169,11 +174,15 @@ export const updatePost = async (postId: string, userId: string, input: Omit<Upd
 
   validatePostInput({ ...input, userId })
   const now = new Date()
+  const emergencyExpiresAt = input.isEmergency === true
+    ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
+    : null
 
   return updatePostData(postId, {
     ...input,
     userId,
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
-    endDate: input.isEmergency === true ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : new Date(input.endDate as Date | string),
+    endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
+    emergencyExpiresAt,
   })
 }

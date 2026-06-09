@@ -4,6 +4,7 @@ import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
 import { PostStatus } from '../../domain/types/postStatus.js'
 import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
+import { EMERGENCY_DURATION_MS } from '../../domain/constants.js'
 
 const postFields = {
   id: true,
@@ -44,7 +45,7 @@ const postFields = {
 export const createPost = async (data: CreatePostInput): Promise<DomainPost> => {
   const now = new Date()
   const startDate = data.startDate ? new Date(data.startDate) : now
-  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
   const raw = await prisma.post.create({
     data: {
       userId: data.userId,
@@ -54,9 +55,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
       endDate,
       address: data.address,
       isEmergency: data.isEmergency ?? false,
-      emergencyExpiresAt: data.isEmergency
-        ? new Date(Date.now() + 24 * 60 * 60 * 1000)
-        : null,
+      emergencyExpiresAt: data.emergencyExpiresAt ?? null,
       categories: {
         create: { categoryId: data.categoryId },
       },
@@ -164,7 +163,7 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
 export const updatePost = async (id: string, data: UpdatePostInput): Promise<DomainPost> => {
   const now = new Date()
   const startDate = data.startDate ? new Date(data.startDate) : now
-  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
   const raw = await prisma.$transaction(async (tx) => {
     await tx.postCategory.deleteMany({ where: { postId: id } })
     await tx.postCategory.create({ data: { postId: id, categoryId: data.categoryId } })
@@ -177,9 +176,7 @@ export const updatePost = async (id: string, data: UpdatePostInput): Promise<Dom
         endDate,
         address: data.address,
         isEmergency: data.isEmergency ?? undefined,
-        emergencyExpiresAt: data.isEmergency
-          ? new Date(Date.now() + 24 * 60 * 60 * 1000)
-          : null,
+        emergencyExpiresAt: data.emergencyExpiresAt ?? null,
       },
       select: postFields,
     })

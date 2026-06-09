@@ -44,6 +44,7 @@ export interface CreatePostInput {
   address: string
   categoryId: string
   isEmergency?: boolean
+  emergencyExpiresAt?: Date | null
 }
 
 export interface UpdatePostInput {
@@ -55,4 +56,5 @@ export interface UpdatePostInput {
   address: string
   categoryId: string
   isEmergency?: boolean
+  emergencyExpiresAt?: Date | null
 }
