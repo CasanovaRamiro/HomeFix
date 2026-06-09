@@ -12,6 +12,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import { useCategories } from '../hooks/useCategories'
 import { useTheme } from '../hooks/useTheme'
 import type { Post } from '../types/post'
+import { createConversation } from '../services/chat'
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>()
@@ -158,6 +159,15 @@ export default function PostDetail() {
     }
   }
 
+  const handleChat = async (workerId: string) => {
+    try {
+      const conv = await createConversation(post!.id, workerId)
+      window.dispatchEvent(new CustomEvent('chat:open', { detail: { conversationId: conv.id } }))
+    } catch {
+      alert('No se pudo iniciar la conversación')
+    }
+  }
+
   const handleCancel = async () => {
     try {
       const res = await cancelPost(post.id)
@@ -214,6 +224,7 @@ export default function PostDetail() {
               postStatus={post.status}
               postTitle={post.title}
               onHire={refresh}
+              onChat={handleChat}
             />
           ))}
         </div>

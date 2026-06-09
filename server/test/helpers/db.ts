@@ -5,6 +5,8 @@ export { prisma };
 
 export const cleanDb = async () => {
   await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`;
+  await prisma.message.deleteMany();
+  await prisma.conversation.deleteMany();
   await prisma.workerReview.deleteMany();
   await prisma.clientReview.deleteMany();
 
