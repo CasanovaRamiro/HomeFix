@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from './useTheme'
-import api from '../services/api'
+import api, { uploadImages } from '../services/api'
 
 export interface PostFormData {
   title: string
@@ -31,35 +31,43 @@ export function useCreatePost() {
     e.target.style.boxShadow = 'none'
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setFormError('')
+  const handleSubmit = (files: File[]) => {
+    return async (e: React.FormEvent) => {
+      e.preventDefault()
+      setFormError('')
 
-    if (!form.title.trim() || !form.categoryId || !form.description.trim() || !form.startDate || !form.endDate || !form.address.trim()) {
-      setFormError('Todos los campos son obligatorios')
-      return
-    }
-    if (new Date(form.endDate) <= new Date(form.startDate)) {
-      setFormError('La fecha de fin debe ser posterior a la fecha de inicio')
-      return
-    }
+      if (!form.title.trim() || !form.categoryId || !form.description.trim() || !form.startDate || !form.endDate || !form.address.trim()) {
+        setFormError('Todos los campos son obligatorios')
+        return
+      }
+      if (new Date(form.endDate) <= new Date(form.startDate)) {
+        setFormError('La fecha de fin debe ser posterior a la fecha de inicio')
+        return
+      }
 
-    setFormSubmitting(true)
-    try {
-      await api.post('/posts/create', {
-        title: form.title,
-        description: form.description,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        address: form.address,
-        categoryId: form.categoryId,
-      })
-      setFormSuccess(true)
-    } catch (err) {
-      const axiosErr = err as { response?: { data?: { error?: string } } }
-      setFormError(axiosErr.response?.data?.error ?? 'Error al publicar la solicitud')
-    } finally {
-      setFormSubmitting(false)
+      setFormSubmitting(true)
+      try {
+        let images: { url: string }[] = []
+        if (files.length > 0) {
+          const urls = await uploadImages(files)
+          images = urls.map((url) => ({ url }))
+        }
+        await api.post('/posts/create', {
+          title: form.title,
+          description: form.description,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          address: form.address,
+          categoryId: form.categoryId,
+          images,
+        })
+        setFormSuccess(true)
+      } catch (err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } }
+        setFormError(axiosErr.response?.data?.error ?? 'Error al publicar la solicitud')
+      } finally {
+        setFormSubmitting(false)
+      }
     }
   }
 

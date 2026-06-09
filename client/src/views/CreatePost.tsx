@@ -62,7 +62,7 @@ export default function CreatePost() {
           {formSuccess ? (
             <SuccessScreen onGoHome={() => navigate('/dashboard')} />
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(files)}>
               {formError && <div style={{ ...s.errorBox, marginBottom: '16px' }}>{formError}</div>}
 
               <div style={{ marginBottom: '24px' }}>

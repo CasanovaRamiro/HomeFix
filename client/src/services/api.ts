@@ -2,6 +2,19 @@ import axios from 'axios'
 import { env } from '../lib/envConfig'
 import type { ReviewInput } from '../types/review'
 
+export const uploadImages = async (files: File[]): Promise<string[]> => {
+  const token = localStorage.getItem('token')
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  const { data } = await axios.post(`${env.VITE_API_URL}/upload`, form, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return data.urls as string[]
+}
+
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
 api.interceptors.request.use((config) => {

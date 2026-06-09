@@ -43,6 +43,15 @@ PORT=3000
 JWT_SECRET=your_secret_here
 ```
 
+### Instalar Cloudinary
+
+```bash
+cd server
+pnpm add cloudinary
+pnpm add multer
+pnpm add -D @types/multer
+```
+
 Run the database migrations:
 
 ```bash

@@ -49,6 +49,11 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
       categories: {
         create: { categoryId: data.categoryId },
       },
+      ...(data.images?.length ? {
+        images: {
+          create: data.images.map((img) => ({ url: img.url })),
+        },
+      } : {}),
     },
     select: postFields,
   }) as unknown as PrismaPostFull
@@ -130,6 +135,9 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
     data: { status },
     select: { id: true, status: true },
   })
+
+export const deletePostImages = (postId: string) =>
+  prisma.postImage.deleteMany({ where: { postId } })
 
 export const updatePost = async (id: string, data: UpdatePostInput): Promise<DomainPost> => {
   const raw = await prisma.$transaction(async (tx) => {

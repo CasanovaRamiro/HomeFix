@@ -38,6 +38,7 @@ export interface CreatePostInput {
   endDate: Date
   address: string
   categoryId: string
+  images?: { url: string }[]
 }
 
 export interface UpdatePostInput {

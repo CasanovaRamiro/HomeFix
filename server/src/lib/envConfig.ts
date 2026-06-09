@@ -27,4 +27,7 @@ export const env = {
   get AUTH0_WORKER_ROLE_ID() { return process.env.AUTH0_WORKER_ROLE_ID },
   get GEMINI_API_KEY() { return process.env.GEMINI_API_KEY! },
   get GEMINI_MODEL() { return process.env.GEMINI_MODEL || 'gemini-2.5-flash' },
+  get CLOUDINARY_CLOUD_NAME() { return process.env.CLOUDINARY_CLOUD_NAME! },
+  get CLOUDINARY_API_KEY() { return process.env.CLOUDINARY_API_KEY! },
+  get CLOUDINARY_API_SECRET() { return process.env.CLOUDINARY_API_SECRET! },
 }
