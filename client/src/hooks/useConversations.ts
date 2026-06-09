@@ -7,14 +7,13 @@ export function useConversations(socket: Socket | null) {
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [messages, setMessages] = useState<DomainMessage[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem('token'))
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
-      setIsLoading(false)
       return
     }
     chatApi.getConversations().then((data) => {
@@ -25,16 +24,16 @@ export function useConversations(socket: Socket | null) {
 
   useEffect(() => {
     if (!selectedId) {
-      setMessages([])
       return
     }
 
-    chatApi.getConversationMessages(selectedId).then(setMessages)
+    chatApi.getConversationMessages(selectedId).then((msgs) => {
+      setMessages(msgs)
+      setConversations((prev) =>
+        prev.map((c) => (c.id === selectedId ? { ...c, unreadCount: 0 } : c)),
+      )
+    })
     chatApi.markAsRead(selectedId)
-
-    setConversations((prev) =>
-      prev.map((c) => (c.id === selectedId ? { ...c, unreadCount: 0 } : c)),
-    )
   }, [selectedId])
 
   useEffect(() => {
@@ -114,7 +113,7 @@ export function useConversations(socket: Socket | null) {
   return {
     conversations,
     selectedId,
-    messages,
+    messages: selectedId ? messages : [],
     isLoading,
     totalUnread,
     selectConversation,
