@@ -9,13 +9,14 @@ export interface PostFormData {
   startDate: string
   endDate: string
   address: string
+  isEmergency?: boolean
 }
 
 export function useCreatePost() {
   const { accent, border } = useTheme()
   const [form, setForm] = useState<PostFormData>({
     title: '', categoryId: '', description: '',
-    startDate: '', endDate: '', address: '',
+    startDate: '', endDate: '', address: '', isEmergency: false,
   })
   const [formError, setFormError] = useState('')
   const [formSubmitting, setFormSubmitting] = useState(false)
@@ -35,11 +36,15 @@ export function useCreatePost() {
     e.preventDefault()
     setFormError('')
 
-    if (!form.title.trim() || !form.categoryId || !form.description.trim() || !form.startDate || !form.endDate || !form.address.trim()) {
+    if (!form.title.trim() || !form.categoryId || !form.description.trim() || !form.address.trim()) {
       setFormError('Todos los campos son obligatorios')
       return
     }
-    if (new Date(form.endDate) <= new Date(form.startDate)) {
+    if (!form.isEmergency && (!form.startDate || !form.endDate)) {
+      setFormError('Todos los campos son obligatorios')
+      return
+    }
+    if (!form.isEmergency && new Date(form.endDate) <= new Date(form.startDate)) {
       setFormError('La fecha de fin debe ser posterior a la fecha de inicio')
       return
     }
@@ -49,10 +54,11 @@ export function useCreatePost() {
       await api.post('/posts/create', {
         title: form.title,
         description: form.description,
-        startDate: form.startDate,
-        endDate: form.endDate,
+        startDate: form.isEmergency ? undefined : form.startDate,
+        endDate: form.isEmergency ? undefined : form.endDate,
         address: form.address,
         categoryId: form.categoryId,
+        isEmergency: form.isEmergency,
       })
       setFormSuccess(true)
     } catch (err) {

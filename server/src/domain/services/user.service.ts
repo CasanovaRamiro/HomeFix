@@ -1,4 +1,4 @@
-import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate } from '../../infrastructure/database/user.database.js'
+import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications } from '../../infrastructure/database/user.database.js'
 import type { DomainClientReview } from '../types/review.types.js'
 import type { DomainWorkerReview } from '../types/worker.types.js'
 import type { DomainUserRating, ReviewTarget } from '../types/user.types.js'
@@ -33,3 +33,6 @@ export const getUserRating = async (userId: string): Promise<DomainUserRating> =
 
   return { averageRating, reviewCount: totalCount }
 }
+
+export const setEmergencyNotifications = (userId: string, enabled: boolean) =>
+  updateEmergencyNotifications(userId, enabled)

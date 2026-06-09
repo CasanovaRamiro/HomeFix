@@ -20,6 +20,8 @@ const postFields = {
   },
   latitude: true,
   longitude: true,
+  isEmergency: true,
+  emergencyExpiresAt: true,
   categories: {
     select: {
       category: {
@@ -40,14 +42,21 @@ const postFields = {
 } as const
 
 export const createPost = async (data: CreatePostInput): Promise<DomainPost> => {
+  const now = new Date()
+  const startDate = data.startDate ? new Date(data.startDate) : now
+  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + 24 * 60 * 60 * 1000)
   const raw = await prisma.post.create({
     data: {
       userId: data.userId,
       title: data.title,
       description: data.description,
-      startDate: data.startDate,
-      endDate: data.endDate,
+      startDate,
+      endDate,
       address: data.address,
+      isEmergency: data.isEmergency ?? false,
+      emergencyExpiresAt: data.isEmergency
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+        : null,
       categories: {
         create: { categoryId: data.categoryId },
       },
@@ -75,6 +84,19 @@ const availablePostWhere = (category?: string) => ({
 export const findAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
     where: availablePostWhere(category),
+    orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
+export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: {
+      ...availablePostWhere(category),
+      isEmergency: true,
+      emergencyExpiresAt: { gt: new Date() },
+    },
     orderBy: { createdAt: 'desc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
@@ -127,6 +149,8 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     worker: post.applications[0]?.worker ?? null,
     applicantCount: post._count.applications,
     hasReview: post.applications.some((a) => a.review !== null),
+    isEmergency: post.isEmergency,
+    emergencyExpiresAt: post.emergencyExpiresAt,
   }))
 }
 
@@ -138,6 +162,9 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
   })
 
 export const updatePost = async (id: string, data: UpdatePostInput): Promise<DomainPost> => {
+  const now = new Date()
+  const startDate = data.startDate ? new Date(data.startDate) : now
+  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + 24 * 60 * 60 * 1000)
   const raw = await prisma.$transaction(async (tx) => {
     await tx.postCategory.deleteMany({ where: { postId: id } })
     await tx.postCategory.create({ data: { postId: id, categoryId: data.categoryId } })
@@ -146,9 +173,13 @@ export const updatePost = async (id: string, data: UpdatePostInput): Promise<Dom
       data: {
         title: data.title,
         description: data.description,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        startDate,
+        endDate,
         address: data.address,
+        isEmergency: data.isEmergency ?? undefined,
+        emergencyExpiresAt: data.isEmergency
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+          : null,
       },
       select: postFields,
     })

@@ -5,6 +5,7 @@ import {
   updatePostStatus,
   updatePost as updatePostData,
   findAvailablePosts,
+  findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
@@ -26,6 +27,12 @@ export const validatePostInput = (input: CreatePostInput) => {
   if (!input.address || input.address.trim() === '') {
     throw new Error('address is required')
   }
+  if (input.isEmergency === true) {
+    return
+  }
+  if (!input.startDate || !input.endDate) {
+    throw new Error('startDate and endDate are required')
+  }
   if (new Date(input.endDate) <= new Date(input.startDate)) {
     throw new Error('endDate must be after startDate')
   }
@@ -33,10 +40,11 @@ export const validatePostInput = (input: CreatePostInput) => {
 
 export const createPost = async (input: CreatePostInput): Promise<DomainPost> => {
   validatePostInput(input)
+  const now = new Date()
   return createPostData({
     ...input,
-    startDate: new Date(input.startDate),
-    endDate: new Date(input.endDate),
+    startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
+    endDate: input.isEmergency === true ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : new Date(input.endDate as Date | string),
   })
 }
 
@@ -47,6 +55,11 @@ const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => 
 
 export const listAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
   const posts = await findAvailablePosts(category)
+  return Promise.all(posts.map(enrichWithClientRating))
+}
+
+export const listEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
+  const posts = await findEmergencyPostsData(category)
   return Promise.all(posts.map(enrichWithClientRating))
 }
 
@@ -155,11 +168,12 @@ export const updatePost = async (postId: string, userId: string, input: Omit<Upd
   }
 
   validatePostInput({ ...input, userId })
+  const now = new Date()
 
   return updatePostData(postId, {
     ...input,
     userId,
-    startDate: new Date(input.startDate),
-    endDate: new Date(input.endDate),
+    startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
+    endDate: input.isEmergency === true ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : new Date(input.endDate as Date | string),
   })
 }

@@ -11,6 +11,8 @@ export interface DomainPost {
   images: { url: string }[]
   latitude: number | null
   longitude: number | null
+  isEmergency?: boolean
+  emergencyExpiresAt?: Date | null
   categories: { id: string; name: string }[]
   user: { id: string; name: string; surname: string }
   clientRating?: number
@@ -29,24 +31,28 @@ export interface DomainUserPost {
   worker: { id: string; name: string } | null
   applicantCount: number
   hasReview: boolean
+  isEmergency?: boolean
+  emergencyExpiresAt?: Date | null
 }
 
 export interface CreatePostInput {
   userId: string
   title: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate?: Date | string | null
+  endDate?: Date | string | null
   address: string
   categoryId: string
+  isEmergency?: boolean
 }
 
 export interface UpdatePostInput {
   userId: string
   title: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate?: Date | string | null
+  endDate?: Date | string | null
   address: string
   categoryId: string
+  isEmergency?: boolean
 }

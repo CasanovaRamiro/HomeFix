@@ -74,7 +74,7 @@ export default function WorkerProfile() {
         {worker && isMobile && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <WorkerHeader worker={worker} />
-            <WorkerActions />
+            <WorkerActions workerId={worker.id} initialEnabled={worker.emergenciesEnabled} />
             <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
             <WorkerAbout worker={worker} />
             <WorkerReviews reviews={reviews} loading={reviewsLoading} />
@@ -89,7 +89,7 @@ export default function WorkerProfile() {
               <WorkerReviews reviews={reviews} loading={reviewsLoading} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <WorkerActions />
+              <WorkerActions workerId={worker.id} initialEnabled={worker.emergenciesEnabled} />
               <WorkerStats reviewCount={reviews.length} avgRating={avgRating} />
             </div>
           </div>
