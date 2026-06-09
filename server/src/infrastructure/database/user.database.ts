@@ -99,7 +99,7 @@ const createDefaultDeps = async () => {
   const addr = await prisma.address.upsert({
     where: { id: 'default-addr-id' },
     update: {},
-    create: { id: 'default-addr-id', street: '', number: '0', city: '', state: '' },
+    create: { id: 'default-addr-id', street: 'Sin especificar', number: '0', city: 'Buenos Aires', state: 'Buenos Aires' },
   })
   return { dniId: dni.id, addrId: addr.id }
 }

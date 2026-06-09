@@ -1,0 +1,40 @@
+import { readdirSync } from 'fs'
+import path from 'path'
+import prisma from './prisma.js'
+
+export async function assertMigrationsApplied() {
+  const migrationsDir = path.resolve(process.cwd(), 'prisma/migrations')
+
+  let migrationFolders: string[]
+  try {
+    migrationFolders = readdirSync(migrationsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort()
+  } catch {
+    return // no migrations directory, nothing to check
+  }
+
+  if (migrationFolders.length === 0) return
+
+  let applied: { migration_name: string }[]
+  try {
+    applied = await prisma.$queryRaw<{ migration_name: string }[]>`
+      SELECT migration_name FROM _prisma_migrations
+      WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
+    `
+  } catch {
+    console.error('\n[startup] Could not query _prisma_migrations — is the database reachable?\n')
+    process.exit(1)
+  }
+
+  const appliedNames = new Set(applied.map((r) => r.migration_name))
+  const pending = migrationFolders.filter((name) => !appliedNames.has(name))
+
+  if (pending.length > 0) {
+    console.error('\n[startup] Database schema is out of date. Pending migrations:\n')
+    pending.forEach((m) => console.error(`  • ${m}`))
+    console.error('\nRun: pnpm prisma migrate dev\n')
+    process.exit(1)
+  }
+}

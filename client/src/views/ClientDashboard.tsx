@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, Plus, FileText } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 
 export default function ClientDashboard() {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -72,7 +74,18 @@ export default function ClientDashboard() {
                 </div>
               ) : ordered.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
-                  <p className="text-sm text-slate-400">Todavía no tenés publicaciones.</p>
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+                    <FileText size={28} className="text-blue-500" />
+                  </div>
+                  <h3 className="mb-2 text-base font-semibold text-slate-700">Todavía no tenés publicaciones</h3>
+                  <p className="mb-6 text-sm text-slate-400">Creá tu primera publicación y encontrá al profesional ideal.</p>
+                  <button
+                    onClick={() => navigate('/post-options')}
+                    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                  >
+                    <Plus size={16} />
+                    Crear publicación
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">

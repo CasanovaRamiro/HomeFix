@@ -1,4 +1,5 @@
 import { env } from './lib/envConfig.js'
+import { assertMigrationsApplied } from './lib/assertMigrations.js'
 import { jwtCheck } from './presentation/middleware/auth0.middleware.js'
 
 import express from 'express'
@@ -36,5 +37,6 @@ app.use('/reviews', jwtCheck, reviewRoutes)
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {
+  await assertMigrationsApplied()
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 }
