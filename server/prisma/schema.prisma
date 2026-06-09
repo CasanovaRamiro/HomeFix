@@ -30,6 +30,9 @@ model User {
   clientReviewsGiven    ClientReview[]    @relation("ClientReviewsGiven")
   clientReviewsReceived ClientReview[]    @relation("ClientReviewsReceived")
   applications          Application[]
+  clientConversations   Conversation[]    @relation("ClientConversations")
+  workerConversations   Conversation[]    @relation("WorkerConversations")
+  messagesSent          Message[]
   nationalId       String
   nationalIdTypeId String  @map("national_id_type_id")
   addressId        String  @map("address_id")
@@ -56,6 +59,7 @@ model Post {
   jobApplications JobApplication[]
   images          PostImage[]
   applications    Application[]
+  conversations   Conversation[]
 }
 
 model Category {
@@ -142,6 +146,39 @@ model PostImage {
   url    String
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id            String    @id @default(uuid())
+  postId        String
+  clientId      String
+  workerId      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime?
+
+  post    Post      @relation(fields: [postId], references: [id])
+  client  User      @relation("ClientConversations", fields: [clientId], references: [id])
+  worker  User      @relation("WorkerConversations", fields: [workerId], references: [id])
+  messages Message[]
+
+  telegramChatId String? @unique
+
+  @@unique([clientId, workerId, postId])
+}
+
+model Message {
+  id              String        @id @default(uuid())
+  conversationId  String
+  senderId        String
+  content         String        @db.Text
+  createdAt       DateTime      @default(now())
+  readAt          DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
 }
 
 model NationalIdType { 

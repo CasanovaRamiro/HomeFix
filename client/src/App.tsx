@@ -23,6 +23,7 @@ import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
 import AuthCallback from './views/AuthCallback'
+import ChatWidget from './components/chat/ChatWidget'
 
 
 const PrivateRoute = ({ children }: { children: ReactNode }) =>
@@ -32,6 +33,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
+      <ChatWidget />
       <Routes>
         <Route path="/review" element={<PrivateRoute><LeaveReview /></PrivateRoute>} />
         

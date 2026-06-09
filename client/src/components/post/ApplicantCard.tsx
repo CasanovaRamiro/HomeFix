@@ -21,9 +21,10 @@ interface ApplicantCardProps {
   postStatus: string
   postTitle: string
   onHire?: () => void
+  onChat?: (workerId: string) => void
 }
 
-export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire }: ApplicantCardProps) {
+export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onChat }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -89,7 +90,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
       </div>
       <div className="actions">
         <button className="btn-outline" onClick={() => navigate(`/worker/${applicant.id}`)}>Ver perfil</button>
-        <button className="btn-outline">Chatear</button>
+        <button className="btn-outline" onClick={() => onChat?.(applicant.id)}>Chatear</button>
         {renderAction()}
       </div>
     </div>
