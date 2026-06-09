@@ -2,6 +2,8 @@ import prisma from '../../lib/prisma.js'
 import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
+import { PostStatus } from '../../domain/types/postStatus.js'
+import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 
 const postFields = {
   id: true,
@@ -93,11 +95,11 @@ export interface LocationSearchResult extends DomainPost {
 
 export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]> => {
   const posts = await prisma.post.findMany({
-    where: { userId, status: { in: ['Active', 'In progress', 'Paused', 'Completed'] } },
+    where: { userId, status: { in: [PostStatus.Active, PostStatus.InProgress, PostStatus.Paused, PostStatus.Completed] } },
     include: {
       categories: { include: { category: true } },
       applications: {
-        where: { status: { in: ['Accepted', 'Completed'] } },
+        where: { status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
         include: {
           worker: { select: { id: true, name: true } },
           review: { select: { id: true } },
