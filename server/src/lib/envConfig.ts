@@ -5,6 +5,9 @@ const required = [
   'AUTH0_AUDIENCE',
   'AUTH0_ISSUER_BASE_URL',
   'GEMINI_API_KEY',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
 ]
 
 const missing = required.filter((key) => !process.env[key])

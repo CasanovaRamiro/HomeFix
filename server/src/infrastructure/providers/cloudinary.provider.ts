@@ -25,7 +25,7 @@ export const uploadImages = async (files: { buffer: Buffer; mimetype: string; or
 }
 
 export const deleteImage = async (url: string): Promise<void> => {
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)\.\w+$/)
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/)
   if (!match) return
   await cloudinary.uploader.destroy(match[1])
 }

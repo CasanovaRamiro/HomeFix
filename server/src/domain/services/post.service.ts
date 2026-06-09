@@ -101,10 +101,9 @@ export const cancelPost = async (postId: string, userId: string) => {
   if (post.status === 'Completed' || post.status === 'Cancelled') {
     throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
   }
-  const result = await updatePostStatus(postId, 'Cancelled')
   await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
   await deletePostImages(postId)
-  return result
+  return updatePostStatus(postId, 'Cancelled')
 }
 
 export const finalizePost = async (postId: string, userId: string) => {

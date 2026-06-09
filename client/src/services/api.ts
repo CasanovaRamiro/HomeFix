@@ -1,20 +1,7 @@
-import axios from 'axios'
 import { env } from '../lib/envConfig'
 import type { ReviewInput } from '../types/review'
 import type { PostStatus } from '../types/post'
-
-export const uploadImages = async (files: File[]): Promise<string[]> => {
-  const token = localStorage.getItem('token')
-  const form = new FormData()
-  files.forEach((f) => form.append('files', f))
-  const { data } = await axios.post(`${env.VITE_API_URL}/upload`, form, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data',
-    },
-  })
-  return data.urls as string[]
-}
+import axios from 'axios'
 
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
@@ -23,6 +10,13 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+export const uploadImages = async (files: File[]): Promise<string[]> => {
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  const { data } = await api.post('/upload', form)
+  return data.urls as string[]
+}
 
 export const getWorkers = (): Promise<Worker[]> =>
   api.get<Worker[]>('/workers').then((r) => r.data)
