@@ -121,6 +121,7 @@ describe("post.service - getUserPosts", () => {
       categories: [{ id: 'uuid-category-1', name: "Plumbing" }],
       worker: null,
       applicantCount: 0,
+      hasReview: false,
     },
   ];
 

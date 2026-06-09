@@ -31,4 +31,5 @@ export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({
   categories: post.categories,
   worker: post.worker,
   applicantCount: post.applicantCount,
+  hasReview: post.hasReview,
 })
