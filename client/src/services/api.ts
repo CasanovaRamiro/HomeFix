@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { env } from '../lib/envConfig'
 import type { ReviewInput } from '../types/review'
+import type { PostStatus } from '../types/post'
 
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
@@ -51,7 +52,7 @@ export interface UserPost {
   id: string
   title: string
   description: string
-  status: string
+  status: PostStatus
   createdAt: string
   address: string
   startDate: string

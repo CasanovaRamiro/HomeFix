@@ -1,13 +1,14 @@
 import { Calendar, Eye, Star, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { UserPost } from '../../services/api'
+import { PostStatus } from '../../types/post'
 
-const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  Active:        { label: 'Activa',        className: 'bg-green-100 text-green-700' },
-  'In progress': { label: 'En desarrollo', className: 'bg-blue-100 text-blue-700' },
-  Paused:        { label: 'Pausada',       className: 'bg-amber-100 text-amber-700' },
-  Completed:     { label: 'Completado',    className: 'bg-slate-100 text-slate-500' },
-  Cancelled:     { label: 'Cancelado',     className: 'bg-red-100 text-red-600' },
+const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
+  [PostStatus.Active]:     { label: 'Activa',       className: 'bg-green-100 text-green-700' },
+  [PostStatus.InProgress]: { label: 'En desarrollo', className: 'bg-blue-100 text-blue-700' },
+  [PostStatus.Paused]:     { label: 'Pausada',       className: 'bg-amber-100 text-amber-700' },
+  [PostStatus.Completed]:  { label: 'Completado',    className: 'bg-slate-100 text-slate-500' },
+  [PostStatus.Cancelled]:  { label: 'Cancelado',     className: 'bg-red-100 text-red-600' },
 }
 
 const fmtDate = (d: string) =>
@@ -17,7 +18,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
   const navigate = useNavigate()
   const st = STATUS_MAP[post.status] ?? STATUS_MAP.Active
 
-  const needsReview = post.status === 'Completed' && !post.hasReview
+  const needsReview = post.status === PostStatus.Completed && !post.hasReview
 
   const handleAction = () => {
     if (needsReview) {
@@ -61,7 +62,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
       <hr className="border-slate-100 my-4" />
 
       {/* Postulantes */}
-      {post.status === 'Active' && (
+      {post.status === PostStatus.Active && (
         <div className="flex items-center gap-2 mb-3">
           <Users size={14} className="text-slate-400" />
           {post.applicantCount > 0 ? (

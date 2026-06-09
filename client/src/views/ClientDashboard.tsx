@@ -3,6 +3,7 @@ import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle } fro
 import { getUserPosts, type UserPost } from '../services/api'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
+import { PostStatus } from '../types/post'
 
 export default function ClientDashboard() {
   const [posts, setPosts] = useState<UserPost[]>([])
@@ -15,8 +16,8 @@ export default function ClientDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activos     = posts.filter(p => p.status === 'Active' || p.status === 'In progress' || p.status === 'Paused').length
-  const completados = posts.filter(p => p.status === 'Completed').length
+  const activos     = posts.filter(p => p.status === PostStatus.Active || p.status === PostStatus.InProgress || p.status === PostStatus.Paused).length
+  const completados = posts.filter(p => p.status === PostStatus.Completed).length
 
   // Identidad Cliente = azul. Cada métrica conserva su color semántico.
   const stats = [
@@ -28,10 +29,10 @@ export default function ClientDashboard() {
 
   // Show only actionable posts: exclude Cancelled and Completed posts that already have a review
   const visible = posts.filter(p =>
-    p.status !== 'Cancelled' && !(p.status === 'Completed' && p.hasReview)
+    p.status !== PostStatus.Cancelled && !(p.status === PostStatus.Completed && p.hasReview)
   )
-  const inProgressPosts = visible.filter(p => p.status === 'In progress')
-  const rest            = visible.filter(p => p.status !== 'In progress')
+  const inProgressPosts = visible.filter(p => p.status === PostStatus.InProgress)
+  const rest            = visible.filter(p => p.status !== PostStatus.InProgress)
   const ordered         = [...inProgressPosts, ...rest]
 
   return (
