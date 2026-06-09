@@ -14,6 +14,7 @@ const DIDIT_STATUS_MAP: Record<string, KycStatus> = {
   'Awaiting User': 'IN_REVIEW',
   'In Progress': 'IN_REVIEW',
   'Not Started': 'NOT_STARTED',
+  'Not Finished': 'IN_REVIEW',
 }
 
 const createHttpError = (status: number, message: string): Error & { status?: number } => {
@@ -28,6 +29,12 @@ export const startKycVerification = async (
   const user = await findByEmail(email)
   if (!user) {
     throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
+  }
+  if (user.kycStatus === 'APPROVED') {
+    throw createHttpError(409, 'Ya tenés la verificación aprobada')
+  }
+  if (user.kycStatus === 'IN_REVIEW') {
+    throw createHttpError(409, 'Ya tenés una verificación en curso')
   }
   return createDiditSession(user.id)
 }
@@ -126,6 +133,11 @@ export const handleKycWebhook = async (
   }
 
   const mappedStatus = DIDIT_STATUS_MAP[payload.status] ?? 'IN_REVIEW'
+
+  if (user.kycStatus === mappedStatus) {
+    return { processed: false }
+  }
+
   const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
     ? new Date()
     : null

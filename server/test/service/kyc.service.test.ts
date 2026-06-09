@@ -19,7 +19,7 @@ vi.mock("../../src/infrastructure/providers/didit.provider.js", () => ({
   getDecision: mockGetDecision,
 }))
 
-import { startKycVerification, confirmKyc, getKycStatus, getKycDecision } from "../../src/domain/services/kyc.service.js"
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from "../../src/domain/services/kyc.service.js"
 
 describe("startKycVerification", () => {
   beforeEach(() => {
@@ -99,6 +99,34 @@ describe("startKycVerification", () => {
     await expect(startKycVerification("foo@bar.com")).rejects.toMatchObject({
       status: 500,
     })
+  })
+
+  it("throws 409 when KYC is already APPROVED", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-1",
+      email: "foo@bar.com",
+      kycStatus: "APPROVED",
+    })
+
+    await expect(startKycVerification("foo@bar.com")).rejects.toMatchObject({
+      status: 409,
+      message: "Ya tenés la verificación aprobada",
+    })
+    expect(mockCreateDiditSession).not.toHaveBeenCalled()
+  })
+
+  it("throws 409 when KYC is already IN_REVIEW", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-1",
+      email: "foo@bar.com",
+      kycStatus: "IN_REVIEW",
+    })
+
+    await expect(startKycVerification("foo@bar.com")).rejects.toMatchObject({
+      status: 409,
+      message: "Ya tenés una verificación en curso",
+    })
+    expect(mockCreateDiditSession).not.toHaveBeenCalled()
   })
 })
 
@@ -374,5 +402,93 @@ describe("getKycDecision", () => {
     mockGetDecision.mockRejectedValue(err)
 
     await expect(getKycDecision("sess-1")).rejects.toMatchObject({ status: 502 })
+  })
+})
+
+describe("handleKycWebhook", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("updates DB when status changes", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-1",
+      email: "foo@bar.com",
+      kycStatus: "IN_REVIEW",
+    })
+
+    const result = await handleKycWebhook({
+      event_id: "evt-1",
+      webhook_type: "status.updated",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Approved",
+      vendor_data: "foo@bar.com",
+    })
+
+    expect(result).toEqual({ processed: true })
+    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
+      kycStatus: "APPROVED",
+      kycVerifiedAt: expect.any(Date),
+      diditVerificationId: "sess-abc",
+    })
+  })
+
+  it("skips DB write when status is already the same (idempotent)", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-1",
+      email: "foo@bar.com",
+      kycStatus: "APPROVED",
+    })
+
+    const result = await handleKycWebhook({
+      event_id: "evt-2",
+      webhook_type: "status.updated",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Approved",
+      vendor_data: "foo@bar.com",
+    })
+
+    expect(result).toEqual({ processed: false })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
+
+  it("ignores non-status.updated webhook types", async () => {
+    const result = await handleKycWebhook({
+      event_id: "evt-3",
+      webhook_type: "session.created",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Approved",
+      vendor_data: "foo@bar.com",
+    })
+
+    expect(result).toEqual({ processed: false })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
+
+  it("maps 'Not Finished' to IN_REVIEW", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-1",
+      email: "foo@bar.com",
+      kycStatus: "NOT_STARTED",
+    })
+
+    const result = await handleKycWebhook({
+      event_id: "evt-4",
+      webhook_type: "status.updated",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Not Finished",
+      vendor_data: "foo@bar.com",
+    })
+
+    expect(result).toEqual({ processed: true })
+    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
+      kycStatus: "IN_REVIEW",
+      kycVerifiedAt: null,
+      diditVerificationId: "sess-abc",
+    })
   })
 })
