@@ -22,6 +22,7 @@ export const app = express()
 const PORT = env.PORT
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       rawBody?: string
