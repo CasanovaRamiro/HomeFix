@@ -23,6 +23,7 @@ model User {
   createdAt       DateTime         @default(now())
   active          Boolean          @default(true)
   deleted         Boolean          @default(false)
+  emergenciesEnabled Boolean         @default(false)
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")
@@ -51,6 +52,8 @@ model Post {
   status          String           @default("Active")
   latitude        Float?
   longitude       Float?
+  isEmergency     Boolean          @default(false)
+  emergencyExpiresAt DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   categories      PostCategory[]

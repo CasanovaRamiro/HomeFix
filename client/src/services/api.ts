@@ -1,6 +1,7 @@
-import axios from 'axios'
 import { env } from '../lib/envConfig'
 import type { ReviewInput } from '../types/review'
+import type { PostStatus } from '../types/post'
+import axios from 'axios'
 
 const api = axios.create({ baseURL: env.VITE_API_URL })
 
@@ -9,6 +10,13 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+export const uploadImages = async (files: File[]): Promise<string[]> => {
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  const { data } = await api.post('/upload', form)
+  return data.urls as string[]
+}
 
 export const getWorkers = (): Promise<Worker[]> =>
   api.get<Worker[]>('/workers').then((r) => r.data)
@@ -32,6 +40,7 @@ export interface Worker {
   role: string
   createdAt: string
   categories: WorkerCategory[]
+  emergenciesEnabled: boolean
 }
 
 export interface WorkerReview {
@@ -51,7 +60,7 @@ export interface UserPost {
   id: string
   title: string
   description: string
-  status: string
+  status: PostStatus
   createdAt: string
   address: string
   startDate: string
@@ -59,6 +68,9 @@ export interface UserPost {
   categories: { id: string; name: string }[]
   worker: { id: string; name: string } | null
   applicantCount: number
+  hasReview: boolean
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
 }
 
 export const createReview = (data: ReviewInput) =>
@@ -82,5 +94,8 @@ export interface UpdatePostData {
 
 export const updatePost = (id: string, data: UpdatePostData) =>
   api.patch(`/posts/${id}`, data)
+
+export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
+  api.patch(`/users/${id}/emergencies`, { enabled })
 
 export default api

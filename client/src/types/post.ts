@@ -1,3 +1,11 @@
+export enum PostStatus {
+  Active = 'Active',
+  InProgress = 'In progress',
+  Paused = 'Paused',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled',
+}
+
 export interface PostCategoryDTO {
   id: string
   name: string
@@ -16,6 +24,8 @@ export interface PostDTO {
   images: { url: string }[]
   latitude: number | null
   longitude: number | null
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
   categories: PostCategoryDTO[]
   user: {
     id: string
@@ -42,4 +52,5 @@ export interface TrabajoView {
   clientSurname: string
   clientRating: number
   address: string
+  isEmergency: boolean
 }

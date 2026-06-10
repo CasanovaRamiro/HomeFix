@@ -142,3 +142,19 @@ export const getAuth0UserInfo = async (accessToken: string): Promise<Auth0UserIn
 
   return (await response.json()) as Auth0UserInfoResponse
 }
+
+export const sendAuth0PasswordReset = async (email: string): Promise<void> => {
+  const response = await fetch(`${getIssuerBaseUrl()}/dbconnections/change_password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: getRequiredEnv('AUTH0_CLIENT_ID'),
+      connection: getRequiredEnv('AUTH0_DB_CONNECTION'),
+      email,
+    }),
+  })
+
+  if (!response.ok) {
+    throw createHttpError(502, 'Error al contactar el servicio de autenticación')
+  }
+}

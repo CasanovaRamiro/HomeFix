@@ -127,6 +127,13 @@ export const addUserCategories = async (userId: string, categoryIds: string[]) =
     data: categoryIds.map((categoryId) => ({ userId, categoryId })),
   })
 
+export const updateEmergencyNotifications = (userId: string, enabled: boolean) =>
+  prisma.user.update({
+    where: { id: userId },
+    data: { emergenciesEnabled: enabled },
+    select: { id: true, emergenciesEnabled: true },
+  })
+
 export const updateUserByEmail = (
   email: string,
   data: Partial<{ email: string; name: string; role: string }>,

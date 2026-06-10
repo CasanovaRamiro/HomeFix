@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, Plus, FileText } from 'lucide-react'
+import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
+import { PostStatus } from '../types/post'
 
 export default function ClientDashboard() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [showEmergencies, setShowEmergencies] = useState(false)
 
   useEffect(() => {
     getUserPosts()
@@ -17,8 +19,9 @@ export default function ClientDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activos     = posts.filter(p => p.status === 'Active' || p.status === 'In progress' || p.status === 'Paused').length
-  const completados = posts.filter(p => p.status === 'Completed').length
+  const activos     = posts.filter(p => p.status === PostStatus.Active || p.status === PostStatus.InProgress || p.status === PostStatus.Paused).length
+  const completados = posts.filter(p => p.status === PostStatus.Completed).length
+  const emergencyCount = posts.filter(p => p.isEmergency && p.status !== PostStatus.Completed && p.status !== PostStatus.Cancelled).length
 
   // Identidad Cliente = azul. Cada métrica conserva su color semántico.
   const stats = [
@@ -28,9 +31,17 @@ export default function ClientDashboard() {
     { label: 'Sin leer',              value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
   ]
 
-  const inProgress = posts.filter(p => p.status !== 'Completed')
-  const completed  = posts.filter(p => p.status === 'Completed')
-  const ordered    = [...inProgress, ...completed]
+  // Show only actionable posts: exclude Cancelled and Completed posts that already have a review
+  const visible = posts.filter(p =>
+    p.status !== PostStatus.Cancelled && !(p.status === PostStatus.Completed && p.hasReview)
+  )
+  const inProgressPosts = visible.filter(p => p.status === PostStatus.InProgress)
+  const rest            = visible.filter(p => p.status !== PostStatus.InProgress)
+  const ordered         = [...inProgressPosts, ...rest]
+
+  const displayedPosts = showEmergencies
+    ? ordered.filter(p => p.isEmergency)
+    : ordered
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -44,7 +55,7 @@ export default function ClientDashboard() {
             Modo Cliente
           </span>
           <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-slate-900">Mi Tablero</h1>
-          <p className="mt-1.5 text-sm text-slate-600">Gestioná tus publicaciones y conversaciones</p>
+          <p className="mt-1.5 text-sm text-slate-600">Gestiona tus publicaciones y conversaciones</p>
         </div>
       </div>
 
@@ -66,13 +77,33 @@ export default function ClientDashboard() {
             <section>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
+                {emergencyCount > 0 && (
+                  <button
+                    onClick={() => setShowEmergencies(!showEmergencies)}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                      showEmergencies
+                        ? 'bg-red-500 text-white'
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                  >
+                    <AlertTriangle size={14} />
+                    Urgentes ({emergencyCount})
+                    {showEmergencies && <X size={14} />}
+                  </button>
+                )}
               </div>
+
+              {showEmergencies && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                  Mostrando solo publicaciones de emergencia
+                </div>
+              )}
 
               {loading ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
                   <div className="spinner mx-auto" />
                 </div>
-              ) : ordered.length === 0 ? (
+              ) : displayedPosts.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
                     <FileText size={28} className="text-blue-500" />
@@ -86,10 +117,15 @@ export default function ClientDashboard() {
                     <Plus size={16} />
                     Crear publicación
                   </button>
+                  <p className="text-sm text-slate-400">
+                    {showEmergencies
+                      ? 'No tenes publicaciones de emergencia activas.'
+                      : 'Todavia no tenes publicaciones.'}
+                  </p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  {ordered.map((post) => <TurnoCard key={post.id} post={post} />)}
+                  {displayedPosts.map((post) => <TurnoCard key={post.id} post={post} />)}
                 </div>
               )}
             </section>
@@ -108,12 +144,23 @@ export default function ClientDashboard() {
       </div>
 
       {/* Botón emergencias — sticky */}
-      <button
-        title="Emergencias"
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-colors hover:bg-red-600!"
-      >
-        <AlertTriangle size={24} />
-      </button>
+      {emergencyCount > 0 && (
+        <button
+          title="Ver emergencias"
+          onClick={() => {
+            setShowEmergencies(true)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-colors hover:bg-red-600!"
+        >
+          <div className="relative">
+            <AlertTriangle size={24} />
+            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-red-500">
+              {emergencyCount}
+            </span>
+          </div>
+        </button>
+      )}
 
     </div>
   )

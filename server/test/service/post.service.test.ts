@@ -13,6 +13,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
+  deletePostImages: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -60,7 +61,7 @@ describe("post.service - createPost", () => {
 
     expect(createPost).toHaveBeenCalledTimes(1);
 
-    expect(createPost).toHaveBeenCalledWith(inputData);
+    expect(createPost).toHaveBeenCalledWith({ ...inputData, emergencyExpiresAt: null });
 
     expect(result).toEqual(createdPostMock);
   });
@@ -121,6 +122,7 @@ describe("post.service - getUserPosts", () => {
       categories: [{ id: 'uuid-category-1', name: "Plumbing" }],
       worker: null,
       applicantCount: 0,
+      hasReview: false,
     },
   ];
 
@@ -536,7 +538,7 @@ describe('post.service - updatePost', () => {
 
     const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
 
-    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput })
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput, emergencyExpiresAt: null })
     expect(result.title).toBe('Título editado')
   })
 

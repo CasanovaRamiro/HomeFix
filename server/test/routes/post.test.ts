@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
   const payload: Record<string, string | undefined> = {
@@ -43,7 +44,7 @@ let categoryId: string
 
 beforeEach(async () => {
   await cleanDb()
-  const user = await createUser('test@test.com', 'Test', 'hashed', { role: 'worker' })
+  const user = await createUser('test@test.com', 'Test', 'hashed', { role: UserRole.Worker })
   const category = await createCategory('Test Category')
   userId = user.id
   categoryId = category.id
@@ -280,6 +281,100 @@ describe('POST /posts/user-posts', () => {
     expect(res.body[0].title).toBe('Dashboard Post')
     expect(res.body[0].categories).toEqual([{ id: expect.any(String), name: 'Test Category' }])
     expect(res.body[0].applicantCount).toBe(0)
+  })
+
+  it('returns the accepted worker, not the first applicant', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Post con múltiples postulantes',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'In progress',
+        categories: { create: { categoryId } },
+      },
+    })
+    const first = await createUser('first@test.com', 'First', 'hashed', { role: UserRole.Worker })
+    const accepted = await createUser('accepted@test.com', 'Accepted', 'hashed', { role: UserRole.Worker })
+    await prisma.application.create({ data: { postId: post.id, workerId: first.id, status: 'Rejected' } })
+    await prisma.application.create({ data: { postId: post.id, workerId: accepted.id, status: 'Accepted' } })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.worker.id).toBe(accepted.id)
+    expect(found.worker.name).toBe('Accepted')
+  })
+
+  it('returns hasReview: false for a completed post without a review', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Completed No Review',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Completed',
+        categories: { create: { categoryId } },
+      },
+    })
+    const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
+    await prisma.application.create({
+      data: { postId: post.id, workerId: worker.id, status: 'Completed' },
+    })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.hasReview).toBe(false)
+  })
+
+  it('returns hasReview: true for a completed post that has been reviewed', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId,
+        title: 'Completed With Review',
+        description: 'Test',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 2',
+        status: 'Completed',
+        categories: { create: { categoryId } },
+      },
+    })
+    const worker = await createUser('worker2@test.com', 'Worker2', 'hashed', { role: UserRole.Worker })
+    const application = await prisma.application.create({
+      data: { postId: post.id, workerId: worker.id, status: 'Completed' },
+    })
+    await prisma.workerReview.create({
+      data: {
+        applicationId: application.id,
+        reviewerId: userId,
+        workerId: worker.id,
+        rating: 5,
+        description: 'Great work',
+      },
+    })
+
+    const res = await request(app)
+      .post('/posts/user-posts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    const found = res.body.find((p: { id: string }) => p.id === post.id)
+    expect(found).toBeDefined()
+    expect(found.hasReview).toBe(true)
   })
 
   it('returns empty array when the user has no posts', async () => {

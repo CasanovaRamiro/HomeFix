@@ -14,6 +14,8 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   images: post.images,
   latitude: post.latitude,
   longitude: post.longitude,
+  isEmergency: post.isEmergency ?? false,
+  emergencyExpiresAt: post.emergencyExpiresAt?.toISOString() ?? null,
   categories: post.categories,
   user: post.user,
   clientRating: post.clientRating ?? 0,
@@ -31,4 +33,7 @@ export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({
   categories: post.categories,
   worker: post.worker,
   applicantCount: post.applicantCount,
+  hasReview: post.hasReview,
+  isEmergency: post.isEmergency ?? false,
+  emergencyExpiresAt: post.emergencyExpiresAt?.toISOString() ?? null,
 })

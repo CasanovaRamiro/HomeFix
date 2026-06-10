@@ -15,6 +15,9 @@ export interface UserPostDTO {
   categories: PostCategoryDTO[]
   worker: { id: string; name: string } | null
   applicantCount: number
+  hasReview: boolean
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
 }
 
 export interface PostDTO {
@@ -30,6 +33,8 @@ export interface PostDTO {
   images: { url: string }[]
   latitude: number | null
   longitude: number | null
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
   categories: PostCategoryDTO[]
   user: {
     id: string

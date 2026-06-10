@@ -7,10 +7,12 @@ import {
 } from 'lucide-react'
 import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
-import { fetchAvailablePosts } from '../services/posts'
+import { fetchAvailablePosts, fetchEmergencyPosts } from '../services/posts'
+import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
+import ApplyModal from '../components/worker/ApplyModal'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ interface DashboardProfile {
   createdAt: string
   location: string | null
   categories: { id: string; name: string }[]
+  emergenciesEnabled: boolean
 }
 
 interface DashboardStats {
@@ -40,52 +43,6 @@ interface DashboardData {
   profile: DashboardProfile
   stats: DashboardStats
 }
-
-interface MockEmergency {
-  id: string
-  title: string
-  description: string
-  timeAgo: string
-  distance: number
-  client: string
-  location: string
-  clientRating: number
-}
-
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-
-const MOCK_EMERGENCIES: MockEmergency[] = [
-  {
-    id: '1',
-    title: 'Caño roto',
-    description: 'Se rompió un caño debajo de la pileta de la cocina, esta inundando todo. Urgente!',
-    timeAgo: 'Hace 3 min',
-    distance: 1.2,
-    client: 'María Gómez',
-    location: 'Palermo, Buenos Aires',
-    clientRating: 4.8,
-  },
-  {
-    id: '2',
-    title: 'Pérdida de agua',
-    description: 'Hay una pérdida grande en el baño, el agua no para de salir del inodoro.',
-    timeAgo: 'Hace 8 min',
-    distance: 2.4,
-    client: 'Roberto Pérez',
-    location: 'Villa Crespo, Buenos Aires',
-    clientRating: 4.5,
-  },
-  {
-    id: '3',
-    title: 'Cañería tapada',
-    description: 'Se tapó la cañería principal, todos los desagües del depto están colapsados.',
-    timeAgo: 'Hace 15 min',
-    distance: 3.1,
-    client: 'Laura Sánchez',
-    location: 'Recoleta, Buenos Aires',
-    clientRating: 3.9,
-  },
-]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -289,7 +246,16 @@ function MetricsStrip({ stats }: { stats: DashboardStats }) {
   )
 }
 
-function EmergencyCard({ emergency }: { emergency: MockEmergency }) {
+function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied: boolean; onPostular: (post: Post) => void }) {
+  const timeAgo = 'Reciente' // Simplified for now
+  const distance = '2.5'
+  const clientName = post.user.name
+  const clientSurname = post.user.surname
+  const clientRating = post.clientRating ?? 0
+  const title = post.title
+  const description = post.description
+  const location = post.address
+
   return (
     <div style={{
       background: '#fff',
@@ -313,121 +279,223 @@ function EmergencyCard({ emergency }: { emergency: MockEmergency }) {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#DC2626' }} />
             Urgente
           </span>
-          <span style={{ fontSize: 12, color: '#94A3B8' }}>{emergency.timeAgo}</span>
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>{timeAgo}</span>
         </div>
         <div style={{
           background: '#F1F5F9', borderRadius: 10, padding: '6px 10px',
           fontSize: 14, fontWeight: 700, color: '#0F172A',
           display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1,
         }}>
-          {emergency.distance}
+          {distance}
           <span style={{ fontSize: 10, fontWeight: 500, color: '#94A3B8' }}>km</span>
         </div>
       </div>
 
       {/* Title */}
       <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-        {emergency.title}
+        {title}
       </h3>
 
       {/* Description */}
       <p style={{ fontSize: 13, color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-        {emergency.description}
+        {description}
       </p>
 
       {/* Client + location */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569' }}>
           <User size={12} color="#94A3B8" />
-          {emergency.client}
+          {clientName} {clientSurname}
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
           {Array.from({ length: 5 }, (_, i) => (
-            <span key={i}>{i < Math.round(emergency.clientRating) ? '★' : '☆'}</span>
+            <span key={i}>{i < Math.round(clientRating) ? '★' : '☆'}</span>
           ))}
-          <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{emergency.clientRating}</span>
+          <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{clientRating}</span>
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8' }}>
           <MapPin size={12} />
-          {emergency.location}
+          {location}
         </span>
       </div>
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-        <button style={{
-          flex: 1, padding: '10px 0', borderRadius: 10,
-          border: '1.5px solid #E2E8F0', background: '#fff',
-          color: '#475569', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', transition: 'background 0.15s',
-        }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
-        >
-          Rechazar
-        </button>
-        <button style={{
-          flex: 1, padding: '10px 0', borderRadius: 10,
-          border: 'none', background: '#EF4444',
-          color: '#fff', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', transition: 'background 0.15s',
-        }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#DC2626' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#EF4444' }}
-        >
-          Aceptar
-        </button>
+        {isApplied ? (
+          <div style={{
+            flex: 1, padding: '10px 0', borderRadius: 10,
+            border: '1.5px solid #10B981', background: '#ECFDF5',
+            color: '#059669', fontSize: 13, fontWeight: 600,
+            textAlign: 'center',
+          }}>
+            Postulado
+          </div>
+        ) : (
+          <>
+            <button style={{
+              flex: 1, padding: '10px 0', borderRadius: 10,
+              border: '1.5px solid #E2E8F0', background: '#fff',
+              color: '#475569', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
+            >
+              Rechazar
+            </button>
+            <button
+              onClick={() => onPostular(post)}
+              style={{
+              flex: 1, padding: '10px 0', borderRadius: 10,
+              border: 'none', background: '#EF4444',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#DC2626' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#EF4444' }}
+            >
+              Postularse
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-function EmergencySection() {
-  const [isActive, setIsActive] = useState(false)
+function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { workerId: string; emergenciesEnabled: boolean }) {
+  const [isActive, setIsActive] = useState(initialEnabled)
+  const [emergencies, setEmergencies] = useState<Post[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedEmergency, setSelectedEmergency] = useState<Post | null>(null)
+  const [mensaje, setMensaje] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [exito, setExito] = useState(false)
+  const [appliedIds, setAppliedIds] = useState<string[]>([])
+
+  const loadAppliedIds = useCallback(async () => {
+    try {
+      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
+      setAppliedIds(res.data.map((a) => a.postId))
+    } catch {
+      setAppliedIds([])
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadAppliedIds()
+  }, [loadAppliedIds])
+
+  const isApplied = (postId: string): boolean => appliedIds.includes(postId)
+
+  const handleToggle = async () => {
+    const newValue = !isActive
+    try {
+      await api.patch(`/users/${workerId}/emergencies`, { enabled: newValue })
+      setIsActive(newValue)
+    } catch (error) {
+      console.error('Error updating emergency notifications:', error)
+    }
+  }
+
+  const handlePostular = async () => {
+    if (!selectedEmergency) return
+    setEnviando(true)
+    try {
+      await applyToPost(selectedEmergency.id)
+      setAppliedIds((prev) => [...prev, selectedEmergency.id])
+      setExito(true)
+      setTimeout(() => {
+        setSelectedEmergency(null)
+        setMensaje('')
+        setExito(false)
+      }, 1500)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al postularse'
+      alert(msg)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setSelectedEmergency(null)
+    setMensaje('')
+    setExito(false)
+  }
+
+  useEffect(() => {
+    if (!isActive) {
+      setEmergencies([])
+      return
+    }
+
+    const loadEmergencies = async () => {
+      setLoading(true)
+      try {
+        const { data } = await fetchEmergencyPosts()
+        setEmergencies(data)
+      } catch (error) {
+        console.error('Error fetching emergencies:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadEmergencies()
+  }, [isActive])
 
   return (
     <div style={{
       maxWidth: 1280, margin: '0 auto', padding: '0 32px',
       marginTop: 36,
+      transition: 'all 0.3s ease'
     }}>
       <div style={{
         background: '#0F172A', borderRadius: 20, padding: '28px 28px 32px',
+        transition: 'all 0.3s ease',
+        overflow: 'hidden',
+        maxHeight: isActive ? '2000px' : '100px'
       }}>
-        {/* Header */}
+        {/* Header / Label */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, flexWrap: 'wrap', gap: 12,
+          marginBottom: isActive ? 24 : 0, flexWrap: 'wrap', gap: 12,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ position: 'relative' }}>
-              <AlertCircle size={24} color="#94A3B8" />
-              <span style={{
-                position: 'absolute', top: -4, right: -6,
-                width: 18, height: 18, borderRadius: '50%',
-                background: '#EF4444', color: '#fff',
-                fontSize: 10, fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {MOCK_EMERGENCIES.length}
-              </span>
+              <AlertCircle size={isActive ? 24 : 20} color="#94A3B8" />
+              {emergencies.length > 0 && (
+                <span style={{
+                  position: 'absolute', top: -4, right: -6,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: '#EF4444', color: '#fff',
+                  fontSize: 10, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {emergencies.length}
+                </span>
+              )}
             </div>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>
-                Urgencias Entrantes
+              <h2 style={{ fontSize: isActive ? 20 : 16, fontWeight: 700, color: '#fff', margin: 0, transition: 'all 0.3s' }}>
+                {isActive ? 'Urgencias Entrantes' : 'Urgencias Pausadas'}
               </h2>
-              <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>
-                Emergencias de clientes cerca de tu ubicación
-              </p>
+              {isActive && (
+                <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>
+                  Emergencias de clientes cerca de tu ubicacion
+                </p>
+              )}
             </div>
           </div>
 
           {/* Active toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? '#10B981' : '#64748B' }}>
-              Activo
+              {isActive ? 'Activo' : 'Inactivo'}
             </span>
             <button
-              onClick={() => setIsActive(!isActive)}
+              onClick={handleToggle}
               style={{
                 width: 48, height: 26, borderRadius: 13,
                 background: isActive ? '#10B981' : '#334155',
@@ -450,27 +518,61 @@ function EmergencySection() {
 
         {/* Emergency cards grid */}
         {isActive ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {MOCK_EMERGENCIES.map((e) => (
-              <EmergencyCard key={e.id} emergency={e} />
-            ))}
-          </div>
+          loading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#94A3B8' }}>Cargando urgencias...</div>
+          ) : emergencies.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 24 }}>
+              {emergencies.map((post) => (
+                <EmergencyCard key={post.id} post={post} isApplied={isApplied(post.id)} onPostular={setSelectedEmergency} />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center', padding: '40px 20px',
+              border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 16,
+              marginTop: 24
+            }}>
+              <X size={32} color="#475569" style={{ margin: '0 auto 12px' }} />
+              <p style={{ color: '#64748B', fontSize: 14, margin: 0 }}>
+                No hay urgencias disponibles en este momento.
+              </p>
+            </div>
+          )
         ) : (
           <div style={{
-            textAlign: 'center', padding: '40px 20px',
-            border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 16,
+            textAlign: 'center', padding: '10px 20px',
+            color: '#64748B', fontSize: 13,
           }}>
-            <X size={32} color="#475569" style={{ margin: '0 auto 12px' }} />
-            <p style={{ color: '#64748B', fontSize: 14, margin: 0 }}>
-              Las urgencias están pausadas. Activá el toggle para recibir solicitudes.
-            </p>
+            Activa el switch para recibir solicitudes urgentes.
           </div>
         )}
       </div>
+
+      {/* Apply Modal for emergencies */}
+      {selectedEmergency && (
+        exito ? (
+          <div className="modal-overlay" role="presentation">
+            <div className="card modal-card" role="dialog" style={{ textAlign: 'center', padding: '2rem' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: 0 }}>Postulacion enviada</h2>
+              <p style={{ fontSize: 14, color: '#64748B', marginTop: 8 }}>Te postulaste exitosamente a la urgencia</p>
+            </div>
+          </div>
+        ) : (
+          <ApplyModal
+            selected={postToTrabajo(selectedEmergency)}
+            mensaje={mensaje}
+            onMensajeChange={setMensaje}
+            onEnviar={handlePostular}
+            onClose={handleCloseModal}
+            enviando={enviando}
+          />
+        )
+      )}
     </div>
   )
 }
-
+// ─── Application type (from /applications/my-applications) ───────────────────
 // ─── Application type (from /applications/my-applications) ───────────────────
 
 interface Application {
@@ -1035,7 +1137,7 @@ export default function WorkerDashboard() {
     }}>
       <ProfileHeader profile={data.profile} stats={data.stats} />
       <MetricsStrip stats={data.stats} />
-      <EmergencySection />
+      <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
 
       {/* Central section: main content + sidebar */}
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>

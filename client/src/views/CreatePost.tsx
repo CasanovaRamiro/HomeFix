@@ -28,6 +28,9 @@ export default function CreatePost() {
     formInput: { width: '100%', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.background, color: theme.primaryDark, transition: 'all 0.3s', boxSizing: 'border-box' as const },
     formSelect: { width: '100%', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.background, color: theme.primaryDark, transition: 'all 0.3s', boxSizing: 'border-box' as const, cursor: 'pointer' },
     formTextarea: { width: '100%', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.background, color: theme.primaryDark, transition: 'all 0.3s', resize: 'none' as const, boxSizing: 'border-box' as const },
+    emergencyCard: { padding: '16px', borderRadius: '12px', background: '#FEF2F2', border: '1px solid #FECACA', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' },
+    emergencyLabel: { fontSize: '14px', fontWeight: 600, color: '#DC2626', display: 'flex', alignItems: 'center', gap: '8px' },
+    emergencyText: { fontSize: '13px', color: '#B91C1C', margin: 0, lineHeight: '1.4' },
     errorBox: { padding: '16px', borderRadius: '8px', fontSize: '14px', background: '#FEF2F2', color: theme.danger, border: '1px solid #FECACA' },
   }
 
@@ -62,7 +65,7 @@ export default function CreatePost() {
           {formSuccess ? (
             <SuccessScreen onGoHome={() => navigate('/dashboard')} />
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(files)}>
               {formError && <div style={{ ...s.errorBox, marginBottom: '16px' }}>{formError}</div>}
 
               <div style={{ marginBottom: '24px' }}>
@@ -79,28 +82,57 @@ export default function CreatePost() {
                 />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label style={s.formLabel}>Categoría</label>
-                <select
-                  value={form.categoryId}
-                  onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
-                  required
-                  style={s.formSelect}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                  disabled={loadingCategories}
-                >
-                  <option value="">
-                    {loadingCategories ? 'Cargando categorías...' : 'Seleccioná una categoría'}
-                  </option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/diagnosis')}
+               <div style={{ marginBottom: '24px' }}>
+                 <label style={s.formLabel}>Categoría</label>
+                 <select
+                   value={form.categoryId}
+                   onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
+                   required
+                   style={s.formSelect}
+                   onFocus={handleFocus}
+                   onBlur={handleBlur}
+                   disabled={loadingCategories}
+                 >
+                   <option value="">
+                     {loadingCategories ? 'Cargando categorías...' : 'Seleccioná una categoría'}
+                   </option>
+                   {categories.map(c => (
+                     <option key={c.id} value={c.id}>{c.name}</option>
+                   ))}
+                 </select>
+               </div>
+               <div style={s.emergencyCard}>
+                 <div style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                   <input
+                     type="checkbox"
+                     id="isEmergency"
+                     checked={form.isEmergency}
+                     onChange={e => setForm(p => ({ ...p, isEmergency: e.target.checked }))}
+                     style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', cursor: 'pointer', zIndex: 2 }}
+                   />
+                   <div style={{
+                     width: '44px', height: '24px', borderRadius: '12px',
+                     background: form.isEmergency ? '#DC2626' : '#D1D5DB',
+                     transition: 'background 0.2s', position: 'absolute', top: 0, left: 0,
+                   }} />
+                   <div style={{
+                     width: '20px', height: '20px', background: '#fff', borderRadius: '50%',
+                     position: 'absolute', top: '2px', left: form.isEmergency ? '22px' : '2px',
+                     transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', zIndex: 1
+                   }} />
+                 </div>
+                 <div>
+                   <label htmlFor="isEmergency" style={s.emergencyLabel}>
+                     Publicación de Emergencia
+                   </label>
+                   <p style={s.emergencyText}>
+                     Esta publicación tendrá prioridad alta.
+                   </p>
+                 </div>
+               </div>
+               <button
+                 type="button"
+                 onClick={() => navigate('/diagnosis')}
                 style={{ width: '100%', padding: '16px', borderRadius: '12px', fontWeight: 600, fontSize: '16px', border: 'none', cursor: 'pointer', background: theme.accent, color: '#FFFFFF', transition: 'all 0.3s', marginBottom: '24px' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.background = theme.accentHover }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = theme.accent }}
@@ -123,30 +155,32 @@ export default function CreatePost() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-                <div>
-                  <label style={s.formLabel}>Fecha de inicio</label>
-                  <input
-                    type="date"
-                    value={form.startDate}
-                    onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))}
-                    required
-                    style={s.formInput}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                  />
-                </div>
-                <div>
-                  <label style={s.formLabel}>Fecha de finalización</label>
-                  <input
-                    type="date"
-                    value={form.endDate}
-                    onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))}
-                    required
-                    style={s.formInput}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                  />
-                </div>
+                 <div>
+                   <label style={s.formLabel}>Fecha de inicio</label>
+                   <input
+                     type="date"
+                     value={form.startDate}
+                     onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))}
+                     required={!form.isEmergency}
+                     disabled={form.isEmergency}
+                     style={{ ...s.formInput, background: form.isEmergency ? '#F3F4F6' : s.formInput.background }}
+                     onFocus={handleFocus}
+                     onBlur={handleBlur}
+                   />
+                 </div>
+                 <div>
+                   <label style={s.formLabel}>Fecha de finalización</label>
+                   <input
+                     type="date"
+                     value={form.endDate}
+                     onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))}
+                     required={!form.isEmergency}
+                     disabled={form.isEmergency}
+                     style={{ ...s.formInput, background: form.isEmergency ? '#F3F4F6' : s.formInput.background }}
+                     onFocus={handleFocus}
+                     onBlur={handleBlur}
+                   />
+                 </div>
               </div>
 
               <div style={{ marginBottom: '32px' }}>
