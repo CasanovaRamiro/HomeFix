@@ -164,7 +164,7 @@ export default function KycVerify() {
 
   useEffect(() => {
     if (showResult || !user?.email) {
-      setCheckingStatus(false)
+      Promise.resolve().then(() => setCheckingStatus(false))
       return
     }
 
@@ -183,7 +183,7 @@ export default function KycVerify() {
       startedRef.current = true
       const email = user?.email
       if (!email) {
-        setConfirmError('No se pudo identificar tu usuario')
+        Promise.resolve().then(() => setConfirmError('No se pudo identificar tu usuario'))
       } else {
         confirmKycSession(rawSessionId, email)
           .then((res) => setConfirmedStatus(res.status))

@@ -26,7 +26,7 @@ describe("startKycVerification", () => {
     vi.clearAllMocks()
   })
 
-  it("looks up the user by email and delegates to the provider with the user id", async () => {
+  it("looks up the user by email and delegates to the provider with the user email as vendor_data", async () => {
     mockFindByEmail.mockResolvedValue({
       id: "user-uuid-123",
       email: "foo@bar.com",
@@ -39,7 +39,7 @@ describe("startKycVerification", () => {
     const result = await startKycVerification("foo@bar.com")
 
     expect(mockFindByEmail).toHaveBeenCalledWith("foo@bar.com")
-    expect(mockCreateDiditSession).toHaveBeenCalledWith("user-uuid-123")
+    expect(mockCreateDiditSession).toHaveBeenCalledWith("foo@bar.com")
     expect(mockCreateDiditSession).toHaveBeenCalledTimes(1)
     expect(result).toEqual({
       sessionUrl: "https://verification.didit.me/session/abc",
@@ -47,7 +47,7 @@ describe("startKycVerification", () => {
     })
   })
 
-  it("passes the internal user id (not the email) as vendor_data", async () => {
+  it("passes the user email as vendor_data so the webhook can find the user", async () => {
     mockFindByEmail.mockResolvedValue({
       id: "internal-uuid-9999",
       email: "someone@example.com",
@@ -60,8 +60,7 @@ describe("startKycVerification", () => {
     await startKycVerification("someone@example.com")
 
     const [vendorDataArg] = mockCreateDiditSession.mock.calls[0]
-    expect(vendorDataArg).toBe("internal-uuid-9999")
-    expect(vendorDataArg).not.toContain("@")
+    expect(vendorDataArg).toBe("someone@example.com")
   })
 
   it("throws 404 with friendly message when the user is not found in DB", async () => {
