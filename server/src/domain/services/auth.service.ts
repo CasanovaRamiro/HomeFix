@@ -2,7 +2,7 @@ import { createHttpError } from '../../lib/errors.js'
 import { env } from '../../lib/envConfig.js'
 import { findByEmail, createUser, addUserCategories, updateUserByEmail } from '../../infrastructure/database/user.database.js'
 import { upsertCategoryByName } from '../../infrastructure/database/category.database.js'
-import { createAuth0User, loginWithAuth0, getAuth0UserInfo, assignAuth0Role } from '../../infrastructure/providers/auth0.provider.js'
+import { createAuth0User, loginWithAuth0, getAuth0UserInfo, assignAuth0Role, sendAuth0PasswordReset } from '../../infrastructure/providers/auth0.provider.js'
 import { UserRole } from '../types/userRole.js'
 import type { CreateUserInput } from '../types/user.types.js'
 
@@ -165,6 +165,15 @@ export const loginUser = async (input: LoginInput) => {
     expiresIn: tokenData.expires_in,
     user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
   }
+}
+
+export const forgotPassword = async (email: string | undefined) => {
+  const normalizedEmail = email?.trim().toLowerCase()
+  if (!normalizedEmail) throw createHttpError(400, 'El correo electrónico es obligatorio')
+
+  await sendAuth0PasswordReset(normalizedEmail)
+
+  return { message: 'Si el correo está registrado, recibirás un email para restablecer tu contraseña' }
 }
 
 export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistration = false) => {

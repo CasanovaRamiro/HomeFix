@@ -103,6 +103,30 @@ describe('POST /auth/register', () => {
   })
 })
 
+describe('POST /auth/forgot-password', () => {
+  it('returns 200 with success message', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      text: async () => '',
+    } as Response)
+
+    const res = await request(app)
+      .post('/auth/forgot-password')
+      .send({ email: 'user@test.com' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.message).toContain('Si el correo está registrado')
+  })
+
+  it('returns 400 when email is missing', async () => {
+    const res = await request(app)
+      .post('/auth/forgot-password')
+      .send({})
+
+    expect(res.status).toBe(400)
+  })
+})
+
 describe('POST /auth/login', () => {
   it('returns 200 and token data when credentials are valid', async () => {
     vi.spyOn(globalThis, 'fetch')
