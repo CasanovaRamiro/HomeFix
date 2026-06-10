@@ -7,6 +7,7 @@ import {
   pausePost,
   cancelPost,
   listAvailablePosts,
+  listEmergencyPosts,
   searchPostsByDistance,
   completePost,
   reopenPost,
@@ -48,6 +49,26 @@ router.get('/available', async (req, res, next) => {
 
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
     const result = await listAvailablePosts(category)
+    res.json(result.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/emergency', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const category = typeof req.query.category === 'string' ? req.query.category : undefined
+    const result = await listEmergencyPosts(category)
     res.json(result.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }

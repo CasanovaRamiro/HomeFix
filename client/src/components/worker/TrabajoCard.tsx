@@ -22,12 +22,15 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, o
         <img src={trabajo.photo} alt="" className="trabajo-card-img" />
       )}
       <div className="trabajo-card-body">
-        <div className="trabajo-card-head">
-          <span className="badge badge-open">{trabajo.categoria}</span>
-          {isApplied && (
-            <span className="badge badge-applied">Postulado</span>
-          )}
-        </div>
+       <div className="trabajo-card-head">
+         <span className="badge badge-open">{trabajo.categoria}</span>
+         {trabajo.isEmergency && (
+           <span className="badge badge-emergency">Emergencia</span>
+         )}
+         {isApplied && (
+           <span className="badge badge-applied">Postulado</span>
+         )}
+       </div>
         <h3>{trabajo.titulo}</h3>
         <p className="trabajo-desc">{trabajo.descripcion}</p>
       </div>

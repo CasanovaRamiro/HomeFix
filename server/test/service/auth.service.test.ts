@@ -28,6 +28,7 @@ const mockUser = {
   createdAt: new Date(),
   active: true,
   deleted: false,
+  emergenciesEnabled: false,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',

@@ -1,4 +1,4 @@
-import { Calendar, Eye, Star, Users } from 'lucide-react'
+import { Calendar, Eye, Users, AlertTriangle, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { UserPost } from '../../services/api'
 import { PostStatus } from '../../types/post'
@@ -14,9 +14,20 @@ const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
+function getEmergencyTimeLeft(expiresAt: string | null): string | null {
+  if (!expiresAt) return null
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return null
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  if (hours > 0) return `${hours}h ${mins}m restantes`
+  return `${mins}m restantes`
+}
+
 export default function TurnoCard({ post }: { post: UserPost }) {
   const navigate = useNavigate()
   const st = STATUS_MAP[post.status] ?? STATUS_MAP.Active
+  const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
   const needsReview = post.status === PostStatus.Completed && !post.hasReview
 
@@ -42,22 +53,35 @@ export default function TurnoCard({ post }: { post: UserPost }) {
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-md">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-md">
 
-      {/* Header */}
-      <div className="flex justify-between items-center gap-3">
-        <div className="min-w-0">
-          <p className="font-bold text-slate-900 text-base truncate">
-            {post.title}
-          </p>
-          <p className="text-slate-500 text-[13px] mt-0.5">
-            {post.categories[0]?.name ?? ''}
-          </p>
+      {/* Emergency banner */}
+      {post.isEmergency && (
+        <div className="flex items-center gap-2 bg-red-500 px-4 py-2 text-white text-sm font-bold">
+          <AlertTriangle size={16} />
+          <span>Urgente</span>
+          {timeLeft && (
+            <span className="ml-auto text-red-100 text-xs font-medium">{timeLeft}</span>
+          )}
         </div>
-        <span className={`${st.className} rounded-full px-3 py-1 text-xs font-semibold shrink-0`}>
-          {st.label}
-        </span>
-      </div>
+      )}
+
+      <div className="p-6">
+
+        {/* Header */}
+        <div className="flex justify-between items-center gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-slate-900 text-base truncate">
+              {post.title}
+            </p>
+            <p className="text-slate-500 text-[13px] mt-0.5">
+              {post.categories[0]?.name ?? ''}
+            </p>
+          </div>
+          <span className={`${st.className} rounded-full px-3 py-1 text-xs font-semibold shrink-0`}>
+            {st.label}
+          </span>
+        </div>
 
       <hr className="border-slate-100 my-4" />
 
@@ -97,6 +121,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
         </button>
       </div>
 
+      </div>
     </div>
   )
 }

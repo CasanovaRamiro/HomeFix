@@ -11,6 +11,8 @@ export interface PrismaPostFull {
   images: { url: string }[]
   latitude: number | null
   longitude: number | null
+  isEmergency: boolean
+  emergencyExpiresAt: Date | null
   categories: { category: { id: string; name: string } }[]
   user: { id: string; name: string; surname: string }
 }
