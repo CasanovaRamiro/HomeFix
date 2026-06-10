@@ -167,32 +167,34 @@ describe("post.service - listAvailablePosts", () => {
   })
 
   it("should return available posts without category filter", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [mockPost], total: 1 });
 
     const result = await postService.listAvailablePosts();
 
-    expect(findAvailablePosts).toHaveBeenCalledWith(undefined);
-    expect(result).toHaveLength(1);
-    expect(result[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
-    expect(result[0].clientRating).toBe(4.5);
+    expect(findAvailablePosts).toHaveBeenCalledWith(undefined, undefined);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
+    expect(result.data[0].clientRating).toBe(4.5);
+    expect(result.total).toBe(1);
   });
 
   it("should filter available posts by category", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [mockPost], total: 1 });
 
     const result = await postService.listAvailablePosts("Plomero");
 
-    expect(findAvailablePosts).toHaveBeenCalledWith("Plomero");
-    expect(result).toHaveLength(1);
-    expect(result[0].clientRating).toBe(4.5);
+    expect(findAvailablePosts).toHaveBeenCalledWith("Plomero", undefined);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].clientRating).toBe(4.5);
   });
 
   it("should return empty array when no posts match", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [], total: 0 });
 
     const result = await postService.listAvailablePosts("NonExistent");
 
-    expect(result).toEqual([]);
+    expect(result.data).toEqual([]);
+    expect(result.total).toBe(0);
   });
 });
 

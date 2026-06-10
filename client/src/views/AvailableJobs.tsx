@@ -19,7 +19,7 @@ import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 5
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
@@ -66,10 +66,15 @@ export default function AvailableJobs(): JSX.Element {
     setLoading(true)
     setError('')
     try {
-      const { data } = locationFilter
-        ? await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
-        : await fetchAvailablePosts(category)
-      const mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
+      const sortOrder = sortBy === 'reciente' ? 'desc' : 'asc'
+      let mapped: (TrabajoView & { lat?: number | null; lng?: number | null })[]
+      if (locationFilter) {
+        const { data } = await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
+        mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
+      } else {
+        const res = await fetchAvailablePosts(category, { page: 1, limit: 1000, sortOrder })
+        mapped = res.data.data.map((post) => postToTrabajo(post))
+      }
       setTrabajos(mapped)
 
       const idParam = searchParams.get('id')
@@ -84,7 +89,7 @@ export default function AvailableJobs(): JSX.Element {
     } finally {
       setLoading(false)
     }
-  }, [category, navigate, searchParams, locationFilter])
+  }, [category, searchParams, locationFilter, sortBy])
 
   useEffect(() => {
     void loadPostulaciones()
@@ -111,32 +116,20 @@ export default function AvailableJobs(): JSX.Element {
   }, [user?.id])
 
   const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
-    let resultado = [...trabajos]
-
+    let resultado = trabajos.filter((t) => !postulacionesIds.includes(t.id))
     const q = searchQuery.trim().toLowerCase()
     if (q !== '') {
       resultado = resultado.filter(
-        (t) =>
-          t.titulo.toLowerCase().includes(q) ||
-          t.descripcion.toLowerCase().includes(q)
+        (t) => t.titulo.toLowerCase().includes(q) || t.descripcion.toLowerCase().includes(q)
       )
     }
-
-    resultado.sort((a, b) => {
-      const dateA = new Date(a.startDate).getTime()
-      const dateB = new Date(b.startDate).getTime()
-
-      return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
-    })
-
     return resultado
-  }, [trabajos, searchQuery, sortBy])
-
-  // Reset to page 1 when filters change
-  useEffect(() => { setPage(1) }, [searchQuery, sortBy, category, locationFilter])
+  }, [trabajos, searchQuery, postulacionesIds])
 
   const totalPages = Math.max(1, Math.ceil(filtradosYOrdenados.length / PAGE_SIZE))
-  const paginated  = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const paginaActual = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  useEffect(() => { setPage(1) }, [sortBy, category, locationFilter])
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
@@ -241,7 +234,7 @@ export default function AvailableJobs(): JSX.Element {
               <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
             </div>
           )}
-          {!loading && paginated.map((trabajo) => (
+          {!loading && paginaActual.map((trabajo) => (
             <TrabajoCard
               key={trabajo.id}
               trabajo={trabajo}

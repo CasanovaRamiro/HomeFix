@@ -85,13 +85,35 @@ const availablePostWhere = (category?: string) => ({
     : {}),
 })
 
-export const findAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
-  const raw = await prisma.post.findMany({
-    where: availablePostWhere(category),
-    orderBy: { createdAt: 'desc' },
-    select: postFields,
-  }) as unknown as PrismaPostFull[]
-  return raw.map(toDomainPost)
+export interface PaginationParams {
+  page: number
+  limit: number
+  sortOrder: 'asc' | 'desc'
+}
+
+export interface PaginatedPosts {
+  posts: DomainPost[]
+  total: number
+}
+
+export const findAvailablePosts = async (
+  category?: string,
+  pagination?: PaginationParams,
+): Promise<PaginatedPosts> => {
+  const where = availablePostWhere(category)
+  const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
+
+  const [raw, total] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      orderBy,
+      select: postFields,
+      ...(pagination ? { skip: (pagination.page - 1) * pagination.limit, take: pagination.limit } : {}),
+    }) as unknown as Promise<PrismaPostFull[]>,
+    prisma.post.count({ where }),
+  ])
+
+  return { posts: raw.map(toDomainPost), total }
 }
 
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {

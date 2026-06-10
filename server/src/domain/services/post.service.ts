@@ -8,6 +8,7 @@ import {
   findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
   deletePostImages,
+  type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
@@ -60,9 +61,22 @@ const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => 
   return { ...post, clientRating: rating.averageRating }
 }
 
-export const listAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
-  const posts = await findAvailablePosts(category)
-  return Promise.all(posts.map(enrichWithClientRating))
+export interface PaginatedResult {
+  data: DomainPost[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+export const listAvailablePosts = async (
+  category?: string,
+  pagination?: PaginationParams,
+): Promise<PaginatedResult> => {
+  const { posts, total } = await findAvailablePosts(category, pagination)
+  const data = await Promise.all(posts.map(enrichWithClientRating))
+  const page = pagination?.page ?? 1
+  const limit = pagination?.limit ?? total
+  return { data, total, page, totalPages: Math.ceil(total / limit) }
 }
 
 export const listEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
