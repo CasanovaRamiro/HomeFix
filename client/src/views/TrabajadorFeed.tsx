@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Calendar, Briefcase, ArrowLeft, Tag } from 'lucide-react'
-import api from '../services/api'
+import { MapPin, Calendar, Briefcase, ArrowLeft, Tag, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react'
+import { fetchWorkerFeed } from '../services/posts'
+import type { Post } from '../types/post'
 
-interface PostFeed {
-  id: string
-  title: string
-  description: string
-  address: string
-  startDate: string
-  endDate: string
-  categories: { id: string; name: string }[]
-  user: { id: string; name: string; surname: string }
-}
+const LIMIT = 10
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('es-AR', {
@@ -28,15 +20,23 @@ function truncate(text: string | undefined, max: number) {
 }
 
 export default function TrabajadorFeed() {
-  const [posts, setPosts] = useState<PostFeed[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const navigate = useNavigate()
 
   useEffect(() => {
-    api.get<PostFeed[]>('/posts')
-      .then((res) => { setPosts(res.data); setLoading(false) })
+    setLoading(true)
+    fetchWorkerFeed({ page, limit: LIMIT, sortOrder })
+      .then((res) => {
+        setPosts(res.data.data)
+        setTotalPages(res.data.totalPages)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
-  }, [])
+  }, [page, sortOrder])
 
   return (
     <div className="min-h-screen font-montserrat">
@@ -50,13 +50,22 @@ export default function TrabajadorFeed() {
             Mis Postulaciones
           </button>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
-              Trabajos Disponibles
-            </h1>
-            <p className="mt-1 text-sm text-white/60">
-              Encontrá el trabajo que mejor se adapte a tus habilidades
-            </p>
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white sm:text-3xl">
+                Trabajos Disponibles
+              </h1>
+              <p className="mt-1 text-sm text-white/60">
+                Encontrá el trabajo que mejor se adapte a tus habilidades
+              </p>
+            </div>
+            <button
+              onClick={() => { setSortOrder((o) => o === 'desc' ? 'asc' : 'desc'); setPage(1) }}
+              className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 transition-colors"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sortOrder === 'desc' ? 'Más recientes primero' : 'Más antiguos primero'}
+            </button>
           </div>
         </div>
       </div>
@@ -79,52 +88,80 @@ export default function TrabajadorFeed() {
                 </p>
               </div>
             ) : (
-              <div className="mt-8 grid grid-cols-1 gap-6 pb-12 lg:grid-cols-2">
-                {posts.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => navigate(`/worker/posts/${p.id}`)}
-                    className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md text-left w-full cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <h3 className="text-base font-bold text-slate-900 flex-1">
-                        {p.title}
-                      </h3>
-                    </div>
+              <>
+                <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  {posts.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => navigate(`/worker/posts/${p.id}`)}
+                      className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md text-left w-full cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <h3 className="text-base font-bold text-slate-900 flex-1">
+                          {p.title}
+                        </h3>
+                      </div>
 
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                      {truncate(p.description, 120)}
-                    </p>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        {truncate(p.description, 120)}
+                      </p>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      {(p.categories ?? []).map((cat) => (
-                        <span
-                          key={cat.id}
-                          className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
-                        >
-                          <Tag className="h-3 w-3" />
-                          {cat.name}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(p.categories ?? []).map((cat) => (
+                          <span
+                            key={cat.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                          >
+                            <Tag className="h-3 w-3" />
+                            {cat.name}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {p.address}
                         </span>
-                      ))}
-                    </div>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(p.startDate)}
+                        </span>
+                        <span className="text-slate-300">—</span>
+                        <span className="flex items-center gap-1 text-slate-500">
+                          {p.user.name} {p.user.surname}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {p.address}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(p.startDate)}
-                      </span>
-                      <span className="text-slate-300">—</span>
-                      <span className="flex items-center gap-1 text-slate-500">
-                        {p.user.name} {p.user.surname}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                {totalPages > 1 && (
+                  <div className="mt-8 mb-12 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </button>
+
+                    <span className="px-4 text-sm text-slate-500">
+                      Página {page} de {totalPages}
+                    </span>
+
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

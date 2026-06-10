@@ -51,6 +51,7 @@ export default function AvailableJobs(): JSX.Element {
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
+  const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
   const [page, setPage] = useState(1)
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
@@ -146,6 +147,21 @@ export default function AvailableJobs(): JSX.Element {
     }
   }
 
+  const handleOpenLocationModal = () => {
+    if (locationFilter) {
+      setShowLocationModal(true)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDefaultCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setShowLocationModal(true)
+      },
+      () => setShowLocationModal(true),
+      { timeout: 5000 }
+    )
+  }
+
   const handleLocationApply = (lat: number, lng: number, radius: number) => {
     const filter = { lat, lng, radius }
     setLocationFilter(filter)
@@ -216,7 +232,7 @@ export default function AvailableJobs(): JSX.Element {
             sortBy={sortBy}
             onSortChange={setSortBy}
             locationFilter={locationFilter}
-            onOpenLocationModal={() => setShowLocationModal(true)}
+            onOpenLocationModal={handleOpenLocationModal}
           />
         </div>
       </div>
@@ -341,8 +357,8 @@ export default function AvailableJobs(): JSX.Element {
 
       {showLocationModal && (
         <LocationFilterModal
-          initialLat={locationFilter?.lat ?? -34.6037}
-          initialLng={locationFilter?.lng ?? -58.3816}
+          initialLat={locationFilter?.lat ?? defaultCoords.lat}
+          initialLng={locationFilter?.lng ?? defaultCoords.lng}
           initialRadius={locationFilter?.radius ?? 30}
           onApply={handleLocationApply}
           onClear={handleLocationClear}
