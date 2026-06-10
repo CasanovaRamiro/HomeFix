@@ -9,6 +9,7 @@ export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
   phone: w.phone,
   bio: w.bio,
   role: w.role,
+  photo: w.photo,
   createdAt: w.createdAt,
   categories: w.categories.map((uc) => uc.category),
 })

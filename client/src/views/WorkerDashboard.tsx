@@ -753,7 +753,7 @@ const VALIDATIONS = [
 
 const QUICK_LINKS = [
   { label: 'Buscar Trabajos',   icon: Briefcase,     href: '/worker/available-jobs' },
-  { label: 'Mi Perfil',         icon: User,           href: '/worker' },
+  { label: 'Mi Perfil',         icon: User,           href: '' },
   { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
   { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
   { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
@@ -761,6 +761,7 @@ const QUICK_LINKS = [
 
 function Sidebar({ workerId }: { workerId: string }) {
   const navigate = useNavigate()
+  const links = QUICK_LINKS.map((l) => l.label === 'Mi Perfil' ? { ...l, href: `/worker/${workerId}` } : l)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -797,7 +798,7 @@ function Sidebar({ workerId }: { workerId: string }) {
           Accesos Rapidos
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {QUICK_LINKS.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.label}
               to={link.href}

@@ -27,10 +27,6 @@ export const getWorker = (id: string): Promise<Worker> =>
 export const getWorkerReviews = (id: string): Promise<WorkerReview[]> =>
   api.get<WorkerReview[]>(`/workers/${id}/reviews`).then((r) => r.data)
 
-export interface WorkerCategory {
-  category: { id: string; name: string }
-}
-
 export interface Worker {
   id: string
   name: string
@@ -38,10 +34,22 @@ export interface Worker {
   phone: string | null
   bio: string | null
   role: string
+  photo: string | null
   createdAt: string
-  categories: WorkerCategory[]
+  categories: { id: string; name: string }[]
   emergenciesEnabled: boolean
 }
+
+export interface WorkerUpdateData {
+  name?: string
+  phone?: string | null
+  bio?: string | null
+  photo?: string | null
+  categoryIds?: string[]
+}
+
+export const updateWorkerProfile = (id: string, data: WorkerUpdateData): Promise<Worker> =>
+  api.patch<Worker>(`/workers/${id}`, data).then((r) => r.data)
 
 export interface WorkerReview {
   id: string

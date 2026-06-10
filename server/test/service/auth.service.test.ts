@@ -29,6 +29,7 @@ const mockUser = {
   active: true,
   deleted: false,
   emergenciesEnabled: false,
+  photo: null as string | null,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',

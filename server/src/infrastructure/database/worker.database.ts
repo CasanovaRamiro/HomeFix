@@ -2,7 +2,7 @@ import prisma from '../../lib/prisma.js'
 import { Prisma } from '@prisma/client'
 import { UserRole } from '../../domain/types/userRole.js'
 import { toDomainWorker } from '../transformers/worker.transformer.js'
-import type { DomainWorker } from '../../domain/types/worker.types.js'
+import type { DomainWorker, UpdateWorkerInput } from '../../domain/types/worker.types.js'
 
 const workerFields = {
   id: true,
@@ -11,6 +11,7 @@ const workerFields = {
   phone: true,
   bio: true,
   role: true,
+  photo: true,
   createdAt: true,
   categories: {
     select: {
@@ -29,6 +30,26 @@ export const findWorkerById = async (id: string): Promise<DomainWorker | null> =
     select: workerFields,
   })
   return raw ? toDomainWorker(raw) : null
+}
+
+export const updateWorker = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
+  const { categoryIds, ...data } = input
+  const raw = await prisma.user.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(categoryIds
+        ? {
+            categories: {
+              deleteMany: {},
+              create: categoryIds.map((categoryId) => ({ categoryId })),
+            },
+          }
+        : {}),
+    },
+    select: workerFields,
+  })
+  return toDomainWorker(raw)
 }
 
 export const findAllWorkers = async (): Promise<DomainWorker[]> => {

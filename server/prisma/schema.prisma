@@ -23,6 +23,7 @@ model User {
   active          Boolean          @default(true)
   deleted         Boolean          @default(false)
   emergenciesEnabled Boolean         @default(false)
+  photo           String?
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")

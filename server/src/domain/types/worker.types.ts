@@ -5,8 +5,17 @@ export interface DomainWorker {
   phone: string | null
   bio: string | null
   role: string
+  photo: string | null
   createdAt: Date
   categories: { id: string; name: string }[]
+}
+
+export interface UpdateWorkerInput {
+  name?: string
+  phone?: string | null
+  bio?: string | null
+  photo?: string | null
+  categoryIds?: string[]
 }
 
 export interface DomainWorkerReview {
