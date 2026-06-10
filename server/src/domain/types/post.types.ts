@@ -43,6 +43,7 @@ export interface CreatePostInput {
   endDate?: Date | string | null
   address: string
   categoryId: string
+  images?: { url: string }[]
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
 }

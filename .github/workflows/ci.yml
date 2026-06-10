@@ -126,6 +126,9 @@ jobs:
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder
+          CLOUDINARY_CLOUD_NAME: ci-placeholder
+          CLOUDINARY_API_KEY: ci-placeholder
+          CLOUDINARY_API_SECRET: ci-placeholder
 
       - name: Apply migrations to test DB
         working-directory: server
@@ -135,6 +138,9 @@ jobs:
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder
+          CLOUDINARY_CLOUD_NAME: ci-placeholder
+          CLOUDINARY_API_KEY: ci-placeholder
+          CLOUDINARY_API_SECRET: ci-placeholder
 
       - name: Run tests
         working-directory: server
@@ -144,3 +150,6 @@ jobs:
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder
+          CLOUDINARY_CLOUD_NAME: ci-placeholder
+          CLOUDINARY_API_KEY: ci-placeholder
+          CLOUDINARY_API_SECRET: ci-placeholder

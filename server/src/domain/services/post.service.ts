@@ -7,8 +7,10 @@ import {
   findAvailablePosts,
   findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
+  deletePostImages,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
+import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { getUserRating } from './user.service.js'
@@ -117,6 +119,8 @@ export const cancelPost = async (postId: string, userId: string) => {
   if (post.status === 'Completed' || post.status === 'Cancelled') {
     throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
   }
+  await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
+  await deletePostImages(postId)
   return updatePostStatus(postId, 'Cancelled')
 }
 
