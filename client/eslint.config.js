@@ -18,7 +18,7 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: globals.browser,
       parserOptions: {
-        project: ['./tsconfig.app.json', './tsconfig.node.json'],
+        project: ['./tsconfig.app.json', './tsconfig.node.json', './tsconfig.test.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -69,8 +69,13 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-assertions': 'off',
       '@typescript-eslint/consistent-type-imports': 'off',
       '@typescript-eslint/consistent-type-definitions': 'off',
-      '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/array-type': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 )

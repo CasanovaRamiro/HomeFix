@@ -1,5 +1,6 @@
 import { findByEmail, updateUserKycStatus } from '../../infrastructure/database/user.database.js'
 import { createDiditSession, getSessionStatus, getDecision } from '../../infrastructure/providers/didit.provider.js'
+import { createHttpError } from '../../lib/errors.js'
 
 export type KycStatus = 'NOT_STARTED' | 'IN_REVIEW' | 'APPROVED' | 'DECLINED' | 'EXPIRED'
 
@@ -25,12 +26,6 @@ const DIDIT_STATUS_MAP: Record<string, KycStatus> = {
   'In Progress': 'IN_REVIEW',
   'Not Started': 'NOT_STARTED',
   'Not Finished': 'IN_REVIEW',
-}
-
-const createHttpError = (status: number, message: string): Error & { status?: number } => {
-  const err = new Error(message) as Error & { status?: number }
-  err.status = status
-  return err
 }
 
 export const startKycVerification = async (
