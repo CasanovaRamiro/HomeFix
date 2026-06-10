@@ -68,3 +68,51 @@ export const createDiditSession = async (
 
   return { sessionUrl: data.url, sessionId: data.session_id }
 }
+
+export const getSessionStatus = async (
+  sessionId: string,
+): Promise<{ sessionId: string; status: string; url: string }> => {
+  const apiKey = env.DIDIT_API_KEY
+  if (!apiKey) throw createHttpError(500, 'DIDIT_API_KEY is not configured')
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(`${DIDIT_API_BASE}/v3/session/${sessionId}/`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        Accept: 'application/json',
+      },
+      signal: controller.signal,
+    })
+  } catch (e) {
+    clearTimeout(timeout)
+    console.error('[KYC] Didit getSessionStatus failed:', e)
+    throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
+  }
+  clearTimeout(timeout)
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    console.error('[KYC] Didit getSessionStatus returned non-OK:', response.status, text)
+    if (response.status === 404) {
+      throw createHttpError(404, 'La sesión de verificación no existe')
+    }
+    throw createHttpError(502, 'El servicio de verificación rechazó la solicitud')
+  }
+
+  const data = (await response.json()) as DiditSessionResponse
+  if (!data.session_id) {
+    console.error('[KYC] Didit getSessionStatus missing session_id:', data)
+    throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
+  }
+
+  return {
+    sessionId: data.session_id,
+    status: data.status ?? 'UNKNOWN',
+    url: data.url ?? '',
+  }
+}

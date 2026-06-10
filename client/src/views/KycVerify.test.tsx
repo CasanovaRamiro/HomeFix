@@ -7,6 +7,7 @@ import * as kycService from '../services/kyc'
 
 vi.mock('../services/kyc', () => ({
   startKycVerification: vi.fn(),
+  confirmKycSession: vi.fn(),
 }))
 
 vi.mock('../lib/envConfig', () => ({
@@ -111,54 +112,116 @@ describe('KycVerify', () => {
   })
 
   describe('vista de resultado (volviendo de Didit)', () => {
-    it('muestra mensaje de éxito cuando status es Approved', () => {
+    it('muestra pantalla de carga mientras confirma con el backend', async () => {
+      vi.mocked(kycService.confirmKycSession).mockImplementation(
+        () => new Promise(() => {}),
+      )
+
       renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
-      expect(screen.getByText('Identidad validada')).toBeInTheDocument()
-      expect(screen.getByText('Aprobada')).toBeInTheDocument()
+
+      expect(await screen.findByText('Confirmando tu verificación…')).toBeInTheDocument()
     })
 
-    it('muestra mensaje de revisión cuando status es In Review', () => {
-      renderAt('/kyc?status=In%20Review&verificationSessionId=sess-1')
-      expect(screen.getByText('Verificación en revisión')).toBeInTheDocument()
-      expect(screen.getByText('En revisión')).toBeInTheDocument()
+    it('confirma con el backend y muestra el resultado', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'APPROVED',
+        sessionId: 'sess-abc',
+      })
+
+      renderAt('/kyc?status=Approved&verificationSessionId=sess-abc')
+
+      expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
+      expect(await screen.findByText('Aprobada')).toBeInTheDocument()
+      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-abc')
     })
 
-    it('muestra mensaje de rechazo cuando status es Declined', () => {
+    it('muestra el status mapeado desde el backend', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'APPROVED',
+        sessionId: 'sess-abc',
+      })
+
+      renderAt('/kyc?status=In%20Review&verificationSessionId=sess-abc')
+
+      expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
+    })
+
+    it('muestra rechazo cuando el backend devuelve DECLINED', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'DECLINED',
+        sessionId: 'sess-1',
+      })
+
       renderAt('/kyc?status=Declined&verificationSessionId=sess-1')
-      expect(screen.getByText('No pudimos validar tu identidad')).toBeInTheDocument()
-      expect(screen.getByText('Rechazada')).toBeInTheDocument()
+
+      expect(await screen.findByText('No pudimos validar tu identidad')).toBeInTheDocument()
+      expect(await screen.findByText('Rechazada')).toBeInTheDocument()
     })
 
-    it('muestra mensaje de expiración cuando status es Expired', () => {
+    it('muestra expiración cuando el backend devuelve EXPIRED', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'EXPIRED',
+        sessionId: 'sess-1',
+      })
+
       renderAt('/kyc?status=Expired&verificationSessionId=sess-1')
-      expect(screen.getByText('La verificación expiró')).toBeInTheDocument()
+
+      expect(await screen.findByText('La verificación expiró')).toBeInTheDocument()
     })
 
-    it('muestra mensaje de incompleto cuando status es Abandoned', () => {
+    it('muestra incompleto cuando el backend devuelve EXPIRED (antes Abandoned)', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'EXPIRED',
+        sessionId: 'sess-1',
+      })
+
       renderAt('/kyc?status=Abandoned&verificationSessionId=sess-1')
-      expect(screen.getByText('Verificación incompleta')).toBeInTheDocument()
+
+      expect(await screen.findByText('La verificación expiró')).toBeInTheDocument()
     })
 
-    it('cae al copy default cuando el status es desconocido', () => {
-      renderAt('/kyc?status=Something%20Random&verificationSessionId=sess-1')
-      expect(screen.getByText('Verificación recibida')).toBeInTheDocument()
-      expect(screen.getByText('Recibida')).toBeInTheDocument()
+    it('cae al copy default cuando el backend devuelve un status no mapeado', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'UNKNOWN',
+        sessionId: 'sess-1',
+      })
+
+      renderAt('/kyc?status=Something&verificationSessionId=sess-1')
+
+      expect(await screen.findByText('Verificación recibida')).toBeInTheDocument()
     })
 
-    it('cae al copy default cuando no hay status', () => {
-      renderAt('/kyc?verificationSessionId=sess-1')
-      expect(screen.getByText('Verificación recibida')).toBeInTheDocument()
+    it('muestra el sessionId del query param', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'APPROVED',
+        sessionId: 'sess-abc',
+      })
+
+      renderAt('/kyc?status=Approved&verificationSessionId=sess-xyz-999')
+
+      expect(await screen.findByText(/sess-xyz-999/)).toBeInTheDocument()
     })
 
-    it('renderiza el sessionId cuando está presente', () => {
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-abc-123')
-      expect(screen.getByText(/sess-abc-123/)).toBeInTheDocument()
-    })
+    it('muestra mensaje de error cuando falla la confirmación', async () => {
+      vi.mocked(kycService.confirmKycSession).mockRejectedValue({
+        response: { data: { error: 'Sesión no encontrada' } },
+      })
 
-    it('muestra el link para volver al panel', () => {
       renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
+
+      expect(await screen.findByText('Sesión no encontrada')).toBeInTheDocument()
+    })
+
+    it('muestra el link para volver al panel', async () => {
+      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
+        status: 'APPROVED',
+        sessionId: 'sess-1',
+      })
+
+      renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
+
       expect(
-        screen.getByRole('link', { name: /volver a mi panel/i }),
+        await screen.findByRole('link', { name: /volver a mi panel/i }),
       ).toBeInTheDocument()
     })
   })

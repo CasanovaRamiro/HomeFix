@@ -8,10 +8,12 @@ vi.mock("../../src/presentation/middleware/auth0.middleware.js", async () => {
 
 vi.mock("../../src/domain/services/kyc.service.js", () => ({
   startKycVerification: vi.fn(),
+  confirmKyc: vi.fn(),
+  getKycStatus: vi.fn(),
 }))
 
 import { app } from "../../src/index.js"
-import { startKycVerification } from "../../src/domain/services/kyc.service.js"
+import { startKycVerification, confirmKyc, getKycStatus } from "../../src/domain/services/kyc.service.js"
 
 const token = "test-auth0-token"
 
@@ -98,5 +100,112 @@ describe("POST /kyc/session", () => {
       .send({})
 
     expect(res.status).toBe(500)
+  })
+})
+
+describe("POST /kyc/confirm", () => {
+  it("returns 401 without an auth token", async () => {
+    const res = await request(app).post("/kyc/confirm").send({ sessionId: "sess-1" })
+
+    expect(res.status).toBe(401)
+  })
+
+  it("returns 200 with mapped status when the session is verified", async () => {
+    vi.mocked(confirmKyc).mockResolvedValue({
+      status: "APPROVED",
+      sessionId: "sess-abc",
+    })
+
+    const res = await request(app)
+      .post("/kyc/confirm")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-abc" })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
+    expect(confirmKyc).toHaveBeenCalledWith("test@test.com", "sess-abc")
+  })
+
+  it("returns 400 when sessionId is missing", async () => {
+    const res = await request(app)
+      .post("/kyc/confirm")
+      .set("Authorization", `Bearer ${token}`)
+      .send({})
+
+    expect(res.status).toBe(400)
+    expect(confirmKyc).not.toHaveBeenCalled()
+  })
+
+  it("returns 404 when the user is not found", async () => {
+    const err = new Error(
+      "Usuario autenticado no encontrado en la base de datos",
+    ) as Error & { status?: number }
+    err.status = 404
+    vi.mocked(confirmKyc).mockRejectedValue(err)
+
+    const res = await request(app)
+      .post("/kyc/confirm")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-1" })
+
+    expect(res.status).toBe(404)
+  })
+
+  it("returns 502 when the Didit API is unreachable", async () => {
+    const err = new Error("No se pudo contactar al servicio de verificación") as Error & {
+      status?: number
+    }
+    err.status = 502
+    vi.mocked(confirmKyc).mockRejectedValue(err)
+
+    const res = await request(app)
+      .post("/kyc/confirm")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-1" })
+
+    expect(res.status).toBe(502)
+  })
+})
+
+describe("GET /kyc/status", () => {
+  it("returns 401 without an auth token", async () => {
+    const res = await request(app).get("/kyc/status")
+
+    expect(res.status).toBe(401)
+  })
+
+  it("returns 200 with the KYC status of the authenticated user", async () => {
+    const verifiedAt = new Date("2026-06-07T12:00:00Z")
+    vi.mocked(getKycStatus).mockResolvedValue({
+      kycStatus: "APPROVED",
+      kycVerifiedAt: verifiedAt,
+      kycSessionId: "sess-abc",
+    })
+
+    const res = await request(app)
+      .get("/kyc/status")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({
+      kycStatus: "APPROVED",
+      kycVerifiedAt: verifiedAt.toISOString(),
+      kycSessionId: "sess-abc",
+    })
+    expect(getKycStatus).toHaveBeenCalledWith("test@test.com")
+  })
+
+  it("returns 404 when the user is not found", async () => {
+    const err = new Error(
+      "Usuario autenticado no encontrado en la base de datos",
+    ) as Error & { status?: number }
+    err.status = 404
+    vi.mocked(getKycStatus).mockRejectedValue(err)
+
+    const res = await request(app)
+      .get("/kyc/status")
+      .set("Authorization", `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
   })
 })
