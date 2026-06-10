@@ -14,7 +14,7 @@ vi.mock('../../src/infrastructure/database/category.database.js', () => ({
 }))
 
 import * as userData from '../../src/infrastructure/database/user.database.js'
-import { loginUser, registerUser, syncAuth0User, type RegisterInput } from '../../src/domain/services/auth.service.js'
+import { loginUser, registerUser, syncAuth0User, forgotPassword, type RegisterInput } from '../../src/domain/services/auth.service.js'
 
 const mockUser = {
   id: 'uuid-jane',
@@ -124,6 +124,42 @@ describe('auth.service - registerUser', () => {
 
   it('throws if required fields are missing', async () => {
     await expect(registerUser({} as RegisterInput)).rejects.toThrow('El nombre es obligatorio')
+  })
+})
+
+describe('auth.service - forgotPassword', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.example.com/'
+    process.env.AUTH0_CLIENT_ID = 'client-id'
+    process.env.AUTH0_DB_CONNECTION = 'Username-Password-Authentication'
+  })
+
+  it('returns success message when Auth0 responds ok', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      text: async () => '',
+    } as Response)
+
+    const result = await forgotPassword('jane@test.com')
+    expect(result.message).toContain('Si el correo está registrado')
+  })
+
+  it('throws 400 when email is missing', async () => {
+    await expect(forgotPassword(undefined)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('throws 400 when email is empty string', async () => {
+    await expect(forgotPassword('   ')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('throws 502 when Auth0 call fails', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response)
+
+    await expect(forgotPassword('jane@test.com')).rejects.toMatchObject({ status: 502 })
   })
 })
 
