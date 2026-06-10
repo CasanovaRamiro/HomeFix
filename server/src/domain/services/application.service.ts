@@ -8,8 +8,18 @@ import {
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
 import { findPostById, updatePostStatus } from '../../infrastructure/database/post.database.js'
+import { findUserById } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
+import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
+import { notifyUser } from './notification.service.js'
 import type { DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
+import type { NotificationProvider } from '../types/notification.types.js'
+
+let _provider: NotificationProvider
+const getProvider = () => {
+  if (!_provider) _provider = createTelegramProvider()
+  return _provider
+}
 
 export const getMyApplications = async (workerId: string): Promise<DomainMyApplication[]> => {
   const apps = await findApplicationsByWorker(workerId)
@@ -35,6 +45,13 @@ export const applyToPost = async (workerId: string, postId: string) => {
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
 
   const created = await createApplication(workerId, postId)
+
+  const worker = await findUserById(workerId)
+  notifyUser(getProvider(), post.userId, 'application_new', {
+    workerName: worker ? `${worker.name}` : 'Alguien',
+    postTitle: post.title,
+  })
+
   return { id: created.id, status: created.status, message: 'Application successful' }
 }
 
@@ -48,6 +65,10 @@ export const acceptApplication = async (clientId: string, applicationId: string)
   const accepted = await updateApplicationStatus(applicationId, 'Accepted')
   await updatePostStatus(application.postId, 'In progress')
 
+  notifyUser(getProvider(), application.workerId, 'application_accepted', {
+    postTitle: application.post.title,
+  })
+
   return { id: accepted.id, status: accepted.status }
 }
 
@@ -58,6 +79,11 @@ export const rejectApplication = async (clientId: string, applicationId: string)
   if (application.status !== 'Pending') throw Object.assign(new Error('Application is not pending'), { status: 400 })
 
   const rejected = await updateApplicationStatus(applicationId, 'Rejected')
+
+  notifyUser(getProvider(), application.workerId, 'application_rejected', {
+    postTitle: application.post.title,
+  })
+
   return { id: rejected.id, status: rejected.status }
 }
 

@@ -11,11 +11,20 @@ import {
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
+import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
+import { notifyUser } from './notification.service.js'
+import type { NotificationProvider } from '../types/notification.types.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { getUserRating } from './user.service.js'
 import { EMERGENCY_DURATION_MS } from '../constants.js'
 import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+
+let _provider: NotificationProvider
+const getProvider = () => {
+  if (!_provider) _provider = createTelegramProvider()
+  return _provider
+}
 
 export const validatePostInput = (input: CreatePostInput) => {
   if (!input.categoryId) {
@@ -121,7 +130,22 @@ export const cancelPost = async (postId: string, userId: string) => {
   }
   await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
   await deletePostImages(postId)
-  return updatePostStatus(postId, 'Cancelled')
+
+  const result = await updatePostStatus(postId, 'Cancelled')
+
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    notifyUser(getProvider(), accepted.workerId, 'post_cancelled', {
+      postTitle: post.title,
+    })
+  }
+
+  return result
+}
+
+const notifyOtherOnComplete = (postTitle: string, accepted: { workerId: string } | null) => {
+  if (!accepted) return
+  notifyUser(getProvider(), accepted.workerId, 'post_completed', { postTitle })
 }
 
 export const finalizePost = async (postId: string, userId: string) => {
@@ -135,7 +159,9 @@ export const finalizePost = async (postId: string, userId: string) => {
   if (accepted) {
     await updateApplicationStatus(accepted.id, 'Completed')
   }
-  return updatePostStatus(postId, 'Completed')
+  const result = await updatePostStatus(postId, 'Completed')
+  notifyOtherOnComplete(post.title, accepted)
+  return result
 }
 
 export const completePost = async (postId: string, userId: string) => {
@@ -149,7 +175,9 @@ export const completePost = async (postId: string, userId: string) => {
   if (accepted) {
     await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
   }
-  return updatePostStatus(postId, ApplicationStatus.Completed)
+  const result = await updatePostStatus(postId, ApplicationStatus.Completed)
+  notifyOtherOnComplete(post.title, accepted)
+  return result
 }
 
 export const reopenPost = async (postId: string, userId: string) => {
