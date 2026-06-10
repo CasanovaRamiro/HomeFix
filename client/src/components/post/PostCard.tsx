@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react'
 import Badge from '../ui/Badge'
 import type { Post } from '../../types/post'
 
@@ -20,11 +21,33 @@ const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' 
   Completed: { label: 'Completada', variant: 'primary' },
 }
 
+function getEmergencyTimeLeft(expiresAt: string | null): string | null {
+  if (!expiresAt) return null
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return null
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  if (hours > 0) return `${hours}h ${mins}m restantes`
+  return `${mins}m restantes`
+}
+
 export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
+  const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
   return (
-    <div className="info-card">
+    <div className="info-card overflow-hidden">
+      {/* Emergency banner */}
+      {post.isEmergency && (
+        <div className="flex items-center gap-2 bg-red-500 px-4 py-2.5 text-white text-sm font-bold -mx-[var(--card-p,1.5rem)] -mt-[var(--card-p,1.5rem)] mb-4">
+          <AlertTriangle size={16} />
+          <span>Publicacion de Emergencia</span>
+          {timeLeft && (
+            <span className="ml-auto text-red-100 text-xs font-medium">{timeLeft}</span>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
         <h2 className="!mb-0">{post.title}</h2>
         <Badge variant={status.variant}>{status.label}</Badge>
@@ -48,17 +71,17 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
 
       <div className="flex justify-between items-center" style={{ marginTop: '0.5rem' }}>
         <div className="info-row" style={{ marginBottom: 0 }}>
-          <strong>Dirección:</strong> {post.address}
+          <strong>Direccion:</strong> {post.address}
         </div>
         {post.status === 'Completed' && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-            <button className="btn-primary" onClick={onViewReview}>Ver reseña</button>
+            <button className="btn-primary" onClick={onViewReview}>Ver resena</button>
           </div>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
             <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
-            <button className="btn-reopen" onClick={onReopen}>Reabrir búsqueda</button>
+            <button className="btn-reopen" onClick={onReopen}>Reabrir busqueda</button>
           </div>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (

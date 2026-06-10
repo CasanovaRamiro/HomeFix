@@ -40,6 +40,7 @@ export interface Worker {
   role: string
   createdAt: string
   categories: WorkerCategory[]
+  emergenciesEnabled: boolean
 }
 
 export interface WorkerReview {
@@ -68,6 +69,8 @@ export interface UserPost {
   worker: { id: string; name: string } | null
   applicantCount: number
   hasReview: boolean
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
 }
 
 export const createReview = (data: ReviewInput) =>
@@ -91,5 +94,8 @@ export interface UpdatePostData {
 
 export const updatePost = (id: string, data: UpdatePostData) =>
   api.patch(`/posts/${id}`, data)
+
+export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
+  api.patch(`/users/${id}/emergencies`, { enabled })
 
 export default api
