@@ -12,8 +12,8 @@ import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
-<<<<<<< HEAD
 import ApplyModal from '../components/worker/ApplyModal'
+import { fetchKycStatus, type KycStatus } from '../services/kyc'
 <<<<<<< HEAD
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 =======
