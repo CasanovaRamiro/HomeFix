@@ -166,7 +166,7 @@ export const handleKycWebhook = async (
 
 async function notifyKycStatus(
   toEmail: string,
-  userName: string,
+  _userName: string,
   status: KycStatus,
 ): Promise<void> {
   const label = KYC_STATUS_LABELS[status]
