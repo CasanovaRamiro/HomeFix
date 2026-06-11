@@ -98,7 +98,7 @@ export const updatePost = (id: string, data: UpdatePostData) =>
 export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
   api.patch(`/users/${id}/emergencies`, { enabled })
 
-export const telegramLink = (): Promise<{ code: string; message: string }> =>
+export const telegramLink = (): Promise<{ code: string; deepLink: string; message: string }> =>
   api.post('/telegram/link').then((r) => r.data)
 
 export const telegramStatus = (): Promise<{ linked: boolean; linkedAt: string | null }> =>

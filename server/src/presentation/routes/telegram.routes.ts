@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User, type Auth0Claims } from '../../domain/services/auth.service.js'
-import { createLinkCode } from '../telegram/bot.js'
+import { createLinkCode, getBotUsername } from '../telegram/bot.js'
 import prisma from '../../lib/prisma.js'
 
 const router = Router()
@@ -13,7 +13,9 @@ router.post('/link', async (req, res, next) => {
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
     const code = await createLinkCode(user.id)
-    res.json({ code, message: `Enviá /link ${code} al bot de HomeFix en Telegram` })
+    const username = await getBotUsername()
+    const deepLink = `https://t.me/${username}?start=${code}`
+    res.json({ code, deepLink, message: `Enviá /link ${code} al bot de HomeFix en Telegram` })
   } catch (err) {
     next(err)
   }
