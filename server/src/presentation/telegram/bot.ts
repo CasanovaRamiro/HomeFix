@@ -105,6 +105,41 @@ export const startBot = () => {
       await processLink(ctx, code)
     })
 
+    bot.command('emergencias', async (ctx) => {
+      const user = await prisma.user.findFirst({
+        where: { telegramChatId: String(ctx.chat?.id) },
+        select: { id: true, role: true, emergenciesEnabled: true },
+      })
+      if (!user) {
+        await ctx.reply('❌ No tenés tu cuenta vinculada. Usá /link para vincular.')
+        return
+      }
+      if (user.role !== 'worker') {
+        await ctx.reply('❌ Solo los trabajadores pueden activar notificaciones de emergencia.')
+        return
+      }
+      const newValue = !user.emergenciesEnabled
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emergenciesEnabled: newValue },
+      })
+      await ctx.reply(
+        newValue
+          ? '✅ Notificaciones de emergencia ACTIVADAS. Vas a recibir alertas de publicaciones urgentes en tu zona.'
+          : '🔕 Notificaciones de emergencia DESACTIVADAS. No vas a recibir alertas de publicaciones urgentes.',
+      )
+    })
+
+    bot.command('help', async (ctx) => {
+      await ctx.reply(
+        '📋 <b>Comandos disponibles</b>\n\n'
+        + '/link &lt;código&gt; — Vincular tu cuenta de HomeFix\n'
+        + '/emergencias — Activar/desactivar notificaciones de emergencia\n'
+        + '/help — Mostrar esta ayuda',
+        { parse_mode: 'HTML' },
+      )
+    })
+
     bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
     bot.launch()
