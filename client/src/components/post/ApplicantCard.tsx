@@ -78,7 +78,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
     <div className="applicant-card">
       <div className="avatar">{initials}</div>
       <div className="info">
-        <Link to={`/worker/${applicant.id}`} className="font-medium hover:text-blue-600 transition-colors">
+        <Link to={`/profile/worker/${applicant.id}`} className="font-medium hover:text-blue-600 transition-colors">
           {applicant.name}
         </Link>
         <div className="meta">{applicant.category} — {applicant.address}</div>
@@ -88,7 +88,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
         </div>
       </div>
       <div className="actions">
-        <button className="btn-outline" onClick={() => navigate(`/worker/${applicant.id}`)}>Ver perfil</button>
+        <button className="btn-outline" onClick={() => navigate(`/profile/worker/${applicant.id}`)}>Ver perfil</button>
         <button className="btn-outline">Chatear</button>
         {renderAction()}
       </div>
