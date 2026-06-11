@@ -44,6 +44,22 @@ const STATUS_COPY: Record<string, StatusCopy> = {
     description:
       'Tu validación está siendo revisada. Te avisaremos por mail cuando se confirme en tu cuenta.',
   },
+  IN_REVIEW: {
+    icon: Clock,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    title: 'Verificación en revisión',
+    description:
+      'Tu validación está siendo revisada. Te avisaremos por mail cuando se confirme en tu cuenta.',
+  },
+  NOT_STARTED: {
+    icon: Clock,
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
+    title: 'Verificación pendiente',
+    description:
+      'Aún no iniciaste la verificación de identidad. Hacelo cuando quieras desde el botón de abajo.',
+  },
   Declined: {
     icon: XCircle,
     iconBg: 'bg-red-100',
