@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Shield,
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { startKycVerification, confirmKycSession, fetchKycStatus } from '../services/kyc'
 import { useAuth } from '../hooks/useAuth'
+import DiditVerificationModal from '../components/DiditVerificationModal'
 
 type ViewState = 'idle' | 'loading' | 'error'
 
@@ -164,119 +165,42 @@ function StatusScreen({
 }
 
 export default function KycVerify() {
-  const [searchParams] = useSearchParams()
-  const rawStatus = searchParams.get('status')
-  const rawSessionId = searchParams.get('verificationSessionId')
-  const showResult = Boolean(rawStatus || rawSessionId)
-
   const [state, setState] = useState<ViewState>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
-  const [confirmedStatus, setConfirmedStatus] = useState<string | null>(null)
-  const [confirmError, setConfirmError] = useState<string | null>(null)
   const [currentStatus, setCurrentStatus] = useState<string | null>(null)
-  const [checkingStatus, setCheckingStatus] = useState(!showResult)
-  const startedRef = useRef(false)
+  const [checkingStatus, setCheckingStatus] = useState(true)
+  const [sessionUrl, setSessionUrl] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
-    if (showResult || !user?.email) {
-      Promise.resolve().then(() => setCheckingStatus(false))
+    if (!user?.email) {
+      queueMicrotask(() => setCheckingStatus(false))
       return
     }
 
+    let cancelled = false
     fetchKycStatus()
       .then((res) => {
-        setCurrentStatus(res.kycStatus)
+        if (!cancelled) setCurrentStatus(res.kycStatus)
       })
       .catch(() => {
-        setCurrentStatus(null)
+        if (!cancelled) setCurrentStatus(null)
       })
-      .finally(() => setCheckingStatus(false))
+      .finally(() => {
+        if (!cancelled) setCheckingStatus(false)
+      })
+    return () => { cancelled = true }
   }, [])
-
-  useEffect(() => {
-    if (showResult && rawSessionId && !startedRef.current) {
-      startedRef.current = true
-      const email = user?.email
-      if (!email) {
-        Promise.resolve().then(() => setConfirmError('No se pudo identificar tu usuario'))
-      } else {
-        confirmKycSession(rawSessionId, email)
-          .then((res) => setConfirmedStatus(res.status))
-          .catch((err) => {
-            const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-            setConfirmError(msg ?? 'Error al confirmar la verificación')
-          })
-      }
-    }
-  }, [])
-
-  const isConfirming = showResult && !confirmedStatus && !confirmError
-  const displayStatus = confirmedStatus ?? rawStatus
-
-  if (checkingStatus || isConfirming) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
-        <div className="max-w-md w-full space-y-4 text-center">
-          <Loader2 className="mx-auto w-10 h-10 animate-spin text-slate-400" />
-          <p className="text-slate-500">{isConfirming ? 'Confirmando tu verificación…' : 'Cargando…'}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (showResult && (confirmedStatus || confirmError)) {
-    const retryConfirm = () => {
-      if (!rawSessionId || !user?.email) return
-      setConfirmError(null)
-      setConfirmedStatus(null)
-      startedRef.current = false
-      confirmKycSession(rawSessionId, user.email)
-        .then((res) => setConfirmedStatus(res.status))
-        .catch((err) => {
-          const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-          setConfirmError(msg ?? 'Error al confirmar la verificación')
-        })
-    }
-
-    return (
-      <StatusScreen
-        displayStatus={displayStatus ?? ''}
-        onRetry={confirmError ? retryConfirm : undefined}
-        retryLabel="Reintentar confirmación"
-      />
-    )
-  }
-
-  if (currentStatus && currentStatus !== 'NOT_STARTED') {
-    const canRetry = currentStatus === 'DECLINED' || currentStatus === 'EXPIRED'
-    const handleRetryDirect = canRetry ? async () => {
-      setCurrentStatus(null)
-      setState('loading')
-      try {
-        const { sessionUrl } = await startKycVerification()
-        window.location.href = sessionUrl
-      } catch (e) {
-        const err = e as { response?: { data?: { error?: string } } }
-        setErrorMessage(err.response?.data?.error ?? 'No se pudo iniciar la verificación')
-        setState('error')
-      }
-    } : undefined
-    return (
-      <StatusScreen
-        displayStatus={currentStatus}
-        onRetry={handleRetryDirect}
-        retryLabel="Iniciar nueva verificación"
-      />
-    )
-  }
 
   const handleStart = async () => {
     setState('loading')
     setErrorMessage('')
     try {
-      const { sessionUrl } = await startKycVerification()
-      window.location.href = sessionUrl
+      const { sessionUrl: url } = await startKycVerification()
+      setSessionUrl(url)
+      setIsModalOpen(true)
+      setState('idle')
     } catch (e) {
       const err = e as { response?: { data?: { error?: string } } }
       setErrorMessage(err.response?.data?.error ?? 'No se pudo iniciar la verificación')
@@ -284,64 +208,143 @@ export default function KycVerify() {
     }
   }
 
+  const handleRetry = async () => {
+    setCurrentStatus(null)
+    await handleStart()
+  }
+
+  const handleModalComplete = async (sessionId: string, _status: string) => {
+    setIsModalOpen(false)
+    setSessionUrl(null)
+    const email = user?.email
+    if (!email) {
+      setErrorMessage('No se pudo identificar tu usuario')
+      setState('error')
+      return
+    }
+    try {
+      const res = await confirmKycSession(sessionId, email)
+      setCurrentStatus(res.status)
+    } catch (e) {
+      const err = e as { response?: { data?: { error?: string } } }
+      setErrorMessage(err.response?.data?.error ?? 'Error al confirmar la verificación')
+      setState('error')
+    }
+  }
+
+  const handleModalCancelled = () => {
+    setIsModalOpen(false)
+    setSessionUrl(null)
+  }
+
+  const handleModalFailed = (error: { message: string }) => {
+    setIsModalOpen(false)
+    setSessionUrl(null)
+    setErrorMessage(error.message)
+    setState('error')
+  }
+
   const isLoading = state === 'loading'
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
-      <div className="max-w-md w-full space-y-4">
-        <Link
-          to="/worker"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Volver a mi panel
-        </Link>
-
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-          <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900/5 flex items-center justify-center mb-5">
-              <Shield className="w-8 h-8 text-slate-900" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Verificá tu identidad</h1>
-            <p className="mt-2 text-sm text-slate-500 max-w-sm">
-              Para empezar a recibir trabajos necesitamos validar tu identidad con tu documento y una selfie.
-            </p>
-          </div>
-
-          <ul className="mt-6 space-y-3">
-            <Feature icon={FileCheck} label="Vas a subir tu documento (DNI, pasaporte o licencia)" />
-            <Feature icon={Shield} label="Te vamos a pedir una selfie para confirmar que sos vos" />
-            <Feature icon={CheckCircle2} label="El proceso completo tarda menos de 2 minutos" />
-          </ul>
-
-          {state === 'error' && (
-            <div className="mt-6 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={isLoading}
-            className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-75"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Iniciando verificación…
-              </>
-            ) : (
-              'Iniciar verificación'
-            )}
-          </button>
-
-          <p className="mt-4 text-xs text-center text-slate-400">
-            Vas a ser redirigido a Didit, nuestro proveedor de verificación. Al terminar vas a volver a HomeFix.
-          </p>
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
+        <div className="max-w-md w-full space-y-4 text-center">
+          <Loader2 className="mx-auto w-10 h-10 animate-spin text-slate-400" />
+          <p className="text-slate-500">Cargando…</p>
         </div>
       </div>
-    </div>
+    )
+  }
+
+  if (currentStatus && currentStatus !== 'NOT_STARTED') {
+    const canRetry = currentStatus === 'DECLINED' || currentStatus === 'EXPIRED'
+    return (
+      <>
+        <StatusScreen
+          displayStatus={currentStatus}
+          onRetry={canRetry ? handleRetry : undefined}
+          retryLabel="Iniciar nueva verificación"
+        />
+        <DiditVerificationModal
+          sessionUrl={sessionUrl ?? ''}
+          isOpen={isModalOpen}
+          onClose={() => { setIsModalOpen(false); setSessionUrl(null) }}
+          onComplete={handleModalComplete}
+          onCancelled={handleModalCancelled}
+          onFailed={handleModalFailed}
+        />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
+        <div className="max-w-md w-full space-y-4">
+          <Link
+            to="/worker"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Volver a mi panel
+          </Link>
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-slate-900/5 flex items-center justify-center mb-5">
+                <Shield className="w-8 h-8 text-slate-900" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900">Verificá tu identidad</h1>
+              <p className="mt-2 text-sm text-slate-500 max-w-sm">
+                Para empezar a recibir trabajos necesitamos validar tu identidad con tu documento y una selfie.
+              </p>
+            </div>
+
+            <ul className="mt-6 space-y-3">
+              <Feature icon={FileCheck} label="Vas a subir tu documento (DNI, pasaporte o licencia)" />
+              <Feature icon={Shield} label="Te vamos a pedir una selfie para confirmar que sos vos" />
+              <Feature icon={CheckCircle2} label="El proceso completo tarda menos de 2 minutos" />
+            </ul>
+
+            {state === 'error' && (
+              <div className="mt-6 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={isLoading}
+              className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-75"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Iniciando verificación…
+                </>
+              ) : (
+                'Iniciar verificación'
+              )}
+            </button>
+
+            <p className="mt-4 text-xs text-center text-slate-400">
+              La verificación se realiza dentro de la app a través de Didit, nuestro proveedor de identidad.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <DiditVerificationModal
+        sessionUrl={sessionUrl ?? ''}
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSessionUrl(null) }}
+        onComplete={handleModalComplete}
+        onCancelled={handleModalCancelled}
+        onFailed={handleModalFailed}
+      />
+    </>
   )
 }
 
