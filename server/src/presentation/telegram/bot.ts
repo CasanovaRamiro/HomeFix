@@ -57,6 +57,25 @@ export const processLink = async (ctx: Context, code: string) => {
   await ctx.reply('✅ ¡Cuenta vinculada con éxito! A partir de ahora vas a recibir notificaciones de HomeFix acá.')
 }
 
+export const handleTextMessage = async (ctx: Context): Promise<void> => {
+  const user = await prisma.user.findFirst({
+    where: { telegramChatId: String(ctx.chat?.id) },
+    select: { id: true, name: true },
+  })
+
+  if (user) {
+    await ctx.reply(`¡Hola ${user.name}, recordá que con HomeFix podés solucionar cualquier inconveniente que tengas en tu casa!`)
+  } else {
+    await ctx.reply(
+      '👋 ¡Hola! No tengo tu cuenta vinculada todavía.\n\n'
+      + 'Para recibir notificaciones de HomeFix:\n'
+      + '1. Iniciá sesión en homefix.vercel.app\n'
+      + '2. Andá a tu perfil → "Vincular Telegram"\n'
+      + '3. Generá un código y enviá /link <código>',
+    )
+  }
+}
+
 export const startBot = () => {
   try {
     const bot = getBot()
@@ -85,6 +104,8 @@ export const startBot = () => {
       }
       await processLink(ctx, code)
     })
+
+    bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
     bot.launch()
     console.log('Telegram bot started (polling)')

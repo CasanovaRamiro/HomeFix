@@ -14,7 +14,7 @@ router.post('/link', async (req, res, next) => {
     const user = await syncAuth0User(claims)
     const code = await createLinkCode(user.id)
     const username = await getBotUsername()
-    const deepLink = `https://t.me/${username}?start=${code}`
+    const deepLink = `https://web.telegram.org/k/#?tgaddr=tg%3A%2F%2Fresolve%3Fdomain%3D${username}%26start%3D${code}`
     res.json({ code, deepLink, message: `Enviá /link ${code} al bot de HomeFix en Telegram` })
   } catch (err) {
     next(err)

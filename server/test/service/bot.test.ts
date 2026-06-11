@@ -9,6 +9,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
       update: vi.fn(),
     },
     user: {
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
   },
@@ -23,7 +24,7 @@ vi.mock('../../src/infrastructure/providers/telegram.provider.js', () => ({
 }))
 
 import prisma from '../../src/lib/prisma.js'
-import { createLinkCode, processLink } from '../../src/presentation/telegram/bot.js'
+import { createLinkCode, processLink, handleTextMessage } from '../../src/presentation/telegram/bot.js'
 
 interface FakeCtx {
   reply: ReturnType<typeof vi.fn>
@@ -189,5 +190,37 @@ describe('processLink', () => {
         telegramLinkedAt: expect.any(Date),
       },
     })
+  })
+})
+
+describe('handleTextMessage', () => {
+  it('saluda al usuario vinculado con su nombre', async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
+      id: 'user-1',
+      name: 'Martín',
+    } as never)
+
+    const ctx = makeCtx()
+    await handleTextMessage(ctx as never)
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '¡Hola Martín, recordá que con HomeFix podés solucionar cualquier inconveniente que tengas en tu casa!',
+    )
+  })
+
+  it('responde con instrucciones si el usuario no está vinculado', async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null)
+
+    const ctx = makeCtx()
+    await handleTextMessage(ctx as never)
+
+    expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('No tengo tu cuenta vinculada todavía'))
+  })
+
+  it('maneja chat null sin errores', async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null)
+
+    const ctx = makeCtx({ chat: null })
+    await expect(handleTextMessage(ctx as never)).resolves.not.toThrow()
   })
 })

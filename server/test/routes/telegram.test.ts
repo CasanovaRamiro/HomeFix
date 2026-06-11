@@ -52,7 +52,7 @@ describe('POST /telegram/link', () => {
     expect(res.body).toHaveProperty('deepLink')
     expect(res.body).toHaveProperty('message')
     expect(res.body.code).toMatch(/^[A-Z0-9]{8}$/)
-    expect(res.body.deepLink).toMatch(/^https:\/\/t\.me\//)
+    expect(res.body.deepLink).toMatch(/^https:\/\/web\.telegram\.org\/k\/#\?tgaddr=/)
   })
 
   it('devuelve 401 sin token', async () => {
