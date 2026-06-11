@@ -6,6 +6,7 @@ import { useCreatePost } from '../hooks/useCreatePost'
 import { useDiagnosisChat } from '../hooks/useDiagnosisChat'
 import SubmitButton from '../components/ui/SubmitButton'
 import FileUpload from '../components/ui/FileUpload'
+import AddressAutocomplete from '../components/ui/AddressAutocomplete'
 
 export default function AiDiagnosis() {
   const navigate = useNavigate()
@@ -357,16 +358,17 @@ export default function AiDiagnosis() {
 
                   <div style={{ marginBottom: '24px' }}>
                     <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Dirección</label>
-                    <input
-                      type="text"
+                    <AddressAutocomplete
                       value={form.address}
-                      onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
-                      placeholder="Ingresá tu dirección"
-                      required
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, background: theme.background, color: theme.primaryDark, transition: 'all 0.3s', boxSizing: 'border-box' as const }}
+                      onChange={(address, lat, lng) => setForm(p => ({ ...p, address, latitude: lat, longitude: lng }))}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
                     />
+                    {form.latitude && form.longitude && (
+                      <p style={{ margin: '6px 0 0', fontSize: '12px', color: theme.accent }}>
+                        ✓ Ubicación confirmada
+                      </p>
+                    )}
                   </div>
 
                   <div style={{ marginBottom: '24px' }}>

@@ -19,6 +19,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   createdAt: post.createdAt,
   startDate: post.startDate,
   photo: post.images[0]?.url ?? '',
+  images: post.images ?? [],
   clientName: post.user?.name ?? 'Cliente',
   clientSurname: post.user?.surname ?? '',
   clientRating: post.clientRating ?? 0,

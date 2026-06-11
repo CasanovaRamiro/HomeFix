@@ -42,6 +42,8 @@ export interface CreatePostInput {
   startDate?: Date | string | null
   endDate?: Date | string | null
   address: string
+  latitude?: number | null
+  longitude?: number | null
   categoryId: string
   images?: { url: string }[]
   isEmergency?: boolean

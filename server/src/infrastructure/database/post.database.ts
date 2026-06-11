@@ -54,6 +54,8 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
       startDate,
       endDate,
       address: data.address,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       isEmergency: data.isEmergency ?? false,
       emergencyExpiresAt: data.emergencyExpiresAt ?? null,
       categories: {
