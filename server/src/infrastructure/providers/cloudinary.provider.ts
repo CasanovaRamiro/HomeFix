@@ -10,7 +10,7 @@ cloudinary.config({
 export const uploadImage = async (file: { buffer: Buffer; mimetype: string; originalname: string }): Promise<string> => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'ofix', resource_type: 'image' },
+      { folder: 'ofix', resource_type: 'auto' },
       (err, result) => {
         if (err || !result) reject(err instanceof Error ? err : new Error('Upload failed'))
         else resolve(result.secure_url)

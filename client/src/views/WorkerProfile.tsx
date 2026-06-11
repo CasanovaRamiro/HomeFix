@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
 import { useCategories } from '../hooks/useCategories'
@@ -6,7 +7,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
 import {
   ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
-  Briefcase, Star, CheckCircle, Timer, Edit3,
+  Briefcase, Star, CheckCircle, Timer, Edit3, Plus,
 } from 'lucide-react'
 
 export default function WorkerProfile() {
@@ -22,6 +23,7 @@ export default function WorkerProfile() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -33,6 +35,17 @@ export default function WorkerProfile() {
   })
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [formAvailability, setFormAvailability] = useState<string[]>([])
+  const [certFiles, setCertFiles] = useState<File[]>([])
+  const [certPreviews, setCertPreviews] = useState<string[]>([])
+  const [certTitle, setCertTitle] = useState('')
+  const [certIssuer, setCertIssuer] = useState('')
+  const [certSaving, setCertSaving] = useState(false)
+  const [editingCert, setEditingCert] = useState<string | null>(null)
+  const [editCertTitle, setEditCertTitle] = useState('')
+  const [editCertIssuer, setEditCertIssuer] = useState('')
+  const [galFiles, setGalFiles] = useState<File[]>([])
+  const [galPreviews, setGalPreviews] = useState<string[]>([])
+  const [galSaving, setGalSaving] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -62,6 +75,114 @@ export default function WorkerProfile() {
     setFormAvailability((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     )
+  }
+
+  const handleCertFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files?.length) {
+      const newFiles = Array.from(files)
+      setCertFiles((prev) => [...prev, ...newFiles])
+      setCertPreviews((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))])
+    }
+    e.target.value = ''
+  }
+
+  const getCertThumbnail = (url: string) => {
+    if (url.endsWith('.pdf')) {
+      return url.replace('/upload/', '/upload/w_120,h_120,c_fill/')
+    }
+    return url
+  }
+
+  const removeCertFile = (index: number) => {
+    URL.revokeObjectURL(certPreviews[index])
+    setCertFiles((prev) => prev.filter((_, i) => i !== index))
+    setCertPreviews((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleGalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files?.length) {
+      const newFiles = Array.from(files)
+      setGalFiles((prev) => [...prev, ...newFiles])
+      setGalPreviews((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))])
+    }
+    e.target.value = ''
+  }
+
+  const removeGalFile = (index: number) => {
+    URL.revokeObjectURL(galPreviews[index])
+    setGalFiles((prev) => prev.filter((_, i) => i !== index))
+    setGalPreviews((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const uploadCert = async () => {
+    if (!certFiles.length || !certTitle.trim() || !worker) return
+    setCertSaving(true)
+    try {
+      const urls = await uploadImages(certFiles)
+      const newCerts = urls.map((url) => ({ id: crypto.randomUUID(), title: certTitle.trim(), issuer: certIssuer.trim() || undefined, imageUrl: url }))
+      const updated = await updateWorkerProfile(worker.id, { certificates: [...worker.certificates, ...newCerts] })
+      setWorker(updated)
+      setCertFiles([])
+      setCertPreviews([])
+      setCertTitle('')
+      setCertIssuer('')
+    } catch { setError('Error al subir certificados') }
+    finally { setCertSaving(false) }
+  }
+
+  const startEditCert = (cert: { id: string; title: string; issuer: string | null }) => {
+    setEditingCert(cert.id)
+    setEditCertTitle(cert.title)
+    setEditCertIssuer(cert.issuer ?? '')
+  }
+
+  const saveEditCert = async () => {
+    if (!worker || !editingCert || !editCertTitle.trim()) return
+    try {
+      const updated = await updateWorkerProfile(worker.id, {
+        certificates: worker.certificates.map((c) =>
+          c.id === editingCert
+            ? { ...c, title: editCertTitle.trim(), issuer: editCertIssuer.trim() || undefined }
+            : c
+        ),
+      })
+      setWorker(updated)
+      setEditingCert(null)
+    } catch { setError('Error al editar certificado') }
+  }
+
+  const cancelEditCert = () => setEditingCert(null)
+
+  const removeCert = async (certId: string) => {
+    if (!worker) return
+    try {
+      const updated = await updateWorkerProfile(worker.id, { certificates: worker.certificates.filter((c) => c.id !== certId) })
+      setWorker(updated)
+    } catch { setError('Error al eliminar certificado') }
+  }
+
+  const uploadGal = async () => {
+    if (!galFiles.length || !worker) return
+    setGalSaving(true)
+    try {
+      const urls = await uploadImages(galFiles)
+      const newImages = urls.map((url) => ({ id: crypto.randomUUID(), imageUrl: url, caption: undefined as string | undefined }))
+      const updated = await updateWorkerProfile(worker.id, { gallery: [...worker.gallery, ...newImages] })
+      setWorker(updated)
+      setGalFiles([])
+      setGalPreviews([])
+    } catch { setError('Error al subir imágenes') }
+    finally { setGalSaving(false) }
+  }
+
+  const removeGal = async (imageId: string) => {
+    if (!worker) return
+    try {
+      const updated = await updateWorkerProfile(worker.id, { gallery: worker.gallery.filter((g) => g.id !== imageId) })
+      setWorker(updated)
+    } catch { setError('Error al eliminar imagen') }
   }
 
   const toggleCategory = (catId: string) => {
@@ -436,6 +557,61 @@ export default function WorkerProfile() {
                 </div>
               </div>
 
+            {/* Gallery */}
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Galería de Trabajos</h3>
+              {worker.gallery.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+                  {worker.gallery.map((img) => (
+                    <div key={img.id} style={{ position: 'relative' }}>
+                      <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      {img.caption && <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{img.caption}</p>}
+                      {isEditing && (
+                        <button onClick={() => removeGal(img.id)} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: '#fff', fontSize: 11, fontWeight: 600 }}>
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isEditing && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <label style={{
+                      width: 80, height: 80, borderRadius: 10, border: '2px dashed #D1D5DB',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', background: '#F9FAFB',
+                    }}>
+                      <Plus size={24} color="#9CA3AF" />
+                      <input type="file" accept="image/*" multiple onChange={handleGalFiles} style={{ display: 'none' }} />
+                    </label>
+                    {galPreviews.map((preview, i) => (
+                      <div key={preview} style={{ position: 'relative', width: 80, height: 80 }}>
+                        <img src={preview} alt="" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover' }} />
+                        <button onClick={() => removeGalFile(i)} style={{
+                          position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%',
+                          background: '#EF4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                        }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                  {galFiles.length > 0 && (
+                    <button onClick={uploadGal} disabled={galSaving} style={{
+                      alignSelf: 'flex-start', padding: '8px 20px', background: '#10B981', color: '#fff',
+                      border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: galSaving ? 'not-allowed' : 'pointer', opacity: galSaving ? 0.6 : 1,
+                    }}>
+                      {galSaving ? 'Subiendo...' : `Subir ${galFiles.length} imagen${galFiles.length > 1 ? 'es' : ''}`}
+                    </button>
+                  )}
+                </div>
+              )}
+              {!isEditing && worker.gallery.length === 0 && (
+                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '12px 0' }}>Sin imágenes</p>
+              )}
+            </div>
+
             {/* Reviews */}
             {!isEditing && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
@@ -498,6 +674,92 @@ export default function WorkerProfile() {
               </div>
             </div>
 
+            {/* Certificates */}
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Certificaciones</h3>
+              {worker.certificates.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                  {worker.certificates.map((c) => {
+                    const isPdf = c.imageUrl?.endsWith('.pdf')
+                    const isEditingCert = editingCert === c.id
+                    return (
+                      <div key={c.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
+                        <img src={getCertThumbnail(c.imageUrl)} alt={c.title} onClick={() => !isPdf && setZoomedImage(c.imageUrl)} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0, cursor: isPdf ? 'default' : 'pointer' }} />
+                        <div style={{ flex: 1 }}>
+                          {isEditing && isEditingCert ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <input value={editCertTitle} onChange={(e) => setEditCertTitle(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13 }} />
+                              <input value={editCertIssuer} onChange={(e) => setEditCertIssuer(e.target.value)} placeholder="Institución" style={{ padding: '6px 10px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13 }} />
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button onClick={saveEditCert} disabled={!editCertTitle.trim()} style={{ padding: '4px 12px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Guardar</button>
+                                <button onClick={cancelEditCert} style={{ padding: '4px 12px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p style={{ fontWeight: 600, color: '#111827', fontSize: 14, margin: 0 }}>{c.title}</p>
+                              {c.issuer && <p style={{ color: '#6B7280', fontSize: 13, margin: '2px 0 0' }}>{c.issuer}</p>}
+                            </>
+                          )}
+                        </div>
+                        {isEditing && !isEditingCert && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button onClick={() => startEditCert(c)} style={{ background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#2563EB', fontSize: 12, fontWeight: 600 }}>
+                              Editar
+                            </button>
+                            <button onClick={() => removeCert(c.id)} style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#DC2626', fontSize: 12, fontWeight: 600 }}>
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {isEditing && editingCert === null && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <label style={{
+                      width: 80, height: 80, borderRadius: 10, border: '2px dashed #D1D5DB',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', background: '#F9FAFB',
+                    }}>
+                      <Plus size={24} color="#9CA3AF" />
+                      <input type="file" accept="image/*,application/pdf" multiple onChange={handleCertFiles} style={{ display: 'none' }} />
+                    </label>
+                    {certPreviews.map((preview, i) => {
+                      const isPdf = certFiles[i]?.type === 'application/pdf'
+                      return (
+                        <div key={preview} style={{ position: 'relative', width: 80, height: 80 }}>
+                          {isPdf ? (
+                            <div style={{ width: '100%', height: '100%', borderRadius: 10, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#DC2626' }}>PDF</div>
+                          ) : (
+                            <img src={preview} alt="" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover' }} />
+                          )}
+                          <button onClick={() => removeCertFile(i)} style={{
+                            position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%',
+                            background: '#EF4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                          }}>×</button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <input type="text" value={certTitle} onChange={(e) => setCertTitle(e.target.value)} placeholder="Título del certificado" style={{ padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13 }} />
+                  <input type="text" value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} placeholder="Institución (opcional)" style={{ padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13 }} />
+                  <button onClick={uploadCert} disabled={!certFiles.length || !certTitle.trim() || certSaving} style={{ alignSelf: 'flex-start', padding: '8px 20px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: certSaving ? 'not-allowed' : 'pointer', opacity: certSaving ? 0.6 : 1 }}>
+                    {certSaving ? 'Subiendo...' : `Subir ${certFiles.length} certificado${certFiles.length > 1 ? 's' : ''}`}
+                  </button>
+                </div>
+              )}
+              {!isEditing && worker.certificates.length === 0 && (
+                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '12px 0' }}>Sin certificaciones</p>
+              )}
+            </div>
+
+
+
             {/* Preview card (only for owner) */}
             {isOwner && !isEditing && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
@@ -518,6 +780,7 @@ export default function WorkerProfile() {
           </div>
         </div>
       </div>
+      {zoomedImage && <ImageViewer src={zoomedImage} alt="Galería" onClose={() => setZoomedImage(null)} />}
     </div>
   )
 }

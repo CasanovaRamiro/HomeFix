@@ -20,6 +20,8 @@ const mockWorker = {
   availability: [] as string[],
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [{ id: 'uuid-category-1', name: 'Plumbing' }],
+  certificates: [],
+  gallery: [],
 }
 
 beforeEach(() => vi.clearAllMocks())

@@ -13,6 +13,8 @@ const workerFields = {
   role: true,
   photo: true,
   availability: true,
+  certificates: true,
+  gallery: true,
   createdAt: true,
   categories: {
     select: {
@@ -30,12 +32,16 @@ export const findWorkerById = async (id: string): Promise<DomainWorker | null> =
     where: { id, role: UserRole.Worker },
     select: workerFields,
   })
-  return raw ? toDomainWorker(raw) : null
+  if (!raw) return null
+  return toDomainWorker(raw)
 }
 
 export const updateWorker = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
-  const { categoryIds, availability, ...data } = input
-  const serialized = availability !== undefined ? { availability: JSON.stringify(availability) } : {}
+  const { categoryIds, availability, certificates, gallery, ...data } = input
+  const serialized: Record<string, string> = {}
+  if (availability !== undefined) serialized.availability = JSON.stringify(availability)
+  if (certificates !== undefined) serialized.certificates = JSON.stringify(certificates)
+  if (gallery !== undefined) serialized.gallery = JSON.stringify(gallery)
   const raw = await prisma.user.update({
     where: { id },
     data: {
@@ -60,5 +66,5 @@ export const findAllWorkers = async (): Promise<DomainWorker[]> => {
     where: { role: UserRole.Worker },
     select: workerFields,
   })
-  return raw.map(toDomainWorker)
+  return raw.map((w) => toDomainWorker(w))
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -12,6 +13,7 @@ export default function PublicWorkerProfile() {
   const [worker, setWorker] = useState<Worker | null>(null)
   const [reviews, setReviews] = useState<WorkerReview[]>([])
   const [loading, setLoading] = useState(true)
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -174,7 +176,7 @@ export default function PublicWorkerProfile() {
                 </div>
               )}
             </div>
-          </div>
+        </div>
         )}
 
         {/* Desktop layout */}
@@ -247,6 +249,21 @@ export default function PublicWorkerProfile() {
               </div>
             )}
 
+            {/* Gallery */}
+            {worker.gallery?.length > 0 && (
+              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Galería de Trabajos</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {worker.gallery.map((img) => (
+                    <div key={img.id}>
+                      <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      {img.caption && <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{img.caption}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Reviews */}
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>
@@ -278,9 +295,9 @@ export default function PublicWorkerProfile() {
           </div>
 
           {/* Right sidebar */}
-          {!isMobile && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Photo */}
+              {/* Photo - only on desktop */}
+              {!isMobile && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
                 {worker.photo ? (
                   <img src={worker.photo} alt={worker.name} style={{ width: '100%', display: 'block' }} />
@@ -293,6 +310,7 @@ export default function PublicWorkerProfile() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Stats */}
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
@@ -311,10 +329,32 @@ export default function PublicWorkerProfile() {
                   ))}
                 </div>
               </div>
+
+              {/* Certificates */}
+              {worker.certificates?.length > 0 && (
+                <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Certificaciones</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {worker.certificates.map((c) => {
+                      const isPdf = c.imageUrl?.endsWith('.pdf')
+                      const thumb = isPdf ? c.imageUrl.replace('/upload/', '/upload/w_120,h_120,c_fill/') : c.imageUrl
+                      return (
+                        <div key={c.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
+                          <img src={thumb} alt={c.title} onClick={() => !isPdf && setZoomedImage(c.imageUrl)} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0, cursor: isPdf ? 'default' : 'pointer' }} />
+                          <div>
+                            <p style={{ fontWeight: 600, color: '#111827', fontSize: 14, margin: 0 }}>{c.title}</p>
+                            {c.issuer && <p style={{ color: '#6B7280', fontSize: 13, margin: '2px 0 0' }}>{c.issuer}</p>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
         </div>
       </div>
+      {zoomedImage && <ImageViewer src={zoomedImage} alt="Galería" onClose={() => setZoomedImage(null)} />}
     </div>
   )
 }

@@ -9,6 +9,8 @@ export interface DomainWorker {
   availability: string[]
   createdAt: Date
   categories: { id: string; name: string }[]
+  certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
+  gallery: { id: string; imageUrl: string; caption: string | null }[]
 }
 
 export interface UpdateWorkerInput {
@@ -18,6 +20,8 @@ export interface UpdateWorkerInput {
   photo?: string | null
   categoryIds?: string[]
   availability?: string[]
+  certificates?: { id: string; title: string; issuer?: string; imageUrl: string }[]
+  gallery?: { id: string; imageUrl: string; caption?: string }[]
 }
 
 export interface DomainWorkerReview {

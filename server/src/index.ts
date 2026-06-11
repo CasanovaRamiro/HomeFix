@@ -7,9 +7,10 @@ import cors from 'cors'
 import morgan from 'morgan'
 import authRoutes from './presentation/routes/auth.routes.js'
 import userRoutes from './presentation/routes/user.routes.js'
-import workerRoutes from './presentation/routes/worker.routes.js'
-import { errorHandler } from './presentation/middleware/error.middleware.js'
 import postRoutes from './presentation/routes/post.routes.js'
+import workerRoutes from './presentation/routes/worker.routes.js'
+
+import { errorHandler } from './presentation/middleware/error.middleware.js'
 import aiRoutes from './presentation/routes/ai.routes.js'
 import categoryRoutes from './presentation/routes/category.routes.js'
 import applicationRoutes from './presentation/routes/application.routes.js'
@@ -36,6 +37,7 @@ app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/upload', jwtCheck, uploadRoutes)
+
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {

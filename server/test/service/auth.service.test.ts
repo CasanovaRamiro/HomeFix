@@ -34,6 +34,8 @@ const mockUser = {
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',
+  certificates: null as string | null,
+  gallery: null as string | null,
 }
 
 describe('auth.service - syncAuth0User', () => {
