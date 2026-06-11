@@ -1,6 +1,8 @@
 export interface DomainPost {
   id: string
   userId: string
+  type?: string
+  parentPostId?: string
   title: string
   description: string
   startDate: Date
@@ -58,4 +60,19 @@ export interface UpdatePostInput {
   categoryId: string
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+}
+
+export interface CreateSubcontractCommand {
+  userId: string
+  parentPostId?: string
+  title?: string
+  description?: string
+  startDate?: Date
+  endDate?: Date
+  address?: string
+  positions: {
+    categoryId: string
+    quantity: number
+    roleDescription: string
+  }[]
 }
