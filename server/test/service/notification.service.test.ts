@@ -15,9 +15,10 @@ vi.mock('../../src/infrastructure/database/user.database.js', () => ({
 
 import * as userData from '../../src/infrastructure/database/user.database.js'
 
+const mockSend = vi.fn<() => Promise<boolean>>()
 const mockProvider = {
   name: 'telegram',
-  send: vi.fn<(...args: any[]) => Promise<boolean>>(),
+  send: mockSend,
 }
 
 const mockUser = {
@@ -35,14 +36,14 @@ describe('notifyUser', () => {
   it('no llama a send si el usuario no tiene telegramChatId', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue({ ...mockUser, telegramChatId: null })
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
-    expect(mockProvider.send).not.toHaveBeenCalled()
+    expect(mockSend).not.toHaveBeenCalled()
   })
 
   it('usa el template application_new', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo caño' })
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Nuevo postulante'),
       parseMode: 'HTML',
     })
@@ -50,9 +51,9 @@ describe('notifyUser', () => {
 
   it('usa el template application_accepted', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
     await notifyUser(mockProvider, 'user-1', 'application_accepted', { postTitle: 'Arreglo caño' })
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Postulación aceptada'),
       parseMode: 'HTML',
     })
@@ -60,9 +61,9 @@ describe('notifyUser', () => {
 
   it('usa el template application_rejected', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
     await notifyUser(mockProvider, 'user-1', 'application_rejected', { postTitle: 'Arreglo caño' })
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Postulación rechazada'),
       parseMode: 'HTML',
     })
@@ -70,9 +71,9 @@ describe('notifyUser', () => {
 
   it('usa el template post_completed', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
     await notifyUser(mockProvider, 'user-1', 'post_completed', { postTitle: 'Arreglo caño' })
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Trabajo finalizado'),
       parseMode: 'HTML',
     })
@@ -80,9 +81,9 @@ describe('notifyUser', () => {
 
   it('usa el template post_cancelled', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
     await notifyUser(mockProvider, 'user-1', 'post_cancelled', { postTitle: 'Arreglo caño' })
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Trabajo cancelado'),
       parseMode: 'HTML',
     })
@@ -90,7 +91,7 @@ describe('notifyUser', () => {
 
   it('limpia telegramChatId si el envío falla', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(false)
+    mockSend.mockResolvedValue(false)
 
     const prisma = (await import('../../src/lib/prisma.js')).default
     const updateSpy = vi.mocked(prisma.user.update)
@@ -117,11 +118,11 @@ describe('notifyUser', () => {
 
   it('incluye los datos del template en el texto', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockProvider.send.mockResolvedValue(true)
+    mockSend.mockResolvedValue(true)
 
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'María García', postTitle: 'Cocina' })
 
-    expect(mockProvider.send).toHaveBeenCalledWith('123456789', {
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('María García'),
       parseMode: 'HTML',
     })

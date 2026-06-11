@@ -3,25 +3,13 @@ import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
 
-const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
+const mockPayload = vi.hoisted(() => {
   const payload: Record<string, string | undefined> = {
     sub: 'auth0|test123',
     email: 'test@test.com',
     name: 'Test User',
   }
-  return {
-    mockPayload: payload,
-    setMockPayload: (p: Record<string, string | undefined>) => {
-      Object.keys(payload).forEach(k => delete payload[k])
-      Object.assign(payload, p)
-    },
-    resetMockPayload: () => {
-      Object.keys(payload).forEach(k => delete payload[k])
-      payload.sub = 'auth0|test123'
-      payload.email = 'test@test.com'
-      payload.name = 'Test User'
-    },
-  }
+  return payload
 })
 
 vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({

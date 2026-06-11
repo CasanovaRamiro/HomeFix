@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { TelegramLinkCode } from '@prisma/client'
 
 vi.mock('../../src/lib/prisma.js', () => ({
   default: {
@@ -24,11 +25,29 @@ vi.mock('../../src/infrastructure/providers/telegram.provider.js', () => ({
 import prisma from '../../src/lib/prisma.js'
 import { createLinkCode, processLink } from '../../src/presentation/telegram/bot.js'
 
-const makeCtx = (overrides: Record<string, unknown> = {}) => ({
+interface FakeCtx {
+  reply: ReturnType<typeof vi.fn>
+  chat: { id: number } | null
+}
+
+const makeCtx = (overrides: Partial<FakeCtx> = {}): FakeCtx => ({
   reply: vi.fn(),
   chat: { id: 12345 },
   ...overrides,
 })
+
+const makeLinkCode = (overrides: Partial<TelegramLinkCode> = {}): TelegramLinkCode => {
+  const now = new Date()
+  return {
+    id: 'link-1',
+    userId: 'user-1',
+    code: 'ABC12345',
+    used: false,
+    expiresAt: new Date(now.getTime() + 60000),
+    createdAt: now,
+    ...overrides,
+  } as TelegramLinkCode
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -36,7 +55,7 @@ beforeEach(() => {
 
 describe('createLinkCode', () => {
   it('crea un código de 8 caracteres alfanuméricos', async () => {
-    vi.mocked(prisma.telegramLinkCode.create).mockResolvedValue({ id: '1', code: 'ABC12345' } as any)
+    vi.mocked(prisma.telegramLinkCode.create).mockResolvedValue({} as TelegramLinkCode)
 
     const code = await createLinkCode('user-1')
 
@@ -45,41 +64,32 @@ describe('createLinkCode', () => {
 
   it('guarda el código con expiresAt a 5 minutos', async () => {
     const before = Date.now()
-    vi.mocked(prisma.telegramLinkCode.create).mockImplementation(async (args) => {
-      const data = args.data as any
-      return { id: '1', code: data.code, ...data } as any
-    })
+    vi.mocked(prisma.telegramLinkCode.create).mockResolvedValue({} as TelegramLinkCode)
 
     await createLinkCode('user-1')
 
     const callArgs = vi.mocked(prisma.telegramLinkCode.create).mock.calls[0][0]
-    const expiresAt = (callArgs.data as any).expiresAt as Date
+    const expiresAt = (callArgs.data as { expiresAt: Date }).expiresAt
     expect(expiresAt.getTime() - before).toBeGreaterThanOrEqual(4.5 * 60 * 1000)
     expect(expiresAt.getTime() - before).toBeLessThanOrEqual(5 * 60 * 1000)
   })
 
   it('asocia el código al userId provisto', async () => {
-    vi.mocked(prisma.telegramLinkCode.create).mockImplementation(async (args) => {
-      const data = args.data as any
-      return { id: '1', code: data.code, ...data } as any
-    })
+    vi.mocked(prisma.telegramLinkCode.create).mockResolvedValue({} as TelegramLinkCode)
 
     await createLinkCode('user-42')
 
     const callArgs = vi.mocked(prisma.telegramLinkCode.create).mock.calls[0][0]
-    expect((callArgs.data as any).userId).toBe('user-42')
+    expect((callArgs.data as { userId: string }).userId).toBe('user-42')
   })
 
   it('retorna el mismo código que guarda en la DB', async () => {
-    vi.mocked(prisma.telegramLinkCode.create).mockImplementation(async (args) => {
-      const data = args.data as any
-      return { id: '1', code: data.code, ...data } as any
-    })
+    vi.mocked(prisma.telegramLinkCode.create).mockResolvedValue({} as TelegramLinkCode)
 
     const code = await createLinkCode('user-1')
 
     const callArgs = vi.mocked(prisma.telegramLinkCode.create).mock.calls[0][0]
-    expect(code).toBe((callArgs.data as any).code)
+    expect(code).toBe((callArgs.data as { code: string }).code)
   })
 })
 
@@ -93,18 +103,10 @@ describe('getBotUsername', () => {
 
 describe('processLink', () => {
   it('vincula al usuario cuando el código es válido', async () => {
-    const now = new Date()
-    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue({
-      id: 'link-1',
-      userId: 'user-1',
-      code: 'ABC12345',
-      used: false,
-      expiresAt: new Date(now.getTime() + 60000),
-      createdAt: now,
-    } as any)
+    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(makeLinkCode())
 
     const ctx = makeCtx()
-    await processLink(ctx as any, 'ABC12345')
+    await processLink(ctx as never, 'ABC12345')
 
     expect(prisma.telegramLinkCode.update).toHaveBeenCalledWith({
       where: { id: 'link-1' },
@@ -124,7 +126,7 @@ describe('processLink', () => {
     vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(null)
 
     const ctx = makeCtx()
-    await processLink(ctx as any, 'INVALIDO')
+    await processLink(ctx as never, 'INVALIDO')
 
     expect(ctx.reply).toHaveBeenCalledWith('Código inválido o expirado. Generá uno nuevo en tu perfil.')
     expect(prisma.telegramLinkCode.update).not.toHaveBeenCalled()
@@ -132,18 +134,13 @@ describe('processLink', () => {
   })
 
   it('rechaza un código expirado', async () => {
-    const now = new Date()
-    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue({
-      id: 'link-1',
-      userId: 'user-1',
+    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(makeLinkCode({
       code: 'EXPIRED',
-      used: false,
-      expiresAt: new Date(now.getTime() - 60000),
-      createdAt: now,
-    } as any)
+      expiresAt: new Date(Date.now() - 60000),
+    }))
 
     const ctx = makeCtx()
-    await processLink(ctx as any, 'EXPIRED')
+    await processLink(ctx as never, 'EXPIRED')
 
     expect(ctx.reply).toHaveBeenCalledWith('Código inválido o expirado. Generá uno nuevo en tu perfil.')
     expect(prisma.telegramLinkCode.update).not.toHaveBeenCalled()
@@ -151,18 +148,13 @@ describe('processLink', () => {
   })
 
   it('rechaza un código ya usado', async () => {
-    const now = new Date()
-    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue({
-      id: 'link-1',
-      userId: 'user-1',
+    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(makeLinkCode({
       code: 'USED123',
       used: true,
-      expiresAt: new Date(now.getTime() + 60000),
-      createdAt: now,
-    } as any)
+    }))
 
     const ctx = makeCtx()
-    await processLink(ctx as any, 'USED123')
+    await processLink(ctx as never, 'USED123')
 
     expect(ctx.reply).toHaveBeenCalledWith('Código inválido o expirado. Generá uno nuevo en tu perfil.')
     expect(prisma.telegramLinkCode.update).not.toHaveBeenCalled()
@@ -170,18 +162,10 @@ describe('processLink', () => {
   })
 
   it('usa el chatId del contexto para vincular', async () => {
-    const now = new Date()
-    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue({
-      id: 'link-1',
-      userId: 'user-1',
-      code: 'ABC12345',
-      used: false,
-      expiresAt: new Date(now.getTime() + 60000),
-      createdAt: now,
-    } as any)
+    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(makeLinkCode())
 
     const ctx = makeCtx({ chat: { id: 99999 } })
-    await processLink(ctx as any, 'ABC12345')
+    await processLink(ctx as never, 'ABC12345')
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
@@ -193,18 +177,10 @@ describe('processLink', () => {
   })
 
   it('maneja chat null (ctx.chat = null)', async () => {
-    const now = new Date()
-    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue({
-      id: 'link-1',
-      userId: 'user-1',
-      code: 'ABC12345',
-      used: false,
-      expiresAt: new Date(now.getTime() + 60000),
-      createdAt: now,
-    } as any)
+    vi.mocked(prisma.telegramLinkCode.findUnique).mockResolvedValue(makeLinkCode())
 
     const ctx = makeCtx({ chat: null })
-    await processLink(ctx as any, 'ABC12345')
+    await processLink(ctx as never, 'ABC12345')
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
