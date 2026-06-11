@@ -35,6 +35,7 @@ export interface Worker {
   bio: string | null
   role: string
   photo: string | null
+  availability: string[]
   createdAt: string
   categories: { id: string; name: string }[]
   emergenciesEnabled: boolean
@@ -46,6 +47,7 @@ export interface WorkerUpdateData {
   bio?: string | null
   photo?: string | null
   categoryIds?: string[]
+  availability?: string[]
 }
 
 export const updateWorkerProfile = (id: string, data: WorkerUpdateData): Promise<Worker> =>

@@ -12,6 +12,7 @@ export const findWorkerProfile = async (workerId: string): Promise<DomainWorkerP
       email: true,
       phone: true,
       bio: true,
+      photo: true,
       role: true,
       createdAt: true,
       address: {
@@ -34,6 +35,7 @@ export const findWorkerProfile = async (workerId: string): Promise<DomainWorkerP
     email: raw.email,
     phone: raw.phone,
     bio: raw.bio,
+    photo: raw.photo,
     createdAt: raw.createdAt,
     location: raw.address ? `${raw.address.city}, ${raw.address.state}` : null,
     categories: raw.categories.map((c) => c.category),

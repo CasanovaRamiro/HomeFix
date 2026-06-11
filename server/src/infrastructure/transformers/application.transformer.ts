@@ -25,6 +25,7 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     applicationId: a.id,
     workerId: a.worker.id,
     name: `${a.worker.name} ${a.worker.surname}`.trim(),
+    photo: a.worker.photo,
     category: a.worker.categories[0]?.category.name ?? null,
     address: a.worker.address?.city ?? '',
     rating: Math.round(avgRating * 10) / 10,

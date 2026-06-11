@@ -115,7 +115,7 @@ export default function RegisterWorker() {
       setErrors({})
       const { data: loginData } = await api.post<{
         accessToken: string
-        user: { id: string; name: string; role: string }
+        user: { id: string; name: string; photo: string | null; role: string }
       }>('/auth/login', { email: form.email, password: form.password })
       localStorage.setItem('token', loginData.accessToken)
       localStorage.setItem('user', JSON.stringify(loginData.user))

@@ -24,6 +24,7 @@ model User {
   deleted         Boolean          @default(false)
   emergenciesEnabled Boolean         @default(false)
   photo           String?
+  availability    String?          @db.Text
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")

@@ -4,13 +4,8 @@ import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, type Wo
 import { useCategories } from '../hooks/useCategories'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
-import WorkerHeader from '../components/worker/WorkerHeader'
-import WorkerAbout from '../components/worker/WorkerAbout'
-import WorkerReviews from '../components/worker/WorkerReviews'
-import WorkerActions from '../components/worker/WorkerActions'
-import WorkerStats from '../components/worker/WorkerStats'
 import {
-  ArrowLeft, Camera, Save, X, User, Mail, Phone, Calendar,
+  ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
   Briefcase, Star, CheckCircle, Timer, Edit3,
 } from 'lucide-react'
 
@@ -37,6 +32,7 @@ export default function WorkerProfile() {
     bio: '',
   })
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [formAvailability, setFormAvailability] = useState<string[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -51,6 +47,7 @@ export default function WorkerProfile() {
         setReviews(r)
         setForm({ name: w.name, phone: w.phone ?? '', bio: w.bio ?? '' })
         setSelectedCategories(w.categories.map((c) => c.id))
+        setFormAvailability(w.availability)
         setPhotoPreview(w.photo)
       })
       .catch(() => setError('No se encontró el trabajador.'))
@@ -60,6 +57,12 @@ export default function WorkerProfile() {
   const avgRating = reviews.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0
+
+  const toggleDay = (day: string) => {
+    setFormAvailability((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    )
+  }
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -91,20 +94,22 @@ export default function WorkerProfile() {
         bio: form.bio || null,
         photo: photoUrl,
         categoryIds: selectedCategories,
+        availability: formAvailability,
       })
       setWorker(updated)
+      setPhotoFile(null)
       setIsEditing(false)
-      if (form.name !== worker.name) {
-        const stored = localStorage.getItem('user')
-        if (stored) {
-          const user = JSON.parse(stored)
-          user.name = form.name
-          localStorage.setItem('user', JSON.stringify(user))
-          emitAuthChange()
-        }
+      const stored = localStorage.getItem('user')
+      if (stored) {
+        const userData = JSON.parse(stored)
+        if (form.name !== worker.name) userData.name = form.name
+        if (photoUrl !== worker.photo) userData.photo = photoUrl
+        localStorage.setItem('user', JSON.stringify(userData))
+        emitAuthChange()
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Error al guardar cambios.')
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? 'Error al guardar cambios.')
     } finally {
       setSaving(false)
     }
@@ -114,6 +119,7 @@ export default function WorkerProfile() {
     if (!worker) return
     setForm({ name: worker.name, phone: worker.phone ?? '', bio: worker.bio ?? '' })
     setSelectedCategories(worker.categories.map((c) => c.id))
+    setFormAvailability(worker.availability)
     setPhotoPreview(worker.photo)
     setPhotoFile(null)
     setIsEditing(false)
@@ -156,7 +162,7 @@ export default function WorkerProfile() {
       <div style={{ background: '#0F172A', width: '100%' }}>
         <div style={{ maxWidth: 1024, margin: '0 auto', padding: isMobile ? '14px 16px' : '20px 24px' }}>
           <button
-            onClick={() => navigate(isOwner ? '/worker' : -1 as any)}
+            onClick={() => navigate(isOwner ? '/worker' : -1 as never)}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'none', border: 'none',
@@ -313,7 +319,7 @@ export default function WorkerProfile() {
                   ) : (
                     <>
                       <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{worker.name}</h2>
-                      <p style={{ color: '#6B7280', fontSize: 14, margin: '0 0 16px', textTransform: 'capitalize' }}>{worker.role}</p>
+                      <p style={{ color: '#6B7280', fontSize: 14, margin: '0 0 16px', textTransform: 'capitalize' }}>Trabajador</p>
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, fontSize: 13 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6B7280' }}>
                           <div style={{ width: 28, height: 28, borderRadius: 8, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -350,7 +356,7 @@ export default function WorkerProfile() {
                   <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>Seleccioná las categorías en las que trabajás.</p>
                 )}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {(isEditing ? allCategories : worker.categories).map((cat: any) => {
+                  {(isEditing ? allCategories : worker.categories).map((cat: { id: string; name: string }) => {
                     const catId = cat.id
                     const catName = cat.name
                     const selected = isEditing ? selectedCategories.includes(catId) : true
@@ -400,8 +406,38 @@ export default function WorkerProfile() {
               </div>
             )}
 
+            {/* Availability */}
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Disponibilidad</h3>
+              {isEditing && (
+                <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>Seleccioná los días que trabajás.</p>
+              )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+                  {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => {
+                    const available = worker.availability.includes(day)
+                    const selected = isEditing ? formAvailability.includes(day) : available
+                    return (
+                      <div
+                        key={day}
+                        onClick={() => isEditing && toggleDay(day)}
+                        style={{
+                          padding: '10px 4px', borderRadius: 10, textAlign: 'center',
+                          fontSize: 12, fontWeight: 600,
+                          background: selected ? '#10B981' : '#F3F4F6',
+                          color: selected ? '#fff' : '#9CA3AF',
+                          cursor: isEditing ? 'pointer' : 'default',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {day.substring(0, 3)}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
             {/* Reviews */}
-            {!isEditing && reviews.length > 0 && (
+            {!isEditing && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Reseñas Recientes</h3>
@@ -411,22 +447,28 @@ export default function WorkerProfile() {
                     <span style={{ color: '#9CA3AF', fontSize: 13 }}>({reviews.length})</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {reviews.slice(0, 5).map((r) => (
-                    <div key={r.id} style={{ paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <p style={{ fontWeight: 600, color: '#111827', fontSize: 14, margin: 0 }}>{r.reviewer.name}</p>
-                        <div style={{ display: 'flex', gap: 2 }}>
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star key={i} size={12} color={i <= r.rating ? '#10B981' : '#D1D5DB'} fill={i <= r.rating ? '#10B981' : 'none'} />
-                          ))}
+                {reviews.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {reviews.slice(0, 5).map((r) => (
+                      <div key={r.id} style={{ paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <p style={{ fontWeight: 600, color: '#111827', fontSize: 14, margin: 0 }}>{r.reviewer.name}</p>
+                          <div style={{ display: 'flex', gap: 2 }}>
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <Star key={i} size={12} color={i <= r.rating ? '#10B981' : '#D1D5DB'} fill={i <= r.rating ? '#10B981' : 'none'} />
+                            ))}
+                          </div>
                         </div>
+                        <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, margin: 0 }}>{r.description}</p>
+                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0' }}>{new Date(r.createdAt).toLocaleDateString('es-AR')}</p>
                       </div>
-                      <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, margin: 0 }}>{r.description}</p>
-                      <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0' }}>{new Date(r.createdAt).toLocaleDateString('es-AR')}</p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '24px 0' }}>
+                    No hay reseñas aún
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import { acceptApplication } from '../../services/applications'
 interface Applicant {
   id: string
   name: string
+  photo: string | null
   category: string
   address: string
   rating: number
@@ -76,7 +77,13 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
 
   return (
     <div className="applicant-card">
-      <div className="avatar">{initials}</div>
+      <div className="avatar">
+        {applicant.photo ? (
+          <img src={applicant.photo} alt={applicant.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+        ) : (
+          initials
+        )}
+      </div>
       <div className="info">
         <Link to={`/profile/worker/${applicant.id}`} className="font-medium hover:text-blue-600 transition-colors">
           {applicant.name}

@@ -12,6 +12,7 @@ const workerFields = {
   bio: true,
   role: true,
   photo: true,
+  availability: true,
   createdAt: true,
   categories: {
     select: {
@@ -33,11 +34,13 @@ export const findWorkerById = async (id: string): Promise<DomainWorker | null> =
 }
 
 export const updateWorker = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
-  const { categoryIds, ...data } = input
+  const { categoryIds, availability, ...data } = input
+  const serialized = availability !== undefined ? { availability: JSON.stringify(availability) } : {}
   const raw = await prisma.user.update({
     where: { id },
     data: {
       ...data,
+      ...serialized,
       ...(categoryIds
         ? {
             categories: {

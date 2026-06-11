@@ -6,6 +6,7 @@ export interface DomainWorker {
   bio: string | null
   role: string
   photo: string | null
+  availability: string[]
   createdAt: Date
   categories: { id: string; name: string }[]
 }
@@ -16,6 +17,7 @@ export interface UpdateWorkerInput {
   bio?: string | null
   photo?: string | null
   categoryIds?: string[]
+  availability?: string[]
 }
 
 export interface DomainWorkerReview {

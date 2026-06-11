@@ -147,6 +147,7 @@ export const loginUser = async (input: LoginInput) => {
         name: existing.name,
         email: existing.email,
         phone: existing.phone,
+        photo: existing.photo,
         role: existing.role,
         createdAt: existing.createdAt,
       }
@@ -163,7 +164,7 @@ export const loginUser = async (input: LoginInput) => {
     idToken: tokenData.id_token,
     tokenType: tokenData.token_type,
     expiresIn: tokenData.expires_in,
-    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, photo: user.photo, role: user.role, createdAt: user.createdAt },
   }
 }
 

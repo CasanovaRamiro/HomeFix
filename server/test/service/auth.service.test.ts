@@ -30,6 +30,7 @@ const mockUser = {
   deleted: false,
   emergenciesEnabled: false,
   photo: null as string | null,
+  availability: null as string | null,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',

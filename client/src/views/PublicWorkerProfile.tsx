@@ -16,18 +16,24 @@ export default function PublicWorkerProfile() {
 
   useEffect(() => {
     if (!id) return
-    setLoading(true)
-    setError(null)
-    Promise.all([
-      getWorker(id),
-      getWorkerReviews(id),
-    ])
-      .then(([w, r]) => {
+    const controller = new AbortController()
+    getWorker(id)
+      .then((w) => {
+        if (controller.signal.aborted) return
         setWorker(w)
+        return getWorkerReviews(id)
+      })
+      .then((r) => {
+        if (controller.signal.aborted || !r) return
         setReviews(r)
       })
-      .catch(() => setError('No se encontró el profesional.'))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        if (!controller.signal.aborted) setError('No se encontró el profesional.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
   }, [id])
 
   if (loading) {
@@ -44,7 +50,7 @@ export default function PublicWorkerProfile() {
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: '#EF4444', marginBottom: 16 }}>{error || 'Profesional no encontrado'}</p>
           <button
-            onClick={() => navigate(-1 as any)}
+            onClick={() => navigate(-1 as never)}
             style={{
               padding: '10px 20px', borderRadius: 10, border: 'none',
               background: '#0F172A', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -73,7 +79,7 @@ export default function PublicWorkerProfile() {
       <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB' }}>
         <div style={{ ...container, display: 'flex', alignItems: 'center', height: 56 }}>
           <button
-            onClick={() => navigate(-1 as any)}
+            onClick={() => navigate(-1 as never)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'none', border: 'none', color: '#374151',
@@ -145,6 +151,28 @@ export default function PublicWorkerProfile() {
                   </div>
                 ))}
               </div>
+
+              {/* Mobile availability */}
+              {worker.availability.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: '0 0 10px' }}>Disponibilidad Horaria</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                    {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => {
+                      const available = worker.availability.includes(day)
+                      return (
+                        <div key={day} style={{
+                          padding: '8px 2px', borderRadius: 8, textAlign: 'center',
+                          fontSize: 11, fontWeight: 600,
+                          background: available ? '#10B981' : '#F3F4F6',
+                          color: available ? '#fff' : '#9CA3AF',
+                        }}>
+                          {day.substring(0, 3)}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -194,6 +222,28 @@ export default function PublicWorkerProfile() {
                     <p style={{ fontWeight: 700, color: '#111827', fontSize: 14, margin: 0 }}>{value}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Availability */}
+            {worker.availability.length > 0 && (
+              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Disponibilidad Horaria</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+                  {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => {
+                    const available = worker.availability.includes(day)
+                    return (
+                      <div key={day} style={{
+                        padding: '10px 4px', borderRadius: 10, textAlign: 'center',
+                        fontSize: 12, fontWeight: 600,
+                        background: available ? '#10B981' : '#F3F4F6',
+                        color: available ? '#fff' : '#9CA3AF',
+                      }}>
+                        {day.substring(0, 3)}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
