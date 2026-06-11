@@ -5,7 +5,8 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "pnpm db:migrate:deploy && node dist/index.js",
+    "preDeployCommand": "pnpm db:migrate:deploy",
+    "startCommand": "node dist/index.js",
     "healthcheckPath": "/health"
   }
 }
