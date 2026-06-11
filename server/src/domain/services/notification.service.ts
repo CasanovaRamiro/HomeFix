@@ -1,5 +1,7 @@
 import type { NotificationMessage, NotificationProvider } from '../types/notification.types.js'
 import { findUserById } from '../../infrastructure/database/user.database.js'
+import prisma from '../../lib/prisma.js'
+import { env } from '../../lib/envConfig.js'
 
 type EventType =
   | 'application_new'
@@ -7,6 +9,7 @@ type EventType =
   | 'application_rejected'
   | 'post_completed'
   | 'post_cancelled'
+  | 'emergency_new'
 
 const templates: Record<EventType, (data: Record<string, string>) => NotificationMessage> = {
   application_new: (d) => ({
@@ -29,6 +32,10 @@ const templates: Record<EventType, (data: Record<string, string>) => Notificatio
     text: `🚫 <b>Trabajo cancelado</b>\nEl trabajo "${d.postTitle}" fue cancelado`,
     parseMode: 'HTML',
   }),
+  emergency_new: (d) => ({
+    text: `📢 <b>Nueva publicación urgente</b>\n"${d.postTitle}" — ¡Aplicá ahora!\n\n${d.postDescription}`,
+    parseMode: 'HTML',
+  }),
 }
 
 export const notifyUser = async (
@@ -48,7 +55,36 @@ export const notifyUser = async (
   }
 }
 
+export const broadcastEmergency = async (
+  provider: NotificationProvider,
+  postId: string,
+  postTitle: string,
+  postDescription: string,
+  categoryId: string,
+): Promise<void> => {
+  const workers = await prisma.user.findMany({
+    where: {
+      emergenciesEnabled: true,
+      telegramChatId: { not: null },
+      categories: { some: { categoryId } },
+    },
+    select: { id: true, telegramChatId: true },
+  })
+
+  const postUrl = `${env.FRONTEND_URL}/posts/${postId}`
+  const isHttps = env.FRONTEND_URL.startsWith('https://')
+
+  const message: NotificationMessage = {
+    text: `📢 <b>Nueva publicación urgente</b>\n"${postTitle}" — ¡Aplicá ahora!\n\n${postDescription}\n\n🔗 ${postUrl}`,
+    parseMode: 'HTML',
+    ...(isHttps ? { buttons: [{ text: '🔍 Ver publicación', url: postUrl }] } : {}),
+  }
+
+  for (const worker of workers) {
+    await provider.send(worker.telegramChatId!, message)
+  }
+}
+
 const clearTelegramChatId = async (userId: string) => {
-  const prisma = (await import('../../lib/prisma.js')).default
   await prisma.user.update({ where: { id: userId }, data: { telegramChatId: null, telegramLinkedAt: null } })
 }

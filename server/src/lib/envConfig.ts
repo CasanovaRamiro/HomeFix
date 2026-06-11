@@ -34,4 +34,5 @@ export const env = {
   get CLOUDINARY_API_KEY() { return process.env.CLOUDINARY_API_KEY! },
   get CLOUDINARY_API_SECRET() { return process.env.CLOUDINARY_API_SECRET! },
   get TELEGRAM_BOT_TOKEN() { return process.env.TELEGRAM_BOT_TOKEN },
+  get FRONTEND_URL() { return process.env.FRONTEND_URL || 'http://localhost:5173' },
 }

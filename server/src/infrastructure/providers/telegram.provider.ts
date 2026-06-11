@@ -29,7 +29,12 @@ export const createTelegramProvider = (): NotificationProvider => {
         const parseMode = message.parseMode === 'HTML' ? 'HTML'
           : message.parseMode === 'Markdown' ? 'Markdown'
           : undefined
-        await bot.telegram.sendMessage(recipient, message.text, parseMode ? { parse_mode: parseMode } : {})
+        const extra: Record<string, unknown> = {}
+        if (parseMode) extra.parse_mode = parseMode
+        if (message.buttons?.length) {
+          extra.reply_markup = { inline_keyboard: [message.buttons.map((b) => ({ text: b.text, url: b.url }))] }
+        }
+        await bot.telegram.sendMessage(recipient, message.text, extra)
         return true
       } catch (err) {
         const code = (err as { code?: number })?.code

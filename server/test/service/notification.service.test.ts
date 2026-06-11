@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { notifyUser } from '../../src/domain/services/notification.service.js'
+import { notifyUser, broadcastEmergency } from '../../src/domain/services/notification.service.js'
 
 vi.mock('../../src/lib/prisma.js', () => ({
   default: {
     user: {
       update: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn(),
     },
+  },
+}))
+
+let mockFrontendUrl = 'http://localhost:5173'
+vi.mock('../../src/lib/envConfig.js', () => ({
+  env: {
+    get FRONTEND_URL() { return mockFrontendUrl },
   },
 }))
 
@@ -127,5 +135,104 @@ describe('notifyUser', () => {
       text: expect.stringContaining('María García'),
       parseMode: 'HTML',
     })
+  })
+})
+
+describe('broadcastEmergency', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFrontendUrl = 'http://localhost:5173'
+  })
+
+  it('envía a workers con emergenciesEnabled y categoría coincidente', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'worker-1', telegramChatId: '111' },
+      { id: 'worker-2', telegramChatId: '222' },
+    ] as never)
+    mockSend.mockResolvedValue(true)
+
+    await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'Se rompió el caño del baño', 'cat-1')
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      where: {
+        emergenciesEnabled: true,
+        telegramChatId: { not: null },
+        categories: { some: { categoryId: 'cat-1' } },
+      },
+      select: { id: true, telegramChatId: true },
+    })
+    expect(mockSend).toHaveBeenCalledTimes(2)
+  })
+
+  it('incluye descripción en el mensaje', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'worker-1', telegramChatId: '111' },
+    ] as never)
+    mockSend.mockResolvedValue(true)
+
+    await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'Se rompió el caño del baño, pierde agua', 'cat-1')
+
+    expect(mockSend).toHaveBeenCalledWith('111', {
+      text: expect.stringContaining('Se rompió el caño del baño, pierde agua'),
+      parseMode: 'HTML',
+    })
+  })
+
+  it('incluye enlace como texto cuando FRONTEND_URL es HTTP', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'worker-1', telegramChatId: '111' },
+    ] as never)
+    mockSend.mockResolvedValue(true)
+    mockFrontendUrl = 'http://localhost:5173'
+
+    await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
+
+    expect(mockSend).toHaveBeenCalledWith('111', {
+      text: expect.stringContaining('http://localhost:5173/posts/post-abc'),
+      parseMode: 'HTML',
+    })
+    const sent = (mockSend.mock.calls[0] as unknown[])[1] as Record<string, unknown>
+    expect(sent.buttons).toBeUndefined()
+  })
+
+  it('incluye botón cuando FRONTEND_URL es HTTPS', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'worker-1', telegramChatId: '111' },
+    ] as never)
+    mockSend.mockResolvedValue(true)
+    mockFrontendUrl = 'https://homefix.vercel.app'
+
+    await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
+
+    expect(mockSend).toHaveBeenCalledWith('111', {
+      text: expect.stringContaining('https://homefix.vercel.app/posts/post-abc'),
+      parseMode: 'HTML',
+      buttons: [{ text: '🔍 Ver publicación', url: 'https://homefix.vercel.app/posts/post-abc' }],
+    })
+  })
+
+  it('no desvincula al worker si el envío falla', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'worker-1', telegramChatId: '111' },
+    ] as never)
+    mockSend.mockResolvedValue(false)
+
+    await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'desc', 'cat-1')
+
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('no hace nada si no hay workers con emergenciesEnabled', async () => {
+    const prisma = (await import('../../src/lib/prisma.js')).default
+    vi.mocked(prisma.user.findMany).mockResolvedValue([])
+
+    await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'desc', 'cat-1')
+
+    expect(mockSend).not.toHaveBeenCalled()
   })
 })

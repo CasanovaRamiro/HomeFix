@@ -1,6 +1,7 @@
 export interface NotificationMessage {
   text: string
   parseMode?: 'HTML' | 'Markdown'
+  buttons?: Array<{ text: string; url: string }>
 }
 
 export interface NotificationProvider {

@@ -12,7 +12,7 @@ import {
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
-import { notifyUser } from './notification.service.js'
+import { notifyUser, broadcastEmergency } from './notification.service.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
@@ -56,12 +56,22 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
   const emergencyExpiresAt = input.isEmergency === true
     ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
     : null
-  return createPostData({
+  const post = await createPostData({
     ...input,
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
     endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
     emergencyExpiresAt,
   })
+
+  if (input.isEmergency) {
+    try {
+      await broadcastEmergency(getProvider(), post.id, input.title, input.description, input.categoryId)
+    } catch (err) {
+      console.error('Emergency broadcast failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
+  return post
 }
 
 const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => {
