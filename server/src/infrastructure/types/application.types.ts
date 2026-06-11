@@ -4,6 +4,12 @@ export interface PrismaApplicationWithPost {
   workerId: string
   status: string
   createdAt: Date
+  message: string | null
+  availableDays: string | null
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
   post: {
     title: string
     address: string
@@ -19,6 +25,12 @@ export interface PrismaApplicationWithWorker {
   postId: string
   status: string
   createdAt: Date
+  message: string | null
+  availableDays: string | null
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
   worker: {
     id: string
     name: string

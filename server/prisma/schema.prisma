@@ -132,16 +132,22 @@ model WorkerReview {
 }
 
 model Application {
-  id            String         @id @default(uuid())
-  workerId      String
-  postId        String
-  status        String         @default("Pending")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
-  worker        User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
-  review        WorkerReview?
-  clientReview  ClientReview?
+  id                 String         @id @default(uuid())
+  workerId           String
+  postId             String
+  status             String         @default("Pending")
+  message            String?        @db.Text
+  availableDays      String?        @db.Text
+  availableTimeFrom  String?
+  availableTimeTo    String?
+  chargesVisit       Boolean        @default(false)
+  visitCost          Float?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  post               Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  worker             User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  review             WorkerReview?
+  clientReview       ClientReview?
 
   @@unique([workerId, postId])
 }

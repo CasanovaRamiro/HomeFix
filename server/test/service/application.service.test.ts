@@ -24,6 +24,14 @@ vi.mock("../../src/infrastructure/database/user.database.js", () => ({
   findUserById: vi.fn(),
 }))
 
+vi.mock("../../src/infrastructure/providers/telegram.provider.js", () => ({
+  createTelegramProvider: vi.fn(() => ({ sendMessage: vi.fn() })),
+}))
+
+vi.mock("../../src/domain/services/notification.service.js", () => ({
+  notifyUser: vi.fn(),
+}))
+
 beforeEach(() => vi.clearAllMocks())
 
 const mockApplication = {
@@ -33,6 +41,12 @@ const mockApplication = {
   status: "Pending",
   createdAt: new Date(),
   updatedAt: new Date(),
+  message: null,
+  availableDays: null,
+  availableTimeFrom: null,
+  availableTimeTo: null,
+  chargesVisit: false,
+  visitCost: null,
   post: { userId: "client-1", title: "Test post", status: "Active" },
 }
 

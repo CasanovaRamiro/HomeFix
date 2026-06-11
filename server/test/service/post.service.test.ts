@@ -507,6 +507,12 @@ describe('post.service - reopenPost', () => {
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      message: null,
+      availableDays: null,
+      availableTimeFrom: null,
+      availableTimeTo: null,
+      chargesVisit: false,
+      visitCost: null,
     })
     vi.mocked(updateApplicationStatus).mockResolvedValue({
       id: 'app-1',
@@ -515,6 +521,12 @@ describe('post.service - reopenPost', () => {
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      message: null,
+      availableDays: null,
+      availableTimeFrom: null,
+      availableTimeTo: null,
+      chargesVisit: false,
+      visitCost: null,
     })
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 

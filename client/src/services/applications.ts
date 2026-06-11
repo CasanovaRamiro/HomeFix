@@ -7,6 +7,16 @@ export interface ApplicationResponse {
   message: string
 }
 
+export interface ApplyToPostInput {
+  postId: string
+  message?: string
+  availableDays: string[]
+  availableTimeFrom: string
+  availableTimeTo: string
+  chargesVisit: boolean
+  visitCost?: number
+}
+
 export interface PostApplicant {
   applicationId: string
   workerId: string
@@ -18,10 +28,16 @@ export interface PostApplicant {
   reviewCount: number
   jobCount: number
   status: string
+  message: string | null
+  availableDays: string[]
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
 }
 
-export const applyToPost = (postId: string) =>
-  api.post<ApplicationResponse>('/applications', { postId })
+export const applyToPost = (input: ApplyToPostInput) =>
+  api.post<ApplicationResponse>('/applications', input)
 
 export const getPostApplicants = (postId: string) =>
   api.get<PostApplicant[]>(`/applications/post/${postId}`)

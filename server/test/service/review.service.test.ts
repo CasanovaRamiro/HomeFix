@@ -57,6 +57,12 @@ const mockAcceptedApp = {
   status: 'Accepted',
   createdAt: new Date(),
   updatedAt: new Date(),
+  message: null,
+  availableDays: null,
+  availableTimeFrom: null,
+  availableTimeTo: null,
+  chargesVisit: false,
+  visitCost: null,
 }
 
 const mockReview: DomainWorkerReview = {

@@ -1,3 +1,13 @@
+export interface CreateApplicationInput {
+  postId: string
+  message?: string
+  availableDays: string[]
+  availableTimeFrom: string
+  availableTimeTo: string
+  chargesVisit: boolean
+  visitCost?: number
+}
+
 export interface DomainMyApplication {
   id: string
   postId: string
@@ -11,6 +21,12 @@ export interface DomainMyApplication {
   category: string | null
   hasReview: boolean
   clientRating: number
+  message: string | null
+  availableDays: string[]
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
 }
 
 export interface DomainPostApplication {
@@ -24,4 +40,10 @@ export interface DomainPostApplication {
   reviewCount: number
   jobCount: number
   status: string
+  message: string | null
+  availableDays: string[]
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
 }

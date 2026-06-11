@@ -13,7 +13,7 @@ import type { Post, TrabajoView } from '../types/post'
 import type { LocationFilter } from '../components/worker/types'
 import TrabajoCard from '../components/worker/TrabajoCard'
 import TrabajoDetail from '../components/worker/TrabajoDetail'
-import ApplyModal from '../components/worker/ApplyModal'
+import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -44,7 +44,6 @@ export default function AvailableJobs(): JSX.Element {
   const [selected, setSelected] = useState<TrabajoView | null>(null)
   const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
   const [showModal, setShowModal] = useState<boolean>(false)
-  const [mensaje, setMensaje] = useState<string>('')
   const [enviando, setEnviando] = useState<boolean>(false)
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [showLocationModal, setShowLocationModal] = useState(false)
@@ -131,11 +130,19 @@ export default function AvailableJobs(): JSX.Element {
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
-  const handlePostular = async (): Promise<void> => {
+  const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
     if (!selected) return
     setEnviando(true)
     try {
-      await applyToPost(selected.id)
+      await applyToPost({
+        postId: selected.id,
+        message: formData.message || undefined,
+        availableDays: formData.availableDays,
+        availableTimeFrom: formData.availableTimeFrom,
+        availableTimeTo: formData.availableTimeTo,
+        chargesVisit: formData.chargesVisit,
+        visitCost: formData.visitCost,
+      })
       setPostulacionesIds((prev) => [...prev, selected.id])
       navigate('/worker/my-applications')
     } catch (err) {
@@ -344,8 +351,6 @@ export default function AvailableJobs(): JSX.Element {
       {showModal && selected !== null && (
         <ApplyModal
           selected={selected}
-          mensaje={mensaje}
-          onMensajeChange={setMensaje}
           onEnviar={handlePostular}
           onClose={() => setShowModal(false)}
           enviando={enviando}
