@@ -24,7 +24,7 @@ vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
 }))
 
 vi.mock('../../src/presentation/telegram/bot.js', async (importOriginal) => {
-  const mod = await importOriginal()
+  const mod = await importOriginal<typeof import('../../src/presentation/telegram/bot.js')>()
   return {
     ...mod,
     getBotUsername: vi.fn().mockResolvedValue('HomeFixTestBot'),

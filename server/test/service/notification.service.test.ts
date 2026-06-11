@@ -25,6 +25,7 @@ const mockUser = {
   id: 'user-1',
   name: 'Test',
   email: 'test@test.com',
+  phone: null,
   telegramChatId: '123456789',
 }
 
