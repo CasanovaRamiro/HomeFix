@@ -69,6 +69,7 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-assertions': 'off',
       '@typescript-eslint/consistent-type-imports': 'off',
       '@typescript-eslint/consistent-type-definitions': 'off',
+      '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/array-type': 'off',
     },
   },

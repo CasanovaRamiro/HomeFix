@@ -32,8 +32,8 @@ model User {
   clientReviewsReceived ClientReview[]    @relation("ClientReviewsReceived")
   applications          Application[]
   nationalId       String
-  nationalIdTypeId String     @map("national_id_type_id")
-  addressId        String     @map("address_id")
+  nationalIdTypeId String  @map("national_id_type_id")
+  addressId        String  @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
   address          Address        @relation(fields: [addressId], references: [id])
 
