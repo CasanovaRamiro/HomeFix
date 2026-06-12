@@ -6,6 +6,7 @@ import {
   updatePostStatus,
   updatePost as updatePostData,
   findAvailablePosts,
+  findAvailableSubcontracts as findAvailableSubcontractsData,
   findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
   deletePostImages,
@@ -109,6 +110,11 @@ export const createSubContract = async (input: CreateSubcontractCommand): Promis
 const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => {
   const rating = await getUserRating(post.userId)
   return { ...post, clientRating: rating.averageRating }
+}
+
+export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
+  const posts = await findAvailableSubcontractsData()
+  return Promise.all(posts.map(enrichWithClientRating))
 }
 
 export const listAvailablePosts = async (category?: string): Promise<DomainPost[]> => {

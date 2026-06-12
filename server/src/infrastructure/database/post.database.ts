@@ -161,6 +161,15 @@ export const findAvailablePosts = async (category?: string): Promise<DomainPost[
   return raw.map(toDomainPost)
 }
 
+export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: { type: 'subcontract', status: 'Active' },
+    orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
     where: {
