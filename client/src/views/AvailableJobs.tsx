@@ -36,9 +36,7 @@ export default function AvailableJobs(): JSX.Element {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [workerCategories, setWorkerCategories] = useState<string[]>([])
-  const [category, setCategory] = useState<string>(
-    () => localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-  )
+  const [category, setCategory] = useState<string>(DEFAULT_WORKER_CATEGORY)
   const [trabajos, setTrabajos] = useState<(TrabajoView & { lat?: number | null; lng?: number | null })[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
@@ -105,10 +103,9 @@ export default function AvailableJobs(): JSX.Element {
     if (user?.id) {
       getWorker(user.id)
         .then((worker) => {
-          const cats = worker.categories.map((c) => c.category.name)
+          const cats = worker.categories.map((c) => c.name)
           setWorkerCategories(cats)
-          const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
-          if ((!saved || saved === DEFAULT_WORKER_CATEGORY) && cats.length > 0) {
+          if (cats.length > 0) {
             setCategory(cats[0])
           }
         })

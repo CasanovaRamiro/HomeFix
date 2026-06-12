@@ -32,7 +32,6 @@ export default function FilterBar({
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
         >
-          <option value="">Todos los rubros</option>
           {workerCategories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
