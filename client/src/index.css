@@ -300,6 +300,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .badge-danger { background: var(--danger); color: #fff; }
 .badge-warning { background: #f59e0b; color: #fff; }
 .badge-info { background: #2563eb; color: #fff; }
+.badge-subcontract { background: #DBEAFE; color: #1E40AF; }
 
 /* Star Rating */
 .star-rating { display: inline-flex; align-items: center; gap: 2px; }
