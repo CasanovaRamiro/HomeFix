@@ -1,10 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -13,11 +12,172 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  phone     String?
-  role      String  @default("user")
-  createdAt DateTime @default(now())
+  id              String           @id @default(uuid())
+  email           String           @unique
+  name            String
+  surname      String
+  password        String
+  phone           String?
+  bio             String?          @db.Text
+  role            String           @default("client")
+  createdAt       DateTime         @default(now())
+  active          Boolean          @default(true)
+  deleted         Boolean          @default(false)
+  emergenciesEnabled Boolean         @default(false)
+  posts           Post[]
+  categories      UserCategory[]
+  jobApplications JobApplication[] @relation("WorkerApplications")
+  reviewsGiven          WorkerReview[]   @relation("ReviewsGiven")
+  reviewsReceived       WorkerReview[]   @relation("ReviewsReceived")
+  clientReviewsGiven    ClientReview[]    @relation("ClientReviewsGiven")
+  clientReviewsReceived ClientReview[]    @relation("ClientReviewsReceived")
+  applications          Application[]
+  nationalId       String
+  nationalIdTypeId String  @map("national_id_type_id")
+  addressId        String  @map("address_id")
+  nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
+  address          Address        @relation(fields: [addressId], references: [id])
+
 }
+
+model Post {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String           @default("client")
+  parentPostId    String?
+  parentPost      Post?            @relation("SubPosts", fields: [parentPostId], references: [id])
+  subPosts        Post[]           @relation("SubPosts")
+  startDate       DateTime
+  endDate         DateTime
+  title           String
+  description     String          @db.Text
+  address         String
+  status          String           @default("Active")
+  latitude        Float?
+  longitude       Float?
+  isEmergency     Boolean          @default(false)
+  emergencyExpiresAt DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  categories      PostCategory[]
+  jobApplications JobApplication[]
+  images          PostImage[]
+  applications    Application[]
+}
+
+model Category {
+  id    String         @id @default(uuid())
+  name  String         @unique
+  posts PostCategory[]
+  users UserCategory[]
+}
+
+model PostCategory {
+  id              String   @id @default(uuid())
+  postId          String
+  categoryId      String
+  quantity        Int      @default(1)
+  filledCount     Int      @default(0)
+  roleDescription String?
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+}
+
+model UserCategory {
+  id         String   @id @default(uuid())
+  userId     String
+  categoryId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+}
+
+model JobApplication {
+  id        String        @id @default(uuid())
+  workerId  String
+  postId    String
+  status    String        @default("pending")
+  createdAt DateTime      @default(now())
+  worker    User          @relation("WorkerApplications", fields: [workerId], references: [id], onDelete: Cascade)
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model WorkerReview {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  reviewerId    String
+  workerId      String
+  description   String      @db.Text
+  rating        Int
+  mediaUrls     String?     @db.Text
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer      User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  worker        User        @relation("ReviewsReceived", fields: [workerId], references: [id])
+}
+
+model Application {
+  id            String         @id @default(uuid())
+  workerId      String
+  postId        String
+  status        String         @default("Pending")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  worker        User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  review        WorkerReview?
+  clientReview  ClientReview?
+
+  @@unique([workerId, postId])
+}
+
+model ClientReview {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  reviewerId    String
+  clientId      String
+  description   String      @db.Text
+  rating        Int
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer      User        @relation("ClientReviewsGiven", fields: [reviewerId], references: [id])
+  client        User        @relation("ClientReviewsReceived", fields: [clientId], references: [id])
+}
+
+model PostImage {
+  id     String @id @default(uuid())
+  url    String
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model NationalIdType { 
+  id          String @id @default(uuid()) 
+  description String
+  users       User[]
+
+  @@map("national_id_type") 
+}
+
+
+
+
+model Address {
+  id        String   @id @default(uuid()) @map("address_id")
+  street    String
+  number    String
+  city      String
+  state     String
+  users     User[]
+
+  @@map("address")
+}
+
+
+
+                
+

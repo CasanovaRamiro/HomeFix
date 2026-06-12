@@ -1,0 +1,13 @@
+{
+  "name": "homefix",
+  "private": true,
+  "scripts": {
+    "build-fe": "pnpm --prefix client run build",
+    "lint-fe": "pnpm --prefix client run lint",
+    "dev-fe": "pnpm --prefix client run dev",
+    "build-be": "pnpm --prefix server run build",
+    "lint-be": "pnpm --prefix server run lint",
+    "dev-be": "pnpm --prefix server run dev",
+    "test": "pnpm --prefix server run test"
+  }
+}

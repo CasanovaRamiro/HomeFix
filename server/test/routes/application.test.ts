@@ -1,0 +1,278 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { Request, Response, NextFunction } from 'express'
+import request from 'supertest'
+import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
+
+const { getPayload, setPayload } = vi.hoisted(() => {
+  const payloads: Record<string, Record<string, string>> = {}
+  return {
+    getPayload: (token: string) => payloads[token],
+    setPayload: (token: string, payload: Record<string, string>) => { payloads[token] = payload },
+  }
+})
+
+vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
+  jwtCheck: (req: Request, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization
+    if (!header?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const payload = getPayload(header.split(' ')[1])
+    if (!payload) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    ;(req as Request & { auth?: unknown }).auth = { header: {}, token: '', payload }
+    next()
+  },
+}))
+
+import { app } from '../../src/index.js'
+
+let clientToken: string
+let workerToken: string
+let clientId: string
+let workerId: string
+let categoryId: string
+
+beforeEach(async () => {
+  await cleanDb()
+  const client = await createUser('client@test.com', 'Client', 'hashed', { role: 'client' })
+  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: 'worker' })
+  const category = await createCategory('Test Category')
+  clientId = client.id
+  workerId = worker.id
+  categoryId = category.id
+  clientToken = 'client-token'
+  workerToken = 'worker-token'
+  setPayload('client-token', { sub: clientId, email: 'client@test.com', role: 'client' })
+  setPayload('worker-token', { sub: workerId, email: 'worker@test.com', role: 'worker' })
+})
+
+const createActivePost = () =>
+  prisma.post.create({
+    data: {
+      userId: clientId,
+      title: 'Reparación de caño',
+      description: 'Test',
+      address: 'Calle 123',
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2026-06-15'),
+      status: 'Active',
+      categories: { create: { categoryId } },
+    },
+  })
+
+const createPendingApplication = (postId: string) =>
+  prisma.application.create({
+    data: { workerId, postId, status: 'Pending' },
+  })
+
+describe('GET /applications/my-applications', () => {
+  it('no devuelve aplicaciones rechazadas', async () => {
+    const post = await createActivePost()
+    await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Rejected' },
+    })
+
+    const res = await request(app)
+      .get('/applications/my-applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(0)
+  })
+
+  it('devuelve aplicaciones Pending y Accepted', async () => {
+    const post1 = await createActivePost()
+    const post2 = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Otro post',
+        description: 'Test',
+        address: 'Calle 456',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'In progress',
+        categories: { create: { categoryId } },
+      },
+    })
+    await prisma.application.create({ data: { workerId, postId: post1.id, status: 'Pending' } })
+    await prisma.application.create({ data: { workerId, postId: post2.id, status: 'Accepted' } })
+
+    const res = await request(app)
+      .get('/applications/my-applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(2)
+    expect(res.body[0]).toHaveProperty('clientRating', 0)
+    expect(res.body[1]).toHaveProperty('clientRating', 0)
+  })
+})
+
+describe('PATCH /applications/:applicationId/accept', () => {
+  it('acepta la aplicación y cambia el post a In progress', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Accepted')
+
+    const updatedPost = await prisma.post.findUnique({ where: { id: post.id } })
+    expect(updatedPost!.status).toBe('In progress')
+  })
+
+  it('no rechaza otras aplicaciones pendientes al aceptar una', async () => {
+    const post = await createActivePost()
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const application = await createPendingApplication(post.id)
+    const otherApplication = await prisma.application.create({
+      data: { workerId: otherWorker.id, postId: post.id, status: 'Pending' },
+    })
+
+    await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    const unchanged = await prisma.application.findUnique({ where: { id: otherApplication.id } })
+    expect(unchanged!.status).toBe('Pending')
+  })
+
+  it('retorna 404 si la aplicación no existe', async () => {
+    const res = await request(app)
+      .patch('/applications/id-inexistente/accept')
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 403 si el usuario no es dueño del post', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si la aplicación no está en estado Pending', async () => {
+    const post = await createActivePost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Rejected' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si el post no está Active', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Post en progreso',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'In progress',
+        categories: { create: { categoryId } },
+      },
+    })
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 403 cuando el token no corresponde al dueño del post', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+    const otroCliente = await createUser('otro@test.com', 'Otro', 'hashed', { role: 'client' })
+    setPayload('otro-token', { sub: otroCliente.id, email: 'otro@test.com', role: 'client' })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', 'Bearer otro-token')
+
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('PATCH /applications/:applicationId/reject', () => {
+  it('rechaza la aplicación y el post queda Active', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/reject`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Rejected')
+
+    const updatedPost = await prisma.post.findUnique({ where: { id: post.id } })
+    expect(updatedPost!.status).toBe('Active')
+  })
+
+  it('no afecta otras aplicaciones pendientes del mismo post', async () => {
+    const post = await createActivePost()
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const application = await createPendingApplication(post.id)
+    const otherApplication = await prisma.application.create({
+      data: { workerId: otherWorker.id, postId: post.id, status: 'Pending' },
+    })
+
+    await request(app)
+      .patch(`/applications/${application.id}/reject`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    const untouched = await prisma.application.findUnique({ where: { id: otherApplication.id } })
+    expect(untouched!.status).toBe('Pending')
+  })
+
+  it('retorna 404 si la aplicación no existe', async () => {
+    const res = await request(app)
+      .patch('/applications/id-inexistente/reject')
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 403 si el usuario no es dueño del post', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/reject`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si la aplicación no está en estado Pending', async () => {
+    const post = await createActivePost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Accepted' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/reject`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(400)
+  })
+})

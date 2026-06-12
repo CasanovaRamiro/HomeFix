@@ -1,4 +1,4 @@
-# Ofix — Server
+# HomeFix — Server
 
 REST API built with Node.js, Express, Prisma and MySQL.
 

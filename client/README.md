@@ -1,6 +1,6 @@
-# Ofix — Client
+# HomeFix — Client
 
-React frontend for the Ofix application.
+React frontend for the HomeFix application.
 
 ## Tech Stack
 

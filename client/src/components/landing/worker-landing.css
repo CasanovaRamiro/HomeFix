@@ -1,0 +1,86 @@
+/* ============================================================
+   HomeFix WORKER landing — incremental styles.
+   Loaded AFTER landing.css. Reuses every .lp-* token & component
+   from landing.css; only adds the few pieces the worker page needs
+   (stats strip, 4-up steps, requirements list, split media block).
+   Everything stays scoped under .lp-root.
+   ============================================================ */
+
+/* ---------- hero: worker variant ----------
+   Uses the recomposed hero (worker on the right, navy text zone on the left).
+   Overlay is dark on the left and fully clears on the right so the person's
+   face is never covered by the headline. */
+.lp-root .lp-hero-worker .lp-hero-bg { background-position: 62% 22%; }
+.lp-root .lp-hero-worker .lp-hero-overlay {
+  background: linear-gradient(to right,
+    rgba(19,36,59,.92) 0%,
+    rgba(19,36,59,.85) 32%,
+    rgba(19,36,59,.45) 52%,
+    rgba(19,36,59,0) 68%);
+}
+.lp-root .lp-hero-worker .lp-hero-inner { max-width: 620px; }
+@media (max-width: 1000px) {
+  /* keep the worker in frame and re-darken so text stays legible on small screens */
+  .lp-root .lp-hero-worker .lp-hero-overlay {
+    background: linear-gradient(to right, rgba(19,36,59,.94), rgba(19,36,59,.7) 60%, rgba(19,36,59,.5));
+  }
+}
+
+/* ---------- hero stats strip ---------- */
+.lp-root .lp-wstats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  margin-top: 44px; max-width: 720px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.16); border-radius: var(--lp-radius-xl);
+  overflow: hidden;
+}
+.lp-root .lp-wstat { background: rgba(19,36,59,.55); padding: 20px 22px; backdrop-filter: blur(4px); }
+.lp-root .lp-wstat-val { font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
+.lp-root .lp-wstat-val .lp-accent { color: var(--lp-emerald); }
+.lp-root .lp-wstat-lbl { margin-top: 8px; font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.72); }
+
+/* ---------- 4-up steps (worker onboarding) ---------- */
+.lp-root .lp-steps-4 { grid-template-columns: repeat(4, 1fr); }
+.lp-root .lp-step-line { position: relative; }
+.lp-root .lp-step-line::after {
+  content: ''; position: absolute; top: 32px; left: calc(50% + 44px); right: calc(-50% + 44px);
+  height: 2px; background: rgba(255,255,255,.16);
+}
+.lp-root .lp-steps-4 .lp-step:last-child .lp-step-line::after { display: none; }
+
+/* ---------- split media block (why verify) ---------- */
+.lp-root .lp-split { display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: center; }
+.lp-root .lp-split-media { position: relative; border-radius: var(--lp-radius-xl); overflow: hidden; aspect-ratio: 4 / 3.4; box-shadow: 0 24px 50px rgba(19,36,59,.22); }
+.lp-root .lp-split-media img { width: 100%; height: 100%; object-fit: cover; }
+.lp-root .lp-split-badge {
+  position: absolute; left: 20px; bottom: 20px; display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.96); color: var(--lp-navy); font-size: 13px; font-weight: 700;
+  padding: 10px 16px; border-radius: 999px; box-shadow: 0 8px 20px rgba(19,36,59,.18);
+}
+.lp-root .lp-split-badge svg { color: var(--lp-emerald); }
+
+/* ---------- requirements checklist ---------- */
+.lp-root .lp-req { display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
+.lp-root .lp-req-item { display: flex; align-items: flex-start; gap: 14px; font-size: 16px; color: var(--lp-fg); }
+.lp-root .lp-req-check { flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(16,185,129,.12); color: var(--lp-emerald); margin-top: 1px; }
+.lp-root .lp-req-check svg { width: 16px; height: 16px; }
+.lp-root .lp-req-opt { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--lp-muted); background: var(--lp-soft); border: 1px solid var(--lp-border); padding: 2px 8px; border-radius: 999px; }
+
+/* review sub-line for trade name */
+.lp-root .lp-review-trade { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--lp-emerald); }
+
+/* nav: mark the active audience link */
+.lp-root .lp-nav-link.active { color: var(--lp-navy); background: var(--lp-soft); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1000px) {
+  .lp-root .lp-wstats { grid-template-columns: repeat(2, 1fr); }
+  .lp-root .lp-steps-4 { grid-template-columns: repeat(2, 1fr); }
+  .lp-root .lp-step-line::after { display: none; }
+  .lp-root .lp-split { grid-template-columns: 1fr; gap: 36px; }
+  .lp-root .lp-split-media { order: -1; aspect-ratio: 16 / 10; }
+}
+@media (max-width: 620px) {
+  .lp-root .lp-wstats { grid-template-columns: 1fr 1fr; }
+  .lp-root .lp-steps-4 { grid-template-columns: 1fr; }
+}
