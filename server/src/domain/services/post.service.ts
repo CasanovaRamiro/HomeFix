@@ -12,6 +12,9 @@ import {
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
+import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
+import { notifyUser, broadcastEmergency } from './notification.service.js'
+import type { NotificationProvider } from '../types/notification.types.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { getUserRating } from './user.service.js'
@@ -28,6 +31,12 @@ const verifySubcontractParent = async (parentPostId: string, userId: string): Pr
   }
 
   return parent
+}
+
+let _provider: NotificationProvider
+const getProvider = () => {
+  if (!_provider) _provider = createTelegramProvider()
+  return _provider
 }
 
 export const validatePostInput = (input: CreatePostInput) => {
@@ -60,12 +69,22 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
   const emergencyExpiresAt = input.isEmergency === true
     ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
     : null
-  return createPostData({
+  const post = await createPostData({
     ...input,
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
     endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
     emergencyExpiresAt,
   })
+
+  if (input.isEmergency) {
+    try {
+      await broadcastEmergency(getProvider(), post.id, input.title, input.description, input.categoryId)
+    } catch (err) {
+      console.error('Emergency broadcast failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
+  return post
 }
 
 export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost> => {
@@ -137,10 +156,10 @@ export const pausePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'Active' && post.status !== 'Paused') {
+  if (post.status !== PostStatus.Active && post.status !== PostStatus.Paused) {
     throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
   }
-  const newStatus = post.status === 'Active' ? 'Paused' : 'Active'
+  const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
   return updatePostStatus(postId, newStatus)
 }
 
@@ -148,26 +167,43 @@ export const cancelPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status === 'Completed' || post.status === 'Cancelled') {
+  if (post.status === PostStatus.Completed || post.status === PostStatus.Cancelled) {
     throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
   }
   await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
   await deletePostImages(postId)
-  return updatePostStatus(postId, 'Cancelled')
+
+  const result = await updatePostStatus(postId, PostStatus.Cancelled)
+
+  const accepted = await findAcceptedApplication(postId)
+  if (accepted) {
+    notifyUser(getProvider(), accepted.workerId, 'post_cancelled', {
+      postTitle: post.title,
+    })
+  }
+
+  return result
+}
+
+const notifyOtherOnComplete = (postTitle: string, accepted: { workerId: string } | null) => {
+  if (!accepted) return
+  notifyUser(getProvider(), accepted.workerId, 'post_completed', { postTitle })
 }
 
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'Paused') {
+  if (post.status !== PostStatus.Paused) {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
   }
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
-    await updateApplicationStatus(accepted.id, 'Completed')
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
   }
-  return updatePostStatus(postId, 'Completed')
+  const result = await updatePostStatus(postId, PostStatus.Completed)
+  notifyOtherOnComplete(post.title, accepted)
+  return result
 }
 
 export const completePost = async (postId: string, userId: string) => {
@@ -181,21 +217,23 @@ export const completePost = async (postId: string, userId: string) => {
   if (accepted) {
     await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
   }
-  return updatePostStatus(postId, ApplicationStatus.Completed)
+  const result = await updatePostStatus(postId, ApplicationStatus.Completed)
+  notifyOtherOnComplete(post.title, accepted)
+  return result
 }
 
 export const reopenPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'In progress') {
+  if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
   }
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
-    await updateApplicationStatus(accepted.id, 'Pending')
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Pending)
   }
-  return updatePostStatus(postId, 'Active')
+  return updatePostStatus(postId, PostStatus.Active)
 }
 
 export const updatePost = async (postId: string, userId: string, input: Omit<UpdatePostInput, 'userId'>) => {
