@@ -2,7 +2,7 @@ import type { WorkerResult } from '../database/worker.database.js'
 import type { ReviewResult } from '../database/review.database.js'
 import type { DomainWorker, DomainWorkerReview } from '../../domain/types/worker.types.js'
 
-function parseJsonArray(raw: string | null): any[] {
+function parseJsonArray<T>(raw: string | null): T[] {
   if (!raw) return []
   try {
     const parsed = JSON.parse(raw)
