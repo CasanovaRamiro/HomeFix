@@ -9,6 +9,7 @@ const publicFields = {
   name: true,
   email: true,
   phone: true,
+  photo: true,
   role: true,
   createdAt: true,
 } as const

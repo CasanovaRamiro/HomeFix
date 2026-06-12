@@ -5,8 +5,23 @@ export interface DomainWorker {
   phone: string | null
   bio: string | null
   role: string
+  photo: string | null
+  availability: string[]
   createdAt: Date
   categories: { id: string; name: string }[]
+  certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
+  gallery: { id: string; imageUrl: string; caption: string | null }[]
+}
+
+export interface UpdateWorkerInput {
+  name?: string
+  phone?: string | null
+  bio?: string | null
+  photo?: string | null
+  categoryIds?: string[]
+  availability?: string[]
+  certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]
+  gallery?: { id: string; imageUrl: string; caption?: string | null }[]
 }
 
 export interface DomainWorkerReview {

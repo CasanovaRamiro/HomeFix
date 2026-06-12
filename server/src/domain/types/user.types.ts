@@ -3,6 +3,7 @@ export interface DomainUser {
   name: string
   email: string
   phone: string | null
+  photo: string | null
   role: string
   createdAt: Date
 }

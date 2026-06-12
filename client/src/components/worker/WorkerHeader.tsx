@@ -72,14 +72,14 @@ export default function WorkerHeader({ worker }: Props) {
         {/* Categories */}
         {worker.categories.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-            {worker.categories.map(({ category }) => (
-              <span key={category.id} style={{
+            {worker.categories.map((c) => (
+              <span key={c.id} style={{
                 background: '#EFF6FF', color: '#1D4ED8',
                 fontSize: 12, fontWeight: 600,
                 padding: '4px 12px', borderRadius: 999,
                 border: '1px solid #BFDBFE',
               }}>
-                {category.name}
+                {c.name}
               </span>
             ))}
           </div>

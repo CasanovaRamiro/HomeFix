@@ -158,9 +158,13 @@ export default function Navbar(): React.ReactElement | null {
                     color:      'inherit',
                   }}
                 >
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: theme.primaryDark, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' }}>
-                    {displayInitial}
-                  </div>
+                  {user?.photo ? (
+                    <img src={user.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: theme.primaryDark, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' }}>
+                      {displayInitial}
+                    </div>
+                  )}
                   <span style={{ fontSize: '14px', fontWeight: '500', color: theme.primaryDark, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {displayName}
                   </span>

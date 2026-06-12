@@ -203,6 +203,7 @@ export default function PostDetail() {
               applicant={{
                 id: a.workerId,
                 name: a.name,
+                photo: a.photo,
                 category: a.category ?? '',
                 address: a.address,
                 rating: a.rating,

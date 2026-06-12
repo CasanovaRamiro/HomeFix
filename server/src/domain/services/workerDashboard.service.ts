@@ -41,6 +41,7 @@ export const getWorkerDashboard = async (workerId: string) => {
       email: profile.email,
       phone: profile.phone,
       bio: profile.bio,
+      photo: profile.photo,
       createdAt: profile.createdAt,
       location: profile.location,
       categories: profile.categories,
