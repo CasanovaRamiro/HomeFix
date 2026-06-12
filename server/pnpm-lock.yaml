@@ -15,7 +15,7 @@ importers:
         specifier: ~5.22.0
         version: 5.22.0(prisma@5.22.0)
       '@types/socket.io':
-        specifier: ^3.0.2
+        specifier: ~3.0.2
         version: 3.0.2
       cloudinary:
         specifier: ~2.10.0
@@ -39,10 +39,10 @@ importers:
         specifier: ~2.1.1
         version: 2.1.1
       socket.io:
-        specifier: ^4.8.3
+        specifier: ~4.8.3
         version: 4.8.3
       telegraf:
-        specifier: ^4.16.3
+        specifier: ~4.16.3
         version: 4.16.3
     devDependencies:
       '@eslint/js':

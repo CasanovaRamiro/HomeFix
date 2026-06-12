@@ -12,6 +12,8 @@ import { findUserById } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser } from './notification.service.js'
+import { ApplicationStatus } from '../types/applicationStatus.js'
+import { PostStatus } from '../types/postStatus.js'
 import type { DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
@@ -39,7 +41,7 @@ export const cancelApplication = async (workerId: string, applicationId: string)
 export const applyToPost = async (workerId: string, postId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
-  if (post.status !== 'Active') throw Object.assign(new Error('This post is no longer available'), { status: 400 })
+  if (post.status !== PostStatus.Active) throw Object.assign(new Error('This post is no longer available'), { status: 400 })
 
   const existing = await findApplication(workerId, postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
@@ -59,11 +61,11 @@ export const acceptApplication = async (clientId: string, applicationId: string)
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (application.status !== 'Pending') throw Object.assign(new Error('Application is not pending'), { status: 400 })
-  if (application.post.status !== 'Active') throw Object.assign(new Error('Post is not active'), { status: 400 })
+  if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
+  if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
 
-  const accepted = await updateApplicationStatus(applicationId, 'Accepted')
-  await updatePostStatus(application.postId, 'In progress')
+  const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
+  await updatePostStatus(application.postId, PostStatus.InProgress)
 
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
     postTitle: application.post.title,
@@ -76,9 +78,9 @@ export const rejectApplication = async (clientId: string, applicationId: string)
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (application.status !== 'Pending') throw Object.assign(new Error('Application is not pending'), { status: 400 })
+  if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
 
-  const rejected = await updateApplicationStatus(applicationId, 'Rejected')
+  const rejected = await updateApplicationStatus(applicationId, ApplicationStatus.Rejected)
 
   notifyUser(getProvider(), application.workerId, 'application_rejected', {
     postTitle: application.post.title,

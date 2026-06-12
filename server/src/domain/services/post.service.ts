@@ -124,10 +124,10 @@ export const pausePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'Active' && post.status !== 'Paused') {
+  if (post.status !== PostStatus.Active && post.status !== PostStatus.Paused) {
     throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
   }
-  const newStatus = post.status === 'Active' ? 'Paused' : 'Active'
+  const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
   return updatePostStatus(postId, newStatus)
 }
 
@@ -135,13 +135,13 @@ export const cancelPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status === 'Completed' || post.status === 'Cancelled') {
+  if (post.status === PostStatus.Completed || post.status === PostStatus.Cancelled) {
     throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
   }
   await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
   await deletePostImages(postId)
 
-  const result = await updatePostStatus(postId, 'Cancelled')
+  const result = await updatePostStatus(postId, PostStatus.Cancelled)
 
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
@@ -162,14 +162,14 @@ export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'Paused') {
+  if (post.status !== PostStatus.Paused) {
     throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
   }
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
-    await updateApplicationStatus(accepted.id, 'Completed')
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
   }
-  const result = await updatePostStatus(postId, 'Completed')
+  const result = await updatePostStatus(postId, PostStatus.Completed)
   notifyOtherOnComplete(post.title, accepted)
   return result
 }
@@ -194,14 +194,14 @@ export const reopenPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== 'In progress') {
+  if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
   }
   const accepted = await findAcceptedApplication(postId)
   if (accepted) {
-    await updateApplicationStatus(accepted.id, 'Pending')
+    await updateApplicationStatus(accepted.id, ApplicationStatus.Pending)
   }
-  return updatePostStatus(postId, 'Active')
+  return updatePostStatus(postId, PostStatus.Active)
 }
 
 export const updatePost = async (postId: string, userId: string, input: Omit<UpdatePostInput, 'userId'>) => {
