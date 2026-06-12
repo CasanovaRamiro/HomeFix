@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import type { CreatePostInput } from "../../src/domain/types/post.types.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -213,5 +213,59 @@ describe("findPostsByUser", () => {
     const posts = await findPostsByUser(userId);
     expect(posts).toHaveLength(2);
     expect(posts[0].title).toBe("Second post");
+  });
+});
+
+describe("findAvailableSubcontracts", () => {
+  it("should return only active subcontracts", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Electricista needed",
+        description: "Subcontract for electrical work",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        address: "Calle 123",
+        status: "Active",
+        type: "subcontract",
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toHaveLength(1);
+    expect(posts[0].title).toBe("Electricista needed");
+    expect(posts[0].type).toBe("subcontract");
+  });
+
+  it("should exclude regular posts", async () => {
+    await createPost(createValidPost());
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
+  });
+
+  it("should exclude non-active subcontracts", async () => {
+    const sub = await prisma.post.create({
+      data: {
+        userId,
+        title: "Cancelled subcontract",
+        description: "Test",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        address: "Calle 123",
+        status: "Cancelled",
+        type: "subcontract",
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
+  });
+
+  it("should return empty array when no subcontracts exist", async () => {
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
   });
 });

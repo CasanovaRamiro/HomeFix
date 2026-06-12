@@ -8,6 +8,7 @@ import {
   pausePost,
   cancelPost,
   listAvailablePosts,
+  findAvailableSubcontracts,
   listEmergencyPosts,
   searchPostsByDistance,
   completePost,
@@ -98,6 +99,25 @@ router.get('/search-location', async (req, res, next) => {
 
     const posts = await searchPostsByDistance(lat, lng, radius, category)
     res.json(posts.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/availableSubcontracts', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await findAvailableSubcontracts()
+    res.json(result.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
