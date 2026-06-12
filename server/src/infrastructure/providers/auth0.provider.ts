@@ -1,5 +1,5 @@
 import { createHttpError } from '../../lib/errors.js'
-import type { Auth0SignupResponse, Auth0TokenResponse, Auth0UserInfoResponse } from '../types/auth0.types.js'
+import type { Auth0SignupResponse, Auth0TokenResponse, Auth0UserInfoResponse, Auth0ManagementUser } from '../types/auth0.types.js'
 import { env } from '../../lib/envConfig.js'
 
 const getIssuerBaseUrl = () => {
@@ -83,13 +83,15 @@ export const createAuth0User = async (payload: {
 
   if (!response.ok) {
     const text = await response.text()
+
     console.error('Auth0 signup error', response.status, text)
-    if (response.status === 400 && /already exists|user already exists|exists/i.test(text)) {
+    if (response.status === 400 && (/already exists|user already exists|exists/i.test(text) || /"code":"invalid_signup"/.test(text))) {
       throw createHttpError(409, 'Email already registered')
     }
     if (response.status === 400 && /password|weak/i.test(text)) {
       throw createHttpError(400, 'Password does not meet Auth0 policy')
     }
+    console.error('Auth0 signup error:', response.status, text)
     throw createHttpError(502, 'Failed to create user in Auth0')
   }
 
@@ -141,6 +143,35 @@ export const getAuth0UserInfo = async (accessToken: string): Promise<Auth0UserIn
   }
 
   return (await response.json()) as Auth0UserInfoResponse
+}
+
+export const getAuth0UserByEmail = async (email: string): Promise<Auth0ManagementUser | null> => {
+  const issuer = getIssuerBaseUrl()
+  const token = await getManagementToken()
+
+  const resp = await fetch(`${issuer}/api/v2/users-by-email?email=${encodeURIComponent(email)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (!resp.ok) return null
+
+  const users = (await resp.json()) as Auth0ManagementUser[]
+  return users[0] ?? null
+}
+
+export const sendAuth0VerificationEmail = async (auth0UserId: string): Promise<void> => {
+  const issuer = getIssuerBaseUrl()
+  const token = await getManagementToken()
+
+  const resp = await fetch(`${issuer}/api/v2/jobs/verification-email`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: auth0UserId }),
+  })
+
+  if (!resp.ok) {
+    throw createHttpError(502, 'Error al enviar el email de verificación')
+  }
 }
 
 export const sendAuth0PasswordReset = async (email: string): Promise<void> => {

@@ -13,6 +13,7 @@ import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 import ApplyModal from '../components/worker/ApplyModal'
+import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -764,7 +765,10 @@ function Sidebar({ workerId }: { workerId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Mis Validaciones */}
+        {/* Telegram */}
+        <TelegramLinkCard />
+
+        {/* Mis Validaciones */}
       <div style={{
         background: '#fff', border: '1px solid #E2E8F0',
         borderRadius: 16, padding: '20px 20px 16px',

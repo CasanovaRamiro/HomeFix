@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:test": "cross-env DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma db push --accept-data-loss --skip-generate",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
@@ -27,13 +28,16 @@
   "dependencies": {
     "@google/generative-ai": "~0.24.1",
     "@prisma/client": "~5.22.0",
+    "@types/socket.io": "~3.0.2",
     "cloudinary": "~2.10.0",
     "cors": "~2.8.6",
     "dotenv": "~17.4.2",
     "express": "~5.2.1",
     "express-oauth2-jwt-bearer": "~1.9.0",
     "morgan": "~1.10.1",
-    "multer": "~2.1.1"
+    "multer": "~2.1.1",
+    "socket.io": "~4.8.3",
+    "telegraf": "~4.16.3"
   },
   "onlyBuiltDependencies": [
     "@prisma/client",

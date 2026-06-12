@@ -29,6 +29,8 @@ const mockUser = {
   active: true,
   deleted: false,
   emergenciesEnabled: false,
+  telegramChatId: null as string | null,
+  telegramLinkedAt: null as Date | null,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',
@@ -191,6 +193,7 @@ describe('auth.service - loginUser', () => {
           sub: 'auth0|1',
           email: 'jane@test.com',
           name: 'Jane',
+          email_verified: true,
         }),
       } as Response)
 

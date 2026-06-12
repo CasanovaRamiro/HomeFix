@@ -20,6 +20,10 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   searchByDistance: vi.fn(),
 }))
 
+vi.mock("../../src/infrastructure/database/user.database.js", () => ({
+  findUserById: vi.fn(),
+}))
+
 beforeEach(() => vi.clearAllMocks())
 
 const mockApplication = {
@@ -29,7 +33,7 @@ const mockApplication = {
   status: "Pending",
   createdAt: new Date(),
   updatedAt: new Date(),
-  post: { userId: "client-1", status: "Active" },
+  post: { userId: "client-1", title: "Test post", status: "Active" },
 }
 
 describe("acceptApplication", () => {
@@ -66,7 +70,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is not Active", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", status: "In progress" },
+      post: { userId: "client-1", title: "Test post", status: "In progress" },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -75,7 +79,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is Paused", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", status: "Paused" },
+      post: { userId: "client-1", title: "Test post", status: "Paused" },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })

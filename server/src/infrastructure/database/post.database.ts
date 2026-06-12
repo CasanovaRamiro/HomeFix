@@ -6,9 +6,56 @@ import { PostStatus } from '../../domain/types/postStatus.js'
 import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import { EMERGENCY_DURATION_MS } from '../../domain/constants.js'
 
+type _CreatePostRecordInput = {
+  userId: string
+  type: string
+  parentPostId: string | null
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  isEmergency: boolean
+  emergencyExpiresAt: Date | null
+  images?: { url: string }[]
+  categories: {
+    categoryId: string
+    quantity?: number
+    filledCount?: number
+    roleDescription?: string | null
+  }[]
+}
+
+async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPost> {
+  const raw = await prisma.post.create({
+    data: {
+      userId: data.userId,
+      type: data.type,
+      parentPostId: data.parentPostId,
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      address: data.address,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      isEmergency: data.isEmergency,
+      emergencyExpiresAt: data.emergencyExpiresAt,
+      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
+      categories: { create: data.categories },
+    },
+    select: postFields,
+  }) as unknown as PrismaPostFull
+  return toDomainPost(raw)
+}
+
 const postFields = {
   id: true,
   userId: true,
+  type: true,
+  parentPostId: true,
   title: true,
   description: true,
   startDate: true,
@@ -31,6 +78,9 @@ const postFields = {
           name: true,
         },
       },
+      quantity: true,
+      filledCount: true,
+      roleDescription: true,
     },
   },
   user: {
@@ -46,31 +96,52 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
   const now = new Date()
   const startDate = data.startDate ? new Date(data.startDate) : now
   const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
-  const raw = await prisma.post.create({
-    data: {
-      userId: data.userId,
-      title: data.title,
-      description: data.description,
-      startDate,
-      endDate,
-      address: data.address,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
-      isEmergency: data.isEmergency ?? false,
-      emergencyExpiresAt: data.emergencyExpiresAt ?? null,
-      categories: {
-        create: { categoryId: data.categoryId },
-      },
-      ...(data.images?.length ? {
-        images: {
-          create: data.images.map((img) => ({ url: img.url })),
-        },
-      } : {}),
-    },
-    select: postFields,
-  }) as unknown as PrismaPostFull
-  return toDomainPost(raw)
+  return _createPostRecord({
+    userId: data.userId,
+    type: 'post',
+    parentPostId: null,
+    title: data.title,
+    description: data.description,
+    startDate,
+    endDate,
+    address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    isEmergency: data.isEmergency ?? false,
+    emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    images: data.images,
+    categories: [{ categoryId: data.categoryId }],
+  })
 }
+
+export const createSubPost = async (data: {
+  userId: string
+  parentPostId?: string
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  positions: { categoryId: string; quantity: number; roleDescription: string }[]
+}): Promise<DomainPost> =>
+  _createPostRecord({
+    userId: data.userId,
+    type: 'subcontract',
+    parentPostId: data.parentPostId ?? null,
+    title: data.title,
+    description: data.description,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    address: data.address,
+    isEmergency: false,
+    emergencyExpiresAt: null,
+    categories: data.positions.map(p => ({
+      categoryId: p.categoryId,
+      quantity: p.quantity,
+      filledCount: 0,
+      roleDescription: p.roleDescription,
+    })),
+  })
 
 const availablePostWhere = (category?: string) => ({
   status: 'Active',

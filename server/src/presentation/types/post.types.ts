@@ -1,6 +1,9 @@
 export interface PostCategoryDTO {
   id: string
   name: string
+  quantity?: number
+  filledCount?: number
+  roleDescription?: string
 }
 
 export interface UserPostDTO {
@@ -20,9 +23,26 @@ export interface UserPostDTO {
   emergencyExpiresAt: string | null
 }
 
+export interface CreateSubcontractRequest {
+  userId: string
+  parentPostId?: string
+  title?: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  address?: string
+  positions: {
+    categoryId: string
+    quantity: number
+    roleDescription: string
+  }[]
+}
+
 export interface PostDTO {
   id: string
   userId: string
+  type?: string
+  parentPostId?: string
   title: string
   description: string
   startDate: string

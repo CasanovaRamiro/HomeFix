@@ -1,5 +1,5 @@
 import api from './api'
-import type { Post } from '../types/post'
+import type { Post, CreateSubcontractInput, SubcontractDTO } from '../types/post'
 
 export interface PaginatedPosts {
   data: Post[]
@@ -37,3 +37,6 @@ export const searchPostsByLocation = (lat: number, lng: number, radius: number, 
 
 export const fetchPostById = (id: string) =>
   api.get<Post>(`/posts/${id}`)
+
+export const createSubcontract = (data: CreateSubcontractInput) =>
+  api.post<SubcontractDTO>('/posts/create-subcontract', data)

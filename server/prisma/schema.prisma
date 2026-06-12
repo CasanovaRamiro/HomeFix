@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -23,6 +24,8 @@ model User {
   active          Boolean          @default(true)
   deleted         Boolean          @default(false)
   emergenciesEnabled Boolean         @default(false)
+  telegramChatId  String?          @unique
+  telegramLinkedAt DateTime?
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")
@@ -36,6 +39,7 @@ model User {
   addressId        String  @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
   address          Address        @relation(fields: [addressId], references: [id])
+  telegramLinkCodes TelegramLinkCode[]
 
 }
 
@@ -43,6 +47,10 @@ model Post {
   id              String           @id @default(uuid())
   userId          String
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String           @default("client")
+  parentPostId    String?
+  parentPost      Post?            @relation("SubPosts", fields: [parentPostId], references: [id])
+  subPosts        Post[]           @relation("SubPosts")
   startDate       DateTime
   endDate         DateTime
   title           String
@@ -69,11 +77,14 @@ model Category {
 }
 
 model PostCategory {
-  id         String   @id @default(uuid())
-  postId     String
-  categoryId String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  postId          String
+  categoryId      String
+  quantity        Int      @default(1)
+  filledCount     Int      @default(0)
+  roleDescription String?
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([postId, categoryId])
 }
@@ -167,6 +178,18 @@ model Address {
   users     User[]
 
   @@map("address")
+}
+
+model TelegramLinkCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("telegram_link_code")
 }
 
 

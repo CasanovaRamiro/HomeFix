@@ -4,6 +4,8 @@ import type { DomainPost } from '../../domain/types/post.types.js'
 export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   id: post.id,
   userId: post.userId,
+  type: post.type,
+  parentPostId: post.parentPostId,
   title: post.title,
   description: post.description,
   startDate: post.startDate,
@@ -16,6 +18,12 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   longitude: post.longitude,
   isEmergency: post.isEmergency,
   emergencyExpiresAt: post.emergencyExpiresAt,
-  categories: post.categories.map((pc) => pc.category),
+  categories: post.categories.map((pc) => ({
+    id: pc.category.id,
+    name: pc.category.name,
+    quantity: pc.quantity,
+    filledCount: pc.filledCount,
+    roleDescription: pc.roleDescription,
+  })),
   user: post.user,
 })

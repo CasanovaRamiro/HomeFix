@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
 import { getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
-import type { CreatePostInput, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
+import type { CreatePostInput, CreateSubcontractCommand, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   createPost: vi.fn(),
@@ -14,6 +14,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
   deletePostImages: vi.fn(),
+  createSubPost: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -578,5 +579,101 @@ describe('post.service - updatePost', () => {
   it('lanza error si endDate <= startDate', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
     await expect(postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, endDate: new Date('2026-05-01') })).rejects.toThrow('endDate must be after startDate')
+  })
+})
+
+describe('post.service - createSubContract', () => {
+  const validInput: CreateSubcontractCommand = {
+    userId: 'mmo-user-id',
+    parentPostId: 'parent-post-id',
+    positions: [
+      { categoryId: 'cat-1', quantity: 2, roleDescription: 'Albañilería general' },
+      { categoryId: 'cat-2', quantity: 1, roleDescription: 'Instalación eléctrica' },
+    ],
+  }
+
+  const parentPostMock: DomainPost = {
+    id: 'parent-post-id',
+    userId: 'client-user-id',
+    title: 'Arreglo de cocina',
+    description: 'Arreglar cocina completa',
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-15'),
+    address: 'Calle 123',
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'client-user-id', name: 'Client', surname: 'Test' },
+  }
+
+  const createdSubPostMock: DomainPost = {
+    id: 'new-sub-post-id',
+    userId: 'mmo-user-id',
+    title: 'Subcontratación: Arreglo de cocina',
+    description: 'Se necesita: 2 Albañilería general, 1 Instalación eléctrica',
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-15'),
+    address: 'Calle 123',
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'mmo-user-id', name: 'MMO', surname: 'Test' },
+  }
+
+  it('creates a subcontract with parentPostId', async () => {
+    vi.mocked(findPostById).mockResolvedValue(parentPostMock)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1',
+      workerId: 'mmo-user-id',
+      postId: 'parent-post-id',
+      status: 'Accepted',
+    } as never)
+    vi.mocked(createSubPost).mockResolvedValue(createdSubPostMock)
+
+    const result = await postService.createSubContract(validInput)
+
+    expect(findPostById).toHaveBeenCalledWith('parent-post-id')
+    expect(findAcceptedApplication).toHaveBeenCalledWith('parent-post-id')
+    expect(createSubPost).toHaveBeenCalled()
+    expect(result.title).toBe('Subcontratación: Arreglo de cocina')
+  })
+
+  it('throws 404 when parentPost does not exist', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.createSubContract(validInput)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('throws 403 when user is not the accepted MMO on parentPost', async () => {
+    vi.mocked(findPostById).mockResolvedValue(parentPostMock)
+    vi.mocked(findAcceptedApplication).mockResolvedValue(null)
+
+    await expect(postService.createSubContract(validInput)).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('creates a subcontract without parentPostId', async () => {
+    const noParentInput: CreateSubcontractCommand = {
+      userId: 'mmo-user-id',
+      startDate: new Date('2026-08-01'),
+      endDate: new Date('2026-08-15'),
+      address: 'Otra calle 456',
+      positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
+    }
+    vi.mocked(createSubPost).mockResolvedValue({
+      ...createdSubPostMock,
+      parentPostId: undefined,
+      title: 'Subcontratación',
+    } as never)
+
+    const result = await postService.createSubContract(noParentInput)
+
+    expect(createSubPost).toHaveBeenCalled()
+    expect(result.parentPostId).toBeUndefined()
   })
 })

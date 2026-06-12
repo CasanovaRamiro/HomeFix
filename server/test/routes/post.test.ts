@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
@@ -816,5 +816,97 @@ describe('PATCH /posts/:id (update)', () => {
       .send({ title: 'x', description: 'x', startDate: '2026-06-01', endDate: '2026-06-15', address: 'x', categoryId })
 
     expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /posts/create-subcontract', () => {
+  let parentPostId: string
+  let catAlbanilId: string
+  let catElectricistaId: string
+
+  beforeEach(async () => {
+    const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    const cat1 = await createCategory('Albañil')
+    const cat2 = await createCategory('Electricista')
+    catAlbanilId = cat1.id
+    catElectricistaId = cat2.id
+
+    const post = await prisma.post.create({
+      data: {
+        userId: client.id,
+        title: 'Arreglo de cocina',
+        description: 'Arreglar la cocina completa',
+        startDate: new Date('2026-07-01'),
+        endDate: new Date('2026-07-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        categories: { create: { categoryId: cat1.id } },
+      },
+    })
+    parentPostId = post.id
+
+    const mmo = await createUser('mmo@test.com', 'MMO', 'hashed', { role: UserRole.Worker })
+    await prisma.application.create({
+      data: { workerId: mmo.id, postId: post.id, status: 'Accepted' },
+    })
+
+    setMockPayload({ sub: 'auth0|mmo', email: 'mmo@test.com' })
+  })
+
+  afterEach(() => {
+    resetMockPayload()
+  })
+
+  const validPayload = () => ({
+    parentPostId,
+    positions: [
+      { categoryId: catAlbanilId, quantity: 2, roleDescription: 'Albañilería general' },
+      { categoryId: catElectricistaId, quantity: 1, roleDescription: 'Instalación eléctrica' },
+    ],
+  })
+
+  it('creates a subcontract linked to a parent post', async () => {
+    const res = await request(app)
+      .post('/posts/create-subcontract')
+      .set('Authorization', 'Bearer test-token')
+      .send(validPayload())
+
+    expect(res.status).toBe(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body.type).toBe('subcontract')
+    expect(res.body.parentPostId).toBe(parentPostId)
+    expect(res.body.title).toBe('Subcontratación: Arreglo de cocina')
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).post('/posts/create-subcontract').send(validPayload())
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 400 when positions is empty', async () => {
+    const res = await request(app)
+      .post('/posts/create-subcontract')
+      .set('Authorization', 'Bearer test-token')
+      .send({ parentPostId, positions: [] })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 404 when parentPost does not exist', async () => {
+    const res = await request(app)
+      .post('/posts/create-subcontract')
+      .set('Authorization', 'Bearer test-token')
+      .send({ parentPostId: 'non-existent-id', positions: validPayload().positions })
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 403 when user is not the accepted MMO on parentPost', async () => {
+    await createUser('otro@test.com', 'Otro', 'hashed', { role: UserRole.Worker })
+    setMockPayload({ sub: 'auth0|otro', email: 'otro@test.com' })
+
+    const res = await request(app)
+      .post('/posts/create-subcontract')
+      .set('Authorization', 'Bearer test-token')
+      .send(validPayload())
+    expect(res.status).toBe(403)
   })
 })

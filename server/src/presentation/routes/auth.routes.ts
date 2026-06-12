@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { createHttpError } from '../../lib/errors.js'
-import { loginUser, registerUser, registerWorker, syncAuth0User, forgotPassword } from '../../domain/services/auth.service.js'
+import { loginUser, registerUser, registerWorker, syncAuth0User, forgotPassword, resendVerificationEmail } from '../../domain/services/auth.service.js'
 
 const router = Router()
 
@@ -28,6 +28,15 @@ router.post('/register/worker', async (req, res, next) => {
 
     const result = await registerWorker(req.body)
     res.status(201).json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/resend-verification', async (req, res, next) => {
+  try {
+    const result = await resendVerificationEmail(req.body.email)
+    res.status(200).json(result)
   } catch (err) {
     next(err)
   }
