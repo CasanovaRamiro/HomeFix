@@ -8,7 +8,6 @@ const DIDIT_URL = "https://verification.didit.me/v3/session/"
 beforeEach(() => {
   vi.stubEnv("DIDIT_API_KEY", "test-api-key")
   vi.stubEnv("DIDIT_WORKFLOW_ID", "test-workflow-id")
-  vi.stubEnv("DIDIT_CALLBACK_URL", "")
   vi.stubGlobal("fetch", mockFetch)
   mockFetch.mockReset()
 })
@@ -47,33 +46,7 @@ describe("createDiditSession", () => {
     })
   })
 
-  it("includes callback and callback_method when DIDIT_CALLBACK_URL is set", async () => {
-    vi.stubEnv("DIDIT_CALLBACK_URL", "http://localhost:5173/kyc")
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        session_id: "sess-1",
-        url: "https://verify.didit.me/session/sess-1",
-      }),
-    })
-
-    await createDiditSession("user-1")
-
-    const [, init] = mockFetch.mock.calls[0]
-    expect(JSON.parse(init.body)).toEqual({
-      workflow_id: "test-workflow-id",
-      vendor_data: "user-1",
-      expected_details: { id_country: "ARG" },
-      callback: "http://localhost:5173/kyc",
-      callback_method: "both",
-    })
-  })
-
-  it("omits callback when DIDIT_CALLBACK_URL is not set", async () => {
-    vi.stubEnv("DIDIT_CALLBACK_URL", "")
-
+  it("omits callback and callback_method from the body", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,

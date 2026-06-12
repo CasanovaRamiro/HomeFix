@@ -1,6 +1,5 @@
 import { env } from '../../lib/envConfig.js'
 
-const DIDIT_API_BASE = 'https://verification.didit.me'
 const TIMEOUT_MS = 10_000
 
 interface DiditSessionResponse {
@@ -22,7 +21,6 @@ export const createDiditSession = async (
 ): Promise<{ sessionUrl: string; sessionId: string }> => {
   const apiKey = env.DIDIT_API_KEY
   const workflowId = env.DIDIT_WORKFLOW_ID
-  const callbackUrl = env.DIDIT_CALLBACK_URL
 
   if (!apiKey) throw createHttpError(500, 'DIDIT_API_KEY is not configured')
   if (!workflowId) throw createHttpError(500, 'DIDIT_WORKFLOW_ID is not configured')
@@ -32,7 +30,7 @@ export const createDiditSession = async (
 
   let response: Response
   try {
-    response = await fetch(`${DIDIT_API_BASE}/v3/session/`, {
+    response = await fetch(`${env.DIDIT_BASE_URL}/v3/session/`, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
@@ -43,7 +41,6 @@ export const createDiditSession = async (
         workflow_id: workflowId,
         vendor_data: vendorData,
         expected_details: { id_country: 'ARG' },
-        ...(callbackUrl ? { callback: callbackUrl, callback_method: 'both' } : {}),
       }),
       signal: controller.signal,
     })
@@ -89,7 +86,7 @@ export const getDecision = async (sessionId: string): Promise<DiditDecision> => 
 
   let response: Response
   try {
-    response = await fetch(`${DIDIT_API_BASE}/v3/session/${sessionId}/decision/`, {
+    response = await fetch(`${env.DIDIT_BASE_URL}/v3/session/${sessionId}/decision/`, {
       method: 'GET',
       headers: {
         'x-api-key': apiKey,
@@ -142,7 +139,7 @@ export const getSessionStatus = async (
 
   let response: Response
   try {
-    response = await fetch(`${DIDIT_API_BASE}/v3/session/${sessionId}/`, {
+    response = await fetch(`${env.DIDIT_BASE_URL}/v3/session/${sessionId}/`, {
       method: 'GET',
       headers: {
         'x-api-key': apiKey,

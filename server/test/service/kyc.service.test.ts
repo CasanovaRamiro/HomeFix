@@ -240,7 +240,7 @@ describe("confirmKyc", () => {
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 
-  it("throws 404 when the session does not exist in Didit", async () => {
+  it("throws 404 when the session does not exist in Didit and no sdkStatus provided", async () => {
     mockFindByEmail.mockResolvedValue(user)
     const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
     err.status = 404
@@ -251,6 +251,22 @@ describe("confirmKyc", () => {
       message: "La sesión de verificación no existe",
     })
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
+
+  it("falls back to sdkStatus when Didit returns 404", async () => {
+    mockFindByEmail.mockResolvedValue(user)
+    const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
+    err.status = 404
+    mockGetSessionStatus.mockRejectedValue(err)
+
+    const result = await confirmKyc("foo@bar.com", "sess-fallback", "Approved")
+
+    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
+      kycStatus: "APPROVED",
+      kycVerifiedAt: expect.any(Date),
+      diditVerificationId: "sess-fallback",
+    })
+    expect(result).toEqual({ status: "APPROVED", sessionId: "sess-fallback" })
   })
 
   it("propagates provider 502 errors", async () => {

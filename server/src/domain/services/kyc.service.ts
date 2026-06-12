@@ -47,14 +47,28 @@ export const startKycVerification = async (
 export const confirmKyc = async (
   email: string,
   sessionId: string,
+  sdkStatus?: string,
 ): Promise<{ status: KycStatus; sessionId: string }> => {
   const user = await findByEmail(email)
   if (!user) {
     throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
   }
 
-  const session = await getSessionStatus(sessionId)
-  const mappedStatus = DIDIT_STATUS_MAP[session.status] ?? 'IN_REVIEW'
+  let diditStatus: string
+  try {
+    const session = await getSessionStatus(sessionId)
+    diditStatus = session.status
+  } catch (e) {
+    const err = e as { status?: number }
+    if (err.status === 404 && sdkStatus) {
+      console.warn(`[KYC] Didit 404 for session ${sessionId}, using SDK status: ${sdkStatus}`)
+      diditStatus = sdkStatus
+    } else {
+      throw e
+    }
+  }
+
+  const mappedStatus = DIDIT_STATUS_MAP[diditStatus] ?? 'IN_REVIEW'
 
   const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
     ? new Date()

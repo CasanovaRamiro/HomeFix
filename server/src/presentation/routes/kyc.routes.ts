@@ -54,14 +54,14 @@ confirmRouter.post('/confirm', async (req, res, next) => {
       return
     }
 
-    const { sessionId, email } = req.body as { sessionId?: string; email?: string }
+    const { sessionId, email, status: sdkStatus } = req.body as { sessionId?: string; email?: string; status?: string }
     if (!sessionId || !email) {
       const err = new Error('sessionId y email son requeridos') as Error & { status?: number }
       err.status = 400
       throw err
     }
 
-    const result = await confirmKyc(email, sessionId)
+    const result = await confirmKyc(email, sessionId, sdkStatus)
     res.json(result)
   } catch (e) {
     const err = e as Error & { status?: number }

@@ -1,13 +1,11 @@
-import 'dotenv/config'
+import { env } from '../src/lib/envConfig.js'
 
-const API_KEY = process.env.DIDIT_API_KEY
+const API_KEY = env.DIDIT_API_KEY
 if (!API_KEY) {
   console.error('DIDIT_API_KEY no está configurado en .env')
   console.error('Agregalo a server/.env y volvé a correr el script.')
   process.exit(1)
 }
-
-const DIDIT_BASE = 'https://verification.didit.me'
 
 const FEATURES = [
   {
@@ -19,9 +17,6 @@ const FEATURES = [
   { feature: 'IP_ANALYSIS' },
 ] as const
 
-const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173'
-const API_BASE_URL = process.env.API_BASE_URL ?? 'https://api.miapinode.com'
-
 const DRY_RUN = process.argv.includes('--dry-run')
 
 interface DiditWorkflow {
@@ -31,7 +26,7 @@ interface DiditWorkflow {
 }
 
 const createWorkflow = async (): Promise<string> => {
-  const url = `${DIDIT_BASE}/v3/workflows/`
+  const url = `${env.DIDIT_BASE_URL}/v3/workflows/`
   const body = JSON.stringify({
     workflow_label: 'HomeFix KYC - Worker Onboarding',
     is_desktop_allowed: true,
@@ -85,7 +80,7 @@ const main = async (): Promise<void> => {
     console.log(`\nAgregá esta línea a server/.env:\n  DIDIT_WORKFLOW_ID=${workflowId}\n`)
     console.log(
       `Las URLs de retorno NO se configuran en el workflow — se pasan al crear cada session.\n` +
-      `El provider las manda automáticamente; la página de retorno es:\n  ${FRONTEND_URL}/kyc?status=...&verificationSessionId=...\n`,
+      `El flujo actual usa iframe embebido (SDK de Didit), no redirect.\n`,
     )
   }
 

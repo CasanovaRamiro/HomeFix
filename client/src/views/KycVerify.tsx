@@ -213,7 +213,7 @@ export default function KycVerify() {
     await handleStart()
   }
 
-  const handleModalComplete = async (sessionId: string, _status: string) => {
+  const handleModalComplete = async (sessionId: string, status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
     const email = user?.email
@@ -223,7 +223,7 @@ export default function KycVerify() {
       return
     }
     try {
-      const res = await confirmKycSession(sessionId, email)
+      const res = await confirmKycSession(sessionId, email, status)
       setCurrentStatus(res.status)
     } catch (e) {
       const err = e as { response?: { data?: { error?: string } } }
