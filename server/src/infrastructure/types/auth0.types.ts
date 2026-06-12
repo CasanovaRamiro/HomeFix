@@ -14,7 +14,14 @@ export interface Auth0TokenResponse {
 export interface Auth0UserInfoResponse {
   sub?: string
   email?: string
+  email_verified?: boolean
   name?: string
   nickname?: string
   phone_number?: string
+}
+
+export interface Auth0ManagementUser {
+  user_id: string
+  email: string
+  email_verified: boolean
 }

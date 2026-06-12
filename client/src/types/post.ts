@@ -38,6 +38,48 @@ export interface PostDTO {
 export type Post = PostDTO
 export type PostCategory = PostCategoryDTO
 
+export interface CreateSubcontractInput {
+  parentPostId?: string
+  title?: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  address?: string
+  positions: {
+    categoryId: string
+    quantity: number
+    roleDescription: string
+  }[]
+}
+
+// --- Subcontract types ---
+
+export interface SubcontractPosition {
+  categoryId: string
+  quantity: number
+  roleDescription: string
+}
+
+export interface SubcontractDTO {
+  id: string
+  userId: string
+  parentPostId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  categories: PostCategoryDTO[]
+  user: {
+    id: string
+    name: string
+    surname: string
+  }
+  clientRating: number
+}
+
 export interface TrabajoView {
   id: string
   titulo: string

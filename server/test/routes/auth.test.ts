@@ -145,6 +145,7 @@ describe('POST /auth/login', () => {
           sub: 'auth0|1',
           email: 'test@test.com',
           name: 'Test User',
+          email_verified: true,
         }),
       } as Response)
 

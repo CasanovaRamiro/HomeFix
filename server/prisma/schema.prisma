@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -47,6 +48,10 @@ model Post {
   id              String           @id @default(uuid())
   userId          String
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String           @default("client")
+  parentPostId    String?
+  parentPost      Post?            @relation("SubPosts", fields: [parentPostId], references: [id])
+  subPosts        Post[]           @relation("SubPosts")
   startDate       DateTime
   endDate         DateTime
   title           String
@@ -73,11 +78,14 @@ model Category {
 }
 
 model PostCategory {
-  id         String   @id @default(uuid())
-  postId     String
-  categoryId String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  postId          String
+  categoryId      String
+  quantity        Int      @default(1)
+  filledCount     Int      @default(0)
+  roleDescription String?
+  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([postId, categoryId])
 }

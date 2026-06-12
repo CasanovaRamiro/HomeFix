@@ -3,14 +3,15 @@ import { useNavigate, Link } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
-  AlertCircle, ArrowRight, ArrowLeft, Shield, Check, CheckCircle2,
-  CreditCard,
+  AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
+  CreditCard, MailCheck,
 } from 'lucide-react'
 import api from '../services/api'
-import { emitAuthChange } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
+import { emitAuthChange } from '../hooks/useAuth'
+
 
 type RegisterResponse = {
   userId: string
@@ -149,23 +150,24 @@ export default function RegisterWorker() {
                 <span className="absolute inset-0 rounded-full bg-accent/15 animate-ping" />
                 <span className="relative flex items-center justify-center w-20 h-20 rounded-full bg-accent/10">
                   <span className="flex items-center justify-center w-14 h-14 rounded-full bg-accent">
-                    <CheckCircle2 className="w-8 h-8 text-white" />
+                    <MailCheck className="w-8 h-8 text-white" />
                   </span>
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900">¡Cuenta creada con éxito!</h1>
+              <h1 className="text-2xl font-bold text-slate-900">¡Verificá tu email!</h1>
               <p className="mt-3 text-slate-500">
-                Tu cuenta de profesional fue creada correctamente
-                {form.email ? <> para <span className="font-medium text-slate-900">{form.email}</span></> : null}.
-                Ya puedes iniciar sesión.
+                Te enviamos un email de verificación a{' '}
+                {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
+                Hacé clic en el enlace para activar tu cuenta.
               </p>
+              <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
               {/* KYC next step */}
               <div className="mt-6 flex gap-3 text-left bg-slate-900/5 border border-slate-900/10 rounded-xl p-4">
                 <Shield className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-slate-900">Siguiente paso: verifica tu identidad</p>
+                  <p className="font-medium text-slate-900">Después de verificar: completá tu identidad</p>
                   <p className="text-slate-500 mt-1">
                     {kycMethod === 'automatic'
                       ? 'Deberás completar la verificación automática (DNI + Reconocimiento Facial) al iniciar sesión.'

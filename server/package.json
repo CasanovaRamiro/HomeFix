@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:test": "cross-env DATABASE_URL=mysql://ofix:ofix123@localhost:3306/ofix_test prisma db push --accept-data-loss --skip-generate",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",

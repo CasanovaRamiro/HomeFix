@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone,
-  AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck,
+  AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck, MailCheck,
 } from 'lucide-react'
 import api from '../services/api'
 import { useTheme } from '../hooks/useTheme'
@@ -98,7 +98,6 @@ export default function Register() {
       }
       await api.post<RegisterResponse>('/auth/register', payload)
       setSubmitted(true)
-      setTimeout(() => navigate('/login'), 2200)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? 'No se pudo completar el registro')
@@ -118,16 +117,19 @@ export default function Register() {
                 <span className="absolute inset-0 rounded-full bg-accent/15 animate-ping" />
                 <span className="relative flex items-center justify-center w-20 h-20 rounded-full bg-accent/10">
                   <span className="flex items-center justify-center w-14 h-14 rounded-full bg-accent">
-                    <CheckCircle2 className="w-8 h-8 text-white" />
+                    <MailCheck className="w-8 h-8 text-white" />
                   </span>
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900">¡Cuenta creada con éxito!</h1>
+              <h1 className="text-2xl font-bold text-slate-900">¡Verificá tu email!</h1>
               <p className="mt-3 text-slate-500">
-                Tu cuenta fue creada correctamente
-                {form.email ? <> para <span className="font-medium text-slate-900">{form.email}</span></> : null}.
-                Te llevamos a iniciar sesión…
+                Te enviamos un email de verificación a{' '}
+                {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
+                Hacé clic en el enlace del email para activar tu cuenta.
+              </p>
+              <p className="mt-2 text-sm text-slate-400">
+                Si no lo ves, revisá la carpeta de spam.
               </p>
 
               <button
