@@ -26,10 +26,10 @@ import AuthCallback from './views/AuthCallback'
 import ForgotPassword from './views/ForgotPassword'
 
 
-const PrivateRoute = ({ children }: { children: ReactNode }) =>
-  localStorage.getItem('token') ? children : <Navigate to="/login" replace />
+const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
+  (localStorage.getItem('token') !== null) ? children : <Navigate to="/login" replace />
 
-export default function App() {
+export default function App(): ReactNode {
   return (
     <BrowserRouter>
       <Navbar />

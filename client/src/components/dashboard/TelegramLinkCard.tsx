@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { type JSX, useState, useEffect } from 'react'
 import { Send, CheckCircle, XCircle, Copy, ExternalLink, Loader2 } from 'lucide-react'
 import { telegramLink, telegramStatus, telegramUnlink } from '../../services/api'
 
-export default function TelegramLinkCard() {
+export default function TelegramLinkCard(): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'loading' | 'linked' | 'unlinked'>('idle')
   const [code, setCode] = useState<string | null>(null)
   const [deepLink, setDeepLink] = useState<string | null>(null)
@@ -19,7 +19,7 @@ export default function TelegramLinkCard() {
       .catch(() => setStatus('unlinked'))
   }, [])
 
-  const handleLink = async () => {
+  const handleLink = async (): Promise<void> => {
     setBusy(true)
     try {
       const res = await telegramLink()
@@ -33,7 +33,7 @@ export default function TelegramLinkCard() {
     }
   }
 
-  const handleUnlink = async () => {
+  const handleUnlink = async (): Promise<void> => {
     setBusy(true)
     try {
       await telegramUnlink()
@@ -44,9 +44,9 @@ export default function TelegramLinkCard() {
     }
   }
 
-  const copyCode = () => {
-    if (code) {
-      navigator.clipboard.writeText(code)
+  const copyCode = (): void => {
+    if (code !== null) {
+      void navigator.clipboard.writeText(code)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
