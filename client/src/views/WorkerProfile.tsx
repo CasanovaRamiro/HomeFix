@@ -5,6 +5,7 @@ import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, type Wo
 import { useCategories } from '../hooks/useCategories'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
+import WorkerActions from '../components/worker/WorkerActions'
 import {
   ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
   Briefcase, Star, CheckCircle, Timer, Edit3, Plus,
@@ -51,19 +52,23 @@ export default function WorkerProfile() {
     if (!id) return
     setLoading(true)
     setError(null)
-    Promise.all([
+    Promise.allSettled([
       getWorker(id),
       getWorkerReviews(id),
     ])
-      .then(([w, r]) => {
+      .then(([workerResult, reviewsResult]) => {
+        if (workerResult.status === 'rejected') {
+          setError('No se encontró el trabajador.')
+          return
+        }
+        const w = workerResult.value
         setWorker(w)
-        setReviews(r)
         setForm({ name: w.name, phone: w.phone ?? '', bio: w.bio ?? '' })
         setSelectedCategories(w.categories.map((c) => c.id))
         setFormAvailability(w.availability)
         setPhotoPreview(w.photo)
+        if (reviewsResult.status === 'fulfilled') setReviews(reviewsResult.value)
       })
-      .catch(() => setError('No se encontró el trabajador.'))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -470,7 +475,7 @@ export default function WorkerProfile() {
             </div>
 
             {/* Categories */}
-            {worker.categories.length > 0 && (
+            {(worker.categories.length > 0 || isEditing) && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>Categorías</h3>
                 {isEditing && (
@@ -556,6 +561,10 @@ export default function WorkerProfile() {
                   })}
                 </div>
               </div>
+
+            {!isEditing && (
+              <WorkerActions workerId={worker.id} initialEnabled={worker.emergenciesEnabled} />
+            )}
 
             {/* Gallery */}
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>

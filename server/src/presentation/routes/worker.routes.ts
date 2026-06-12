@@ -29,7 +29,13 @@ router.patch('/:id', async (req, res, next) => {
       res.status(401).json({ error: 'Unauthorized' })
       return
     }
-    const authUser = await syncAuth0User(claims)
+    let authUser
+    try {
+      authUser = await syncAuth0User(claims)
+    } catch {
+      res.status(401).json({ error: 'No encontramos una cuenta con este correo. Por favor registrate primero.' })
+      return
+    }
     if (authUser.id !== req.params.id) {
       res.status(403).json({ error: 'Forbidden' })
       return
