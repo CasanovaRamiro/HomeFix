@@ -18,8 +18,6 @@ export default function AvailableSubcontracts() {
   const [page, setPage] = useState(1)
 
   useEffect(() => {
-    setLoading(true)
-    setError('')
     fetchAvailableSubcontracts()
       .then((res) => {
         setSubcontratos(res.data)
@@ -54,7 +52,15 @@ export default function AvailableSubcontracts() {
     return resultado
   }, [subcontratos, searchQuery, sortBy])
 
-  useEffect(() => { setPage(1) }, [searchQuery, sortBy])
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setPage(1)
+  }
+
+  const handleSortChange = (value: 'reciente' | 'antiguo') => {
+    setSortBy(value)
+    setPage(1)
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
   const paginated = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -156,7 +162,7 @@ export default function AvailableSubcontracts() {
                 type="search"
                 placeholder="Subcontrato, categoría..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 style={{
                   padding: '9px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0',
                   fontSize: 14, outline: 'none', width: '100%',
@@ -174,7 +180,7 @@ export default function AvailableSubcontracts() {
               <select
                 id="sc-sort"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'reciente' | 'antiguo')}
+                onChange={(e) => handleSortChange(e.target.value as 'reciente' | 'antiguo')}
                 style={{
                   padding: '9px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0',
                   fontSize: 14, outline: 'none', background: '#fff',
