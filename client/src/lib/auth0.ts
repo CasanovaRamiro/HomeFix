@@ -24,7 +24,11 @@ export async function loginWithGoogle(isRegister?: boolean) {
   const challenge = await generateCodeChallenge(verifier)
 
   sessionStorage.setItem('pkce_verifier', verifier)
-  if (isRegister) sessionStorage.setItem('pkce_register', '1')
+  if (isRegister) {
+    sessionStorage.setItem('pkce_register', '1')
+  } else {
+    sessionStorage.removeItem('pkce_register')
+  }
 
   const params = new URLSearchParams({
     response_type: 'code',

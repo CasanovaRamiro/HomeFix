@@ -191,6 +191,7 @@ describe('auth.service - loginUser', () => {
           sub: 'auth0|1',
           email: 'jane@test.com',
           name: 'Jane',
+          email_verified: true,
         }),
       } as Response)
 
