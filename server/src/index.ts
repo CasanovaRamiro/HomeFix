@@ -17,6 +17,8 @@ import applicationRoutes from './presentation/routes/application.routes.js'
 import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.js'
 import reviewRoutes from './presentation/routes/review.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
+import telegramRoutes from './presentation/routes/telegram.routes.js'
+import { startBot } from './presentation/telegram/bot.js'
 
 export const app = express()
 const PORT = env.PORT
@@ -37,10 +39,13 @@ app.use('/applications', applicationRoutes)
 app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/upload', jwtCheck, uploadRoutes)
-
+app.use('/telegram', telegramRoutes)
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {
   await assertMigrationsApplied()
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+    if (env.TELEGRAM_BOT_TOKEN) startBot()
+  })
 }

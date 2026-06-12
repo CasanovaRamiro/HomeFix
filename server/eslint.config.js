@@ -69,6 +69,14 @@ export default tseslint.config(
     },
   },
 
+  // Test files: disable unbound-method (mocks are unbound by design)
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
+
   // Root config files (vitest.config.ts etc): basic linting, no type project needed
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

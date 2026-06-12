@@ -4,6 +4,7 @@ import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, P
 import { getUserPosts, type UserPost } from '../services/api'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
+import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 import { PostStatus } from '../types/post'
 
 export default function ClientDashboard() {
@@ -129,6 +130,9 @@ export default function ClientDashboard() {
                 </div>
               )}
             </section>
+
+            {/* Telegram */}
+            <TelegramLinkCard />
 
             {/* Mensajes */}
             <section>

@@ -31,6 +31,8 @@ const mockUser = {
   emergenciesEnabled: false,
   photo: null as string | null,
   availability: null as string | null,
+  telegramChatId: null as string | null,
+  telegramLinkedAt: null as Date | null,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',

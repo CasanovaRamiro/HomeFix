@@ -26,6 +26,8 @@ model User {
   emergenciesEnabled Boolean         @default(false)
   photo           String?
   availability    String?          @db.Text
+  telegramChatId  String?          @unique
+  telegramLinkedAt DateTime?
   posts           Post[]
   categories      UserCategory[]
   jobApplications JobApplication[] @relation("WorkerApplications")
@@ -41,6 +43,7 @@ model User {
   address          Address        @relation(fields: [addressId], references: [id])
   certificates     String?         @db.Text
   gallery          String?         @db.Text
+  telegramLinkCodes TelegramLinkCode[]
 
 }
 
@@ -179,6 +182,18 @@ model Address {
   users     User[]
 
   @@map("address")
+}
+
+model TelegramLinkCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("telegram_link_code")
 }
 
 

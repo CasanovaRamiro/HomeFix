@@ -17,6 +17,12 @@ const publicFields = {
 export const findByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email } })
 
+export const findUserById = (id: string) =>
+  prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, phone: true, telegramChatId: true },
+  })
+
 export const findAll = (): Promise<DomainUser[]> =>
   prisma.user.findMany({ select: publicFields })
 
