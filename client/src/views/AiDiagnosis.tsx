@@ -24,6 +24,8 @@ export default function AiDiagnosis() {
       startDate: data.startDate || '',
       endDate: data.endDate || '',
       address: data.address || '',
+      latitude: null,
+      longitude: null,
     })
   })
 
