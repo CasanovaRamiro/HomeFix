@@ -246,7 +246,7 @@ describe("findAvailableSubcontracts", () => {
   });
 
   it("should exclude non-active subcontracts", async () => {
-    const sub = await prisma.post.create({
+    await prisma.post.create({
       data: {
         userId,
         title: "Cancelled subcontract",

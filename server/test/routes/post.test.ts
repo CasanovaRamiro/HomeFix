@@ -176,7 +176,7 @@ describe('GET /posts/availableSubcontracts', () => {
   })
 
   it('returns 403 when user role is not worker', async () => {
-    const client = await createUser('client2@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    await createUser('client2@test.com', 'Client', 'hashed', { role: UserRole.Client })
     setMockPayload({ sub: 'auth0|client2', email: 'client2@test.com' })
 
     const res = await request(app)
