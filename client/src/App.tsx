@@ -19,6 +19,7 @@ import ClientDashboard from './views/ClientDashboard'
 import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
+import CreateSubcontract from './views/CreateSubcontract'
 import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
         <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
+        <Route path="/create-subcontract" element={<PrivateRoute><CreateSubcontract /></PrivateRoute>} />
         <Route path="/worker" element={<WorkerDashboard />} />
         <Route path="/worker/feed" element={<TrabajadorFeed />} />
         <Route path="/worker/my-applications" element={<WorkerApplications />} />

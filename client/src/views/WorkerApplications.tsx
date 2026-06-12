@@ -317,6 +317,7 @@ function ReviewModal({
 // ─── Application Card ─────────────────────────────────────────────────────────
 
 function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application; onCancelled: (id: string) => void; onReviewClick: (app: Application) => void }) {
+  const navigate = useNavigate()
   const appliedAt   = app.appliedAt?.substring(0, 10)   ?? ''
   const serviceDate = app.serviceDate?.substring(0, 10) ?? ''
   const [showCancel, setShowCancel] = useState(false)
@@ -429,18 +430,36 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
       {app.status !== ApplicationStatus.Rejected && (
         <div style={{ padding: '0 20px 20px' }}>
           {app.status === ApplicationStatus.Accepted && (
-            <button style={{
-              width: '100%', background: '#10B981', border: 'none',
-              borderRadius: 10, color: '#fff',
-              fontSize: 13, fontWeight: 600, padding: '11px 0',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', gap: 8, transition: 'background 0.15s',
-            }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
-            >
-              Contactar cliente
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{
+                flex: 1, background: '#10B981', border: 'none',
+                borderRadius: 10, color: '#fff',
+                fontSize: 13, fontWeight: 600, padding: '11px 0',
+                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: 8, transition: 'background 0.15s',
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+              >
+                Contactar cliente
+              </button>
+              <button
+                onClick={() => navigate('/create-subcontract', {
+                  state: { parentPostId: app.postId },
+                })}
+                style={{
+                  flex: 1, background: '#0F172A', border: 'none',
+                  borderRadius: 10, color: '#fff',
+                  fontSize: 13, fontWeight: 600, padding: '11px 0',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: 8, transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E293B' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#0F172A' }}
+              >
+                Subcontratar
+              </button>
+            </div>
           )}
 
           {app.status === ApplicationStatus.Pending && (

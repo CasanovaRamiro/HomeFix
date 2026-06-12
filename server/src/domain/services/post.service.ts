@@ -1,5 +1,6 @@
 import {
   createPost as createPostData,
+  createSubPost,
   findPostById,
   findPostsByUser,
   updatePostStatus,
@@ -15,7 +16,19 @@ import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { getUserRating } from './user.service.js'
 import { EMERGENCY_DURATION_MS } from '../constants.js'
-import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+import type { CreatePostInput, CreateSubcontractCommand, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+
+const verifySubcontractParent = async (parentPostId: string, userId: string): Promise<DomainPost> => {
+  const parent = await findPostById(parentPostId)
+  if (!parent) throw Object.assign(new Error('Parent post not found'), { status: 404 })
+
+  const accepted = await findAcceptedApplication(parentPostId)
+  if (!accepted || accepted.workerId !== userId) {
+    throw Object.assign(new Error('You are not the accepted worker on this post'), { status: 403 })
+  }
+
+  return parent
+}
 
 export const validatePostInput = (input: CreatePostInput) => {
   if (!input.categoryId) {
@@ -52,6 +65,25 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
     endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
     emergencyExpiresAt,
+  })
+}
+
+export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost> => {
+  const parentPost = input.parentPostId
+    ? await verifySubcontractParent(input.parentPostId, input.userId)
+    : null
+
+  const title       = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
+  const description = input.description?.trim() || ''
+  const startDate   = input.startDate ?? parentPost?.startDate ?? new Date()
+  const endDate     = input.endDate   ?? parentPost?.endDate   ?? new Date()
+  const address     = input.address?.trim() || parentPost?.address || 'Por definir'
+
+  return createSubPost({
+    userId: input.userId,
+    parentPostId: input.parentPostId,
+    title, description, startDate, endDate, address,
+    positions: input.positions,
   })
 }
 
