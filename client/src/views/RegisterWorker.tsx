@@ -10,8 +10,6 @@ import api from '../services/api'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
-import { emitAuthChange } from '../hooks/useAuth'
-
 
 type RegisterResponse = {
   userId: string
@@ -114,18 +112,7 @@ export default function RegisterWorker() {
         categories: selected,
       })
       setErrors({})
-      const { data: loginData } = await api.post<{
-        accessToken: string
-        user: { id: string; name: string; photo: string | null; role: string }
-      }>('/auth/login', { email: form.email, password: form.password })
-      localStorage.setItem('token', loginData.accessToken)
-      localStorage.setItem('user', JSON.stringify(loginData.user))
-      emitAuthChange()
-      if (kycMethod === 'automatic') {
-        navigate('/kyc')
-      } else {
-        setSubmitted(true)
-      }
+      setSubmitted(true)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
