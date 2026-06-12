@@ -9,7 +9,6 @@ import CreatePost from './views/CreatePost'
 import PostOptions from './views/PostOptions'
 import WorkerProfile from './views/WorkerProfile'
 import PostDetail from './views/PostDetail'
-import TrabajadorFeed from './views/TrabajadorFeed'
 import WorkerDashboard from './views/WorkerDashboard'
 import WorkerApplications from './views/WorkerApplications'
 import Navbar from './components/Navbar'
@@ -55,7 +54,6 @@ export default function App() {
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
         <Route path="/create-subcontract" element={<PrivateRoute><CreateSubcontract /></PrivateRoute>} />
         <Route path="/worker" element={<WorkerDashboard />} />
-        <Route path="/worker/feed" element={<TrabajadorFeed />} />
         <Route path="/worker/my-applications" element={<WorkerApplications />} />
         <Route
           path="/worker/available-jobs"
