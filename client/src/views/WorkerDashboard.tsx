@@ -24,6 +24,7 @@ interface DashboardProfile {
   email: string
   phone: string | null
   bio: string | null
+  photo: string | null
   createdAt: string
   location: string | null
   categories: { id: string; name: string }[]
@@ -71,16 +72,22 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
           {/* Left: Avatar + Info */}
           <div className="wd-left-info">
             {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
-              border: '3px solid rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, fontWeight: 700, color: '#94A3B8',
-              flexShrink: 0,
-            }}>
-              {getInitials(profile.name, profile.surname)}
-            </div>
+            {profile.photo ? (
+              <img src={profile.photo} alt={profile.name}
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.15)', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
+                border: '3px solid rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, fontWeight: 700, color: '#94A3B8',
+                flexShrink: 0,
+              }}>
+                {getInitials(profile.name, profile.surname)}
+              </div>
+            )}
 
             {/* Name & details */}
             <div>
@@ -754,7 +761,7 @@ const VALIDATIONS = [
 
 const QUICK_LINKS = [
   { label: 'Buscar Trabajos',   icon: Briefcase,     href: '/worker/available-jobs' },
-  { label: 'Mi Perfil',         icon: User,           href: '/worker' },
+  { label: 'Mi Perfil',         icon: User,           href: '' },
   { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
   { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
   { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
@@ -762,6 +769,7 @@ const QUICK_LINKS = [
 
 function Sidebar({ workerId }: { workerId: string }) {
   const navigate = useNavigate()
+  const links = QUICK_LINKS.map((l) => l.label === 'Mi Perfil' ? { ...l, href: `/worker/${workerId}` } : l)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -801,7 +809,7 @@ function Sidebar({ workerId }: { workerId: string }) {
           Accesos Rapidos
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {QUICK_LINKS.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.label}
               to={link.href}

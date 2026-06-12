@@ -11,6 +11,7 @@ export interface PostApplicant {
   applicationId: string
   workerId: string
   name: string
+  photo: string | null
   category: string | null
   address: string
   rating: number

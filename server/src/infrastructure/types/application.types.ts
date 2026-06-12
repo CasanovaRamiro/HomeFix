@@ -23,6 +23,7 @@ export interface PrismaApplicationWithWorker {
     id: string
     name: string
     surname: string
+    photo: string | null
     categories: { category: { name: string } }[]
     address: { city: string; state: string } | null
     reviewsReceived: { rating: number }[]

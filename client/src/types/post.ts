@@ -80,6 +80,33 @@ export interface SubcontractDTO {
   clientRating: number
 }
 
+export interface SubcontractCategoryDTO {
+  id: string
+  name: string
+  quantity: number
+  filledCount: number
+  roleDescription: string
+}
+
+export interface AvailableSubcontractDTO {
+  id: string
+  userId: string
+  parentPostId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  images: { url: string }[]
+  latitude: number | null
+  longitude: number | null
+  categories: SubcontractCategoryDTO[]
+  user: { id: string; name: string; surname: string }
+  clientRating: number
+}
+
 export interface TrabajoView {
   id: string
   titulo: string

@@ -24,6 +24,8 @@ model User {
   active          Boolean          @default(true)
   deleted         Boolean          @default(false)
   emergenciesEnabled Boolean         @default(false)
+  photo           String?
+  availability    String?          @db.Text
   telegramChatId  String?          @unique
   telegramLinkedAt DateTime?
   posts           Post[]
@@ -39,6 +41,8 @@ model User {
   addressId        String  @map("address_id")
   nationalIdType   NationalIdType @relation(fields: [nationalIdTypeId], references: [id])
   address          Address        @relation(fields: [addressId], references: [id])
+  certificates     String?         @db.Text
+  gallery          String?         @db.Text
   telegramLinkCodes TelegramLinkCode[]
 
 }
@@ -194,5 +198,4 @@ model TelegramLinkCode {
 
 
 
-                
 

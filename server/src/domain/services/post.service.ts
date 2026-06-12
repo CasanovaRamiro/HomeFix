@@ -6,6 +6,7 @@ import {
   updatePostStatus,
   updatePost as updatePostData,
   findAvailablePosts,
+  findAvailableSubcontracts as findAvailableSubcontractsData,
   findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
   deletePostImages,
@@ -117,6 +118,11 @@ export interface PaginatedResult {
   total: number
   page: number
   totalPages: number
+}
+
+export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
+  const posts = await findAvailableSubcontractsData()
+  return Promise.all(posts.map(enrichWithClientRating))
 }
 
 export const listAvailablePosts = async (

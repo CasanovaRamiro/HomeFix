@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
 import { getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
@@ -12,6 +12,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   updatePostStatus: vi.fn(),
   updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
+  findAvailableSubcontracts: vi.fn(),
   searchByDistance: vi.fn(),
   deletePostImages: vi.fn(),
   createSubPost: vi.fn(),
@@ -196,6 +197,48 @@ describe("post.service - listAvailablePosts", () => {
 
     expect(result.data).toEqual([]);
     expect(result.total).toBe(0);
+  });
+});
+
+describe("post.service - findAvailableSubcontracts", () => {
+  const mockSubcontract: DomainPost = {
+    id: "uuid-sub-1",
+    userId: "uuid-user-1",
+    title: "Electricista needed",
+    description: "Subcontract for electrical work",
+    address: "Calle 123",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ id: "uuid-cat-1", name: "Electricista" }],
+    user: { id: "uuid-user-1", name: "Test", surname: "User" },
+  };
+
+  beforeEach(() => {
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 });
+  });
+
+  it("should return available subcontracts with client rating", async () => {
+    vi.mocked(findAvailableSubcontracts).mockResolvedValue([mockSubcontract]);
+
+    const result = await postService.findAvailableSubcontracts();
+
+    expect(findAvailableSubcontracts).toHaveBeenCalledOnce();
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Electricista needed");
+    expect(result[0].clientRating).toBe(4.5);
+  });
+
+  it("should return empty array when no subcontracts are available", async () => {
+    vi.mocked(findAvailableSubcontracts).mockResolvedValue([]);
+
+    const result = await postService.findAvailableSubcontracts();
+
+    expect(result).toEqual([]);
   });
 });
 

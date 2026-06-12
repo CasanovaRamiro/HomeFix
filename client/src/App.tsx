@@ -8,6 +8,7 @@ import AiDiagnosis from './views/AiDiagnosis'
 import CreatePost from './views/CreatePost'
 import PostOptions from './views/PostOptions'
 import WorkerProfile from './views/WorkerProfile'
+import PublicWorkerProfile from './views/PublicWorkerProfile'
 import PostDetail from './views/PostDetail'
 import WorkerDashboard from './views/WorkerDashboard'
 import WorkerApplications from './views/WorkerApplications'
@@ -18,6 +19,7 @@ import ClientDashboard from './views/ClientDashboard'
 import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
+import AvailableSubcontracts from './views/AvailableSubcontracts'
 import CreateSubcontract from './views/CreateSubcontract'
 import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
@@ -51,10 +53,19 @@ export default function App(): ReactNode {
         <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
         <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
         <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
+        <Route path="/profile/worker/:id" element={<PublicWorkerProfile />} />
         <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
         <Route path="/create-subcontract" element={<PrivateRoute><CreateSubcontract /></PrivateRoute>} />
         <Route path="/worker" element={<WorkerDashboard />} />
         <Route path="/worker/my-applications" element={<WorkerApplications />} />
+        <Route
+          path="/worker/available-subcontracts"
+          element={
+            <PrivateRoute>
+              <AvailableSubcontracts />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/worker/available-jobs"
           element={

@@ -125,6 +125,74 @@ describe('GET /posts/available', () => {
   })
 })
 
+describe('GET /posts/availableSubcontracts', () => {
+  it('returns active subcontracts', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Albañil needed',
+        description: 'Need albañil for kitchen',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        type: 'subcontract',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .get('/posts/availableSubcontracts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].title).toBe('Albañil needed')
+    expect(res.body[0].type).toBe('subcontract')
+    expect(res.body[0].clientRating).toBe(0)
+  })
+
+  it('excludes regular posts', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Regular post',
+        description: 'Not a subcontract',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        type: 'post',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .get('/posts/availableSubcontracts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([])
+  })
+
+  it('returns 403 when user role is not worker', async () => {
+    await createUser('client2@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: 'auth0|client2', email: 'client2@test.com' })
+
+    const res = await request(app)
+      .get('/posts/availableSubcontracts')
+      .set('Authorization', 'Bearer test-token')
+
+    expect(res.status).toBe(403)
+    resetMockPayload()
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).get('/posts/availableSubcontracts')
+    expect(res.status).toBe(401)
+  })
+})
+
 describe('GET /posts/search-location', () => {
   it('returns posts within the given radius', async () => {
     await prisma.post.create({
