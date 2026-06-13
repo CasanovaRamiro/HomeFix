@@ -143,3 +143,8 @@ CLAUDE.md
 .idea/
 client/package-lock.json
 package-lock.json
+
+# Local dev tooling (no commitear: cada dev necesita su propia versión
+# con sus credenciales reales; el archivo es un template que el equipo
+# debe replicar localmente para crear/configurar el workflow de Didit)
+didit-workflow.http

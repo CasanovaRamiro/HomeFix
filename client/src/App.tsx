@@ -22,7 +22,7 @@ import WorkerLanding from './views/WorkerLanding'
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
 import CreateSubcontract from './views/CreateSubcontract'
-import KycVerification from './views/KycVerification'
+import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
 import AuthCallback from './views/AuthCallback'
@@ -47,7 +47,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/kyc" element={<KycVerification />} />
+        <Route path="/kyc" element={<PrivateRoute><KycVerify /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
         <Route path="/users" element={<Users />} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />

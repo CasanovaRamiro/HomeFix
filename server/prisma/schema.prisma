@@ -45,6 +45,10 @@ model User {
   gallery          String?         @db.Text
   telegramLinkCodes TelegramLinkCode[]
 
+  kycStatus       String    @default("NOT_STARTED")
+  kycVerifiedAt   DateTime?
+  diditVerificationId String?
+
 }
 
 model Post {
