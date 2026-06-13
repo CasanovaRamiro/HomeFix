@@ -14,13 +14,7 @@ import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 import ApplyModal from '../components/worker/ApplyModal'
 import { fetchKycStatus, type KycStatus } from '../services/kyc'
-<<<<<<< HEAD
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
-=======
-=======
-import { fetchKycStatus, type KycStatus } from '../services/kyc'
->>>>>>> 22528a9 (feat(kyc): persistencia con confirmación previa + insignia KYC del trabajador)
->>>>>>> d7da38a (Rebase con develop)
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -783,9 +777,7 @@ const KYC_BADGE: Record<string, { icon: typeof CheckCircle2; bg: string; color: 
 
 function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStatus }) {
   const navigate = useNavigate()
-<<<<<<< HEAD
   const links = QUICK_LINKS.map((l) => l.label === 'Mi Perfil' ? { ...l, href: `/worker/${workerId}` } : l)
-=======
 
   function renderKycButton() {
     const badge = KYC_BADGE[kycStatus]
@@ -869,7 +861,6 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
     )
   }
 
->>>>>>> d7da38a (Rebase con develop)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
