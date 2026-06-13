@@ -81,6 +81,7 @@ export const broadcastEmergency = async (
   }
 
   for (const worker of workers) {
+    if (!worker.telegramChatId) continue
     await provider.send(worker.telegramChatId, message)
   }
 }
