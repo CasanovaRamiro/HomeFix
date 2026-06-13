@@ -21,6 +21,8 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   categories: post.categories,
   user: post.user,
   clientRating: post.clientRating ?? 0,
+  workerRating: post.workerRating,
+  originalClientRating: post.originalClientRating,
 })
 
 export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({

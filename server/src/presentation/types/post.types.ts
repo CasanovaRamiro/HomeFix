@@ -62,4 +62,6 @@ export interface PostDTO {
     surname: string
   }
   clientRating: number
+  workerRating?: number
+  originalClientRating?: number
 }

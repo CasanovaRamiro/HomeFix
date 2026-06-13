@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
+import { PostType } from '../../src/domain/types/postType.js'
 
 const { mockPayload, setMockPayload, resetMockPayload } = vi.hoisted(() => {
   const payload: Record<string, string | undefined> = {
@@ -189,6 +190,111 @@ describe('GET /posts/availableSubcontracts', () => {
 
   it('returns 401 without token', async () => {
     const res = await request(app).get('/posts/availableSubcontracts')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('GET /posts/subcontracts/:id', () => {
+  let subcontractId: string
+  let categoryIdLocal: string
+
+  beforeEach(async () => {
+    const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    const mmo = await createUser('mmo@test.com', 'MMO', 'hashed', { role: UserRole.Worker })
+    const cat = await createCategory('Plomero')
+    categoryIdLocal = cat.id
+
+    const parentPost = await prisma.post.create({
+      data: {
+        userId: client.id,
+        title: 'Parent job',
+        description: 'Original job',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        categories: { create: { categoryId: cat.id } },
+      },
+    })
+
+    await prisma.application.create({
+      data: { workerId: mmo.id, postId: parentPost.id, status: 'Accepted' },
+    })
+
+    const subcontract = await prisma.post.create({
+      data: {
+        userId: mmo.id,
+        type: PostType.SubContract,
+        parentPostId: parentPost.id,
+        title: 'Plomero needed',
+        description: 'Need plumber',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        categories: { create: { categoryId: cat.id } },
+      },
+    })
+    subcontractId = subcontract.id
+  })
+
+  it('returns subcontract with both ratings', async () => {
+    const res = await request(app)
+      .get(`/posts/subcontracts/${subcontractId}`)
+      .set('Authorization', 'Bearer test-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.type).toBe('subcontract')
+    expect(res.body).toHaveProperty('workerRating')
+    expect(res.body).toHaveProperty('clientRating')
+    expect(res.body.title).toBe('Plomero needed')
+  })
+
+  it('returns 404 for regular post', async () => {
+    const regularPost = await prisma.post.create({
+      data: {
+        userId: userId,
+        title: 'Regular post',
+        description: 'Not subcontract',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 123',
+        status: 'Active',
+        categories: { create: { categoryId: categoryIdLocal } },
+      },
+    })
+
+    const res = await request(app)
+      .get(`/posts/subcontracts/${regularPost.id}`)
+      .set('Authorization', 'Bearer test-token')
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Subcontract not found')
+  })
+
+  it('returns 404 for non-existent ID', async () => {
+    const res = await request(app)
+      .get('/posts/subcontracts/non-existent-id')
+      .set('Authorization', 'Bearer test-token')
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Subcontract not found')
+  })
+
+  it('returns 403 when user is not worker', async () => {
+    await createUser('client2@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: 'auth0|client2', email: 'client2@test.com' })
+
+    const res = await request(app)
+      .get(`/posts/subcontracts/${subcontractId}`)
+      .set('Authorization', 'Bearer test-token')
+
+    expect(res.status).toBe(403)
+    resetMockPayload()
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app).get(`/posts/subcontracts/${subcontractId}`)
     expect(res.status).toBe(401)
   })
 })

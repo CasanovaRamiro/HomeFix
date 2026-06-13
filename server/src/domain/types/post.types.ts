@@ -1,7 +1,9 @@
+import { PostType } from './postType.js'
+
 export interface DomainPost {
   id: string
   userId: string
-  type?: string
+  type?: PostType
   parentPostId?: string
   title: string
   description: string
@@ -18,6 +20,8 @@ export interface DomainPost {
   categories: { id: string; name: string }[]
   user: { id: string; name: string; surname: string }
   clientRating?: number
+  workerRating?: number
+  originalClientRating?: number
 }
 
 export interface DomainUserPost {
