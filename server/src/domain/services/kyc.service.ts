@@ -28,6 +28,19 @@ const DIDIT_STATUS_MAP: Record<string, KycStatus> = {
   'Not Finished': 'IN_REVIEW',
 }
 
+const DIDIT_STATUS_MAP_LOWER: Record<string, KycStatus> = Object.fromEntries(
+  Object.entries(DIDIT_STATUS_MAP).map(([k, v]) => [k.toLowerCase(), v]),
+)
+
+function mapDiditStatus(raw: string): KycStatus {
+  const exact = DIDIT_STATUS_MAP[raw]
+  if (exact) return exact
+  const lower = DIDIT_STATUS_MAP_LOWER[raw.toLowerCase()]
+  if (lower) return lower
+  console.warn(`[KYC] Status desconocido de Didit: "${raw}", mapeando a IN_REVIEW`)
+  return 'IN_REVIEW'
+}
+
 export const startKycVerification = async (
   email: string,
 ): Promise<{ sessionUrl: string; sessionId: string }> => {
@@ -55,20 +68,27 @@ export const confirmKyc = async (
   }
 
   let diditStatus: string
+  let lastError: (Error & { status?: number }) | null = null
   try {
-    const session = await getSessionStatus(sessionId)
-    diditStatus = session.status
+    const decision = await getDecision(sessionId)
+    diditStatus = decision.status
   } catch (e) {
-    const err = e as { status?: number }
-    if (err.status === 404 && sdkStatus) {
-      console.warn(`[KYC] Didit 404 for session ${sessionId}, using SDK status: ${sdkStatus}`)
+    lastError = e as Error & { status?: number }
+    if (sdkStatus) {
       diditStatus = sdkStatus
     } else {
-      throw e
+      try {
+        const session = await getSessionStatus(sessionId)
+        diditStatus = session.status
+      } catch (e2) {
+        throw lastError.status === 404
+          ? createHttpError(404, 'La sesión de verificación no existe')
+          : createHttpError(502, 'No se pudo obtener el estado de la verificación')
+      }
     }
   }
 
-  const mappedStatus = DIDIT_STATUS_MAP[diditStatus] ?? 'IN_REVIEW'
+  const mappedStatus = mapDiditStatus(diditStatus)
 
   const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
     ? new Date()
@@ -91,11 +111,44 @@ export const getKycStatus = async (
     throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
   }
 
-  return {
-    kycStatus: (user.kycStatus as KycStatus) ?? 'NOT_STARTED',
-    kycVerifiedAt: user.kycVerifiedAt ?? null,
-    diditVerificationId: user.diditVerificationId ?? null,
+  let kycStatus = (user.kycStatus as KycStatus) ?? 'NOT_STARTED'
+  let kycVerifiedAt = user.kycVerifiedAt ?? null
+
+  const TERMINAL_STATUSES: KycStatus[] = ['APPROVED', 'DECLINED', 'EXPIRED', 'IN_REVIEW']
+  if (TERMINAL_STATUSES.includes(kycStatus) && user.diditVerificationId) {
+    let diditStatus: string | null = null
+
+    try {
+      const decision = await getDecision(user.diditVerificationId)
+      diditStatus = decision.status
+    } catch {
+      try {
+        const session = await getSessionStatus(user.diditVerificationId)
+        diditStatus = session.status
+      } catch {
+        // Ambos endpoints fallaron, mantener status actual
+      }
+    }
+
+    if (diditStatus) {
+      const mappedStatus = mapDiditStatus(diditStatus)
+      if (mappedStatus !== kycStatus) {
+        console.log(`[KYC] Status cambió para ${email}: ${kycStatus} → ${mappedStatus}`)
+        const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
+          ? new Date()
+          : null
+        await updateUserKycStatus(email, {
+          kycStatus: mappedStatus,
+          kycVerifiedAt: now,
+          diditVerificationId: user.diditVerificationId,
+        })
+        kycStatus = mappedStatus
+        kycVerifiedAt = now
+      }
+    }
   }
+
+  return { kycStatus, kycVerifiedAt, diditVerificationId: user.diditVerificationId ?? null }
 }
 
 export interface KycDecision {
@@ -113,7 +166,7 @@ export const getKycDecision = async (sessionId: string): Promise<KycDecision> =>
   const decision = await getDecision(sessionId)
   return {
     sessionId: decision.sessionId,
-    status: DIDIT_STATUS_MAP[decision.status] ?? 'IN_REVIEW',
+    status: mapDiditStatus(decision.status),
     sessionKind: decision.sessionKind,
     vendorData: decision.vendorData,
     idVerifications: decision.idVerifications,
@@ -151,7 +204,7 @@ export const handleKycWebhook = async (
     return { processed: false }
   }
 
-  const mappedStatus = DIDIT_STATUS_MAP[payload.status] ?? 'IN_REVIEW'
+  const mappedStatus = mapDiditStatus(payload.status)
 
   if (user.kycStatus === mappedStatus) {
     return { processed: false }

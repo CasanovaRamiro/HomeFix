@@ -132,7 +132,7 @@ describe("POST /kyc/confirm", () => {
 
     expect(res.status).toBe(200)
     expect(res.body).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
-    expect(confirmKyc).toHaveBeenCalledWith("test@test.com", "sess-abc")
+    expect(confirmKyc).toHaveBeenCalledWith("test@test.com", "sess-abc", undefined)
   })
 
   it("returns 404 when the user is not found", async () => {

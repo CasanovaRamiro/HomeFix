@@ -244,6 +244,7 @@ describe("confirmKyc", () => {
     mockFindByEmail.mockResolvedValue(user)
     const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
     err.status = 404
+    mockGetDecision.mockRejectedValue(err)
     mockGetSessionStatus.mockRejectedValue(err)
 
     await expect(confirmKyc("foo@bar.com", "sess-nonexistent")).rejects.toMatchObject({
@@ -275,6 +276,7 @@ describe("confirmKyc", () => {
       status?: number
     }
     err.status = 502
+    mockGetDecision.mockRejectedValue(err)
     mockGetSessionStatus.mockRejectedValue(err)
 
     await expect(confirmKyc("foo@bar.com", "sess-1")).rejects.toMatchObject({

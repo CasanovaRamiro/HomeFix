@@ -193,6 +193,23 @@ export default function KycVerify() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (!currentStatus || currentStatus === 'NOT_STARTED') return
+
+    const interval = setInterval(() => {
+      fetchKycStatus()
+        .then((res) => {
+          if (res.kycStatus !== currentStatus) {
+            console.log(`[KYC] Status cambió: ${currentStatus} → ${res.kycStatus}`)
+            setCurrentStatus(res.kycStatus)
+          }
+        })
+        .catch(() => {})
+    }, 10_000)
+
+    return () => clearInterval(interval)
+  }, [currentStatus])
+
   const handleStart = async () => {
     setState('loading')
     setErrorMessage('')

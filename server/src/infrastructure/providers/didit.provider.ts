@@ -155,11 +155,11 @@ export const getSessionStatus = async (
   clearTimeout(timeout)
 
   if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    console.error('[KYC] Didit getSessionStatus returned non-OK:', response.status, text)
     if (response.status === 404) {
       throw createHttpError(404, 'La sesión de verificación no existe')
     }
+    const text = await response.text().catch(() => '')
+    console.error('[KYC] Didit getSessionStatus returned non-OK:', response.status, text)
     throw createHttpError(502, 'El servicio de verificación rechazó la solicitud')
   }
 
