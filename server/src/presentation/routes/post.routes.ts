@@ -33,8 +33,12 @@ router.get('/', async (req, res, next) => {
       return
     }
 
-    const result = await listAvailablePosts()
-    res.json(result.map(toPostDTO))
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10))
+    const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc'
+
+    const result = await listAvailablePosts(undefined, { page, limit, sortOrder })
+    res.json({ ...result, data: result.data.map(toPostDTO) })
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
@@ -53,8 +57,12 @@ router.get('/available', async (req, res, next) => {
     }
 
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
-    const result = await listAvailablePosts(category)
-    res.json(result.map(toPostDTO))
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10))
+    const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc'
+
+    const result = await listAvailablePosts(category, { page, limit, sortOrder })
+    res.json({ ...result, data: result.data.map(toPostDTO) })
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400

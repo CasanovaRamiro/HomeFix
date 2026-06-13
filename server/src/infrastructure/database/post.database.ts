@@ -15,6 +15,8 @@ type _CreatePostRecordInput = {
   startDate: Date
   endDate: Date
   address: string
+  latitude?: number | null
+  longitude?: number | null
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   images?: { url: string }[]
@@ -37,6 +39,8 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       startDate: data.startDate,
       endDate: data.endDate,
       address: data.address,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
       images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
@@ -101,6 +105,8 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     startDate,
     endDate,
     address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
     isEmergency: data.isEmergency ?? false,
     emergencyExpiresAt: data.emergencyExpiresAt ?? null,
     images: data.images,
@@ -152,13 +158,35 @@ const availablePostWhere = (category?: string) => ({
     : {}),
 })
 
-export const findAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
-  const raw = await prisma.post.findMany({
-    where: availablePostWhere(category),
-    orderBy: { createdAt: 'desc' },
-    select: postFields,
-  }) as unknown as PrismaPostFull[]
-  return raw.map(toDomainPost)
+export interface PaginationParams {
+  page: number
+  limit: number
+  sortOrder: 'asc' | 'desc'
+}
+
+export interface PaginatedPosts {
+  posts: DomainPost[]
+  total: number
+}
+
+export const findAvailablePosts = async (
+  category?: string,
+  pagination?: PaginationParams,
+): Promise<PaginatedPosts> => {
+  const where = availablePostWhere(category)
+  const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
+
+  const [raw, total] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      orderBy,
+      select: postFields,
+      ...(pagination ? { skip: (pagination.page - 1) * pagination.limit, take: pagination.limit } : {}),
+    }) as unknown as Promise<PrismaPostFull[]>,
+    prisma.post.count({ where }),
+  ])
+
+  return { posts: raw.map(toDomainPost), total }
 }
 
 export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {

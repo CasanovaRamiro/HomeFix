@@ -117,6 +117,7 @@ export interface TrabajoView {
   createdAt: string
   startDate: string
   photo: string
+  images: { url: string }[]
   clientName: string
   clientSurname: string
   clientRating: number

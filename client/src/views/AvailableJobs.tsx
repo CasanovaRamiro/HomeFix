@@ -19,7 +19,7 @@ import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 5
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
@@ -36,9 +36,7 @@ export default function AvailableJobs(): JSX.Element {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [workerCategories, setWorkerCategories] = useState<string[]>([])
-  const [category, setCategory] = useState<string>(
-    () => localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-  )
+  const [category, setCategory] = useState<string>(DEFAULT_WORKER_CATEGORY)
   const [trabajos, setTrabajos] = useState<(TrabajoView & { lat?: number | null; lng?: number | null })[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
@@ -51,6 +49,7 @@ export default function AvailableJobs(): JSX.Element {
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
+  const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
   const [page, setPage] = useState(1)
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
@@ -66,10 +65,15 @@ export default function AvailableJobs(): JSX.Element {
     setLoading(true)
     setError('')
     try {
-      const { data } = locationFilter
-        ? await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
-        : await fetchAvailablePosts(category)
-      const mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
+      const sortOrder = sortBy === 'reciente' ? 'desc' : 'asc'
+      let mapped: (TrabajoView & { lat?: number | null; lng?: number | null })[]
+      if (locationFilter) {
+        const { data } = await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
+        mapped = (data as unknown[]).map((post) => postToTrabajo(post as Post))
+      } else {
+        const res = await fetchAvailablePosts(category, { page: 1, limit: 1000, sortOrder })
+        mapped = res.data.data.map((post) => postToTrabajo(post))
+      }
       setTrabajos(mapped)
 
       const idParam = searchParams.get('id')
@@ -84,7 +88,7 @@ export default function AvailableJobs(): JSX.Element {
     } finally {
       setLoading(false)
     }
-  }, [category, navigate, searchParams, locationFilter])
+  }, [category, searchParams, locationFilter, sortBy])
 
   useEffect(() => {
     void loadPostulaciones()
@@ -101,8 +105,7 @@ export default function AvailableJobs(): JSX.Element {
         .then((worker) => {
           const cats = worker.categories.map((c) => c.name)
           setWorkerCategories(cats)
-          const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
-          if ((!saved || saved === DEFAULT_WORKER_CATEGORY) && cats.length > 0) {
+          if (cats.length > 0) {
             setCategory(cats[0])
           }
         })
@@ -111,32 +114,20 @@ export default function AvailableJobs(): JSX.Element {
   }, [user?.id])
 
   const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
-    let resultado = [...trabajos]
-
+    let resultado = trabajos.filter((t) => !postulacionesIds.includes(t.id))
     const q = searchQuery.trim().toLowerCase()
     if (q !== '') {
       resultado = resultado.filter(
-        (t) =>
-          t.titulo.toLowerCase().includes(q) ||
-          t.descripcion.toLowerCase().includes(q)
+        (t) => t.titulo.toLowerCase().includes(q) || t.descripcion.toLowerCase().includes(q)
       )
     }
-
-    resultado.sort((a, b) => {
-      const dateA = new Date(a.startDate).getTime()
-      const dateB = new Date(b.startDate).getTime()
-
-      return sortBy === 'reciente' ? dateB - dateA : dateA - dateB
-    })
-
     return resultado
-  }, [trabajos, searchQuery, sortBy])
-
-  // Reset to page 1 when filters change
-  useEffect(() => { setPage(1) }, [searchQuery, sortBy, category, locationFilter])
+  }, [trabajos, searchQuery, postulacionesIds])
 
   const totalPages = Math.max(1, Math.ceil(filtradosYOrdenados.length / PAGE_SIZE))
-  const paginated  = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const paginaActual = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  useEffect(() => { setPage(1) }, [sortBy, category, locationFilter])
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
 
@@ -151,6 +142,21 @@ export default function AvailableJobs(): JSX.Element {
       console.warn('Error al postularse:', err)
       setEnviando(false)
     }
+  }
+
+  const handleOpenLocationModal = () => {
+    if (locationFilter) {
+      setShowLocationModal(true)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDefaultCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setShowLocationModal(true)
+      },
+      () => setShowLocationModal(true),
+      { timeout: 5000 }
+    )
   }
 
   const handleLocationApply = (lat: number, lng: number, radius: number) => {
@@ -223,7 +229,7 @@ export default function AvailableJobs(): JSX.Element {
             sortBy={sortBy}
             onSortChange={setSortBy}
             locationFilter={locationFilter}
-            onOpenLocationModal={() => setShowLocationModal(true)}
+            onOpenLocationModal={handleOpenLocationModal}
           />
         </div>
       </div>
@@ -241,7 +247,7 @@ export default function AvailableJobs(): JSX.Element {
               <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
             </div>
           )}
-          {!loading && paginated.map((trabajo) => (
+          {!loading && paginaActual.map((trabajo) => (
             <TrabajoCard
               key={trabajo.id}
               trabajo={trabajo}
@@ -348,8 +354,8 @@ export default function AvailableJobs(): JSX.Element {
 
       {showLocationModal && (
         <LocationFilterModal
-          initialLat={locationFilter?.lat ?? -34.6037}
-          initialLng={locationFilter?.lng ?? -58.3816}
+          initialLat={locationFilter?.lat ?? defaultCoords.lat}
+          initialLng={locationFilter?.lng ?? defaultCoords.lng}
           initialRadius={locationFilter?.radius ?? 30}
           onApply={handleLocationApply}
           onClear={handleLocationClear}

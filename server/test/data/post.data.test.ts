@@ -111,7 +111,7 @@ describe("findAvailablePosts", () => {
     const p2 = await createPost({ ...createValidPost(), title: "Cancelled post" });
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
 
-    const posts = await findAvailablePosts();
+    const { posts } = await findAvailablePosts();
     expect(posts.length).toBeGreaterThanOrEqual(1);
     expect(posts.every((p) => p.status === "Active")).toBe(true);
   });
@@ -121,13 +121,13 @@ describe("findAvailablePosts", () => {
     await createPost(createValidPost());
     await createPost({ ...createValidPost(), title: "Plumbing post", categoryId: cat2.id });
 
-    const posts = await findAvailablePosts("Test Category");
+    const { posts } = await findAvailablePosts("Test Category");
     expect(posts.length).toBeGreaterThanOrEqual(1);
     expect(posts.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
   });
 
   it("should return empty array when no active posts match category", async () => {
-    const posts = await findAvailablePosts("NonExistentCategory");
+    const { posts } = await findAvailablePosts("NonExistentCategory");
     expect(posts).toEqual([]);
   });
 });

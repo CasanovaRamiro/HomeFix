@@ -1,9 +1,28 @@
 import api from './api'
 import type { Post, CreateSubcontractInput, SubcontractDTO, AvailableSubcontractDTO } from '../types/post'
 
-export const fetchAvailablePosts = (category?: string) =>
-  api.get<Post[]>('/posts/available', {
-    params: category?.trim() ? { category: category.trim() } : undefined,
+export interface PaginatedPosts {
+  data: Post[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+export interface FeedParams {
+  page: number
+  limit: number
+  sortOrder: 'asc' | 'desc'
+}
+
+export const fetchWorkerFeed = (params: FeedParams) =>
+  api.get<PaginatedPosts>('/posts', { params })
+
+export const fetchAvailablePosts = (category?: string, pagination?: FeedParams) =>
+  api.get<PaginatedPosts>('/posts/available', {
+    params: {
+      ...(category?.trim() ? { category: category.trim() } : {}),
+      ...(pagination ?? {}),
+    },
   })
 
 export const fetchEmergencyPosts = (category?: string) =>

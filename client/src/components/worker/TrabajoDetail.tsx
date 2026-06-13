@@ -17,8 +17,18 @@ export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostul
           x
         </button>
       </div>
-      {selected.photo && (
-        <img src={selected.photo} alt="" className="trabajo-photo" />
+      {selected.images && selected.images.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '12px 16px', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
+          {selected.images.map((img, i) => (
+            <a key={i} href={img.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0 }}>
+              <img
+                src={img.url}
+                alt={`Foto ${i + 1}`}
+                style={{ width: '96px', height: '72px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+              />
+            </a>
+          ))}
+        </div>
       )}
       <div className="trabajos-detail-body">
         <div className="trabajo-detail-client">

@@ -83,6 +83,8 @@ export const createAuth0User = async (payload: {
 
   if (!response.ok) {
     const text = await response.text()
+
+    console.error('Auth0 signup error', response.status, text)
     if (response.status === 400 && (/already exists|user already exists|exists/i.test(text) || /"code":"invalid_signup"/.test(text))) {
       throw createHttpError(409, 'Email already registered')
     }

@@ -82,9 +82,9 @@ describe('GET /posts/available', () => {
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
-    expect(res.body).toHaveLength(1)
-    expect(res.body[0].title).toBe('Plumber job')
-    expect(res.body[0].clientRating).toBe(0)
+    expect(res.body.data).toHaveLength(1)
+    expect(res.body.data[0].title).toBe('Plumber job')
+    expect(res.body.data[0].clientRating).toBe(0)
   })
 
   it('returns empty array when no posts match the category', async () => {
@@ -93,7 +93,7 @@ describe('GET /posts/available', () => {
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
-    expect(res.body).toEqual([])
+    expect(res.body.data).toEqual([])
   })
 
   it('returns all active posts when no category given', async () => {
@@ -115,8 +115,8 @@ describe('GET /posts/available', () => {
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
-    expect(res.body).toHaveLength(1)
-    expect(res.body[0].clientRating).toBe(0)
+    expect(res.body.data).toHaveLength(1)
+    expect(res.body.data[0].clientRating).toBe(0)
   })
 
   it('returns 401 without token', async () => {

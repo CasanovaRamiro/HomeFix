@@ -9,6 +9,8 @@ import { useState } from 'react'
     startDate: string
     endDate: string
     address: string
+    latitude: number | null
+    longitude: number | null
     isEmergency?: boolean
   }
 
@@ -16,7 +18,7 @@ import { useState } from 'react'
     const { accent, border } = useTheme()
     const [form, setForm] = useState<PostFormData>({
       title: '', categoryId: '', description: '',
-      startDate: '', endDate: '', address: '', isEmergency: false,
+      startDate: '', endDate: '', address: '', latitude: null, longitude: null, isEmergency: false,
     })
     const [formError, setFormError] = useState('')
     const [formSubmitting, setFormSubmitting] = useState(false)
@@ -41,6 +43,10 @@ import { useState } from 'react'
           setFormError('Todos los campos son obligatorios')
           return
         }
+        if (!form.latitude || !form.longitude) {
+          setFormError('Seleccioná una dirección de la lista de sugerencias para confirmar la ubicación')
+          return
+        }
         if (!form.isEmergency && (!form.startDate || !form.endDate)) {
           setFormError('Todos los campos son obligatorios')
           return
@@ -63,6 +69,8 @@ import { useState } from 'react'
             startDate: form.isEmergency ? undefined : form.startDate,
             endDate: form.isEmergency ? undefined : form.endDate,
             address: form.address,
+            latitude: form.latitude,
+            longitude: form.longitude,
             categoryId: form.categoryId,
             isEmergency: form.isEmergency,
             images,

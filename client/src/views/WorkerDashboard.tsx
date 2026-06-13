@@ -1169,8 +1169,8 @@ export default function WorkerDashboard() {
   const fetchNearbyJobs = useCallback(async () => {
     try {
       const category = localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-      const { data: posts } = await fetchAvailablePosts(category)
-      setNearbyJobs(posts.slice(0, 3))
+      const res = await fetchAvailablePosts(category, { page: 1, limit: 3, sortOrder: 'desc' })
+      setNearbyJobs(res.data.data)
     } catch {
       setNearbyJobs([])
     } finally {

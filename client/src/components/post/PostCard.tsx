@@ -61,6 +61,20 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
 
       <p className="desc">{post.description}</p>
 
+      {post.images && post.images.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', margin: '0 0 0.75rem', paddingBottom: '4px' }}>
+          {post.images.map((img, i) => (
+            <a key={i} href={img.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0 }}>
+              <img
+                src={img.url}
+                alt={`Foto ${i + 1}`}
+                style={{ width: '96px', height: '72px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+              />
+            </a>
+          ))}
+        </div>
+      )}
+
       <div className="info-row">
         <strong>Fechas:</strong>{' '}
         {new Date(post.startDate).toLocaleDateString()} — {new Date(post.endDate).toLocaleDateString()}
@@ -70,8 +84,14 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
       </div>
 
       <div className="flex justify-between items-center" style={{ marginTop: '0.5rem' }}>
-        <div className="info-row" style={{ marginBottom: 0 }}>
-          <strong>Direccion:</strong> {post.address}
+        <div className="info-row" style={{ marginBottom: 0, minWidth: 0, flex: 1, marginRight: '1rem' }}>
+          <strong>Direccion:</strong>{' '}
+          <span
+            title={post.address}
+            style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
+          >
+            {post.address}
+          </span>
         </div>
         {post.status === 'Completed' && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
