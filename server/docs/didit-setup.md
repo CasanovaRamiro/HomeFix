@@ -2,7 +2,7 @@
 
 Guía para configurar la verificación de identidad con [Didit](https://docs.didit.me) en entorno local.
 
-> Estado actual: **MVP con persistencia y webhook**. El status se guarda en la DB y se actualiza vía confirm-first (frontend) + webhook (backend).
+> Estado actual: **Iframe SDK embebido**. El usuario completa la verificación dentro de la app sin salir de la página. El status se guarda en la DB y se actualiza vía SDK callback (frontend) + polling (cada 10s) + webhook (backup en producción).
 
 ---
 
@@ -71,18 +71,13 @@ Códigos de documento válidos: `ID` (national ID / DNI), `P` (passport), `DL` (
 En `server/.env`:
 
 ```env
-# Didit KYC
-DIDIT_API_KEY=<tu-api-key>
+# Didit KYC (las 3 vars son compartidas — pedilas al team lead)
+DIDIT_API_KEY=<api-key-compartida>
 DIDIT_WORKFLOW_ID=<uuid-del-workflow>
-
-# Opcional: URL de retorno. Si está configurada, el provider la pasa
-# al crear cada session y Didit redirige ahí con ?status=...&verificationSessionId=...
-# En desarrollo típicamente apunta al front local.
-DIDIT_CALLBACK_URL=http://localhost:5173/kyc
-
-# Webhook (opcional para MVP, requerido para producción)
-DIDIT_WEBHOOK_SECRET=<secret-shared-key-del-destination>
+DIDIT_WEBHOOK_SECRET=<secret-shared-key-del-webhook>
 ```
+
+> Las 3 variables de Didit son las mismas para todos los developers. No las generes — pedilas al team lead.
 
 En `client/.env`:
 
@@ -105,13 +100,13 @@ Una vez que un workflow recibe al menos una session, Didit lo marca como `is_edi
    ```
 2. Loguearse en la app y entrar al dashboard de worker.
 3. Click en **Dni** (fila de "Mis validaciones") → abre `/kyc`.
-4. Click en **Iniciar verificación** → redirige a Didit.
-5. Completar el flow (DNI frente/dorso + selfie).
-6. Didit redirige de vuelta a `/kyc?status=...&verificationSessionId=...` y la app muestra el resultado.
+4. Click en **Iniciar verificación** → se abre un **modal embebido** dentro de la app con el flow de Didit.
+5. Completar el flow (DNI frente/dorso + selfie) dentro del modal.
+6. Al terminar, el SDK de Didit recibe el resultado via `postMessage` y la app muestra el estado final.
 
-### Status posibles en el callback
+> No se redirige a ninguna URL externa. Todo ocurre dentro de un iframe embebido en la app.
 
-Didit appendea `?status=<status>` al callback. Valores relevantes para la UI:
+### Status posibles
 
 | Status | Significado | UI en HomeFix |
 |---|---|---|
@@ -122,7 +117,9 @@ Didit appendea `?status=<status>` al callback. Valores relevantes para la UI:
 | `Abandoned` | User no completó | "Verificación incompleta" |
 | otros | Cualquier otro | Copy default: "Verificación recibida" |
 
-Lista completa en la [API reference de Didit](https://docs.didit.me/reference/sessions).
+### Polling automático
+
+Si el status queda en `IN_REVIEW` (o cualquier otro estado no-`NOT_STARTED`), la app consulta automáticamente la API de Didit cada 10 segundos para detectar cambios. Si cambias el status desde el dashboard de Didit, la app lo refleja sin necesidad de refrescar.
 
 ---
 
@@ -171,8 +168,10 @@ Documentación completa: https://docs.didit.me/integration/webhooks
 
 ---
 
-## 6. Limitaciones del MVP
+## 6. Limitaciones conocidas
 
-- **Webhook sin ngrok**: no se puede testear localmente sin ngrok. El endpoint funciona en producción.
+- **Webhook sin URL pública**: en desarrollo no se puede recibir webhooks de Didit. El polling cada 10s cubre esta necesidad. Para staging/producción, configurar una URL pública en Didit dashboard.
+- **Polling en status terminales**: cuando un usuario está en `/kyc` con status APPROVED/DECLINED/EXPIRED, cada request a `/kyc/status` consulta la API de Didit. Si muchos usuarios están en la página simultáneamente, puede acercarse a los rate limits de Didit. Optimización futura: solo polling una vez después del confirm, no continuo.
 - **API key compartida**: todos los workers usan el mismo workflow. No hay segregación por tenant.
-- **Sin retry manual**: si el webhook falla 2 veces, Didit deja de reintentar. No hay mecanismo de reconciliación (excepto polling manual con `GET /kyc/status`).
+- **Email stub**: las notificaciones por email son `console.log` — falta integrar un proveedor real (SendGrid, SES).
+- **`getSessionStatus` 404**: el endpoint GET `/v3/session/{id}/` de Didit devuelve 404 consistentemente. Usamos `getDecision` (GET `/v3/session/{id}/decision/`) como endpoint primario. Si Didit cambia esto, podría requerir ajustes.
