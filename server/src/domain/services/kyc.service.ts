@@ -80,7 +80,7 @@ export const confirmKyc = async (
       try {
         const session = await getSessionStatus(sessionId)
         diditStatus = session.status
-      } catch (e2) {
+      } catch {
         throw lastError.status === 404
           ? createHttpError(404, 'La sesión de verificación no existe')
           : createHttpError(502, 'No se pudo obtener el estado de la verificación')
