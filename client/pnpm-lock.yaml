@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@didit-protocol/sdk-web':
+        specifier: ^0.2.1
+        version: 0.2.1
       '@prisma/client':
         specifier: ~7.7.0
         version: 7.7.0(prisma@7.7.0(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.8.3))(typescript@5.8.3)
@@ -684,6 +687,10 @@ packages:
   '@csstools/css-tokenizer@4.0.0':
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
+
+  '@didit-protocol/sdk-web@0.2.1':
+    resolution: {integrity: sha512-dv5mrvgV6RJgXySWIcDFwp9AMD7Hz9AN/GbDIhmZMRHpSumiIb44XP9MhUaF7YgWbtscRJhkbDH0KgHzSO6hJg==}
+    engines: {node: '>=16.0.0'}
 
   '@electric-sql/pglite-socket@0.1.1':
     resolution: {integrity: sha512-p2hoXw3Z3LQHwTeikdZNsFBOvXGqKY2hk51BBw+8NKND8eoH+8LFOtW9Z8CQKmTJ2qqGYu82ipqiyFZOTTXNfw==}
@@ -4533,6 +4540,8 @@ snapshots:
       css-tree: 3.2.1
 
   '@csstools/css-tokenizer@4.0.0': {}
+
+  '@didit-protocol/sdk-web@0.2.1': {}
 
   '@electric-sql/pglite-socket@0.1.1(@electric-sql/pglite@0.4.1)':
     dependencies:

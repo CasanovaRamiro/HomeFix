@@ -34,5 +34,11 @@ export const env = {
   get CLOUDINARY_API_KEY() { return process.env.CLOUDINARY_API_KEY! },
   get CLOUDINARY_API_SECRET() { return process.env.CLOUDINARY_API_SECRET! },
   get TELEGRAM_BOT_TOKEN() { return process.env.TELEGRAM_BOT_TOKEN },
-  get FRONTEND_URL() { return process.env.CORS_ORIGIN || 'http://localhost:5173' },
+  get DIDIT_API_KEY() { return process.env.DIDIT_API_KEY },
+  get DIDIT_WORKFLOW_ID() { return process.env.DIDIT_WORKFLOW_ID },
+  get DIDIT_BASE_URL() { return process.env.DIDIT_BASE_URL || 'https://verification.didit.me' },
+  get DIDIT_CALLBACK_URL() { return process.env.DIDIT_CALLBACK_URL },
+  get DIDIT_WEBHOOK_SECRET() { return process.env.DIDIT_WEBHOOK_SECRET },
+  get FRONTEND_URL() { return process.env.FRONTEND_URL || 'http://localhost:5173' },
+  get API_BASE_URL() { return process.env.API_BASE_URL || 'https://api.miapinode.com' },
 }

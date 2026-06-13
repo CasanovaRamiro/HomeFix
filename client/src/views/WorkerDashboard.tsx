@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
-  CheckCircle2, User, MapPin, AlertCircle, X,
+  CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
   Eye, ChevronRight, Shield, MessageSquare, FileText,
 } from 'lucide-react'
 import api from '../services/api'
@@ -13,6 +13,7 @@ import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 import ApplyModal from '../components/worker/ApplyModal'
+import { fetchKycStatus, type KycStatus } from '../services/kyc'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -767,9 +768,99 @@ const QUICK_LINKS = [
   { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
 ]
 
-function Sidebar({ workerId }: { workerId: string }) {
+const KYC_BADGE: Record<string, { icon: typeof CheckCircle2; bg: string; color: string }> = {
+  APPROVED:   { icon: CheckCircle2, bg: '#ECFDF5', color: '#059669' },
+  DECLINED:   { icon: XCircle, bg: '#FEF2F2', color: '#DC2626' },
+  EXPIRED:    { icon: Clock, bg: '#FEF2F2', color: '#DC2626' },
+  IN_REVIEW:  { icon: Clock, bg: '#FFFBEB', color: '#D97706' },
+}
+
+function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStatus }) {
   const navigate = useNavigate()
   const links = QUICK_LINKS.map((l) => l.label === 'Mi Perfil' ? { ...l, href: `/worker/${workerId}` } : l)
+
+  function renderKycButton() {
+    const badge = KYC_BADGE[kycStatus]
+    if (kycStatus === 'APPROVED') {
+      const B = badge
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Verificada
+          </span>
+        </div>
+      )
+    }
+
+    if (kycStatus === 'DECLINED' || kycStatus === 'EXPIRED') {
+      const B = badge
+      return (
+        <button
+          type="button"
+          onClick={() => navigate('/kyc')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', background: 'transparent', border: 'none', padding: 0,
+            cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+        >
+          <span style={{ fontSize: 13 }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Rechazada
+          </span>
+        </button>
+      )
+    }
+
+    if (kycStatus === 'IN_REVIEW') {
+      const B = badge
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Pendiente
+          </span>
+        </div>
+      )
+    }
+
+    return (
+      <button
+        key="dni"
+        type="button"
+        onClick={() => navigate('/kyc')}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', background: 'transparent', border: 'none', padding: 0,
+          cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+      >
+        <span style={{ fontSize: 13 }}>Dni</span>
+        <ChevronRight size={18} color="#94A3B8" />
+      </button>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -791,12 +882,17 @@ function Sidebar({ workerId }: { workerId: string }) {
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {VALIDATIONS.map((v) => (
-            <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
-              <CheckCircle2 size={18} color="#10B981" />
-            </div>
-          ))}
+          {VALIDATIONS.map((v) => {
+            if (v.label === 'Dni') {
+              return <div key={v.label}>{renderKycButton()}</div>
+            }
+            return (
+              <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
+                <CheckCircle2 size={18} color="#10B981" />
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -1057,6 +1153,7 @@ export default function WorkerDashboard() {
   const [jobsLoading, setJobsLoading] = useState(true)
   const [applications, setApplications] = useState<Application[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
+  const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -1092,11 +1189,21 @@ export default function WorkerDashboard() {
     }
   }, [])
 
+  const fetchKyc = useCallback(async () => {
+    try {
+      const { kycStatus: status } = await fetchKycStatus()
+      setKycStatus(status)
+    } catch {
+      // keep default NOT_STARTED
+    }
+  }, [])
+
   useEffect(() => {
     void fetchDashboard()
     void fetchNearbyJobs()
     void fetchApplications()
-  }, [fetchDashboard, fetchNearbyJobs, fetchApplications])
+    void fetchKyc()
+  }, [fetchDashboard, fetchNearbyJobs, fetchApplications, fetchKyc])
 
   if (loading) {
     return (
@@ -1161,7 +1268,7 @@ export default function WorkerDashboard() {
         </div>
 
         {/* Right sidebar */}
-        <Sidebar workerId={data.profile.id} />
+        <Sidebar workerId={data.profile.id} kycStatus={kycStatus} />
       </div>
 
       <style>{`
