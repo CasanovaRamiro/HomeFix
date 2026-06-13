@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { createDiditSession } from "../../src/infrastructure/providers/didit.provider.js"
+import { createDiditSession, getSessionStatus } from "../../src/infrastructure/providers/didit.provider.js"
 
 const mockFetch = vi.fn()
 
@@ -234,6 +234,99 @@ describe("createDiditSession", () => {
     await expect(createDiditSession("user-1")).rejects.toMatchObject({
       status: 502,
       message: "El servicio de verificación rechazó la solicitud",
+    })
+  })
+})
+
+describe("getSessionStatus", () => {
+  it("sends a GET with x-api-key and returns the session", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        session_id: "sess-abc",
+        status: "Approved",
+        url: "https://verify.didit.me/session/sess-abc",
+      }),
+    })
+
+    const result = await getSessionStatus("sess-abc")
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    const [url, init] = mockFetch.mock.calls[0]
+    expect(url).toBe("https://verification.didit.me/v3/session/sess-abc/")
+    expect(init.method).toBe("GET")
+    expect(init.headers).toMatchObject({ "x-api-key": "test-api-key" })
+    expect(result).toEqual({
+      sessionId: "sess-abc",
+      status: "Approved",
+      url: "https://verify.didit.me/session/sess-abc",
+    })
+  })
+
+  it("defaults to UNKNOWN when status is missing", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ session_id: "sess-1" }),
+    })
+
+    const result = await getSessionStatus("sess-1")
+    expect(result.status).toBe("UNKNOWN")
+  })
+
+  it("throws 404 when Didit returns 404", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      text: async () => "Not Found",
+    })
+
+    await expect(getSessionStatus("sess-nonexistent")).rejects.toMatchObject({
+      status: 404,
+      message: "La sesión de verificación no existe",
+    })
+  })
+
+  it("throws 502 when Didit returns 5xx", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => "Internal Server Error",
+    })
+
+    await expect(getSessionStatus("sess-1")).rejects.toMatchObject({ status: 502 })
+  })
+
+  it("throws 502 when fetch itself throws", async () => {
+    mockFetch.mockRejectedValue(new Error("network error"))
+
+    await expect(getSessionStatus("sess-1")).rejects.toMatchObject({
+      status: 502,
+      message: "No se pudo contactar al servicio de verificación",
+    })
+  })
+
+  it("throws 500 when DIDIT_API_KEY is not set", async () => {
+    vi.stubEnv("DIDIT_API_KEY", "")
+
+    await expect(getSessionStatus("sess-1")).rejects.toMatchObject({
+      status: 500,
+      message: "DIDIT_API_KEY is not configured",
+    })
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it("throws 502 when response is missing session_id", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: "Approved" }),
+    })
+
+    await expect(getSessionStatus("sess-1")).rejects.toMatchObject({
+      status: 502,
+      message: "Respuesta inválida del servicio de verificación",
     })
   })
 })

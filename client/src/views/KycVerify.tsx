@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
   Shield,
@@ -11,7 +11,7 @@ import {
   FileCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { startKycVerification } from '../services/kyc'
+import { startKycVerification, confirmKycSession } from '../services/kyc'
 
 type ViewState = 'idle' | 'loading' | 'error'
 
@@ -100,16 +100,46 @@ function toneForStatus(rawStatus: string | null): Tone {
 
 export default function KycVerify() {
   const [searchParams] = useSearchParams()
-  const diditStatus = searchParams.get('status')
-  const sessionId = searchParams.get('verificationSessionId')
-  const showResult = Boolean(diditStatus || sessionId)
+  const rawStatus = searchParams.get('status')
+  const rawSessionId = searchParams.get('verificationSessionId')
+  const showResult = Boolean(rawStatus || rawSessionId)
 
   const [state, setState] = useState<ViewState>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [confirmedStatus, setConfirmedStatus] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+  const startedRef = useRef(false)
 
-  if (showResult) {
-    const copy = resolveStatusCopy(diditStatus)
-    const tone = toneForStatus(diditStatus)
+  useEffect(() => {
+    if (showResult && rawSessionId && !startedRef.current) {
+      startedRef.current = true
+      confirmKycSession(rawSessionId)
+        .then((res) => setConfirmedStatus(res.status))
+        .catch((err) => {
+          const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+          setConfirmError(msg ?? 'Error al confirmar la verificación')
+        })
+    }
+  }, [])
+
+  const isConfirming = showResult && !confirmedStatus && !confirmError
+  const displayStatus = confirmedStatus ?? rawStatus
+  const handleResult = Boolean(confirmedStatus || confirmError)
+
+  if (isConfirming) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 font-sans">
+        <div className="max-w-md w-full space-y-4 text-center">
+          <Loader2 className="mx-auto w-10 h-10 animate-spin text-slate-400" />
+          <p className="text-slate-500">Confirmando tu verificación…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (handleResult) {
+    const copy = resolveStatusCopy(displayStatus)
+    const tone = toneForStatus(displayStatus)
     const badge = TONE_BADGE[tone]
     const Icon = copy.icon
     return (
@@ -121,11 +151,16 @@ export default function KycVerify() {
             </div>
             <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
             <p className="mt-3 text-slate-500">{copy.description}</p>
+            {confirmError && (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-xs text-left">
+                {confirmError}
+              </div>
+            )}
             <span className={`mt-4 inline-block text-xs font-semibold px-3 py-1 rounded-full ${badge.bg} ${badge.color}`}>
               {badge.label}
             </span>
-            {sessionId && (
-              <p className="mt-4 text-xs text-slate-400 font-mono break-all">ID de sesión: {sessionId}</p>
+            {rawSessionId && (
+              <p className="mt-4 text-xs text-slate-400 font-mono break-all">ID de sesión: {rawSessionId}</p>
             )}
             <Link
               to="/worker"
