@@ -7,7 +7,7 @@ CREATE TABLE certificates (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   INDEX certificates_worker_id_idx (worker_id),
-  CONSTRAINT certificates_worker_id_fk FOREIGN KEY (worker_id) REFERENCES User(id) ON DELETE CASCADE
+  CONSTRAINT certificates_worker_id_fk FOREIGN KEY (worker_id) REFERENCES `User`(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE work_images (
@@ -18,5 +18,5 @@ CREATE TABLE work_images (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   INDEX work_images_worker_id_idx (worker_id),
-  CONSTRAINT work_images_worker_id_fk FOREIGN KEY (worker_id) REFERENCES User(id) ON DELETE CASCADE
+  CONSTRAINT work_images_worker_id_fk FOREIGN KEY (worker_id) REFERENCES `User`(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
