@@ -15,6 +15,8 @@
   - Made the column `address_id` on table `User` required. This step will fail if there are existing NULL values in that column.
 
 */
+SET FOREIGN_KEY_CHECKS=0;
+
 -- DropForeignKey
 ALTER TABLE `Application` DROP FOREIGN KEY `Application_postId_fkey`;
 
@@ -193,3 +195,5 @@ ALTER TABLE `ClientReview` ADD CONSTRAINT `ClientReview_clientId_fkey` FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE `PostImage` ADD CONSTRAINT `PostImage_postId_fkey` FOREIGN KEY (`postId`) REFERENCES `Post`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+SET FOREIGN_KEY_CHECKS=1;
