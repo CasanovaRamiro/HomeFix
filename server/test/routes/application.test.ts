@@ -69,6 +69,144 @@ const createPendingApplication = (postId: string) =>
     data: { workerId, postId, status: 'Pending' },
   })
 
+const validApplicationBody = (postId: string) => ({
+  postId,
+  availableDays: ['Lunes', 'Martes'],
+  availableTimeFrom: '09:00',
+  availableTimeTo: '18:00',
+  chargesVisit: false,
+})
+
+describe('POST /applications', () => {
+  it('crea una postulación con los campos de disponibilidad y retorna 201', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send(validApplicationBody(post.id))
+
+    expect(res.status).toBe(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body.status).toBe('Pending')
+    expect(res.body.message).toBe('Application successful')
+  })
+
+  it('persiste todos los campos de disponibilidad y visita en la base de datos', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({
+        ...validApplicationBody(post.id),
+        message: 'Puedo ir mañana a las 10',
+        chargesVisit: true,
+        visitCost: 500,
+      })
+
+    expect(res.status).toBe(201)
+    const saved = await prisma.application.findUnique({ where: { id: res.body.id } })
+    expect(saved?.message).toBe('Puedo ir mañana a las 10')
+    expect(saved?.availableDays).toBe(JSON.stringify(['Lunes', 'Martes']))
+    expect(saved?.availableTimeFrom).toBe('09:00')
+    expect(saved?.availableTimeTo).toBe('18:00')
+    expect(saved?.chargesVisit).toBe(true)
+    expect(saved?.visitCost).toBe(500)
+  })
+
+  it('retorna 400 si falta availableDays', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ postId: post.id, availableTimeFrom: '09:00', availableTimeTo: '18:00', chargesVisit: false })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si availableDays es array vacío', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(post.id), availableDays: [] })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si falta availableTimeFrom', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ postId: post.id, availableDays: ['Lunes'], availableTimeTo: '18:00', chargesVisit: false })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si falta availableTimeTo', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ postId: post.id, availableDays: ['Lunes'], availableTimeFrom: '09:00', chargesVisit: false })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si falta chargesVisit', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ postId: post.id, availableDays: ['Lunes'], availableTimeFrom: '09:00', availableTimeTo: '18:00' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si chargesVisit es true pero no se envía visitCost', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(post.id), chargesVisit: true })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 409 si el worker ya se postuló al mismo post', async () => {
+    const post = await createActivePost()
+    await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send(validApplicationBody(post.id))
+
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send(validApplicationBody(post.id))
+
+    expect(res.status).toBe(409)
+  })
+
+  it('retorna 401 si no se envía token', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .send(validApplicationBody(post.id))
+
+    expect(res.status).toBe(401)
+  })
+
+  it('retorna 404 si el post no existe', async () => {
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send(validApplicationBody('post-inexistente'))
+
+    expect(res.status).toBe(404)
+  })
+})
+
 describe('GET /applications/my-applications', () => {
   it('no devuelve aplicaciones rechazadas', async () => {
     const post = await createActivePost()
