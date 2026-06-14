@@ -1,5 +1,5 @@
 import api from './api'
-import type { Post, CreateSubcontractInput, SubcontractDTO, AvailableSubcontractDTO } from '../types/post'
+import type { Post, CreateSubcontractInput, SubcontractDTO, AvailableSubcontractDTO, SubcontractDetailDTO } from '../types/post'
 
 export const fetchAvailablePosts = (category?: string) =>
   api.get<Post[]>('/posts/available', {
@@ -24,3 +24,6 @@ export const createSubcontract = (data: CreateSubcontractInput) =>
 
 export const fetchAvailableSubcontracts = () =>
   api.get<AvailableSubcontractDTO[]>('/posts/availableSubcontracts')
+
+export const fetchSubcontractById = (id: string) =>
+  api.get<SubcontractDetailDTO>(`/posts/subcontracts/${id}`)

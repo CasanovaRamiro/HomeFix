@@ -21,6 +21,7 @@ import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
+import SubcontractDetail from './views/SubcontractDetail'
 import CreateSubcontract from './views/CreateSubcontract'
 import KycVerification from './views/KycVerification'
 import RegisterChoice from './views/RegisterChoice'
@@ -65,6 +66,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <AvailableSubcontracts />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/worker/subcontracts/:id"
+          element={
+            <PrivateRoute>
+              <SubcontractDetail />
             </PrivateRoute>
           }
         />

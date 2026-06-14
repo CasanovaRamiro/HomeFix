@@ -250,7 +250,7 @@ export default function AvailableSubcontracts() {
                 <div key={sub.id} className="sc-card-wrapper" style={{ animation: `fadeInUp 0.35s ease-out ${idx * 0.06}s both` }}>
                   <SubcontractCard
                     subcontract={sub}
-                    onClick={() => navigate(`/posts/${sub.id}`)}
+                    onClick={() => navigate(`/worker/subcontracts/${sub.id}`)}
                   />
                 </div>
               ))}

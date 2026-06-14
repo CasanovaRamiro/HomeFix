@@ -22,6 +22,7 @@ export interface DomainPost {
   clientRating?: number
   workerRating?: number
   originalClientRating?: number
+  parentUser?: { name: string; surname: string }
 }
 
 export interface DomainUserPost {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
+import { findUserById } from "../../src/infrastructure/database/user.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
@@ -22,6 +23,10 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   updateApplicationStatus: vi.fn(),
+}));
+
+vi.mock("../../src/infrastructure/database/user.database.js", () => ({
+  findUserById: vi.fn(),
 }));
 
 vi.mock("../../src/domain/services/user.service.js", () => ({
@@ -281,9 +286,10 @@ describe("post.service - getSubcontractById", () => {
     user: { id: "client-user-id", name: "Client", surname: "Test" },
   }
 
-  it("should return subcontract with workerRating and original clientRating", async () => {
+  it("should return subcontract with workerRating, original clientRating and parentUser", async () => {
     vi.mocked(findPostById).mockResolvedValueOnce(subcontractMock)
     vi.mocked(findPostById).mockResolvedValueOnce(parentPostMock)
+    vi.mocked(findUserById).mockResolvedValue({ id: "client-user-id", name: "Client", surname: "Test", email: "client@test.com", phone: null, telegramChatId: null })
     vi.mocked(getWorkerRating).mockResolvedValue({ averageRating: 4.2, reviewCount: 5 })
     vi.mocked(getClientRating).mockResolvedValue({ averageRating: 3.8, reviewCount: 2 })
 
@@ -291,12 +297,14 @@ describe("post.service - getSubcontractById", () => {
 
     expect(findPostById).toHaveBeenNthCalledWith(1, "uuid-sub-1")
     expect(findPostById).toHaveBeenNthCalledWith(2, "parent-post-id")
+    expect(findUserById).toHaveBeenCalledWith("client-user-id")
     expect(getWorkerRating).toHaveBeenCalledWith("mmo-user-id")
     expect(getClientRating).toHaveBeenCalledWith("client-user-id")
     expect(result).not.toBeNull()
     expect(result!.type).toBe(PostType.SubContract)
     expect(result!.workerRating).toBe(4.2)
     expect(result!.clientRating).toBe(3.8)
+    expect(result!.parentUser).toEqual({ name: "Client", surname: "Test" })
   })
 
   it("should return null for regular post (type: post)", async () => {

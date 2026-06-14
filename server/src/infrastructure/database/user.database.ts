@@ -20,7 +20,7 @@ export const findByEmail = (email: string) =>
 export const findUserById = (id: string) =>
   prisma.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, phone: true, telegramChatId: true },
+    select: { id: true, name: true, surname: true, email: true, phone: true, telegramChatId: true },
   })
 
 export const findAll = (): Promise<DomainUser[]> =>

@@ -12,6 +12,7 @@ import {
   deletePostImages,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
+import { findUserById } from '../../infrastructure/database/user.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -164,11 +165,16 @@ export const getSubcontractById = async (id: string): Promise<DomainPost | null>
   const workerRating = workerRatingResult.averageRating
 
   let clientRating: number | undefined
+  let parentUser: { name: string; surname: string } | undefined
   if (post.parentPostId) {
     const parent = await findPostById(post.parentPostId)
     if (parent) {
       const clientRatingResult = await getClientRating(parent.userId)
       clientRating = clientRatingResult.averageRating
+      const parentUserRecord = await findUserById(parent.userId)
+      if (parentUserRecord) {
+        parentUser = { name: parentUserRecord.name, surname: parentUserRecord.surname }
+      }
     }
   }
 
@@ -176,6 +182,7 @@ export const getSubcontractById = async (id: string): Promise<DomainPost | null>
     ...post,
     clientRating,
     workerRating,
+    parentUser,
   }
 }
 
