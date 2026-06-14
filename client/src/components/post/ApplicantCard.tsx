@@ -13,6 +13,12 @@ interface Applicant {
   rating: number
   reviewCount: number
   jobCount: number
+  message: string | null
+  availableDays: string[]
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  chargesVisit: boolean
+  visitCost: number | null
 }
 
 interface ApplicantCardProps {
@@ -93,6 +99,30 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
           <StarRating rating={applicant.rating} count={applicant.reviewCount} />
           {' · '}{applicant.jobCount} trabajos
         </div>
+        {applicant.message && (
+          <p style={{ fontSize: 13, color: '#475569', marginTop: 6, fontStyle: 'italic' }}>
+            "{applicant.message}"
+          </p>
+        )}
+        {applicant.availableDays.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+            {applicant.availableDays.map((day) => (
+              <span key={day} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#D1FAE5', color: '#065F46' }}>
+                {day}
+              </span>
+            ))}
+            {applicant.availableTimeFrom && applicant.availableTimeTo && (
+              <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
+                {applicant.availableTimeFrom} – {applicant.availableTimeTo}
+              </span>
+            )}
+          </div>
+        )}
+        <p style={{ fontSize: 12, color: applicant.chargesVisit ? '#92400E' : '#6B7280', marginTop: 4 }}>
+          {applicant.chargesVisit
+            ? `Cobra visita: $${applicant.visitCost?.toLocaleString('es-AR') ?? '-'}`
+            : 'No cobra visita'}
+        </p>
       </div>
       <div className="actions">
         <button className="btn-outline" onClick={() => navigate(`/profile/worker/${applicant.id}`)}>Ver perfil</button>

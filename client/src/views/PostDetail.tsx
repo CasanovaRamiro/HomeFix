@@ -209,6 +209,12 @@ export default function PostDetail() {
                 rating: a.rating,
                 reviewCount: a.reviewCount,
                 jobCount: a.jobCount,
+                message: a.message,
+                availableDays: a.availableDays,
+                availableTimeFrom: a.availableTimeFrom,
+                availableTimeTo: a.availableTimeTo,
+                chargesVisit: a.chargesVisit,
+                visitCost: a.visitCost,
               }}
               applicationId={a.applicationId}
               applicationStatus={a.status}
