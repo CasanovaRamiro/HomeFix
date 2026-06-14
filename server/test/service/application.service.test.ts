@@ -110,14 +110,23 @@ describe("applyToPost", () => {
     chargesVisit: false,
   }
 
-  const mockPost = { id: "post-1", userId: "client-1", title: "Test post", status: "Active" }
-  const mockCreated = { id: "app-new", status: "Pending" }
+  const mockPost = {
+    id: "post-1", userId: "client-1", title: "Test post", status: "Active",
+    description: "", address: "", startDate: new Date(), endDate: new Date(),
+    createdAt: new Date(), images: [], latitude: null, longitude: null,
+    categories: [], user: { id: "client-1", name: "Client", surname: "Test" },
+  }
+  const mockCreated = {
+    id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
+    message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+    chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+  }
 
   beforeEach(() => {
     vi.mocked(postData.findPostById).mockResolvedValue(mockPost)
     vi.mocked(applicationData.findApplication).mockResolvedValue(null)
     vi.mocked(applicationData.createApplication).mockResolvedValue(mockCreated)
-    vi.mocked(userDatabase.findUserById).mockResolvedValue({ id: "worker-1", name: "Juan" })
+    vi.mocked(userDatabase.findUserById).mockResolvedValue({ id: "worker-1", name: "Juan", email: "juan@test.com", phone: null, telegramChatId: null })
   })
 
   it("crea la postulación y retorna id, status y mensaje de éxito", async () => {
@@ -137,7 +146,11 @@ describe("applyToPost", () => {
   })
 
   it("lanza 409 si el worker ya se postuló al post", async () => {
-    vi.mocked(applicationData.findApplication).mockResolvedValue({ id: "existing-app" })
+    vi.mocked(applicationData.findApplication).mockResolvedValue({
+      id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
+      message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+      chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+    })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
 
