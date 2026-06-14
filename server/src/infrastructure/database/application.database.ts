@@ -1,7 +1,7 @@
 import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import prisma from '../../lib/prisma.js'
 import { toDomainMyApplication, toDomainPostApplication } from '../transformers/application.transformer.js'
-import type { DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
+import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
 
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
@@ -39,9 +39,19 @@ export const updateApplicationStatus = (id: string, status: string) =>
     data: { status },
   })
 
-export const createApplication = (workerId: string, postId: string) =>
+export const createApplication = (workerId: string, input: CreateApplicationInput) =>
   prisma.application.create({
-    data: { workerId, postId, status: ApplicationStatus.Pending },
+    data: {
+      workerId,
+      postId: input.postId,
+      status: ApplicationStatus.Pending,
+      message: input.message ?? null,
+      availableDays: JSON.stringify(input.availableDays),
+      availableTimeFrom: input.availableTimeFrom,
+      availableTimeTo: input.availableTimeTo,
+      chargesVisit: input.chargesVisit,
+      visitCost: input.visitCost ?? null,
+    },
   })
 
 export const deleteApplication = (workerId: string, applicationId: string) =>

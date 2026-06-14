@@ -14,7 +14,7 @@ import { createTelegramProvider } from '../../infrastructure/providers/telegram.
 import { notifyUser } from './notification.service.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
-import type { DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
+import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
 let _provider: NotificationProvider
@@ -38,15 +38,18 @@ export const cancelApplication = async (workerId: string, applicationId: string)
   return { message: 'Postulación cancelada' }
 }
 
-export const applyToPost = async (workerId: string, postId: string) => {
-  const post = await findPostById(postId)
+export const applyToPost = async (workerId: string, input: CreateApplicationInput) => {
+  const post = await findPostById(input.postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('This post is no longer available'), { status: 400 })
 
-  const existing = await findApplication(workerId, postId)
+  const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
 
-  const created = await createApplication(workerId, postId)
+  if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
+    throw Object.assign(new Error('visitCost must be a positive number when chargesVisit is true'), { status: 400 })
+
+  const created = await createApplication(workerId, input)
 
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {

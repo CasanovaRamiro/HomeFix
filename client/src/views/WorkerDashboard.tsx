@@ -12,7 +12,7 @@ import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
-import ApplyModal from '../components/worker/ApplyModal'
+import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import { fetchKycStatus, type KycStatus } from '../services/kyc'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
@@ -377,7 +377,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   const [emergencies, setEmergencies] = useState<Post[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedEmergency, setSelectedEmergency] = useState<Post | null>(null)
-  const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [exito, setExito] = useState(false)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
@@ -407,16 +406,23 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
     }
   }
 
-  const handlePostular = async () => {
+  const handlePostular = async (formData: ApplicationFormData) => {
     if (!selectedEmergency) return
     setEnviando(true)
     try {
-      await applyToPost(selectedEmergency.id)
+      await applyToPost({
+        postId: selectedEmergency.id,
+        message: formData.message || undefined,
+        availableDays: formData.availableDays,
+        availableTimeFrom: formData.availableTimeFrom,
+        availableTimeTo: formData.availableTimeTo,
+        chargesVisit: formData.chargesVisit,
+        visitCost: formData.visitCost,
+      })
       setAppliedIds((prev) => [...prev, selectedEmergency.id])
       setExito(true)
       setTimeout(() => {
         setSelectedEmergency(null)
-        setMensaje('')
         setExito(false)
       }, 1500)
     } catch (err: unknown) {
@@ -429,7 +435,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
 
   const handleCloseModal = () => {
     setSelectedEmergency(null)
-    setMensaje('')
     setExito(false)
   }
 
@@ -570,8 +575,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
         ) : (
           <ApplyModal
             selected={postToTrabajo(selectedEmergency)}
-            mensaje={mensaje}
-            onMensajeChange={setMensaje}
             onEnviar={handlePostular}
             onClose={handleCloseModal}
             enviando={enviando}
