@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `user` RENAME COLUMN `kycSessionId` TO `diditVerificationId`;
+ALTER TABLE `User` RENAME COLUMN `kycSessionId` TO `diditVerificationId`;
