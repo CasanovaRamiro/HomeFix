@@ -569,7 +569,7 @@ export default function WorkerProfile() {
             {/* Gallery */}
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Galería de Trabajos</h3>
-              {worker.gallery.length > 0 && (
+              {worker.gallery?.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
                   {worker.gallery.map((img) => (
                     <div key={img.id} style={{ position: 'relative' }}>
@@ -616,7 +616,7 @@ export default function WorkerProfile() {
                   )}
                 </div>
               )}
-              {!isEditing && worker.gallery.length === 0 && (
+              {!isEditing && worker.gallery?.length === 0 && (
                 <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '12px 0' }}>Sin imágenes</p>
               )}
             </div>
@@ -686,7 +686,7 @@ export default function WorkerProfile() {
             {/* Certificates */}
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px' }}>Certificaciones</h3>
-              {worker.certificates.length > 0 && (
+              {worker.certificates?.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
                   {worker.certificates.map((c) => {
                     const isPdf = c.imageUrl?.endsWith('.pdf')
@@ -762,7 +762,7 @@ export default function WorkerProfile() {
                   </button>
                 </div>
               )}
-              {!isEditing && worker.certificates.length === 0 && (
+              {!isEditing && worker.certificates?.length === 0 && (
                 <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '12px 0' }}>Sin certificaciones</p>
               )}
             </div>
