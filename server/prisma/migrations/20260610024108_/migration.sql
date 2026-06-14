@@ -18,58 +18,58 @@
 SET FOREIGN_KEY_CHECKS=0;
 
 -- DropForeignKey
-ALTER TABLE `Application` DROP FOREIGN KEY `Application_postId_fkey`;
+ALTER TABLE `Application` DROP FOREIGN KEY IF EXISTS `Application_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `Application` DROP FOREIGN KEY `Application_workerId_fkey`;
+ALTER TABLE `Application` DROP FOREIGN KEY IF EXISTS `Application_workerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `ClientReview` DROP FOREIGN KEY `ClientReview_applicationId_fkey`;
+ALTER TABLE `ClientReview` DROP FOREIGN KEY IF EXISTS `ClientReview_applicationId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `ClientReview` DROP FOREIGN KEY `ClientReview_clientId_fkey`;
+ALTER TABLE `ClientReview` DROP FOREIGN KEY IF EXISTS `ClientReview_clientId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `ClientReview` DROP FOREIGN KEY `ClientReview_reviewerId_fkey`;
+ALTER TABLE `ClientReview` DROP FOREIGN KEY IF EXISTS `ClientReview_reviewerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `JobApplication` DROP FOREIGN KEY `JobApplication_postId_fkey`;
+ALTER TABLE `JobApplication` DROP FOREIGN KEY IF EXISTS `JobApplication_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `JobApplication` DROP FOREIGN KEY `JobApplication_workerId_fkey`;
+ALTER TABLE `JobApplication` DROP FOREIGN KEY IF EXISTS `JobApplication_workerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `Post` DROP FOREIGN KEY `Post_userId_fkey`;
+ALTER TABLE `Post` DROP FOREIGN KEY IF EXISTS `Post_userId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `PostCategory` DROP FOREIGN KEY `PostCategory_categoryId_fkey`;
+ALTER TABLE `PostCategory` DROP FOREIGN KEY IF EXISTS `PostCategory_categoryId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `PostCategory` DROP FOREIGN KEY `PostCategory_postId_fkey`;
+ALTER TABLE `PostCategory` DROP FOREIGN KEY IF EXISTS `PostCategory_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `PostImage` DROP FOREIGN KEY `PostImage_postId_fkey`;
+ALTER TABLE `PostImage` DROP FOREIGN KEY IF EXISTS `PostImage_postId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `User` DROP FOREIGN KEY `User_address_id_fkey`;
+ALTER TABLE `User` DROP FOREIGN KEY IF EXISTS `User_address_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `User` DROP FOREIGN KEY `User_national_id_type_id_fkey`;
+ALTER TABLE `User` DROP FOREIGN KEY IF EXISTS `User_national_id_type_id_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `UserCategory` DROP FOREIGN KEY `UserCategory_categoryId_fkey`;
+ALTER TABLE `UserCategory` DROP FOREIGN KEY IF EXISTS `UserCategory_categoryId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `UserCategory` DROP FOREIGN KEY `UserCategory_userId_fkey`;
+ALTER TABLE `UserCategory` DROP FOREIGN KEY IF EXISTS `UserCategory_userId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_applicationId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY IF EXISTS `WorkerReview_applicationId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_reviewerId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY IF EXISTS `WorkerReview_reviewerId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `WorkerReview` DROP FOREIGN KEY `WorkerReview_workerId_fkey`;
+ALTER TABLE `WorkerReview` DROP FOREIGN KEY IF EXISTS `WorkerReview_workerId_fkey`;
 
 -- AlterTable
 ALTER TABLE `Application` DROP PRIMARY KEY,
