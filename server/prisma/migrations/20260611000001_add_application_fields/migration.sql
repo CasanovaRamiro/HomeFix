@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `application`
+ALTER TABLE `Application`
     ADD COLUMN `message` TEXT NULL,
     ADD COLUMN `availableDays` TEXT NULL,
     ADD COLUMN `availableTimeFrom` VARCHAR(191) NULL,
