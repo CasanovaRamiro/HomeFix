@@ -11,6 +11,7 @@ export interface DomainWorker {
   categories: { id: string; name: string }[]
   certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
   gallery: { id: string; imageUrl: string; caption: string | null }[]
+  emergenciesEnabled: boolean
 }
 
 export interface UpdateWorkerInput {
@@ -22,6 +23,7 @@ export interface UpdateWorkerInput {
   availability?: string[]
   certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]
   gallery?: { id: string; imageUrl: string; caption?: string | null }[]
+  emergenciesEnabled?: boolean
 }
 
 export interface DomainWorkerReview {

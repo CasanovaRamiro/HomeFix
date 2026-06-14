@@ -15,6 +15,7 @@ const workerFields = {
   availability: true,
   certificates: true,
   gallery: true,
+  emergenciesEnabled: true,
   createdAt: true,
   categories: {
     select: {
