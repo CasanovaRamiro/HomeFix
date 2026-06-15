@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { DiditSdk } from '@didit-protocol/sdk-web'
 import { X, Loader2 } from 'lucide-react'
 import type { DiditSdkState, VerificationError } from '@didit-protocol/sdk-web'
+import logo from '../assets/homefix-logo.png'
 
 interface DiditVerificationModalProps {
   sessionUrl: string
@@ -94,21 +95,53 @@ export default function DiditVerificationModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(248, 250, 252, 0.85)' }}
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose()
       }}
     >
-      <div className="relative w-[90%] max-w-[480px] h-[85vh] max-h-[750px] bg-white rounded-2xl overflow-hidden shadow-2xl">
-        <button
-          type="button"
-          onClick={handleClose}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-colors"
-          aria-label="Cerrar verificación"
+      <div
+        className="relative flex flex-col overflow-hidden shadow-2xl"
+        style={{
+          width: '94vw',
+          maxWidth: '520px',
+          height: '90vh',
+          maxHeight: '780px',
+          borderRadius: 16,
+          border: '1px solid #E2E8F0',
+          background: '#fff',
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+          style={{
+            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+            borderBottom: '2px solid #10B981',
+          }}
         >
-          <X className="w-4 h-4 text-slate-600" />
-        </button>
+          <div className="flex items-center gap-2.5">
+            <img src={logo} alt="HomeFix" style={{ height: '28px', width: 'auto' }} />
+            <div className="flex flex-col">
+              <span className="text-white text-sm font-bold leading-tight">Verificación de identidad</span>
+              <span className="text-slate-400 text-[11px] leading-tight">Proceso seguro con Didit</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            style={{ background: 'rgba(255,255,255,0.1)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)' }}
+            aria-label="Cerrar verificación"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+        </div>
 
+        {/* Loading placeholder */}
         <div className="w-full h-full flex items-center justify-center bg-slate-50">
           <div className="flex flex-col items-center gap-3 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin" />
@@ -116,10 +149,12 @@ export default function DiditVerificationModal({
           </div>
         </div>
 
+        {/* Didit iframe container */}
         <div
           ref={containerRef}
           id="didit-embedded-container"
-          className="absolute inset-0"
+          className="absolute"
+          style={{ top: 56, left: 0, right: 0, bottom: 0 }}
         />
       </div>
     </div>
