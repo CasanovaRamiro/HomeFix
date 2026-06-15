@@ -226,7 +226,21 @@ export default function PostDetail() {
               postStatus={post.status}
               postTitle={post.title}
               onHire={refresh}
-              onDismiss={refresh}
+              onDismiss={() => navigate('/review', {
+                state: {
+                  postId: post.id,
+                  applicationId: a.applicationId,
+                  titulo: post.title,
+                  fecha: post.endDate,
+                  ubicacion: post.address,
+                  trabajador: {
+                    id: a.workerId,
+                    nombre: a.name,
+                    categoria: a.category ?? '',
+                    verificado: false,
+                  },
+                },
+              })}
             />
           ))}
         </div>
