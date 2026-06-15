@@ -19,7 +19,7 @@ import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 10
 const POLL_INTERVAL = 30000
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
@@ -87,6 +87,14 @@ export default function AvailableJobs(): JSX.Element {
     }
     setError('')
     try {
+      // Refresh worker categories before fetching jobs
+      if (user?.id) {
+        try {
+          const worker = await getWorker(user.id)
+          setWorkerCategories(worker.categories.map((c) => c.name))
+        } catch { /* ignore */ }
+      }
+
       const sortOrder = sortBy === 'reciente' ? 'desc' : 'asc'
       let mapped: (TrabajoView & { lat?: number | null; lng?: number | null })[]
       if (locationFilter) {
@@ -114,7 +122,7 @@ export default function AvailableJobs(): JSX.Element {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [category, searchParams, locationFilter, sortBy])
+  }, [category, searchParams, locationFilter, sortBy, user?.id])
 
   useEffect(() => {
     void loadPostulaciones()
@@ -262,7 +270,7 @@ export default function AvailableJobs(): JSX.Element {
                 Trabajos disponibles
               </h1>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="refresh-controls" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {lastUpdated && !loading && (
                 <span style={{ fontSize: 12, color: '#64748B' }}>
                   Actualizado {formatLastUpdate(lastUpdated)}
@@ -480,6 +488,7 @@ export default function AvailableJobs(): JSX.Element {
           .trabajos-grid-container { padding-left: 16px !important; padding-right: 16px !important; margin-top: 16px !important; }
           .filter-bar-container { padding-left: 0 !important; padding-right: 16px !important; }
           .filter-bar-container .trabajos-filters-row { align-items: stretch; }
+          .refresh-controls { display: none !important; }
         }
       `}</style>
     </div>
