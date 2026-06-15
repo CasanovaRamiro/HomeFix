@@ -162,13 +162,13 @@ router.post('/create-subcontract', validateCreateSubcontractBody, async (req, re
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
     const body = req.body as CreateSubcontractRequest
-    const result = await createSubContract({
+    const results = await createSubContract({
       ...body,
       userId: user.id,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : undefined,
     })
-    res.status(201).json(toPostDTO(result))
+    res.status(201).json(results.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400

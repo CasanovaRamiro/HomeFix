@@ -89,23 +89,34 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
   return post
 }
 
-export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost> => {
+export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost[]> => {
   const parentPost = input.parentPostId
     ? await verifySubcontractParent(input.parentPostId, input.userId)
     : null
 
-  const title       = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
-  const description = input.description?.trim() || ''
-  const startDate   = input.startDate ?? parentPost?.startDate ?? new Date()
-  const endDate     = input.endDate   ?? parentPost?.endDate   ?? new Date()
-  const address     = input.address?.trim() || parentPost?.address || 'Por definir'
+  const startDate = input.startDate ?? parentPost?.startDate ?? new Date()
+  const endDate   = input.endDate   ?? parentPost?.endDate   ?? new Date()
+  const address   = input.address?.trim() || parentPost?.address || 'Por definir'
+  const baseTitle = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
 
-  return createSubPost({
-    userId: input.userId,
-    parentPostId: input.parentPostId,
-    title, description, startDate, endDate, address,
-    positions: input.positions,
-  })
+  const results = await Promise.all(
+    input.positions.map((pos) =>
+      createSubPost({
+        userId: input.userId,
+        parentPostId: input.parentPostId,
+        title: pos.roleDescription
+          ? `${baseTitle} - ${pos.roleDescription}`
+          : baseTitle,
+        description: input.description?.trim() || pos.roleDescription || '',
+        startDate,
+        endDate,
+        address,
+        positions: [pos],
+      })
+    )
+  )
+
+  return results
 }
 
 const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => {
