@@ -82,6 +82,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
             onConfirm={handleDismiss}
             onCancel={() => setDismissModalOpen(false)}
             loading={dismissing}
+            danger
           />
         </>
       )

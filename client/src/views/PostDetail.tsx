@@ -255,6 +255,7 @@ export default function PostDetail() {
         cancelLabel="No, deseo mantenerla"
         onConfirm={handleCancel}
         onCancel={() => setShowCancelModal(false)}
+        danger
       />
 
       {showEditModal && (
