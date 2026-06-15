@@ -31,6 +31,20 @@ import ForgotPassword from './views/ForgotPassword'
 const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
   (localStorage.getItem('token') !== null) ? children : <Navigate to="/login" replace />
 
+function HomeRedirect(): ReactNode {
+  const token = localStorage.getItem('token')
+  if (!token) return <Landing />
+  try {
+    const raw = localStorage.getItem('user')
+    const user = raw ? JSON.parse(raw) as { role?: string } : null
+    if (user?.role === 'worker') return <Navigate to="/worker" replace />
+    if (user?.role === 'client') return <Navigate to="/dashboard" replace />
+  } catch {
+    // ignore parse error
+  }
+  return <Landing />
+}
+
 export default function App(): ReactNode {
   return (
     <BrowserRouter>
@@ -39,7 +53,7 @@ export default function App(): ReactNode {
         <Route path="/review" element={<PrivateRoute><LeaveReview /></PrivateRoute>} />
         
         <Route path="/workerlanding" element={<WorkerLanding />} />
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup"          element={<RegisterChoice />} /> 
