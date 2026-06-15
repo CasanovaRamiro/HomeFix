@@ -16,17 +16,27 @@ export default function KycRequiredModal({ isOpen, onClose }: Props) {
       <div
         className="card modal-card"
         role="dialog"
-        style={{ textAlign: 'center', padding: '2rem', maxWidth: 400 }}
+        style={{ textAlign: 'center', padding: '2rem 2rem 1.5rem' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <ShieldAlert size={48} color="#F59E0B" style={{ marginBottom: 16 }} />
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 8px' }}>
-          Verificación requerida
-        </h2>
-        <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 20px', lineHeight: 1.5 }}>
-          Para postularse a trabajos, necesitás completar la verificación de identidad con tu DNI.
+        <div style={{
+          width: 64, height: 64, borderRadius: '50%',
+          background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 20px',
+        }}>
+          <ShieldAlert size={32} color="#D97706" />
+        </div>
+
+        <h2>Verificación requerida</h2>
+
+        <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 24px', lineHeight: 1.6 }}>
+          Para postularse a trabajos, necesitás completar la verificación de identidad con tu DNI. Es un proceso rápido y seguro.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+
+        <div className="modal-actions">
+          <button type="button" className="btn-outline" onClick={onClose}>
+            Cerrar
+          </button>
           <button
             type="button"
             className="btn-accent"
@@ -36,13 +46,6 @@ export default function KycRequiredModal({ isOpen, onClose }: Props) {
             }}
           >
             Realizar verificación
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={onClose}
-          >
-            Cerrar
           </button>
         </div>
       </div>
