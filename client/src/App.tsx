@@ -39,7 +39,9 @@ function HomeRedirect(): ReactNode {
     const user = raw ? JSON.parse(raw) as { role?: string } : null
     if (user?.role === 'worker') return <Navigate to="/worker" replace />
     if (user?.role === 'client') return <Navigate to="/dashboard" replace />
-  } catch {}
+  } catch {
+    // ignore parse error
+  }
   return <Landing />
 }
 
