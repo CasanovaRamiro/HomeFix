@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { DiditSdk } from '@didit-protocol/sdk-web'
 import { X, Loader2 } from 'lucide-react'
 import type { DiditSdkState, VerificationError } from '@didit-protocol/sdk-web'
-import logo from '../assets/homefix-logo.png'
+import logo from '../assets/homefix-logo-negative.png'
 
 interface DiditVerificationModalProps {
   sessionUrl: string
