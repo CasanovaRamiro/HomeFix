@@ -180,7 +180,7 @@ describe('POST /reviews', () => {
       })
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toBe('Post must be completed before reviewing')
+    expect(res.body.error).toBe('Post must be completed or cancelled before reviewing')
   })
 
   it('should return 400 when no accepted application exists', async () => {

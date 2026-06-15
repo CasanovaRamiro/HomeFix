@@ -33,10 +33,12 @@ export const createWorkerReview = async (
   if (post.userId !== userId) {
     throw Object.assign(new Error('Forbidden'), { status: 403 })
   }
-  if (post.status !== 'Completed') {
-    throw Object.assign(new Error('Post must be completed before reviewing'), { status: 400 })
+  if (post.status !== PostStatus.Completed && post.status !== PostStatus.Cancelled) {
+    throw Object.assign(new Error('Post must be completed or cancelled before reviewing'), { status: 400 })
   }
 
+  // For cancelled posts the accepted-application lookup is what gates reviewability:
+  // a post cancelled while still Active never had a hired worker, so it stays non-reviewable.
   const accepted = await findAcceptedApplication(postId)
   if (!accepted) {
     throw Object.assign(new Error('No accepted application found for this post'), { status: 400 })

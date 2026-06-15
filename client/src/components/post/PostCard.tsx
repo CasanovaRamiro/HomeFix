@@ -102,6 +102,7 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
             <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
             <button className="btn-reopen" onClick={onReopen}>Reabrir busqueda</button>
+            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar contratacion</button>
           </div>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (

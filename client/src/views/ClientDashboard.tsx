@@ -32,10 +32,12 @@ export default function ClientDashboard() {
     { label: 'Sin leer',              value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
   ]
 
-  // Show only actionable posts: exclude Cancelled and Completed posts that already have a review
-  const visible = posts.filter(p =>
-    p.status !== PostStatus.Cancelled && !(p.status === PostStatus.Completed && p.hasReview)
-  )
+  // Show only actionable posts. Cancelled posts surface only when a hired contract still needs a
+  // review; everything else is hidden once Completed + reviewed.
+  const visible = posts.filter(p => {
+    if (p.status === PostStatus.Cancelled) return p.worker != null && !p.hasReview
+    return !(p.status === PostStatus.Completed && p.hasReview)
+  })
   const inProgressPosts = visible.filter(p => p.status === PostStatus.InProgress)
   const rest            = visible.filter(p => p.status !== PostStatus.InProgress)
   const ordered         = [...inProgressPosts, ...rest]

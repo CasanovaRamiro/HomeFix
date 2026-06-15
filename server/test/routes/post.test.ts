@@ -615,6 +615,32 @@ describe('PATCH /posts/:id/cancel', () => {
     expect(res.body.status).toBe('Cancelled')
   })
 
+  it('conserva la application Accepted y permite reseñar al trabajador tras cancelar la contratación', async () => {
+    const worker = await createUser('worker-cancel@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
+    await prisma.post.update({ where: { id: postId }, data: { status: 'In progress' } })
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId, status: 'Accepted' },
+    })
+
+    const cancelRes = await request(app)
+      .patch(`/posts/${postId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(cancelRes.status).toBe(200)
+    expect(cancelRes.body.status).toBe('Cancelled')
+
+    // The accepted application survives the cancellation.
+    const stillAccepted = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(stillAccepted?.status).toBe('Accepted')
+
+    // The client can review the worker on the cancelled contract.
+    const reviewRes = await request(app)
+      .post('/reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ postId, rating: 2, description: 'No se presentó' })
+    expect(reviewRes.status).toBe(201)
+    expect(reviewRes.body.rating).toBe(2)
+  })
+
   it('returns 400 when post is Completed', async () => {
     await prisma.post.update({ where: { id: postId }, data: { status: 'Completed' } })
 

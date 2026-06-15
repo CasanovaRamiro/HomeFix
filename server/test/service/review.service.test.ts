@@ -145,15 +145,27 @@ describe('createWorkerReview', () => {
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
-  it('should throw 400 when post is not completed', async () => {
+  it('should throw 400 when post is neither completed nor cancelled', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
 
-    await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'Post must be completed before reviewing' })
+    await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'Post must be completed or cancelled before reviewing' })
     expect(createReviewData).not.toHaveBeenCalled()
   })
 
-  it('should throw 400 when no accepted application exists', async () => {
-    vi.mocked(findPostById).mockResolvedValue(mockPost)
+  it('should create a review on a cancelled post that had a hired worker', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Cancelled' })
+    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(createReviewData).mockResolvedValue(mockReview)
+
+    const result = await createWorkerReview(postId, userId, validInput)
+
+    expect(findAcceptedApplication).toHaveBeenCalledWith(postId)
+    expect(createReviewData).toHaveBeenCalled()
+    expect(result).toEqual(mockReview)
+  })
+
+  it('should throw 400 when no accepted application exists (e.g. cancelled while Active)', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Cancelled' })
     vi.mocked(findAcceptedApplication).mockResolvedValue(null)
 
     await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'No accepted application found for this post' })

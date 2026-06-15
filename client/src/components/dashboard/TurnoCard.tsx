@@ -29,7 +29,9 @@ export default function TurnoCard({ post }: { post: UserPost }) {
   const st = STATUS_MAP[post.status] ?? STATUS_MAP.Active
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
-  const needsReview = post.status === PostStatus.Completed && !post.hasReview
+  // Reviewable when completed, or when a hired contract was cancelled (worker present, not yet reviewed).
+  const needsReview = !post.hasReview && post.worker != null &&
+    (post.status === PostStatus.Completed || post.status === PostStatus.Cancelled)
 
   const handleAction = () => {
     if (needsReview) {
