@@ -42,6 +42,7 @@ export default function AvailableJobs(): JSX.Element {
   const [error, setError] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selected, setSelected] = useState<TrabajoView | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState<boolean>(false)
   const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [enviando, setEnviando] = useState<boolean>(false)
@@ -226,7 +227,7 @@ export default function AvailableJobs(): JSX.Element {
 
       {/* FilterBar — fuera del header oscuro */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
+        <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
           <FilterBar
             category={category}
             onCategoryChange={setCategory}
@@ -245,108 +246,102 @@ export default function AvailableJobs(): JSX.Element {
         <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1280, margin: '12px auto 0', padding: '0 32px' }}>{error}</p>
       )}
 
-      <div className="aj-main-grid" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
-          {!loading && filtradosYOrdenados.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
-              <h3 style={{ marginBottom: 8, fontSize: '1.1rem', color: '#0F172A' }}>No hay trabajos disponibles</h3>
-              <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
-            </div>
-          )}
-          {!loading && paginaActual.map((trabajo) => (
-            <TrabajoCard
-              key={trabajo.id}
-              trabajo={trabajo}
-              isSelected={selected?.id === trabajo.id}
-              isApplied={yaPostulado(trabajo.id)}
-              onClick={() => setSelected(trabajo)}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setSelected(trabajo)
-                }
+      <div className="trabajos-grid-container" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
+        {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
+        {!loading && filtradosYOrdenados.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
+            <h3 style={{ marginBottom: 8, fontSize: '1.1rem', color: '#0F172A' }}>No hay trabajos disponibles</h3>
+            <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
+          </div>
+        )}
+        {!loading && (
+          <div className="trabajos-list-2col">
+            {paginaActual.map((trabajo) => (
+              <TrabajoCard
+                key={trabajo.id}
+                trabajo={trabajo}
+                isSelected={selected?.id === trabajo.id}
+                isApplied={yaPostulado(trabajo.id)}
+                onClick={() => { setSelected(trabajo); setShowDetailModal(true) }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelected(trabajo)
+                    setShowDetailModal(true)
+                  }
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 6, marginTop: 24, paddingBottom: 8,
+          }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                opacity: page === 1 ? 0.4 : 1,
               }}
-            />
-          ))}
+            >
+              <ChevronLeft size={16} color="#475569" />
+            </button>
 
-          {/* Pagination */}
-          {!loading && totalPages > 1 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: 6, marginTop: 8, paddingBottom: 8,
-            }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                key={p}
+                onClick={() => setPage(p)}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 36, height: 36, borderRadius: 8,
-                  border: '1.5px solid #E2E8F0', background: '#fff',
-                  cursor: page === 1 ? 'not-allowed' : 'pointer',
-                  opacity: page === 1 ? 0.4 : 1,
-                  transition: 'background 0.15s',
+                  border: p === page ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
+                  background: p === page ? '#0F172A' : '#fff',
+                  color: p === page ? '#fff' : '#475569',
+                  fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer',
                 }}
-                onMouseEnter={(e) => { if (page !== 1) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
               >
-                <ChevronLeft size={16} color="#475569" />
+                {p}
               </button>
+            ))}
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    border: p === page ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
-                    background: p === page ? '#0F172A' : '#fff',
-                    color: p === page ? '#fff' : '#475569',
-                    fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
-                  onMouseLeave={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#fff' }}
-                >
-                  {p}
-                </button>
-              ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                opacity: page === totalPages ? 0.4 : 1,
+              }}
+            >
+              <ChevronRight size={16} color="#475569" />
+            </button>
+          </div>
+        )}
+      </div>
 
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 36, height: 36, borderRadius: 8,
-                  border: '1.5px solid #E2E8F0', background: '#fff',
-                  cursor: page === totalPages ? 'not-allowed' : 'pointer',
-                  opacity: page === totalPages ? 0.4 : 1,
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => { if (page !== totalPages) (e.currentTarget as HTMLElement).style.background = '#F1F5F9' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
-              >
-                <ChevronRight size={16} color="#475569" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <aside>
-          {selected !== null ? (
+      {/* Detail modal */}
+      {showDetailModal && selected !== null && (
+        <div className="modal-overlay" role="presentation" onClick={() => setShowDetailModal(false)}>
+          <div className="modal-card detail-modal-card" role="dialog" onClick={(e) => e.stopPropagation()}>
             <TrabajoDetail
               selected={selected}
               yaPostulado={yaPostulado(selected.id)}
-              onClose={() => setSelected(null)}
-              onPostular={() => setShowModal(true)}
+              onClose={() => setShowDetailModal(false)}
+              onPostular={() => { setShowDetailModal(false); setShowModal(true) }}
             />
-          ) : (
-            <div style={{ textAlign: 'center', color: '#64748B', padding: '2.5rem 1rem' }}>
-              <p>Selecciona un trabajo para ver el detalle</p>
-            </div>
-          )}
-        </aside>
-      </div>
+          </div>
+        </div>
+      )}
 
       {showModal && selected !== null && (
         <ApplyModal
@@ -374,10 +369,14 @@ export default function AvailableJobs(): JSX.Element {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .aj-main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.25rem; align-items: start; }
-        @media (max-width: 900px) { .aj-main-grid { grid-template-columns: 1fr; } }
+        .trabajos-list-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .detail-modal-card { max-width: 520px; max-height: 85vh; overflow-y: auto; }
+        .detail-modal-card .trabajos-detail-card { position: static; }
         @media (max-width: 640px) {
-          .aj-main-grid { padding: 0 16px 2rem !important; margin-top: 16px !important; }
+          .trabajos-list-2col { grid-template-columns: 1fr; }
+          .trabajos-grid-container { padding-left: 16px !important; padding-right: 16px !important; margin-top: 16px !important; }
+          .filter-bar-container { padding-left: 0 !important; padding-right: 16px !important; }
+          .filter-bar-container .trabajos-filters-row { align-items: stretch; }
         }
       `}</style>
     </div>

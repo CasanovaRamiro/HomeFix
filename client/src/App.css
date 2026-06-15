@@ -162,10 +162,19 @@
   font-weight: 600;
 }
 
+@media (max-width: 768px) {
+  .trabajos-filters-row {
+    gap: 10px;
+  }
+  .filter-category { flex: 1 1 200px; }
+  .filter-search { flex: 1 1 200px; }
+  .filter-sort { flex: 0 0 140px; }
+}
+
 @media (max-width: 640px) {
   .trabajos-filters-row {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .filter-category,
@@ -175,9 +184,17 @@
     flex: 1 1 100%;
   }
 
+  .filter-group select,
+  .filter-group input {
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
   .btn-filter-location {
     width: 100%;
     text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
   }
 }
 
@@ -207,9 +224,24 @@
   .trabajos-layout {
     grid-template-columns: 1fr;
   }
+  .trabajos-list-2col {
+    grid-template-columns: 1fr;
+  }
+  .trabajos-grid-container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-top: 16px !important;
+  }
 }
 
 .trabajos-list { display: flex; flex-direction: column; gap: 10px; }
+.trabajos-list-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.trabajos-grid-container {
+  max-width: 1280px;
+  margin: 24px auto 0;
+  padding: 0 32px 2rem;
+}
 
 .trabajo-card,
 .subcontract-card {
