@@ -14,6 +14,7 @@ import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
+import KycRequiredModal from '../components/worker/KycRequiredModal'
 import TrabajoCard from '../components/worker/TrabajoCard'
 import { fetchKycStatus, type KycStatus } from '../services/kyc'
 import type { LocationFilter } from '../components/worker/types'
@@ -375,7 +376,7 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
   )
 }
 
-function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { workerId: string; emergenciesEnabled: boolean }) {
+function EmergencySection({ workerId, emergenciesEnabled: initialEnabled, kycStatus }: { workerId: string; emergenciesEnabled: boolean; kycStatus: KycStatus }) {
   const [isActive, setIsActive] = useState(initialEnabled)
   const [emergencies, setEmergencies] = useState<Post[]>([])
   const [loading, setLoading] = useState(false)
@@ -383,6 +384,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   const [enviando, setEnviando] = useState(false)
   const [exito, setExito] = useState(false)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
+  const [showKycRequired, setShowKycRequired] = useState(false)
 
   const loadAppliedIds = useCallback(async () => {
     try {
@@ -540,7 +542,13 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
           ) : emergencies.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 24 }}>
               {emergencies.map((post) => (
-                <EmergencyCard key={post.id} post={post} isApplied={isApplied(post.id)} onPostular={setSelectedEmergency} />
+                <EmergencyCard key={post.id} post={post} isApplied={isApplied(post.id)} onPostular={(p) => {
+                  if (kycStatus !== 'APPROVED') {
+                    setShowKycRequired(true)
+                    return
+                  }
+                  setSelectedEmergency(p)
+                }} />
               ))}
             </div>
           ) : (
@@ -564,6 +572,11 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
           </div>
         )}
       </div>
+
+      {/* KYC Required Modal */}
+      {showKycRequired && (
+        <KycRequiredModal isOpen onClose={() => setShowKycRequired(false)} />
+      )}
 
       {/* Apply Modal for emergencies */}
       {selectedEmergency && (
@@ -1315,7 +1328,7 @@ export default function WorkerDashboard() {
     }}>
       <ProfileHeader profile={data.profile} stats={data.stats} />
       <MetricsStrip stats={data.stats} />
-      <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
+      <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} kycStatus={kycStatus} />
 
       {/* Central section: main content + sidebar */}
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
