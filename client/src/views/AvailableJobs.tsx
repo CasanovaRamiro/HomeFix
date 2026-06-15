@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useMemo, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DEFAULT_WORKER_CATEGORY,
@@ -16,10 +16,11 @@ import TrabajoDetail from '../components/worker/TrabajoDetail'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
-import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 
 const PAGE_SIZE = 5
+const POLL_INTERVAL = 30000
 
 const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
@@ -31,14 +32,28 @@ const loadStoredFilter = (): LocationFilter | null => {
   return null
 }
 
+function formatLastUpdate(date: Date): string {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diff < 60) return 'hace unos segundos'
+  const min = Math.floor(diff / 60)
+  if (min === 1) return 'hace 1 minuto'
+  return `hace ${min} minutos`
+}
+
 export default function AvailableJobs(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [workerCategories, setWorkerCategories] = useState<string[]>([])
-  const [category, setCategory] = useState<string>(DEFAULT_WORKER_CATEGORY)
+  const [categoriesReady, setCategoriesReady] = useState(false)
+  const [category, setCategory] = useState<string>(() => {
+    const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
+    return saved ?? DEFAULT_WORKER_CATEGORY
+  })
   const [trabajos, setTrabajos] = useState<(TrabajoView & { lat?: number | null; lng?: number | null })[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [refreshing, setRefreshing] = useState<boolean>(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selected, setSelected] = useState<TrabajoView | null>(null)
@@ -47,10 +62,13 @@ export default function AvailableJobs(): JSX.Element {
   const [showModal, setShowModal] = useState<boolean>(false)
   const [enviando, setEnviando] = useState<boolean>(false)
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
+  const [notificacion, setNotificacion] = useState<{ tipo: 'error' | 'exito'; mensaje: string } | null>(null)
+  const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
   const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
   const [page, setPage] = useState(1)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
     try {
@@ -61,8 +79,12 @@ export default function AvailableJobs(): JSX.Element {
     }
   }, [])
 
-  const loadTrabajos = useCallback(async (): Promise<void> => {
-    setLoading(true)
+  const fetchTrabajos = useCallback(async (isRefresh = false): Promise<void> => {
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
     setError('')
     try {
       const sortOrder = sortBy === 'reciente' ? 'desc' : 'asc'
@@ -75,6 +97,7 @@ export default function AvailableJobs(): JSX.Element {
         mapped = res.data.data.map((post) => postToTrabajo(post))
       }
       setTrabajos(mapped)
+      setLastUpdated(new Date())
 
       const idParam = searchParams.get('id')
       if (idParam !== null && idParam !== '') {
@@ -83,10 +106,13 @@ export default function AvailableJobs(): JSX.Element {
       }
     } catch (err) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
-      setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
-      setTrabajos([])
+      if (!isRefresh) {
+        setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los trabajos')
+        setTrabajos([])
+      }
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [category, searchParams, locationFilter, sortBy])
 
@@ -95,9 +121,20 @@ export default function AvailableJobs(): JSX.Element {
   }, [loadPostulaciones])
 
   useEffect(() => {
+    if (!categoriesReady) return
     localStorage.setItem(WORKER_CATEGORY_KEY, category)
-    void loadTrabajos()
-  }, [category, loadTrabajos])
+    void fetchTrabajos(false)
+  }, [category, categoriesReady, fetchTrabajos])
+
+  useEffect(() => {
+    pollingRef.current = setInterval(() => {
+      void loadPostulaciones()
+      void fetchTrabajos(true)
+    }, POLL_INTERVAL)
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [loadPostulaciones, fetchTrabajos])
 
   useEffect(() => {
     if (user?.id) {
@@ -105,16 +142,25 @@ export default function AvailableJobs(): JSX.Element {
         .then((worker) => {
           const cats = worker.categories.map((c) => c.name)
           setWorkerCategories(cats)
-          if (cats.length > 0) {
-            setCategory(cats[0])
+          const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
+          if (saved && !cats.includes(saved) && saved !== '') {
+            setCategory('')
+            localStorage.setItem(WORKER_CATEGORY_KEY, '')
           }
+          setCategoriesReady(true)
         })
-        .catch(() => setWorkerCategories([]))
+        .catch(() => {
+          setWorkerCategories([])
+          setCategoriesReady(true)
+        })
     }
   }, [user?.id])
 
   const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
-    let resultado = trabajos.filter((t) => !postulacionesIds.includes(t.id))
+    let resultado = trabajos
+    if (category === '' && workerCategories.length > 0) {
+      resultado = resultado.filter((t) => workerCategories.includes(t.categoria))
+    }
     const q = searchQuery.trim().toLowerCase()
     if (q !== '') {
       resultado = resultado.filter(
@@ -122,7 +168,7 @@ export default function AvailableJobs(): JSX.Element {
       )
     }
     return resultado
-  }, [trabajos, searchQuery, postulacionesIds])
+  }, [trabajos, searchQuery, category, workerCategories])
 
   const totalPages = Math.max(1, Math.ceil(filtradosYOrdenados.length / PAGE_SIZE))
   const paginaActual = filtradosYOrdenados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -130,6 +176,12 @@ export default function AvailableJobs(): JSX.Element {
   useEffect(() => { setPage(1) }, [sortBy, category, locationFilter])
 
   const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
+
+  const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
+    if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
+    setNotificacion({ tipo, mensaje })
+    notifTimeoutRef.current = setTimeout(() => setNotificacion(null), 4000)
+  }
 
   const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
     if (!selected) return
@@ -145,10 +197,14 @@ export default function AvailableJobs(): JSX.Element {
         visitCost: formData.visitCost,
       })
       setPostulacionesIds((prev) => [...prev, selected.id])
-      navigate('/worker/my-applications')
+      setShowModal(false)
+      mostrarNotificacion('exito', 'Te postulaste correctamente')
     } catch (err) {
-      console.warn('Error al postularse:', err)
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      const msg = axiosErr.response?.data?.error ?? 'Error al postularte'
+      setShowModal(false)
       setEnviando(false)
+      mostrarNotificacion('error', msg)
     }
   }
 
@@ -199,11 +255,39 @@ export default function AvailableJobs(): JSX.Element {
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <Briefcase size={28} color="#10B981" />
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
-              Trabajos disponibles
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Briefcase size={28} color="#10B981" />
+              <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+                Trabajos disponibles
+              </h1>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {lastUpdated && !loading && (
+                <span style={{ fontSize: 12, color: '#64748B' }}>
+                  Actualizado {formatLastUpdate(lastUpdated)}
+                </span>
+              )}
+              <button
+                onClick={() => { void loadPostulaciones(); void fetchTrabajos(true) }}
+                disabled={refreshing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#E2E8F0', fontSize: 12, fontWeight: 600,
+                  padding: '7px 14px', borderRadius: 8,
+                  cursor: refreshing ? 'not-allowed' : 'pointer',
+                  opacity: refreshing ? 0.6 : 1,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { if (!refreshing) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.14)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)' }}
+              >
+                <RefreshCw size={13} className={refreshing ? 'spin' : ''} />
+                Actualizar
+              </button>
+            </div>
           </div>
           <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 0 38px' }}>
             {loading ? (
@@ -214,7 +298,7 @@ export default function AvailableJobs(): JSX.Element {
                 {category.trim() !== '' ? (
                   <>trabajos de <strong style={{ color: '#fff' }}>{category}</strong></>
                 ) : (
-                  'trabajos activos'
+                  <>trabajos de <strong style={{ color: '#fff' }}>todos tus rubros</strong></>
                 )}
                 {locationFilter && (
                   <span> — {locationFilter.radius} km a la redonda</span>
@@ -244,6 +328,23 @@ export default function AvailableJobs(): JSX.Element {
 
       {error !== '' && (
         <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1280, margin: '12px auto 0', padding: '0 32px' }}>{error}</p>
+      )}
+
+      {notificacion && (
+        <div style={{
+          position: 'fixed', top: 24, right: 24, zIndex: 9999,
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: notificacion.tipo === 'error' ? '#FEF2F2' : '#ECFDF5',
+          border: `1px solid ${notificacion.tipo === 'error' ? '#FECACA' : '#A7F3D0'}`,
+          borderRadius: 12, padding: '14px 20px',
+          maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          animation: 'slideIn 0.3s ease',
+        }}>
+          <XCircle size={20} color={notificacion.tipo === 'error' ? '#DC2626' : '#059669'} />
+          <span style={{ fontSize: 14, fontWeight: 500, color: notificacion.tipo === 'error' ? '#991B1B' : '#065F46' }}>
+            {notificacion.mensaje}
+          </span>
+        </div>
       )}
 
       <div className="trabajos-grid-container" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
@@ -369,6 +470,8 @@ export default function AvailableJobs(): JSX.Element {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .spin { animation: spin 0.8s linear infinite; }
         .trabajos-list-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .detail-modal-card { max-width: 520px; max-height: 85vh; overflow-y: auto; }
         .detail-modal-card .trabajos-detail-card { position: static; }

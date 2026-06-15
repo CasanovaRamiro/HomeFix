@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
@@ -1147,6 +1147,8 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
 
 // ─── Main View ───────────────────────────────────────────────────────────────
 
+const DASHBOARD_POLL_MS = 60000
+
 export default function WorkerDashboard() {
   useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -1157,6 +1159,9 @@ export default function WorkerDashboard() {
   const [applications, setApplications] = useState<Application[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
   const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const appsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -1206,6 +1211,16 @@ export default function WorkerDashboard() {
     void fetchNearbyJobs()
     void fetchApplications()
     void fetchKyc()
+
+    dashIntervalRef.current = setInterval(() => { void fetchDashboard() }, DASHBOARD_POLL_MS)
+    jobsIntervalRef.current = setInterval(() => { void fetchNearbyJobs() }, DASHBOARD_POLL_MS)
+    appsIntervalRef.current = setInterval(() => { void fetchApplications() }, DASHBOARD_POLL_MS)
+
+    return () => {
+      if (dashIntervalRef.current) clearInterval(dashIntervalRef.current)
+      if (jobsIntervalRef.current) clearInterval(jobsIntervalRef.current)
+      if (appsIntervalRef.current) clearInterval(appsIntervalRef.current)
+    }
   }, [fetchDashboard, fetchNearbyJobs, fetchApplications, fetchKyc])
 
   if (loading) {

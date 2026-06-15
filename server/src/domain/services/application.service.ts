@@ -41,7 +41,7 @@ export const cancelApplication = async (workerId: string, applicationId: string)
 export const applyToPost = async (workerId: string, input: CreateApplicationInput) => {
   const post = await findPostById(input.postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
-  if (post.status !== PostStatus.Active) throw Object.assign(new Error('This post is no longer available'), { status: 400 })
+  if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
 
   const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
