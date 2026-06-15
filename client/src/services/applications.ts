@@ -45,5 +45,8 @@ export const getPostApplicants = (postId: string) =>
 export const acceptApplication = (applicationId: string): Promise<ApplicationResponse> =>
   api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`).then(r => r.data)
 
+export const dismissWorker = (applicationId: string): Promise<ApplicationResponse> =>
+  api.patch<ApplicationResponse>(`/applications/${applicationId}/dismiss`).then(r => r.data)
+
 export const createClientReview = (data: ClientReviewInput) =>
   api.post('/reviews/client', data)

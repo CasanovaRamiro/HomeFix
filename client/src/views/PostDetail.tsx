@@ -72,20 +72,6 @@ export default function PostDetail() {
     }
   }
 
-  const handleReopen = async () => {
-    try {
-      await api.patch(`/posts/${id}/reopen`)
-      const [postRes, applicantsData] = await Promise.all([
-        api.get<Post>(`/posts/${id}`),
-        getPostApplicants(id!).catch(() => []),
-      ])
-      setPost(postRes.data)
-      setApplicants(Array.isArray(applicantsData) ? applicantsData : applicantsData.data ?? [])
-    } catch {
-      // error handling
-    }
-  }
-
   const refresh = () => {
     if (!id) return
     Promise.all([
@@ -204,7 +190,6 @@ export default function PostDetail() {
             post={post}
             hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
             onComplete={handleComplete}
-            onReopen={handleReopen}
             onViewReview={() => navigate('/review')}
             onPause={handlePause}
             onCancel={() => setShowCancelModal(true)}
@@ -241,6 +226,7 @@ export default function PostDetail() {
               postStatus={post.status}
               postTitle={post.title}
               onHire={refresh}
+              onDismiss={refresh}
             />
           ))}
         </div>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import StarRating from '../ui/StarRating'
 import ConfirmModal from '../ui/ConfirmModal'
-import { acceptApplication } from '../../services/applications'
+import { acceptApplication, dismissWorker } from '../../services/applications'
 
 interface Applicant {
   id: string
@@ -28,12 +28,15 @@ interface ApplicantCardProps {
   postStatus: string
   postTitle: string
   onHire?: () => void
+  onDismiss?: () => void
 }
 
-export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire }: ApplicantCardProps) {
+export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onDismiss }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [dismissModalOpen, setDismissModalOpen] = useState(false)
+  const [dismissing, setDismissing] = useState(false)
 
   const initials = applicant.name.split(' ').map((n) => n[0]).join('')
 
@@ -50,11 +53,43 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
     }
   }
 
+  const handleDismiss = async () => {
+    setDismissing(true)
+    try {
+      await dismissWorker(applicationId)
+      setDismissModalOpen(false)
+      onDismiss?.()
+    } catch {
+      setDismissing(false)
+    }
+  }
+
   const renderAction = () => {
     if (applicationStatus === 'Accepted') {
-      return <span className="text-green-700 bg-green-100 px-3 py-1 rounded text-sm font-medium">Contratado</span>
+      return (
+        <>
+          <span className="text-green-700 bg-green-100 px-3 py-1 rounded text-sm font-medium">Contratado</span>
+          <button
+            onClick={() => setDismissModalOpen(true)}
+            className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors"
+          >
+            Despedir
+          </button>
+          <ConfirmModal
+            open={dismissModalOpen}
+            title="Despedir trabajador"
+            message={`¿Seguro que querés dar de baja a ${applicant.name} de "${postTitle}"? La publicación vuelve a estar activa y vas a poder contratar a otro trabajador.`}
+            onConfirm={handleDismiss}
+            onCancel={() => setDismissModalOpen(false)}
+            loading={dismissing}
+          />
+        </>
+      )
     }
     if (applicationStatus === 'Rejected') return null
+    if (applicationStatus === 'Dismissed') {
+      return <span className="text-red-700 bg-red-100 px-3 py-1 rounded text-sm font-medium">Despedido</span>
+    }
 
     return (
       <>

@@ -6,6 +6,7 @@ import {
   applyToPost,
   acceptApplication,
   rejectApplication,
+  dismissWorker,
   cancelApplication,
   getPostApplications,
 } from '../../domain/services/application.service.js'
@@ -106,6 +107,17 @@ router.patch('/:applicationId/reject', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
     const result = await rejectApplication(user.id, req.params.applicationId)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.patch('/:applicationId/dismiss', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await dismissWorker(user.id, req.params.applicationId)
     res.json(result)
   } catch (err) {
     next(err)

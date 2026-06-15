@@ -92,6 +92,24 @@ export const rejectApplication = async (clientId: string, applicationId: string)
   return { id: rejected.id, status: rejected.status }
 }
 
+export const dismissWorker = async (clientId: string, applicationId: string) => {
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
+  if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (application.status !== ApplicationStatus.Accepted) throw Object.assign(new Error('Application is not accepted'), { status: 400 })
+  if (application.post.status !== PostStatus.InProgress) throw Object.assign(new Error('Post is not in progress'), { status: 400 })
+
+  const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
+  // Reopen the post so the client can hire a different worker; other pending applicants are kept.
+  await updatePostStatus(application.postId, PostStatus.Active)
+
+  notifyUser(getProvider(), application.workerId, 'worker_dismissed', {
+    postTitle: application.post.title,
+  })
+
+  return { id: dismissed.id, status: dismissed.status }
+}
+
 export const getPostApplications = (clientId: string, postId: string): Promise<DomainPostApplication[]> =>
   findPostById(postId).then((post) => {
     if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
