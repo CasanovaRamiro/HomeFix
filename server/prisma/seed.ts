@@ -1,4 +1,5 @@
 import prisma from '../src/lib/prisma.js'
+import { UserRole } from '../src/domain/types/userRole.js'
 const MANAGED_PASSWORD = 'AUTH0_MANAGED_ACCOUNT'
 
 const JOB_IMAGES: Record<string, string[]> = {
@@ -155,7 +156,7 @@ async function main() {
       nationalId: '2033344455',
       nationalIdTypeId: dni.id,
       addressId: addressPalermo.id,
-      role: 'worker',
+      role: UserRole.Worker,
       phone: '+541198765432',
     },
   })

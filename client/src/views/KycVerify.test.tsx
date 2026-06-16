@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { UserRole } from '../types/user'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -12,7 +13,7 @@ vi.mock('../services/kyc', () => ({
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', name: 'Test', email: 'test@test.com', role: 'worker' },
+    user: { id: 'user-1', name: 'Test', email: 'test@test.com', role: UserRole.Worker },
     isLoggedIn: true,
   }),
 }))

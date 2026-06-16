@@ -24,7 +24,7 @@ const mockUser = {
   phone: null as string | null,
   bio: null as string | null,
   surname: 'Test',
-  role: 'client',
+  role: UserRole.Client,
   createdAt: new Date(),
   active: true,
   deleted: false,

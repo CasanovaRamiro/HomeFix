@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 const { getPayload, setPayload } = vi.hoisted(() => {
   const payloads: Record<string, Record<string, string>> = {}
@@ -38,16 +39,16 @@ let categoryId: string
 
 beforeEach(async () => {
   await cleanDb()
-  const client = await createUser('client@test.com', 'Client', 'hashed', { role: 'client' })
-  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: 'worker' })
+  const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+  const worker = await createUser('worker@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
   const category = await createCategory('Test Category')
   clientId = client.id
   workerId = worker.id
   categoryId = category.id
   clientToken = 'client-token'
   workerToken = 'worker-token'
-  setPayload('client-token', { sub: clientId, email: 'client@test.com', role: 'client' })
-  setPayload('worker-token', { sub: workerId, email: 'worker@test.com', role: 'worker' })
+  setPayload('client-token', { sub: clientId, email: 'client@test.com', role: UserRole.Client })
+  setPayload('worker-token', { sub: workerId, email: 'worker@test.com', role: UserRole.Worker })
 })
 
 const createActivePost = () =>
@@ -268,7 +269,7 @@ describe('PATCH /applications/:applicationId/accept', () => {
 
   it('no rechaza otras aplicaciones pendientes al aceptar una', async () => {
     const post = await createActivePost()
-    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: UserRole.Worker })
     const application = await createPendingApplication(post.id)
     const otherApplication = await prisma.application.create({
       data: { workerId: otherWorker.id, postId: post.id, status: 'Pending' },
@@ -339,8 +340,8 @@ describe('PATCH /applications/:applicationId/accept', () => {
   it('retorna 403 cuando el token no corresponde al dueño del post', async () => {
     const post = await createActivePost()
     const application = await createPendingApplication(post.id)
-    const otroCliente = await createUser('otro@test.com', 'Otro', 'hashed', { role: 'client' })
-    setPayload('otro-token', { sub: otroCliente.id, email: 'otro@test.com', role: 'client' })
+    const otroCliente = await createUser('otro@test.com', 'Otro', 'hashed', { role: UserRole.Client })
+    setPayload('otro-token', { sub: otroCliente.id, email: 'otro@test.com', role: UserRole.Client })
 
     const res = await request(app)
       .patch(`/applications/${application.id}/accept`)
@@ -368,7 +369,7 @@ describe('PATCH /applications/:applicationId/reject', () => {
 
   it('no afecta otras aplicaciones pendientes del mismo post', async () => {
     const post = await createActivePost()
-    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: UserRole.Worker })
     const application = await createPendingApplication(post.id)
     const otherApplication = await prisma.application.create({
       data: { workerId: otherWorker.id, postId: post.id, status: 'Pending' },
@@ -449,7 +450,7 @@ describe('PATCH /applications/:applicationId/dismiss', () => {
 
   it('conserva las otras postulaciones pendientes para poder contratar a otro', async () => {
     const post = await createInProgressPost()
-    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: UserRole.Worker })
     const accepted = await prisma.application.create({
       data: { workerId, postId: post.id, status: 'Accepted' },
     })

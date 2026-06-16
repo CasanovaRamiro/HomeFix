@@ -1,3 +1,5 @@
+import { UserRole } from './userRole.js'
+
 export interface DomainUser {
   id: string
   name: string
@@ -8,7 +10,7 @@ export interface DomainUser {
   createdAt: Date
 }
 
-export type ReviewTarget = 'worker' | 'client'
+export type ReviewTarget = UserRole
 
 export interface DomainUserRating {
   averageRating: number

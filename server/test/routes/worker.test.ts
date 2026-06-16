@@ -12,7 +12,7 @@ import { UserRole } from '../../src/domain/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
-const makeWorker = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'worker' })
+const makeWorker = (email: string, name: string) => createUser(email, name, 'hashed', { role: UserRole.Worker })
 const makeUser = (email: string, name: string) => createUser(email, name, 'hashed', { role: 'user' })
 
 describe('GET /workers', () => {
