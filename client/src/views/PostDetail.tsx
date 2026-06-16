@@ -220,6 +220,7 @@ export default function PostDetail() {
                 availableTimeTo: a.availableTimeTo,
                 chargesVisit: a.chargesVisit,
                 visitCost: a.visitCost,
+                phone: a.phone,
               }}
               applicationId={a.applicationId}
               applicationStatus={a.status}

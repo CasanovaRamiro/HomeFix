@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import StarRating from '../ui/StarRating'
 import ConfirmModal from '../ui/ConfirmModal'
 import { acceptApplication, dismissWorker } from '../../services/applications'
+import { formatWhatsAppNumber } from '../../services/formatWhatsApp'
 
 interface Applicant {
   id: string
@@ -19,6 +20,7 @@ interface Applicant {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  phone: string | null
 }
 
 interface ApplicantCardProps {
@@ -69,6 +71,17 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
       return (
         <>
           <span className="text-green-700 bg-green-100 px-3 py-1 rounded text-sm font-medium">Contratado</span>
+          {applicant.phone && (
+            <button
+              onClick={() => window.open(
+                `https://wa.me/${formatWhatsAppNumber(applicant.phone)}?text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
+                '_blank'
+              )}
+              className="btn-outline"
+            >
+              Chatear
+            </button>
+          )}
           <button
             onClick={() => setDismissModalOpen(true)}
             className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors"
@@ -162,7 +175,6 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
       </div>
       <div className="actions">
         <button className="btn-outline" onClick={() => navigate(`/profile/worker/${applicant.id}`)}>Ver perfil</button>
-        <button className="btn-outline">Chatear</button>
         {renderAction()}
       </div>
     </div>

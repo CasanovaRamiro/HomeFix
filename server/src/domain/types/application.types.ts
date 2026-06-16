@@ -46,4 +46,5 @@ export interface DomainPostApplication {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  phone: string | null
 }
