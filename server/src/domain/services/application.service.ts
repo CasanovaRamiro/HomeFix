@@ -14,6 +14,7 @@ import { createTelegramProvider } from '../../infrastructure/providers/telegram.
 import { notifyUser } from './notification.service.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
+import { PostType } from '../types/postType.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
@@ -58,6 +59,33 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   })
 
   return { id: created.id, status: created.status, message: 'Application successful' }
+}
+
+export const applyToSubcontract = async (workerId: string, input: CreateApplicationInput) => {
+  const post = await findPostById(input.postId)
+  if (!post) throw Object.assign(new Error('Subcontratación no encontrada'), { status: 404 })
+  if (post.type !== PostType.SubContract) throw Object.assign(new Error('Esta publicación no es una subcontratación'), { status: 400 })
+  if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta subcontratación ya no está disponible'), { status: 400 })
+  if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propia subcontratación'), { status: 400 })
+
+  const hasVacancies = post.categories.some((c) => (c.quantity != null ? c.filledCount! < c.quantity : false))
+  if (!hasVacancies) throw Object.assign(new Error('No hay vacantes disponibles'), { status: 400 })
+
+  const existing = await findApplication(workerId, input.postId)
+  if (existing) throw Object.assign(new Error('Ya te postulaste a esta subcontratación'), { status: 409 })
+
+  if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
+    throw Object.assign(new Error('visitCost debe ser un número positivo cuando chargesVisit es true'), { status: 400 })
+
+  const created = await createApplication(workerId, input)
+
+  const worker = await findUserById(workerId)
+  notifyUser(getProvider(), post.userId, 'application_new', {
+    workerName: worker ? worker.name : 'Alguien',
+    postTitle: post.title,
+  })
+
+  return { id: created.id, status: created.status, message: 'Postulación a subcontrato exitosa' }
 }
 
 export const acceptApplication = async (clientId: string, applicationId: string) => {

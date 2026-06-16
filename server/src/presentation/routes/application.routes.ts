@@ -4,6 +4,7 @@ import { syncAuth0User } from '../../domain/services/auth.service.js'
 import {
   getMyApplications,
   applyToPost,
+  applyToSubcontract,
   acceptApplication,
   rejectApplication,
   dismissWorker,
@@ -77,6 +78,48 @@ router.post('/', async (req, res, next) => {
     }
 
     const result = await applyToPost(user.id, {
+      postId,
+      message: typeof message === 'string' ? message : undefined,
+      availableDays,
+      availableTimeFrom,
+      availableTimeTo,
+      chargesVisit,
+      visitCost: typeof visitCost === 'number' ? visitCost : undefined,
+    })
+    res.status(201).json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/subcontract', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const { postId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
+
+    if (!postId || typeof postId !== 'string') {
+      res.status(400).json({ error: 'postId is required' })
+      return
+    }
+    if (!Array.isArray(availableDays) || availableDays.length === 0) {
+      res.status(400).json({ error: 'availableDays is required and must be a non-empty array' })
+      return
+    }
+    if (!availableTimeFrom || typeof availableTimeFrom !== 'string') {
+      res.status(400).json({ error: 'availableTimeFrom is required' })
+      return
+    }
+    if (!availableTimeTo || typeof availableTimeTo !== 'string') {
+      res.status(400).json({ error: 'availableTimeTo is required' })
+      return
+    }
+    if (typeof chargesVisit !== 'boolean') {
+      res.status(400).json({ error: 'chargesVisit is required and must be a boolean' })
+      return
+    }
+
+    const result = await applyToSubcontract(user.id, {
       postId,
       message: typeof message === 'string' ? message : undefined,
       availableDays,

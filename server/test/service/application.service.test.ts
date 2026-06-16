@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/infrastructure/database/application.database.js"
 import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
-import { acceptApplication, rejectApplication, dismissWorker, applyToPost } from "../../src/domain/services/application.service.js"
+import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -181,6 +181,119 @@ describe("applyToPost", () => {
   it("acepta la postulación sin visitCost cuando chargesVisit es false", async () => {
     const result = await applyToPost("worker-1", validInput)
     expect(result.status).toBe("Pending")
+  })
+})
+
+describe("applyToSubcontract", () => {
+  const validInput = {
+    postId: "subcontract-1",
+    availableDays: ["Lunes", "Martes"],
+    availableTimeFrom: "09:00",
+    availableTimeTo: "18:00",
+    chargesVisit: false,
+  }
+
+  const mockSubcontract = {
+    id: "subcontract-1",
+    userId: "worker-creator",
+    type: "subcontract" as const,
+    title: "Busco albañil",
+    status: "Active",
+    description: "",
+    address: "",
+    startDate: new Date(),
+    endDate: new Date(),
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    isEmergency: false,
+    emergencyExpiresAt: null,
+    categories: [
+      { id: "cat-1", name: "Albañil", quantity: 2, filledCount: 0, roleDescription: "Albañilería general" },
+    ],
+    user: { id: "worker-creator", name: "Worker", surname: "Creator" },
+  }
+
+  const mockCreated = {
+    id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
+    message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+    chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+  }
+
+  beforeEach(() => {
+    vi.mocked(postData.findPostById).mockResolvedValue(mockSubcontract)
+    vi.mocked(applicationData.findApplication).mockResolvedValue(null)
+    vi.mocked(applicationData.createApplication).mockResolvedValue(mockCreated)
+    vi.mocked(userDatabase.findUserById).mockResolvedValue({ id: "worker-1", name: "Juan", email: "juan@test.com", phone: null, telegramChatId: null })
+  })
+
+  it("crea la postulación y retorna id, status y mensaje de éxito", async () => {
+    const result = await applyToSubcontract("worker-1", validInput)
+    expect(result).toEqual({ id: "app-new", status: "Pending", message: "Postulación a subcontrato exitosa" })
+    expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", validInput)
+  })
+
+  it("lanza 404 si el subcontract no existe", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue(null)
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("lanza 400 si el post no es de tipo SubContract", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockSubcontract, type: "post" })
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si el subcontract no está Active", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockSubcontract, status: "Completed" })
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si el worker se postula a su propio subcontract", async () => {
+    await expect(applyToSubcontract("worker-creator", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si no hay vacantes disponibles", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockSubcontract,
+      categories: [
+        { id: "cat-1", name: "Albañil", quantity: 2, filledCount: 2, roleDescription: "Albañilería general" },
+      ],
+    })
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 409 si el worker ya se postuló", async () => {
+    vi.mocked(applicationData.findApplication).mockResolvedValue({
+      id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
+      message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+      chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+    })
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
+  })
+
+  it("lanza 400 cuando chargesVisit es true y visitCost no se envía", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, chargesVisit: true }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 cuando chargesVisit es true y visitCost es 0", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, chargesVisit: true, visitCost: 0 }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 cuando chargesVisit es true y visitCost es negativo", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, chargesVisit: true, visitCost: -100 }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("acepta la postulación cuando chargesVisit es true y visitCost es positivo", async () => {
+    const result = await applyToSubcontract("worker-1", { ...validInput, chargesVisit: true, visitCost: 500 })
+    expect(result.status).toBe("Pending")
+    expect(applicationData.createApplication).toHaveBeenCalledWith(
+      "worker-1",
+      expect.objectContaining({ chargesVisit: true, visitCost: 500 }),
+    )
   })
 })
 
