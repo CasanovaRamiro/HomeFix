@@ -27,6 +27,7 @@ import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
 import AuthCallback from './views/AuthCallback'
 import ForgotPassword from './views/ForgotPassword'
+import { UserRole } from './types/user'
 
 
 function getStoredUser(): { role?: string } | null {
@@ -44,22 +45,22 @@ const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
 const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
   if (!localStorage.getItem('token')) return <Navigate to="/" replace />
   const user = getStoredUser()
-  if (user?.role !== 'worker') return <Navigate to="/dashboard" replace />
+  if (user?.role !== UserRole.Worker) return <Navigate to="/dashboard" replace />
   return children
 }
 
 const ClientRoute = ({ children }: { children: ReactNode }): ReactNode => {
   if (!localStorage.getItem('token')) return <Navigate to="/" replace />
   const user = getStoredUser()
-  if (user?.role !== 'client') return <Navigate to="/worker" replace />
+  if (user?.role !== UserRole.Client) return <Navigate to="/worker" replace />
   return children
 }
 
 function NotFoundRedirect(): ReactNode {
   if (!localStorage.getItem('token')) return <Navigate to="/" replace />
   const user = getStoredUser()
-  if (user?.role === 'worker') return <Navigate to="/worker" replace />
-  if (user?.role === 'client') return <Navigate to="/dashboard" replace />
+  if (user?.role === UserRole.Worker) return <Navigate to="/worker" replace />
+  if (user?.role === UserRole.Client) return <Navigate to="/dashboard" replace />
   return <Navigate to="/" replace />
 }
 
@@ -67,8 +68,8 @@ function HomeRedirect(): ReactNode {
   const token = localStorage.getItem('token')
   if (!token) return <Landing />
   const user = getStoredUser()
-  if (user?.role === 'worker') return <Navigate to="/worker" replace />
-  if (user?.role === 'client') return <Navigate to="/dashboard" replace />
+  if (user?.role === UserRole.Worker) return <Navigate to="/worker" replace />
+  if (user?.role === UserRole.Client) return <Navigate to="/dashboard" replace />
   return <Landing />
 }
 

@@ -1,6 +1,7 @@
 import { getBot } from '../../infrastructure/providers/telegram.provider.js'
 import type { Context } from 'telegraf'
 import prisma from '../../lib/prisma.js'
+import { UserRole } from '../../domain/types/userRole.js'
 
 let _botUsername: string | null = null
 
@@ -114,7 +115,7 @@ export const startBot = () => {
         await ctx.reply('❌ No tenés tu cuenta vinculada. Usá /link para vincular.')
         return
       }
-      if (user.role !== 'worker') {
+      if (user.role !== UserRole.Worker) {
         await ctx.reply('❌ Solo los trabajadores pueden activar notificaciones de emergencia.')
         return
       }

@@ -109,7 +109,7 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
     email,
     password: managedPassword,
     phone,
-    role: 'worker',
+    role: UserRole.Worker,
   })
 
   const categoryIds = await Promise.all(

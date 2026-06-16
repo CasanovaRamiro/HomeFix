@@ -18,6 +18,7 @@ import {
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import type { Auth0Claims } from '../../domain/services/auth.service.js'
+import { UserRole } from '../../domain/types/userRole.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
 import { validateCreateSubcontractBody } from '../middleware/subcontract.middleware.js'
 import type { CreateSubcontractRequest } from '../types/post.types.js'
@@ -29,7 +30,7 @@ router.get('/', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -52,7 +53,7 @@ router.get('/available', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -76,7 +77,7 @@ router.get('/emergency', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -96,7 +97,7 @@ router.get('/search-location', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -120,7 +121,7 @@ router.get('/availableSubcontracts', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -139,7 +140,7 @@ router.get('/subcontracts/:id', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
