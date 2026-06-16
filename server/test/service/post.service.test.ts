@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
-import { getUserRating } from "../../src/domain/services/user.service.js";
+import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
+import { PostType } from "../../src/domain/types/postType.js";
 import type { CreatePostInput, CreateSubcontractCommand, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
@@ -25,6 +26,8 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
 
 vi.mock("../../src/domain/services/user.service.js", () => ({
   getUserRating: vi.fn(),
+  getWorkerRating: vi.fn(),
+  getClientRating: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -241,6 +244,92 @@ describe("post.service - findAvailableSubcontracts", () => {
     expect(result).toEqual([]);
   });
 });
+
+describe("post.service - getSubcontractById", () => {
+  const subcontractMock: DomainPost = {
+    id: "uuid-sub-1",
+    userId: "mmo-user-id",
+    type: PostType.SubContract,
+    parentPostId: "parent-post-id",
+    title: "Electricista needed",
+    description: "Subcontract for electrical work",
+    address: "Calle 123",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ id: "uuid-cat-1", name: "Electricista" }],
+    user: { id: "mmo-user-id", name: "MMO", surname: "Test" },
+  }
+
+  const parentPostMock: DomainPost = {
+    id: "parent-post-id",
+    userId: "client-user-id",
+    type: PostType.Post,
+    title: "Arreglo de cocina",
+    description: "Arreglar cocina completa",
+    address: "Calle 123",
+    startDate: new Date("2026-07-01"),
+    endDate: new Date("2026-07-15"),
+    status: "Active",
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: "client-user-id", name: "Client", surname: "Test" },
+  }
+
+  it("should return subcontract with workerRating, original clientRating and parentUser", async () => {
+    vi.mocked(findPostById).mockResolvedValueOnce(subcontractMock)
+    vi.mocked(findPostById).mockResolvedValueOnce(parentPostMock)
+    vi.mocked(getWorkerRating).mockResolvedValue({ averageRating: 4.2, reviewCount: 5 })
+    vi.mocked(getClientRating).mockResolvedValue({ averageRating: 3.8, reviewCount: 2 })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(findPostById).toHaveBeenNthCalledWith(1, "uuid-sub-1")
+    expect(findPostById).toHaveBeenNthCalledWith(2, "parent-post-id")
+    expect(getWorkerRating).toHaveBeenCalledWith("mmo-user-id")
+    expect(getClientRating).toHaveBeenCalledWith("client-user-id")
+    expect(result).not.toBeNull()
+    expect(result!.type).toBe(PostType.SubContract)
+    expect(result!.workerRating).toBe(4.2)
+    expect(result!.clientRating).toBe(3.8)
+    expect(result!.parentUser).toEqual({ name: "Client", surname: "Test" })
+  })
+
+  it("should return null for regular post (type: post)", async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...subcontractMock, type: PostType.Post })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(result).toBeNull()
+  })
+
+  it("should return null when post does not exist", async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    const result = await postService.getSubcontractById("non-existent-id")
+
+    expect(result).toBeNull()
+  })
+
+  it("should return subcontract without parentPostId (no originalClientRating)", async () => {
+    const noParentSub = { ...subcontractMock, parentPostId: undefined }
+    vi.mocked(findPostById).mockResolvedValue(noParentSub)
+    vi.mocked(getWorkerRating).mockResolvedValue({ averageRating: 4.0, reviewCount: 3 })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(result).not.toBeNull()
+    expect(result!.workerRating).toBe(4.0)
+    expect(result!.clientRating).toBeUndefined()
+  })
+})
 
 describe("post.service - searchPostsByDistance", () => {
   it("should call searchByDistance with correct params", async () => {

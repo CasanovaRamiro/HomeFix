@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma.js'
 import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
+import { PostType } from '../../domain/types/postType.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
 import { PostStatus } from '../../domain/types/postStatus.js'
@@ -8,7 +9,7 @@ import { EMERGENCY_DURATION_MS } from '../../domain/constants.js'
 
 type _CreatePostRecordInput = {
   userId: string
-  type: string
+  type: PostType
   parentPostId: string | null
   title: string
   description: string
@@ -98,7 +99,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
   const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
   return _createPostRecord({
     userId: data.userId,
-    type: 'post',
+    type: PostType.Post,
     parentPostId: null,
     title: data.title,
     description: data.description,
@@ -126,7 +127,7 @@ export const createSubPost = async (data: {
 }): Promise<DomainPost> =>
   _createPostRecord({
     userId: data.userId,
-    type: 'subcontract',
+    type: PostType.SubContract,
     parentPostId: data.parentPostId ?? null,
     title: data.title,
     description: data.description,
@@ -191,7 +192,7 @@ export const findAvailablePosts = async (
 
 export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
-    where: { type: 'subcontract', status: 'Active' },
+    where: { type: PostType.SubContract, status: 'Active' } as never,
     orderBy: { createdAt: 'desc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
