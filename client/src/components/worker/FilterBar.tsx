@@ -71,7 +71,7 @@ export default function FilterBar({
           className={`btn-filter-location ${locationFilter ? 'active' : ''}`}
           onClick={onOpenLocationModal}
         >
-          {locationFilter ? `Ubicación (${locationFilter.radius} km)` : 'Filtrar por ubicación'}
+          {locationFilter ? `${locationFilter.radius} km` : 'Filtrar por ubicación'}
         </button>
       </div>
     </div>
