@@ -3,7 +3,6 @@ import type { Request, Response, NextFunction } from 'express'
 import request from 'supertest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
-import { PostType } from '../../src/domain/types/postType.js'
 
 const { getPayload, setPayload } = vi.hoisted(() => {
   const payloads: Record<string, Record<string, string>> = {}
