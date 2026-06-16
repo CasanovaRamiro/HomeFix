@@ -1162,6 +1162,7 @@ export default function WorkerDashboard() {
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const appsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const kycIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -1215,11 +1216,13 @@ export default function WorkerDashboard() {
     dashIntervalRef.current = setInterval(() => { void fetchDashboard() }, DASHBOARD_POLL_MS)
     jobsIntervalRef.current = setInterval(() => { void fetchNearbyJobs() }, DASHBOARD_POLL_MS)
     appsIntervalRef.current = setInterval(() => { void fetchApplications() }, DASHBOARD_POLL_MS)
+    kycIntervalRef.current = setInterval(() => { void fetchKyc() }, DASHBOARD_POLL_MS)
 
     return () => {
       if (dashIntervalRef.current) clearInterval(dashIntervalRef.current)
       if (jobsIntervalRef.current) clearInterval(jobsIntervalRef.current)
       if (appsIntervalRef.current) clearInterval(appsIntervalRef.current)
+      if (kycIntervalRef.current) clearInterval(kycIntervalRef.current)
     }
   }, [fetchDashboard, fetchNearbyJobs, fetchApplications, fetchKyc])
 
