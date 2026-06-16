@@ -4,6 +4,7 @@ import {
   createSubContract,
   getUserPosts,
   getPostById,
+  getSubcontractById,
   finalizePost,
   pausePost,
   cancelPost,
@@ -133,6 +134,26 @@ router.get('/availableSubcontracts', async (req, res, next) => {
   }
 })
 
+router.get('/subcontracts/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== 'worker') {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await getSubcontractById(req.params.id)
+    if (!result) return res.status(404).json({ error: 'Subcontract not found' })
+    res.json(toPostDTO(result))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
 router.post('/create', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as {
@@ -162,13 +183,13 @@ router.post('/create-subcontract', validateCreateSubcontractBody, async (req, re
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
     const body = req.body as CreateSubcontractRequest
-    const result = await createSubContract({
+    const results = await createSubContract({
       ...body,
       userId: user.id,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : undefined,
     })
-    res.status(201).json(toPostDTO(result))
+    res.status(201).json(results.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400

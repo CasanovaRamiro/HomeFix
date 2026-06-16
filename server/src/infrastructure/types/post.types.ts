@@ -1,7 +1,9 @@
+import type { PostType } from '../../domain/types/postType.js'
+
 export interface PrismaPostFull {
   id: string
   userId: string
-  type?: string
+  type: PostType
   parentPostId?: string
   title: string
   description: string

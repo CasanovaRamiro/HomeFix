@@ -20,6 +20,12 @@ export const getClientRating = async (userId: string): Promise<DomainUserRating>
   return { averageRating, reviewCount: agg._count }
 }
 
+export const getWorkerRating = async (userId: string): Promise<DomainUserRating> => {
+  const agg = await getWorkerReviewAggregate(userId)
+  const averageRating = agg._count > 0 ? Math.round((agg._avg.rating ?? 0) * 10) / 10 : 0
+  return { averageRating, reviewCount: agg._count }
+}
+
 export const getUserRating = async (userId: string): Promise<DomainUserRating> => {
   const [workerAgg, clientAgg] = await Promise.all([
     getWorkerReviewAggregate(userId),

@@ -20,6 +20,7 @@ import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
+import SubcontractDetail from './views/SubcontractDetail'
 import CreateSubcontract from './views/CreateSubcontract'
 import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
@@ -77,6 +78,14 @@ export default function App(): ReactNode {
           element={
             <PrivateRoute>
               <AvailableSubcontracts />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/worker/subcontracts/:id"
+          element={
+            <PrivateRoute>
+              <SubcontractDetail />
             </PrivateRoute>
           }
         />

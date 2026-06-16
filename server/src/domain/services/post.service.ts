@@ -19,8 +19,9 @@ import { notifyUser, broadcastEmergency } from './notification.service.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
-import { getUserRating } from './user.service.js'
+import { getWorkerRating, getClientRating, getUserRating } from './user.service.js'
 import { EMERGENCY_DURATION_MS } from '../constants.js'
+import { PostType } from '../types/postType.js'
 import type { CreatePostInput, CreateSubcontractCommand, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 
 const verifySubcontractParent = async (parentPostId: string, userId: string): Promise<DomainPost> => {
@@ -89,23 +90,34 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
   return post
 }
 
-export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost> => {
+export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost[]> => {
   const parentPost = input.parentPostId
     ? await verifySubcontractParent(input.parentPostId, input.userId)
     : null
 
-  const title       = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
-  const description = input.description?.trim() || ''
-  const startDate   = input.startDate ?? parentPost?.startDate ?? new Date()
-  const endDate     = input.endDate   ?? parentPost?.endDate   ?? new Date()
-  const address     = input.address?.trim() || parentPost?.address || 'Por definir'
+  const startDate = input.startDate ?? parentPost?.startDate ?? new Date()
+  const endDate   = input.endDate   ?? parentPost?.endDate   ?? new Date()
+  const address   = input.address?.trim() || parentPost?.address || 'Por definir'
+  const baseTitle = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
 
-  return createSubPost({
-    userId: input.userId,
-    parentPostId: input.parentPostId,
-    title, description, startDate, endDate, address,
-    positions: input.positions,
-  })
+  const results = await Promise.all(
+    input.positions.map((pos) =>
+      createSubPost({
+        userId: input.userId,
+        parentPostId: input.parentPostId,
+        title: pos.roleDescription
+          ? `${baseTitle} - ${pos.roleDescription}`
+          : baseTitle,
+        description: input.description?.trim() || pos.roleDescription || '',
+        startDate,
+        endDate,
+        address,
+        positions: [pos],
+      })
+    )
+  )
+
+  return results
 }
 
 const enrichWithClientRating = async (post: DomainPost): Promise<DomainPost> => {
@@ -167,6 +179,32 @@ export const getPostById = async (id: string): Promise<DomainPost | null> => {
   const post = await findPostById(id)
   if (!post) return null
   return enrichWithClientRating(post)
+}
+
+export const getSubcontractById = async (id: string): Promise<DomainPost | null> => {
+  const post = await findPostById(id)
+  if (!post || post.type !== PostType.SubContract) return null
+
+  const workerRatingResult = await getWorkerRating(post.userId)
+  const workerRating = workerRatingResult.averageRating
+
+  let clientRating: number | undefined
+  let parentUser: { name: string; surname: string } | undefined
+  if (post.parentPostId) {
+    const parent = await findPostById(post.parentPostId)
+    if (parent) {
+      const clientRatingResult = await getClientRating(parent.userId)
+      clientRating = clientRatingResult.averageRating
+      parentUser = { name: parent.user.name, surname: parent.user.surname }
+    }
+  }
+
+  return {
+    ...post,
+    clientRating,
+    workerRating,
+    parentUser,
+  }
 }
 
 export const getUserPosts = (userId: string): Promise<DomainUserPost[]> =>
