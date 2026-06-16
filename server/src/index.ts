@@ -1,3 +1,7 @@
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason instanceof Error ? reason.message : reason)
+})
+
 import { env } from './lib/envConfig.js'
 import { assertMigrationsApplied } from './lib/assertMigrations.js'
 import { jwtCheck } from './presentation/middleware/auth0.middleware.js'

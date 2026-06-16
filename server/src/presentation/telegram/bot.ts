@@ -142,7 +142,9 @@ export const startBot = () => {
 
     bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
-    bot.launch()
+    bot.launch().catch((err) => {
+      console.error('Telegram bot launch error:', err instanceof Error ? err.message : err)
+    })
     console.log('Telegram bot started (polling)')
   } catch (err) {
     console.error('Failed to start Telegram bot:', err instanceof Error ? err.message : err)
