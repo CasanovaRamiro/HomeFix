@@ -11,5 +11,9 @@ export default defineConfig({
     AUTH0_ISSUER_BASE_URL: 'https://dev-thdx752hxc0ircbe.us.auth0.com/',
     },
     fileParallelism: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+    },
   },
 })

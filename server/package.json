@@ -17,7 +17,10 @@
     "db:seed": "tsx prisma/seed.ts",
     "didit:create-workflow": "tsx scripts/createDiditWorkflow.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage:service": "vitest run --coverage test/service",
+    "test:coverage:data": "vitest run --coverage test/data",
+    "test:coverage:routes": "vitest run --coverage test/routes"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -63,6 +66,7 @@
     "tsx": "~4.19.3",
     "typescript": "~5.8.3",
     "typescript-eslint": "~8.33.0",
-    "vitest": "~4.1.4"
+    "vitest": "~4.1.4",
+    "@vitest/coverage-v8": "~4.1.4"
   }
 }
