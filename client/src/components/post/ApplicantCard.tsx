@@ -74,7 +74,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
           {applicant.phone && (
             <button
               onClick={() => window.open(
-                `https://wa.me/${formatWhatsAppNumber(applicant.phone)}?text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
+                `https://wa.me/${formatWhatsAppNumber(applicant.phone!)}?text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
                 '_blank'
               )}
               className="btn-outline"
