@@ -9,6 +9,7 @@ export interface DomainWorkerProfile {
   createdAt: Date
   location: string | null
   categories: { id: string; name: string }[]
+  emergenciesEnabled: boolean
 }
 
 export interface DomainWorkerStats {

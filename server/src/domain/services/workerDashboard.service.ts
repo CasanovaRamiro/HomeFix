@@ -43,9 +43,11 @@ export const getWorkerDashboard = async (workerId: string) => {
       bio: profile.bio,
       photo: profile.photo,
       createdAt: profile.createdAt,
-      location: profile.location,
-      categories: profile.categories,
-    },
+       location: profile.location,
+       categories: profile.categories,
+       emergenciesEnabled: profile.emergenciesEnabled,
+     },
+
     stats: {
       totalJobs: completedJobs,
       reviewCount: reviewStats.count,

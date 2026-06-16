@@ -25,6 +25,7 @@ export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
   categories: w.categories.map((uc) => uc.category),
   certificates: parseJsonArray(w.certificates),
   gallery: parseJsonArray(w.gallery),
+  emergenciesEnabled: w.emergenciesEnabled,
 })
 
 export const toDomainWorkerReview = (r: ReviewResult): DomainWorkerReview => ({

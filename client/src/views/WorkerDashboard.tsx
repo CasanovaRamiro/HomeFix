@@ -493,7 +493,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
             </div>
             <div>
               <h2 style={{ fontSize: isActive ? 20 : 16, fontWeight: 700, color: '#fff', margin: 0, transition: 'all 0.3s' }}>
-                {isActive ? 'Urgencias Entrantes' : 'Urgencias Pausadas'}
+                {isActive ? 'Urgencias Entrantes' : 'Urgencias Ocultas'}
               </h2>
               {isActive && (
                 <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>
@@ -557,7 +557,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
             textAlign: 'center', padding: '10px 20px',
             color: '#64748B', fontSize: 13,
           }}>
-            Activa el switch para recibir solicitudes urgentes.
+            Activa el switch para para ver las solicitudes urgentes.
           </div>
         )}
       </div>
