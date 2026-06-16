@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { TrabajoView } from '../../types/post'
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -13,7 +12,7 @@ export interface ApplicationFormData {
 }
 
 interface Props {
-  selected: TrabajoView
+  selected: { id: string; titulo: string }
   onEnviar: (data: ApplicationFormData) => void
   onClose: () => void
   enviando: boolean
