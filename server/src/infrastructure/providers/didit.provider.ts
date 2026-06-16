@@ -25,31 +25,23 @@ export const createDiditSession = async (
   if (!apiKey) throw createHttpError(500, 'DIDIT_API_KEY is not configured')
   if (!workflowId) throw createHttpError(500, 'DIDIT_WORKFLOW_ID is not configured')
 
-  const url = `${env.DIDIT_BASE_URL}/v3/session/`
-  const body = JSON.stringify({
-    workflow_id: workflowId,
-    vendor_data: vendorData,
-    expected_details: { id_country: 'ARG' },
-  })
-
-  console.log('[KYC][DIAG] URL:', url)
-  console.log('[KYC][DIAG] API_KEY length:', apiKey.length, '| first8:', apiKey.substring(0, 8))
-  console.log('[KYC][DIAG] WORKFLOW_ID:', workflowId)
-  console.log('[KYC][DIAG] BODY:', body)
-
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
   let response: Response
   try {
-    response = await fetch(url, {
+    response = await fetch(`${env.DIDIT_BASE_URL}/v3/session/`, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body,
+      body: JSON.stringify({
+        workflow_id: workflowId,
+        vendor_data: vendorData,
+        expected_details: { id_country: 'ARG' },
+      }),
       signal: controller.signal,
     })
   } catch (e) {
@@ -58,8 +50,6 @@ export const createDiditSession = async (
     throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
   }
   clearTimeout(timeout)
-
-  console.log('[KYC][DIAG] Response status:', response.status, response.statusText)
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
