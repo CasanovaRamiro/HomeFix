@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/infrastructure/database/application.database.js"
 import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
+import { PostType } from "../../src/domain/types/postType.js"
 import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -196,7 +197,7 @@ describe("applyToSubcontract", () => {
   const mockSubcontract = {
     id: "subcontract-1",
     userId: "worker-creator",
-    type: "subcontract" as const,
+    type: PostType.SubContract,
     title: "Busco albañil",
     status: "Active",
     description: "",
@@ -240,7 +241,7 @@ describe("applyToSubcontract", () => {
   })
 
   it("lanza 400 si el post no es de tipo SubContract", async () => {
-    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockSubcontract, type: "post" })
+    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockSubcontract, type: PostType.Post })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 
