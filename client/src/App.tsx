@@ -29,20 +29,46 @@ import AuthCallback from './views/AuthCallback'
 import ForgotPassword from './views/ForgotPassword'
 
 
+function getStoredUser(): { role?: string } | null {
+  try {
+    const raw = localStorage.getItem('user')
+    return raw ? JSON.parse(raw) as { role?: string } : null
+  } catch {
+    return null
+  }
+}
+
 const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
-  (localStorage.getItem('token') !== null) ? children : <Navigate to="/login" replace />
+  localStorage.getItem('token') !== null ? children : <Navigate to="/" replace />
+
+const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
+  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
+  const user = getStoredUser()
+  if (user?.role !== 'worker') return <Navigate to="/dashboard" replace />
+  return children
+}
+
+const ClientRoute = ({ children }: { children: ReactNode }): ReactNode => {
+  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
+  const user = getStoredUser()
+  if (user?.role !== 'client') return <Navigate to="/worker" replace />
+  return children
+}
+
+function NotFoundRedirect(): ReactNode {
+  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
+  const user = getStoredUser()
+  if (user?.role === 'worker') return <Navigate to="/worker" replace />
+  if (user?.role === 'client') return <Navigate to="/dashboard" replace />
+  return <Navigate to="/" replace />
+}
 
 function HomeRedirect(): ReactNode {
   const token = localStorage.getItem('token')
   if (!token) return <Landing />
-  try {
-    const raw = localStorage.getItem('user')
-    const user = raw ? JSON.parse(raw) as { role?: string } : null
-    if (user?.role === 'worker') return <Navigate to="/worker" replace />
-    if (user?.role === 'client') return <Navigate to="/dashboard" replace />
-  } catch {
-    // ignore parse error
-  }
+  const user = getStoredUser()
+  if (user?.role === 'worker') return <Navigate to="/worker" replace />
+  if (user?.role === 'client') return <Navigate to="/dashboard" replace />
   return <Landing />
 }
 
@@ -62,42 +88,21 @@ export default function App(): ReactNode {
         <Route path="/register/worker" element={<RegisterWorker />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/kyc" element={<PrivateRoute><KycVerify /></PrivateRoute>} />
-        <Route path="/dashboard" element={<PrivateRoute><ClientDashboard /></PrivateRoute>} />
+        <Route path="/dashboard" element={<ClientRoute><ClientDashboard /></ClientRoute>} />
         <Route path="/users" element={<Users />} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
-        <Route path="/manual-post" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
-        <Route path="/post-options" element={<PrivateRoute><PostOptions /></PrivateRoute>} />
-        <Route path="/worker/:id" element={<PrivateRoute><WorkerProfile /></PrivateRoute>} />
+        <Route path="/manual-post" element={<ClientRoute><CreatePost /></ClientRoute>} />
+        <Route path="/post-options" element={<ClientRoute><PostOptions /></ClientRoute>} />
         <Route path="/profile/worker/:id" element={<PublicWorkerProfile />} />
-        <Route path="/posts/:id" element={<PrivateRoute><PostDetail /></PrivateRoute>} />
-        <Route path="/create-subcontract" element={<PrivateRoute><CreateSubcontract /></PrivateRoute>} />
-        <Route path="/worker" element={<WorkerDashboard />} />
-        <Route path="/worker/my-applications" element={<WorkerApplications />} />
-        <Route
-          path="/worker/available-subcontracts"
-          element={
-            <PrivateRoute>
-              <AvailableSubcontracts />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/worker/subcontracts/:id"
-          element={
-            <PrivateRoute>
-              <SubcontractDetail />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/worker/available-jobs"
-          element={
-            <PrivateRoute>
-              <AvailableJobs />
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/posts/:id" element={<ClientRoute><PostDetail /></ClientRoute>} />
+        <Route path="/create-subcontract" element={<WorkerRoute><CreateSubcontract /></WorkerRoute>} />
+        <Route path="/worker" element={<WorkerRoute><WorkerDashboard /></WorkerRoute>} />
+        <Route path="/worker/my-applications" element={<WorkerRoute><WorkerApplications /></WorkerRoute>} />
+        <Route path="/worker/available-subcontracts" element={<WorkerRoute><AvailableSubcontracts /></WorkerRoute>} />
+        <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
+        <Route path="/worker/available-jobs" element={<WorkerRoute><AvailableJobs /></WorkerRoute>} />
+        <Route path="/worker/:id" element={<WorkerRoute><WorkerProfile /></WorkerRoute>} />
+        <Route path="*" element={<NotFoundRedirect />} />
       </Routes>
     </BrowserRouter>
   )
