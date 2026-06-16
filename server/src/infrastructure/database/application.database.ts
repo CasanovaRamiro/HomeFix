@@ -5,7 +5,7 @@ import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication
 
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
-    where: { workerId, status: { not: ApplicationStatus.Rejected } },
+    where: { workerId, status: { notIn: [ApplicationStatus.Rejected, ApplicationStatus.Dismissed] } },
     include: {
       post: {
         include: {

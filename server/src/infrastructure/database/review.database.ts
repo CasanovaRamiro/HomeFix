@@ -48,6 +48,14 @@ export const createReview = async (data: CreateReviewData): Promise<DomainWorker
   return toDomainWorkerReview(raw)
 }
 
+export const findWorkerReviewByApplicationId = async (applicationId: string): Promise<DomainWorkerReview | null> => {
+  const raw = await prisma.workerReview.findUnique({
+    where: { applicationId },
+    select: reviewFields,
+  })
+  return raw ? toDomainWorkerReview(raw) : null
+}
+
 export const findReviewsByWorkerId = async (workerId: string): Promise<DomainWorkerReview[]> => {
   const raw = await prisma.workerReview.findMany({
     where: { workerId },

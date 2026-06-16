@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/infrastructure/database/application.database.js"
 import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
-import { acceptApplication, rejectApplication, applyToPost } from "../../src/domain/services/application.service.js"
+import { acceptApplication, rejectApplication, dismissWorker, applyToPost } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -212,5 +212,57 @@ describe("rejectApplication", () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...mockApplication, status: "Accepted" })
 
     await expect(rejectApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe("dismissWorker", () => {
+  const acceptedApplication = {
+    ...mockApplication,
+    status: "Accepted",
+    post: { userId: "client-1", title: "Test post", status: "In progress" },
+  }
+
+  it("dismisses the worker and reopens the post when valid", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(acceptedApplication)
+    vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...acceptedApplication, status: "Dismissed" })
+    vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
+
+    const result = await dismissWorker("client-1", "app-1")
+
+    expect(result.status).toBe("Dismissed")
+    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Dismissed")
+    expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "Active")
+  })
+
+  it("throws 404 if application does not exist", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(null)
+
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("throws 403 if requester is not the post owner", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(acceptedApplication)
+
+    await expect(dismissWorker("otro-cliente", "app-1")).rejects.toMatchObject({ status: 403 })
+  })
+
+  it("throws 400 if application is not Accepted", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...acceptedApplication,
+      status: "Pending",
+    })
+
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+    expect(postData.updatePostStatus).not.toHaveBeenCalled()
+  })
+
+  it("throws 400 if post is not In progress", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...acceptedApplication,
+      post: { userId: "client-1", title: "Test post", status: "Completed" },
+    })
+
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+    expect(postData.updatePostStatus).not.toHaveBeenCalled()
   })
 })

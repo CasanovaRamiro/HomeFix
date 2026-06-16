@@ -10,6 +10,7 @@ const MAX_CHARS = 500
 
 export interface ReviewTarget {
   postId: string
+  applicationId?: string
   titulo: string
   fecha: string
   ubicacion: string
@@ -65,7 +66,7 @@ export default function LeaveReview() {
 
   const handleSubmit = async () => {
     if (rating === 0 || !target.postId) return
-    await submit({ postId: target.postId, rating, description: comentario || undefined })
+    await submit({ postId: target.postId, applicationId: target.applicationId, rating, description: comentario || undefined })
   }
 
   /* ── Pantalla de agradecimiento ─────────────────────────────── */

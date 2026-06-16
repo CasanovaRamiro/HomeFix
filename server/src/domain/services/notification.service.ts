@@ -7,6 +7,7 @@ type EventType =
   | 'application_new'
   | 'application_accepted'
   | 'application_rejected'
+  | 'worker_dismissed'
   | 'post_completed'
   | 'post_cancelled'
   | 'emergency_new'
@@ -22,6 +23,10 @@ const templates: Record<EventType, (data: Record<string, string>) => Notificatio
   }),
   application_rejected: (d) => ({
     text: `❌ <b>Postulación rechazada</b>\nTu postulación a "${d.postTitle}" fue rechazada`,
+    parseMode: 'HTML',
+  }),
+  worker_dismissed: (d) => ({
+    text: `⚠️ <b>Contratación cancelada</b>\nEl cliente te dio de baja del trabajo "${d.postTitle}"`,
     parseMode: 'HTML',
   }),
   post_completed: (d) => ({

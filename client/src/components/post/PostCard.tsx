@@ -6,7 +6,6 @@ interface PostCardProps {
   post: Post
   hasAcceptedWorker?: boolean
   onComplete?: () => void
-  onReopen?: () => void
   onViewReview?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
@@ -31,7 +30,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
@@ -101,7 +100,7 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
         {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
             <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
-            <button className="btn-reopen" onClick={onReopen}>Reabrir busqueda</button>
+            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar contratacion</button>
           </div>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (

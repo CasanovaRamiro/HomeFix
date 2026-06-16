@@ -226,7 +226,14 @@ export interface LocationSearchResult extends DomainPost {
 
 export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]> => {
   const posts = await prisma.post.findMany({
-    where: { userId, status: { in: [PostStatus.Active, PostStatus.InProgress, PostStatus.Paused, PostStatus.Completed] } },
+    where: {
+      userId,
+      OR: [
+        { status: { in: [PostStatus.Active, PostStatus.InProgress, PostStatus.Paused, PostStatus.Completed] } },
+        // Cancelled posts that had a hired worker — surfaced so the client can still review them.
+        { status: PostStatus.Cancelled, applications: { some: { status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } } } },
+      ],
+    },
     include: {
       categories: { include: { category: true } },
       applications: {

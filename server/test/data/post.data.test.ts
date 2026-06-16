@@ -193,6 +193,17 @@ describe("findPostsByUser", () => {
     expect(posts).toHaveLength(1);
   });
 
+  it("should include a Cancelled post that had a hired worker", async () => {
+    const worker = await createUser("worker@test.com", "Worker", "hashed");
+    const post = await createPost(createValidPost());
+    await prisma.application.create({ data: { workerId: worker.id, postId: post.id, status: "Accepted" } });
+    await prisma.post.update({ where: { id: post.id }, data: { status: "Cancelled" } });
+
+    const posts = await findPostsByUser(userId);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].status).toBe("Cancelled");
+  });
+
   it("should return empty array when user has no posts", async () => {
     const posts = await findPostsByUser('non-existent-id');
     expect(posts).toEqual([]);

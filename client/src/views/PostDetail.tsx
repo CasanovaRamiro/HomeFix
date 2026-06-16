@@ -72,20 +72,6 @@ export default function PostDetail() {
     }
   }
 
-  const handleReopen = async () => {
-    try {
-      await api.patch(`/posts/${id}/reopen`)
-      const [postRes, applicantsData] = await Promise.all([
-        api.get<Post>(`/posts/${id}`),
-        getPostApplicants(id!).catch(() => []),
-      ])
-      setPost(postRes.data)
-      setApplicants(Array.isArray(applicantsData) ? applicantsData : applicantsData.data ?? [])
-    } catch {
-      // error handling
-    }
-  }
-
   const refresh = () => {
     if (!id) return
     Promise.all([
@@ -158,11 +144,31 @@ export default function PostDetail() {
     }
   }
 
+  const accepted = applicants.find(a => a.status === ApplicationStatus.Accepted)
+
   const handleCancel = async () => {
     try {
       const res = await cancelPost(post.id)
-      setPost({ ...post, status: res.data.status })
       setShowCancelModal(false)
+      // If a worker was hired, the client can still review them after cancelling.
+      if (accepted) {
+        navigate('/review', {
+          state: {
+            postId: post.id,
+            titulo: post.title,
+            fecha: post.endDate,
+            ubicacion: post.address,
+            trabajador: {
+              id: accepted.workerId ?? '',
+              nombre: accepted.name ?? '',
+              categoria: accepted.category ?? '',
+              verificado: false,
+            },
+          },
+        })
+        return
+      }
+      setPost({ ...post, status: res.data.status })
     } catch {
       alert('No se pudo cancelar la publicación')
     }
@@ -184,7 +190,6 @@ export default function PostDetail() {
             post={post}
             hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
             onComplete={handleComplete}
-            onReopen={handleReopen}
             onViewReview={() => navigate('/review')}
             onPause={handlePause}
             onCancel={() => setShowCancelModal(true)}
@@ -221,6 +226,21 @@ export default function PostDetail() {
               postStatus={post.status}
               postTitle={post.title}
               onHire={refresh}
+              onDismiss={() => navigate('/review', {
+                state: {
+                  postId: post.id,
+                  applicationId: a.applicationId,
+                  titulo: post.title,
+                  fecha: post.endDate,
+                  ubicacion: post.address,
+                  trabajador: {
+                    id: a.workerId,
+                    nombre: a.name,
+                    categoria: a.category ?? '',
+                    verificado: false,
+                  },
+                },
+              })}
             />
           ))}
         </div>
@@ -228,11 +248,14 @@ export default function PostDetail() {
 
       <ConfirmModal
         open={showCancelModal}
-        title="¿Estás seguro de que quieres cancelar la publicación?"
-        confirmLabel="Sí, quiero cancelarla"
+        title={accepted
+          ? '¿Querés cancelar la contratación? Vas a poder dejar una reseña del trabajador.'
+          : '¿Estás seguro de que quieres cancelar la publicación?'}
+        confirmLabel={accepted ? 'Sí, cancelar la contratación' : 'Sí, quiero cancelarla'}
         cancelLabel="No, deseo mantenerla"
         onConfirm={handleCancel}
         onCancel={() => setShowCancelModal(false)}
+        danger
       />
 
       {showEditModal && (

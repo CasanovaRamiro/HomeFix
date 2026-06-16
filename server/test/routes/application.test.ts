@@ -414,3 +414,88 @@ describe('PATCH /applications/:applicationId/reject', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('PATCH /applications/:applicationId/dismiss', () => {
+  const createInProgressPost = () =>
+    prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Trabajo en curso',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'In progress',
+        categories: { create: { categoryId } },
+      },
+    })
+
+  it('despide al trabajador, deja la aplicación Dismissed y reabre el post', async () => {
+    const post = await createInProgressPost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Accepted' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/dismiss`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Dismissed')
+
+    const updatedPost = await prisma.post.findUnique({ where: { id: post.id } })
+    expect(updatedPost!.status).toBe('Active')
+  })
+
+  it('conserva las otras postulaciones pendientes para poder contratar a otro', async () => {
+    const post = await createInProgressPost()
+    const otherWorker = await createUser('other@test.com', 'Other', 'hashed', { role: 'worker' })
+    const accepted = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Accepted' },
+    })
+    const pending = await prisma.application.create({
+      data: { workerId: otherWorker.id, postId: post.id, status: 'Pending' },
+    })
+
+    await request(app)
+      .patch(`/applications/${accepted.id}/dismiss`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    const untouched = await prisma.application.findUnique({ where: { id: pending.id } })
+    expect(untouched!.status).toBe('Pending')
+  })
+
+  it('retorna 404 si la aplicación no existe', async () => {
+    const res = await request(app)
+      .patch('/applications/id-inexistente/dismiss')
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 403 si el usuario no es dueño del post', async () => {
+    const post = await createInProgressPost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Accepted' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/dismiss`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si la aplicación no está Accepted', async () => {
+    const post = await createInProgressPost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Pending' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/dismiss`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(400)
+  })
+})
