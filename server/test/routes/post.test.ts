@@ -1046,10 +1046,13 @@ describe('POST /posts/create-subcontract', () => {
       .send(validPayload())
 
     expect(res.status).toBe(201)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body.type).toBe('subcontract')
-    expect(res.body.parentPostId).toBe(parentPostId)
-    expect(res.body.title).toBe('Subcontratación: Arreglo de cocina')
+    expect(res.body).toHaveLength(2)
+    expect(res.body[0]).toHaveProperty('id')
+    expect(res.body[0].type).toBe('subcontract')
+    expect(res.body[0].parentPostId).toBe(parentPostId)
+    expect(res.body[0].title).toBe('Subcontratación: Arreglo de cocina - Albañilería general')
+    expect(res.body[1].parentPostId).toBe(parentPostId)
+    expect(res.body[1].title).toBe('Subcontratación: Arreglo de cocina - Instalación eléctrica')
   })
 
   it('returns 401 without token', async () => {
