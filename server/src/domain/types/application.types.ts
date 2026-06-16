@@ -14,6 +14,7 @@ export interface DomainMyApplication {
   title: string
   client: string
   clientId: string
+  clientPhone: string | null
   location: string
   appliedAt: Date
   serviceDate: Date
@@ -46,4 +47,5 @@ export interface DomainPostApplication {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  phone: string | null
 }

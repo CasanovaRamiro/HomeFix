@@ -9,7 +9,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
     include: {
       post: {
         include: {
-          user: { select: { id: true, name: true, surname: true } },
+          user: { select: { id: true, name: true, surname: true, phone: true } },
           categories: { include: { category: { select: { name: true } } } },
         },
       },

@@ -32,6 +32,7 @@ export interface PostApplicant {
   availableDays: string[]
   availableTimeFrom: string | null
   availableTimeTo: string | null
+  phone: string | null
   chargesVisit: boolean
   visitCost: number | null
 }

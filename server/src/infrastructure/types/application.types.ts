@@ -14,7 +14,7 @@ export interface PrismaApplicationWithPost {
     title: string
     address: string
     startDate: Date
-    user: { id: string; name: string; surname: string }
+    user: { id: string; name: string; surname: string; phone: string | null }
     categories: { category: { name: string } }[]
   }
   clientReview: { id: string } | null
@@ -36,6 +36,7 @@ export interface PrismaApplicationWithWorker {
     name: string
     surname: string
     photo: string | null
+    phone: string | null
     categories: { category: { name: string } }[]
     address: { city: string; state: string } | null
     reviewsReceived: { rating: number }[]

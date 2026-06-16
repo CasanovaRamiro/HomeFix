@@ -12,6 +12,7 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   title: a.post.title,
   client: `${a.post.user.name} ${a.post.user.surname}`.trim(),
   clientId: a.post.user.id,
+  clientPhone: a.post.user.phone,
   location: a.post.address,
   appliedAt: a.createdAt,
   serviceDate: a.post.startDate,
@@ -49,5 +50,6 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     availableTimeTo: a.availableTimeTo,
     chargesVisit: a.chargesVisit,
     visitCost: a.visitCost,
+    phone: a.worker.phone,
   }
 }

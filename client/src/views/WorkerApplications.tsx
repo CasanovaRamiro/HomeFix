@@ -26,6 +26,7 @@ interface Application {
   image?: string
   hasReview: boolean
   clientRating: number
+  clientPhone: string | null
 }
 
 const TABS = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas', 'Completadas'] as const
@@ -431,14 +432,25 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
         <div style={{ padding: '0 20px 20px' }}>
           {app.status === ApplicationStatus.Accepted && (
             <div style={{ display: 'flex', gap: 8 }}>
-              <button style={{
+              <button
+                onClick={() => {
+                  const phone = app.clientPhone?.replace(/\D/g, '')
+                  if (!phone) return
+                  window.open(
+                    `https://wa.me/${phone}?text=${encodeURIComponent('Hola, me contrataste para: ' + app.title)}`,
+                    '_blank'
+                  )
+                }}
+                style={{
                 flex: 1, background: '#10B981', border: 'none',
                 borderRadius: 10, color: '#fff',
                 fontSize: 13, fontWeight: 600, padding: '11px 0',
-                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                cursor: app.clientPhone ? 'pointer' : 'not-allowed',
+                opacity: app.clientPhone ? 1 : 0.5,
+                display: 'flex', alignItems: 'center',
                 justifyContent: 'center', gap: 8, transition: 'background 0.15s',
               }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                onMouseEnter={(e) => { if (app.clientPhone) (e.currentTarget as HTMLElement).style.background = '#059669' }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
               >
                 Contactar cliente
