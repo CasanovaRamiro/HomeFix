@@ -127,7 +127,7 @@ describe('GET /client/stats', () => {
 
   it('cuenta unreviewedJobs solo para post completados sin WorkerReview', async () => {
     const postWithoutReview = await createPost(clientId, 'Completed')
-    const appWithoutReview = await createApplication(postWithoutReview.id, 'Accepted')
+    await createApplication(postWithoutReview.id, 'Accepted')
 
     const postWithReview = await createPost(clientId, 'Completed')
     const appWithReview = await createApplication(postWithReview.id, 'Accepted')

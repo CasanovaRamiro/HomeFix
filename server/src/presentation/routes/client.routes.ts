@@ -3,6 +3,7 @@ import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import { getClientRating } from '../../domain/services/user.service.js'
 import { PostStatus } from '../../domain/types/postStatus.js'
+import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import { findHistoryPostsByUser } from '../../infrastructure/database/clientHistory.database.js'
 import { toUserPostDTO } from '../transformers/post.transformer.js'
 import prisma from '../../lib/prisma.js'
@@ -26,7 +27,7 @@ router.get('/stats', async (req, res, next) => {
       where: { userId: user.id, status: PostStatus.Completed },
       include: {
         applications: {
-          where: { status: { in: ['Accepted', 'Completed'] } },
+          where: { status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
           include: { review: { select: { id: true } } },
         },
       },

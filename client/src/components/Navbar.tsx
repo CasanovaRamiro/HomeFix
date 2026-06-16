@@ -24,7 +24,7 @@ const WORKER_LINKS: NavLinkDef[] = [
 const CLIENT_LINKS: NavLinkDef[] = [
   { href: '/dashboard',        label: 'Inicio',               icon: Home },
   { href: '/post-options', label: 'Nueva Solicitud',      icon: FileText },
-  { href: '/dashboard',    label: 'Mis Publicaciones',    icon: ClipboardList },
+  { href: '/client/history', label: 'Historial', icon: ClipboardList },
 ]
 
 const AUTH_ROUTES = ['/login']
