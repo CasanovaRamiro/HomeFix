@@ -3,7 +3,7 @@ export interface PostCategoryDTO {
   name: string
   quantity?: number
   filledCount?: number
-  roleDescription?: string
+  roleDescription?: string | null
 }
 
 export interface UserPostDTO {

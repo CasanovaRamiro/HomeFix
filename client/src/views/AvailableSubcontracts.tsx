@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle } from 'lucide-react'
+import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle, Calendar, MapPin, Users } from 'lucide-react'
 import { fetchAvailableSubcontracts } from '../services/posts'
+import { applyToSubcontract } from '../services/applications'
 import { getWorker } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY } from '../lib/post'
@@ -9,16 +10,30 @@ import type { AvailableSubcontractDTO } from '../types/post'
 import type { LocationFilter } from '../components/worker/types'
 import SubcontractCard from '../components/worker/SubcontractCard'
 import LocationFilterModal from '../components/post/LocationFilterModal'
+import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
+import StarRating from '../components/ui/StarRating'
+import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
 
 const PAGE_SIZE = 8
+const POLL_INTERVAL = 30000
+
+function formatLastUpdate(date: Date): string {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diff < 60) return 'hace unos segundos'
+  const min = Math.floor(diff / 60)
+  if (min === 1) return 'hace 1 minuto'
+  return `hace ${min} minutos`
+}
 
 export default function AvailableSubcontracts() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [subcontratos, setSubcontratos] = useState<AvailableSubcontractDTO[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [page, setPage] = useState(1)
@@ -28,9 +43,6 @@ export default function AvailableSubcontracts() {
     const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
     return saved ?? DEFAULT_WORKER_CATEGORY
   })
-
-  const [refreshing, setRefreshing] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(() => {
     try {
@@ -39,8 +51,14 @@ export default function AvailableSubcontracts() {
     } catch { return null }
   })
   const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
+  const [selected, setSelected] = useState<AvailableSubcontractDTO | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showApplyModal, setShowApplyModal] = useState(false)
+  const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
+  const [enviando, setEnviando] = useState(false)
   const [notificacion, setNotificacion] = useState<{ tipo: 'error' | 'exito'; mensaje: string } | null>(null)
   const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (user?.id) {
@@ -62,15 +80,16 @@ export default function AvailableSubcontracts() {
     }
   }, [user?.id])
 
-  function formatLastUpdate(date: Date): string {
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000)
-    if (diff < 60) return 'hace unos segundos'
-    const min = Math.floor(diff / 60)
-    if (min === 1) return 'hace 1 minuto'
-    return `hace ${min} minutos`
-  }
+  const loadPostulaciones = useCallback(async (): Promise<void> => {
+    try {
+      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
+      setPostulacionesIds(res.data.map((a) => a.postId))
+    } catch {
+      setPostulacionesIds([])
+    }
+  }, [])
 
-  const fetchSubcontratos = async (isRefresh = false) => {
+  const fetchSubcontratos = useCallback(async (isRefresh = false): Promise<void> => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     setError('')
@@ -90,18 +109,58 @@ export default function AvailableSubcontracts() {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [])
 
-  function mostrarNotificacion(tipo: 'error' | 'exito', mensaje: string) {
+  useEffect(() => {
+    void loadPostulaciones()
+  }, [loadPostulaciones])
+
+  useEffect(() => {
+    if (!categoriesReady) return
+    void fetchSubcontratos(false)
+  }, [categoriesReady, fetchSubcontratos])
+
+  useEffect(() => {
+    pollingRef.current = setInterval(() => {
+      void loadPostulaciones()
+      void fetchSubcontratos(true)
+    }, POLL_INTERVAL)
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [loadPostulaciones, fetchSubcontratos])
+
+  const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
+
+  const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
     if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
     setNotificacion({ tipo, mensaje })
     notifTimeoutRef.current = setTimeout(() => setNotificacion(null), 4000)
   }
 
-  useEffect(() => {
-    if (!categoriesReady) return
-    fetchSubcontratos()
-  }, [categoriesReady])
+  const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
+    if (!selected) return
+    setEnviando(true)
+    try {
+      await applyToSubcontract({
+        postId: selected.id,
+        message: formData.message || undefined,
+        availableDays: formData.availableDays,
+        availableTimeFrom: formData.availableTimeFrom,
+        availableTimeTo: formData.availableTimeTo,
+        chargesVisit: formData.chargesVisit,
+        visitCost: formData.visitCost,
+      })
+      setPostulacionesIds((prev) => [...prev, selected.id])
+      setShowApplyModal(false)
+      mostrarNotificacion('exito', 'Te postulaste correctamente')
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setShowApplyModal(false)
+      setEnviando(false)
+      mostrarNotificacion('error', axiosErr.response?.data?.error ?? 'Error al postularte')
+    }
+  }
 
   function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371
@@ -117,7 +176,6 @@ export default function AvailableSubcontracts() {
     let resultado = [...subcontratos]
 
     const categoryFilter = category || workerCategories
-
     resultado = resultado.filter((s) =>
       s.categories.some((c) => categoryFilter.includes(c.name)),
     )
@@ -254,7 +312,7 @@ export default function AvailableSubcontracts() {
                 </span>
               )}
               <button
-                onClick={() => fetchSubcontratos(true)}
+                onClick={() => { void loadPostulaciones(); void fetchSubcontratos(true) }}
                 disabled={refreshing}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5,
@@ -420,7 +478,7 @@ export default function AvailableSubcontracts() {
                 <div key={sub.id} className="sc-card-wrapper" style={{ animation: `fadeInUp 0.35s ease-out ${idx * 0.06}s both` }}>
                   <SubcontractCard
                     subcontract={sub}
-                    onClick={() => navigate(`/worker/subcontracts/${sub.id}`)}
+                    onClick={() => { setSelected(sub); setShowDetailModal(true) }}
                   />
                 </div>
               ))}
@@ -497,6 +555,161 @@ export default function AvailableSubcontracts() {
           onApply={handleLocationApply}
           onClear={handleLocationClear}
           onClose={() => setShowLocationModal(false)}
+        />
+      )}
+
+      {/* ── Detail modal ── */}
+      {showDetailModal && selected !== null && (
+        <div className="modal-overlay" role="presentation" onClick={() => setShowDetailModal(false)}>
+          <div
+            className="modal-card"
+            role="dialog"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 520, maxHeight: '85vh', overflowY: 'auto', borderRadius: 12, background: '#fff' }}
+          >
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '16px 20px 0',
+            }}>
+              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#0F172A', margin: 0 }}>
+                {selected.title}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowDetailModal(false)}
+                style={{
+                  background: 'transparent', border: 'none', fontSize: '1.3rem',
+                  color: '#94A3B8', cursor: 'pointer', padding: '0 4px',
+                  lineHeight: 1,
+                }}
+              >
+                x
+              </button>
+            </div>
+
+            <div style={{ padding: '14px 20px 20px' }}>
+              {/* Creator info */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', marginBottom: 12,
+                background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: '#EEF2FF', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: 16, fontWeight: 700,
+                  color: '#4F46E5', flexShrink: 0,
+                }}>
+                  {selected.user?.name?.charAt(0).toUpperCase() ?? 'C'}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+                    {selected.user?.name ?? ''} {selected.user?.surname ?? ''}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                      Contratista
+                    </span>
+                    <StarRating rating={selected.clientRating} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <p style={{ fontSize: 14, color: '#475569', margin: '0 0 14px', lineHeight: 1.55 }}>
+                {selected.description}
+              </p>
+
+              {/* Info grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                <div style={{ padding: '8px 10px', background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <Calendar size={13} color="#64748B" />
+                    <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Fechas</span>
+                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', margin: 0 }}>
+                    {new Date(selected.startDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} — {new Date(selected.endDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <div style={{ padding: '8px 10px', background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <MapPin size={13} color="#64748B" />
+                    <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Ubicación</span>
+                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', margin: 0 }}>{selected.address}</p>
+                </div>
+              </div>
+
+              {/* Categories / Vacancies */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Users size={16} color="#3B82F6" />
+                  <span style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: 600 }}>Vacantes</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {selected.categories.map((cat, i) => {
+                    const needed = cat.quantity - cat.filledCount
+                    return (
+                      <div key={i} style={{
+                        padding: '10px 12px', borderRadius: 8,
+                        background: '#F8FAFC', border: '1px solid #E2E8F0',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{cat.name}</span>
+                          <span style={{
+                            padding: '2px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 600,
+                            background: needed > 0 ? '#ECFDF5' : '#F1F5F9',
+                            color: needed > 0 ? '#059669' : '#94A3B8',
+                          }}>
+                            {needed > 0 ? `${needed} vacante${needed !== 1 ? 's' : ''}` : 'Completo'}
+                          </span>
+                        </div>
+                        {cat.roleDescription && (
+                          <p style={{ margin: '0 0 2px', fontSize: 12, color: '#64748B' }}>
+                            Rol: {cat.roleDescription}
+                          </p>
+                        )}
+                        <p style={{ margin: 0, fontSize: 11, color: '#94A3B8' }}>
+                          {cat.filledCount} de {cat.quantity} cubierto{cat.filledCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Postular button */}
+              <div style={{ paddingTop: 4 }}>
+                {yaPostulado(selected.id) ? (
+                  <p style={{
+                    background: '#E8F5E9', color: '#2D6A4F',
+                    padding: 12, borderRadius: 6, fontSize: 14, textAlign: 'center',
+                  }}>
+                    Ya te postulaste a esta subcontratación.
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-accent"
+                    onClick={() => { setShowDetailModal(false); setShowApplyModal(true) }}
+                    style={{ width: '100%' }}
+                  >
+                    Postularme
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Apply modal ── */}
+      {showApplyModal && selected !== null && (
+        <ApplyModal
+          selected={{ id: selected.id, titulo: selected.title }}
+          onEnviar={(data) => { void handlePostular(data) }}
+          onClose={() => setShowApplyModal(false)}
+          enviando={enviando}
         />
       )}
 
