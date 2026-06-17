@@ -123,6 +123,8 @@ export const createSubPost = async (data: {
   startDate: Date
   endDate: Date
   address: string
+  latitude?: number | null
+  longitude?: number | null
   positions: { categoryId: string; quantity: number; roleDescription: string }[]
 }): Promise<DomainPost> =>
   _createPostRecord({
@@ -134,6 +136,8 @@ export const createSubPost = async (data: {
     startDate: data.startDate,
     endDate: data.endDate,
     address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
     isEmergency: false,
     emergencyExpiresAt: null,
     categories: data.positions.map(p => ({
@@ -146,6 +150,7 @@ export const createSubPost = async (data: {
 
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
+  type: PostType.Post,
   ...(category?.trim()
     ? {
         categories: {
@@ -329,6 +334,7 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
+      AND p.type = 'Post'
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}

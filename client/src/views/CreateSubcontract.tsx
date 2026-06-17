@@ -8,6 +8,7 @@ import { fetchPostById } from '../services/posts'
 import type { Post } from '../types/post'
 import SuccessScreen from '../components/post/SuccessScreen'
 import SubmitButton from '../components/ui/SubmitButton'
+import AddressAutocomplete from '../components/ui/AddressAutocomplete'
 
 export default function CreateSubcontract() {
   const navigate = useNavigate()
@@ -154,14 +155,15 @@ export default function CreateSubcontract() {
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={s.formLabel}>Dirección</label>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={form.address}
-                  onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
-                  placeholder="Dirección del servicio"
-                  required
-                  style={s.formInput}
+                  onChange={(address, lat, lng) => setForm(p => ({ ...p, address, latitude: lat, longitude: lng }))}
                 />
+                {form.latitude && form.longitude && (
+                  <p style={{ margin: '6px 0 0', fontSize: '12px', color: theme.accent }}>
+                    ✓ Ubicación confirmada
+                  </p>
+                )}
               </div>
 
               <div style={{ marginBottom: '24px' }}>

@@ -31,6 +31,8 @@ export interface CreateSubcontractRequest {
   startDate?: string
   endDate?: string
   address?: string
+  latitude?: number | null
+  longitude?: number | null
   positions: {
     categoryId: string
     quantity: number

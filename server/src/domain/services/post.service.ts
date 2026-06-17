@@ -112,6 +112,8 @@ export const createSubContract = async (input: CreateSubcontractCommand): Promis
         startDate,
         endDate,
         address,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
         positions: [pos],
       })
     )
