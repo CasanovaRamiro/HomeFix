@@ -1,37 +1,131 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
+import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle } from 'lucide-react'
 import { fetchAvailableSubcontracts } from '../services/posts'
+import { getWorker } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
+import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY } from '../lib/post'
 import type { AvailableSubcontractDTO } from '../types/post'
+import type { LocationFilter } from '../components/worker/types'
 import SubcontractCard from '../components/worker/SubcontractCard'
+import LocationFilterModal from '../components/post/LocationFilterModal'
 import LandingFooter from '../components/landing/LandingFooter'
 
 const PAGE_SIZE = 8
 
 export default function AvailableSubcontracts() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [subcontratos, setSubcontratos] = useState<AvailableSubcontractDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'reciente' | 'antiguo'>('reciente')
   const [page, setPage] = useState(1)
+  const [workerCategories, setWorkerCategories] = useState<string[]>([])
+  const [categoriesReady, setCategoriesReady] = useState(false)
+  const [category, setCategory] = useState<string>(() => {
+    const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
+    return saved ?? DEFAULT_WORKER_CATEGORY
+  })
+
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(() => {
+    try {
+      const raw = localStorage.getItem('homefix_location_filter')
+      return raw ? JSON.parse(raw) as LocationFilter : null
+    } catch { return null }
+  })
+  const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
+  const [notificacion, setNotificacion] = useState<{ tipo: 'error' | 'exito'; mensaje: string } | null>(null)
+  const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    fetchAvailableSubcontracts()
-      .then((res) => {
-        setSubcontratos(res.data)
-      })
-      .catch((err) => {
-        const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
+    if (user?.id) {
+      getWorker(user.id)
+        .then((worker) => {
+          const cats = worker.categories.map((c) => c.name)
+          setWorkerCategories(cats)
+          const saved = localStorage.getItem(WORKER_CATEGORY_KEY)
+          if (saved && !cats.includes(saved) && saved !== '') {
+            setCategory('')
+            localStorage.setItem(WORKER_CATEGORY_KEY, '')
+          }
+          setCategoriesReady(true)
+        })
+        .catch(() => {
+          setWorkerCategories([])
+          setCategoriesReady(true)
+        })
+    }
+  }, [user?.id])
+
+  function formatLastUpdate(date: Date): string {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+    if (diff < 60) return 'hace unos segundos'
+    const min = Math.floor(diff / 60)
+    if (min === 1) return 'hace 1 minuto'
+    return `hace ${min} minutos`
+  }
+
+  const fetchSubcontratos = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoading(true)
+    setError('')
+    try {
+      const res = await fetchAvailableSubcontracts()
+      setSubcontratos(res.data)
+      setLastUpdated(new Date())
+    } catch (err) {
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
+      if (!isRefresh) {
         setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los subcontratos')
         setSubcontratos([])
-      })
-      .finally(() => setLoading(false))
+      }
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSubcontratos()
   }, [])
+
+  const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
+    if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
+    setNotificacion({ tipo, mensaje })
+    notifTimeoutRef.current = setTimeout(() => setNotificacion(null), 4000)
+  }
+
+  function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371
+    const dLat = ((lat2 - lat1) * Math.PI) / 180
+    const dLng = ((lng2 - lng1) * Math.PI) / 180
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  }
 
   const filtrados = useMemo(() => {
     let resultado = [...subcontratos]
+
+    const categoryFilter = category || workerCategories
+
+    resultado = resultado.filter((s) =>
+      s.categories.some((c) => categoryFilter.includes(c.name)),
+    )
+
+    if (locationFilter) {
+      resultado = resultado.filter((s) => {
+        if (s.latitude == null || s.longitude == null) return false
+        const dist = haversineKm(locationFilter.lat, locationFilter.lng, s.latitude, s.longitude)
+        return dist <= locationFilter.radius
+      })
+    }
 
     const q = searchQuery.trim().toLowerCase()
     if (q !== '') {
@@ -50,7 +144,9 @@ export default function AvailableSubcontracts() {
     })
 
     return resultado
-  }, [subcontratos, searchQuery, sortBy])
+  }, [subcontratos, searchQuery, sortBy, category, workerCategories, locationFilter])
+
+  useEffect(() => { setPage(1) }, [sortBy, category, locationFilter])
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
@@ -60,6 +156,39 @@ export default function AvailableSubcontracts() {
   const handleSortChange = (value: 'reciente' | 'antiguo') => {
     setSortBy(value)
     setPage(1)
+  }
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value)
+    localStorage.setItem(WORKER_CATEGORY_KEY, value)
+    setPage(1)
+  }
+
+  const handleOpenLocationModal = () => {
+    if (locationFilter) {
+      setShowLocationModal(true)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDefaultCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setShowLocationModal(true)
+      },
+      () => setShowLocationModal(true),
+      { timeout: 5000 }
+    )
+  }
+
+  const handleLocationApply = (lat: number, lng: number, radius: number) => {
+    const filter = { lat, lng, radius }
+    setLocationFilter(filter)
+    localStorage.setItem('homefix_location_filter', JSON.stringify(filter))
+    setShowLocationModal(false)
+  }
+
+  const handleLocationClear = () => {
+    setLocationFilter(null)
+    localStorage.removeItem('homefix_location_filter')
   }
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
@@ -92,106 +221,127 @@ export default function AvailableSubcontracts() {
             borderRadius: '50%', background: 'rgba(59,130,246,0.06)',
           }}
         />
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', position: 'relative' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button
               onClick={() => navigate('/worker')}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                background: 'rgba(255,255,255,0.08)', border: 'none', padding: '6px 12px',
-                borderRadius: 8, color: '#94A3B8', fontSize: 13, fontWeight: 500,
-                cursor: 'pointer', transition: 'background 0.15s',
+                background: 'none', border: 'none', padding: 0,
+                color: '#94A3B8', fontSize: 13, fontWeight: 500,
+                cursor: 'pointer',
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.14)' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)' }}
             >
               <ArrowLeft size={14} />
               Volver
             </button>
           </div>
 
-          <div className="sc-hero" style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-            <div
-              style={{
-                width: 48, height: 48, borderRadius: 14,
-                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
-              }}
-            >
-              <GitBranch size={24} color="#fff" />
-            </div>
-            <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <GitBranch size={28} color="#3B82F6" />
               <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
                 Subcontrataciones disponibles
               </h1>
-              <p style={{ fontSize: 14, color: '#94A3B8', margin: '2px 0 0' }}>
-                {loading ? (
-                  'Cargando…'
-                ) : (
-                  <>
-                    <strong style={{ color: '#fff' }}>{filtrados.length}</strong> subcontrataciones activas
-                    {!loading && totalVacantes > 0 && (
-                      <> &middot; <strong style={{ color: '#93C5FD' }}>{totalVacantes}</strong> vacantes totales</>
-                    )}
-                  </>
-                )}
-              </p>
+            </div>
+            <div className="refresh-controls" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {lastUpdated && !loading && (
+                <span style={{ fontSize: 12, color: '#64748B' }}>
+                  Actualizado {formatLastUpdate(lastUpdated)}
+                </span>
+              )}
+              <button
+                onClick={() => fetchSubcontratos(true)}
+                disabled={refreshing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#E2E8F0', fontSize: 12, fontWeight: 600,
+                  padding: '7px 14px', borderRadius: 8,
+                  cursor: refreshing ? 'not-allowed' : 'pointer',
+                  opacity: refreshing ? 0.6 : 1,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { if (!refreshing) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.14)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)' }}
+              >
+                <RefreshCw size={13} className={refreshing ? 'spin' : ''} />
+                Actualizar
+              </button>
             </div>
           </div>
+          <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 0 38px' }}>
+            {loading ? (
+              'Cargando…'
+            ) : (
+              <>
+                <strong style={{ color: '#fff' }}>{filtrados.length}</strong> subcontrataciones activas
+                {category.trim() !== '' && (
+                  <> &middot; <strong style={{ color: '#fff' }}>{category}</strong></>
+                )}
+                {!loading && totalVacantes > 0 && (
+                  <> &middot; <strong style={{ color: '#93C5FD' }}>{totalVacantes}</strong> vacantes totales</>
+                )}
+                {locationFilter && (
+                  <span> &middot; {locationFilter.radius} km a la redonda</span>
+                )}
+              </>
+            )}
+          </p>
         </div>
       </div>
 
       {/* ── Barra de filtros ── */}
-      <div
-        style={{
-          background: '#fff', borderBottom: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          position: 'sticky', top: 0, zIndex: 10,
-        }}
-      >
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '14px 32px' }}>
-          <div className="sc-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label htmlFor="sc-search" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                <Search size={12} style={{ display: 'inline', marginRight: 4 }} />
-                Buscar
-              </label>
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+        <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
+          <div className="trabajos-filters-row">
+            <div className="filter-group filter-category">
+              <label htmlFor="sc-category">Rubro</label>
+              <select
+                id="sc-category"
+                value={category}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+              >
+                <option value="">Todos los rubros</option>
+                {workerCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group filter-search">
+              <label htmlFor="sc-search">Buscar</label>
               <input
                 id="sc-search"
                 type="search"
-                placeholder="Subcontrato, categoría..."
+                placeholder="Palabra clave..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                style={{
-                  padding: '9px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0',
-                  fontSize: 14, outline: 'none', width: '100%',
-                  transition: 'border-color 0.15s', boxSizing: 'border-box',
-                }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#3B82F6' }}
-                onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' }}
               />
             </div>
-            <div>
-              <label htmlFor="sc-sort" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                <SlidersHorizontal size={12} style={{ display: 'inline', marginRight: 4 }} />
-                Orden
-              </label>
+
+            <div className="filter-group filter-sort">
+              <label htmlFor="sc-sort">Orden</label>
               <select
                 id="sc-sort"
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value as 'reciente' | 'antiguo')}
-                style={{
-                  padding: '9px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0',
-                  fontSize: 14, outline: 'none', background: '#fff',
-                  transition: 'border-color 0.15s', cursor: 'pointer',
-                }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#3B82F6' }}
-                onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' }}
               >
-                <option value="reciente">Más recientes</option>
-                <option value="antiguo">Más antiguos</option>
+                <option value="reciente">Mas recientes</option>
+                <option value="antiguo">Mas antiguos</option>
               </select>
+            </div>
+
+            <div className="filter-group filter-location">
+              <label>&nbsp;</label>
+              <button
+                type="button"
+                className={`btn-filter-location ${locationFilter ? 'active' : ''}`}
+                onClick={handleOpenLocationModal}
+              >
+                {locationFilter ? `${locationFilter.radius} km` : 'Filtrar por ubicación'}
+              </button>
             </div>
           </div>
         </div>
@@ -203,6 +353,23 @@ export default function AvailableSubcontracts() {
             <span style={{ color: '#DC2626', fontSize: 14 }}>⚠</span>
             <span style={{ color: '#991B1B', fontSize: 13 }}>{error}</span>
           </div>
+        </div>
+      )}
+
+      {notificacion && (
+        <div style={{
+          position: 'fixed', top: 24, right: 24, zIndex: 9999,
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: notificacion.tipo === 'error' ? '#FEF2F2' : '#ECFDF5',
+          border: `1px solid ${notificacion.tipo === 'error' ? '#FECACA' : '#A7F3D0'}`,
+          borderRadius: 12, padding: '14px 20px',
+          maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          animation: 'slideIn 0.3s ease',
+        }}>
+          <XCircle size={20} color={notificacion.tipo === 'error' ? '#DC2626' : '#059669'} />
+          <span style={{ fontSize: 14, fontWeight: 500, color: notificacion.tipo === 'error' ? '#991B1B' : '#065F46' }}>
+            {notificacion.mensaje}
+          </span>
         </div>
       )}
 
@@ -319,23 +486,37 @@ export default function AvailableSubcontracts() {
         )}
       </div>
 
+      {showLocationModal && (
+        <LocationFilterModal
+          initialLat={locationFilter?.lat ?? defaultCoords.lat}
+          initialLng={locationFilter?.lng ?? defaultCoords.lng}
+          initialRadius={locationFilter?.radius ?? 30}
+          onApply={handleLocationApply}
+          onClear={handleLocationClear}
+          onClose={() => setShowLocationModal(false)}
+        />
+      )}
+
       <div style={{ marginTop: 48 }}>
         <LandingFooter />
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        .spin { animation: spin 0.8s linear infinite; }
         .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
         .sc-card-wrapper { will-change: transform, opacity; }
         @media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr; } }
         @media (max-width: 640px) {
-          .sc-filters-row { flex-direction: column; }
-          .sc-filters-row > div:first-child { min-width: 0; width: 100%; }
-          .sc-hero { flex-direction: column; align-items: flex-start; gap: 10px; }
+          .filter-bar-container { padding-left: 0 !important; padding-right: 16px !important; }
+          .filter-bar-container .trabajos-filters-row { align-items: stretch; }
+          .sc-grid { padding-left: 16px !important; padding-right: 16px !important; }
+          .refresh-controls { display: none !important; }
         }
       `}</style>
     </div>

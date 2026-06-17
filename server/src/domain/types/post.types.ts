@@ -77,6 +77,8 @@ export interface CreateSubcontractCommand {
   startDate?: Date
   endDate?: Date
   address?: string
+  latitude?: number | null
+  longitude?: number | null
   positions: {
     categoryId: string
     quantity: number

@@ -8,6 +8,8 @@ export interface SubcontractPrefill {
   startDate: string
   endDate: string
   address: string
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export interface SubcontractForm {
@@ -17,6 +19,8 @@ export interface SubcontractForm {
   startDate: string
   endDate: string
   address: string
+  latitude: number | null
+  longitude: number | null
   positions: SubcontractPosition[]
 }
 
@@ -30,6 +34,8 @@ export function useCreateSubcontract(parentPostId?: string) {
     startDate: '',
     endDate: '',
     address: '',
+    latitude: null,
+    longitude: null,
     positions: [emptyPosition()],
   })
   const [formError, setFormError] = useState('')
@@ -44,6 +50,8 @@ export function useCreateSubcontract(parentPostId?: string) {
       startDate: data.startDate.substring(0, 10),
       endDate: data.endDate.substring(0, 10),
       address: data.address,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
     }))
   }, [])
 
@@ -109,6 +117,10 @@ export function useCreateSubcontract(parentPostId?: string) {
       setFormError('Ingresá la dirección del servicio')
       return
     }
+    if (!form.latitude || !form.longitude) {
+      setFormError('Seleccioná una dirección de la lista de sugerencias')
+      return
+    }
 
     setFormSubmitting(true)
     try {
@@ -118,6 +130,8 @@ export function useCreateSubcontract(parentPostId?: string) {
         startDate: form.startDate,
         endDate: form.endDate,
         address: form.address.trim(),
+        latitude: form.latitude,
+        longitude: form.longitude,
         positions: form.positions,
         parentPostId: form.parentPostId || undefined,
       }
