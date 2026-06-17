@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Shield,
@@ -230,10 +230,10 @@ export default function KycVerify() {
     await handleStart()
   }
 
-  const handleModalComplete = async (sessionId: string, status: string) => {
+  const email = user?.email
+  const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
-    const email = user?.email
     if (!email) {
       setErrorMessage('No se pudo identificar tu usuario')
       setState('error')
@@ -247,7 +247,7 @@ export default function KycVerify() {
       setErrorMessage(err.response?.data?.error ?? 'Error al confirmar la verificación')
       setState('error')
     }
-  }
+  }, [email])
 
   const handleModalCancelled = () => {
     setIsModalOpen(false)

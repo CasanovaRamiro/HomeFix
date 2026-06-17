@@ -23,6 +23,7 @@ export default function DiditVerificationModal({
 }: DiditVerificationModalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sdkStateRef = useRef<DiditSdkState>('idle')
+  const lastEventRef = useRef<{ sessionId?: string; status?: string }>({})
 
   const handleClose = useCallback(() => {
     DiditSdk.shared.close()
@@ -32,11 +33,15 @@ export default function DiditVerificationModal({
   useEffect(() => {
     if (!isOpen || !containerRef.current) return
 
+    lastEventRef.current = {}
+
     DiditSdk.shared.onComplete = (result) => {
       switch (result.type) {
         case 'completed':
           if (result.session) {
             onComplete(result.session.sessionId, result.session.status)
+          } else if (lastEventRef.current.sessionId) {
+            onComplete(lastEventRef.current.sessionId, lastEventRef.current.status ?? 'Approved')
           }
           break
         case 'cancelled':
@@ -52,6 +57,11 @@ export default function DiditVerificationModal({
 
     DiditSdk.shared.onStateChange = (state) => {
       sdkStateRef.current = state
+    }
+
+    DiditSdk.shared.onEvent = (event) => {
+      if (event.data?.sessionId) lastEventRef.current.sessionId = event.data.sessionId
+      if (event.data?.status) lastEventRef.current.status = event.data.status
     }
 
     DiditSdk.shared.startVerification({
@@ -70,6 +80,7 @@ export default function DiditVerificationModal({
       DiditSdk.shared.close()
       DiditSdk.shared.onComplete = undefined
       DiditSdk.shared.onStateChange = undefined
+      DiditSdk.shared.onEvent = undefined
     }
   }, [isOpen, sessionUrl, onComplete, onCancelled, onFailed])
 
