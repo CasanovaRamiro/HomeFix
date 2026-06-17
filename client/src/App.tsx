@@ -15,6 +15,7 @@ import WorkerApplications from './views/WorkerApplications'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
+import ClientHistory from './views/ClientHistory'
 
 import WorkerLanding from './views/WorkerLanding'
 
@@ -90,6 +91,7 @@ export default function App(): ReactNode {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/kyc" element={<PrivateRoute><KycVerify /></PrivateRoute>} />
         <Route path="/dashboard" element={<ClientRoute><ClientDashboard /></ClientRoute>} />
+        <Route path="/client/history" element={<ClientRoute><ClientHistory /></ClientRoute>} />
         <Route path="/users" element={<Users />} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
         <Route path="/manual-post" element={<ClientRoute><CreatePost /></ClientRoute>} />
