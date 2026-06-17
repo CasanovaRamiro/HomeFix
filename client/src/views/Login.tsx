@@ -60,7 +60,7 @@ export default function Login() {
         user: { id: string; name: string; email: string; photo: string | null; role: UserRole }
       }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
-      localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, role: data.user.role, photo: data.user.photo ?? null }))
+      localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, email:data.user.email, role: data.user.role, photo: data.user.photo ?? null }))
       emitAuthChange()
       const destination = data.user.role === UserRole.Worker ? '/worker' : '/dashboard'
       setSuccess('Sesion iniciada con exito. Redirigiendo...')

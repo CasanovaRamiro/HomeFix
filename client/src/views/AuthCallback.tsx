@@ -74,7 +74,7 @@ export default function AuthCallback() {
         }>('/auth/me', { headers })
 
         localStorage.setItem('token', tokens.access_token)
-        localStorage.setItem('user', JSON.stringify({ id: user.id, name: user.name, role: user.role, photo: user.photo ?? null }))
+        localStorage.setItem('user', JSON.stringify({ id: user.id, name: user.name, email: user.email,role: user.role, photo: user.photo ?? null }))
         emitAuthChange()
 
         navigate(user.role === UserRole.Worker ? '/worker' : '/dashboard', { replace: true })
