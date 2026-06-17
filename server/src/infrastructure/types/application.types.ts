@@ -8,6 +8,7 @@ export interface PrismaApplicationWithPost {
     title: string
     address: string
     startDate: Date
+    endDate: Date
     user: { id: string; name: string; surname: string }
     categories: { category: { name: string } }[]
   }

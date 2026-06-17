@@ -7,6 +7,7 @@ export interface DomainMyApplication {
   location: string
   appliedAt: Date
   serviceDate: Date
+  endDate: Date
   status: string
   category: string | null
   hasReview: boolean

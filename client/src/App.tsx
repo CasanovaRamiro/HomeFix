@@ -12,6 +12,7 @@ import PostDetail from './views/PostDetail'
 import TrabajadorFeed from './views/TrabajadorFeed'
 import WorkerDashboard from './views/WorkerDashboard'
 import WorkerApplications from './views/WorkerApplications'
+import WorkerCalendar from './views/WorkerCalendar'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/worker" element={<WorkerDashboard />} />
         <Route path="/worker/feed" element={<TrabajadorFeed />} />
         <Route path="/worker/my-applications" element={<WorkerApplications />} />
+        <Route path="/worker/calendar" element={<PrivateRoute><WorkerCalendar /></PrivateRoute>} />
         <Route
           path="/worker/available-jobs"
           element={

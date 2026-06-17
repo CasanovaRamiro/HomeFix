@@ -28,16 +28,17 @@ interface Application {
   clientRating: number
 }
 
-const TABS = ['Todas', 'Pendientes', 'Aceptadas', 'Rechazadas', 'Completadas'] as const
+const TABS = ['Todas', 'Rechazadas', 'Completadas'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_TO_STATUS: Record<Tab, string> = {
   Todas:       '',
-  Pendientes:  ApplicationStatus.Pending,
-  Aceptadas:   ApplicationStatus.Accepted,
   Rechazadas:  ApplicationStatus.Rejected,
   Completadas: ApplicationStatus.Completed,
 }
+
+// Solo mostrar postulaciones finalizadas (historial)
+const HISTORY_STATUSES = new Set([ApplicationStatus.Rejected, ApplicationStatus.Completed])
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -541,7 +542,7 @@ export default function WorkerApplications() {
     const fetchApplications = async () => {
       try {
         const res = await api.get<Application[]>('/applications/my-applications')
-        const data = res.data
+        const data = res.data.filter((a) => HISTORY_STATUSES.has(a.status as ApplicationStatus))
         if (cancelled) return
         setApplications((prev) => {
           const prevMap = new Map(prev.map((a) => [a.id, a.status]))
@@ -574,11 +575,9 @@ export default function WorkerApplications() {
   }, [])
 
   const metrics = useMemo(() => ({
-    total:      applications.length,
-    pending:    applications.filter((a) => a.status === ApplicationStatus.Pending).length,
-    accepted:   applications.filter((a) => a.status === ApplicationStatus.Accepted).length,
-    rejected:   applications.filter((a) => a.status === ApplicationStatus.Rejected).length,
-    completed:  applications.filter((a) => a.status === ApplicationStatus.Completed).length,
+    total:     applications.length,
+    rejected:  applications.filter((a) => a.status === ApplicationStatus.Rejected).length,
+    completed: applications.filter((a) => a.status === ApplicationStatus.Completed).length,
   }), [applications])
 
   const filtered = useMemo(() => {
@@ -629,13 +628,13 @@ export default function WorkerApplications() {
 
           {/* Title row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <Send size={26} color="#10B981" />
+            <FileText size={26} color="#10B981" />
             <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
-              Mis Postulaciones
+              Historial de Trabajos
             </h1>
           </div>
           <p style={{ fontSize: 14, color: '#94A3B8', margin: '0 0 0 36px' }}>
-            Seguí el estado de tus ofertas enviadas
+            Tus trabajos finalizados y rechazados
           </p>
         </div>
       </div>
@@ -643,11 +642,9 @@ export default function WorkerApplications() {
       {/* Metrics strip — fuera del header, solapado */}
       <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div className="wa-metrics-grid">
-          <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A"  />
-          <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#D97706"  />
-          <MetricCard value={metrics.accepted}  label="Aceptadas"   valueColor="#059669"  />
-          <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#DC2626"  />
-          <MetricCard value={metrics.completed} label="Completadas" valueColor="#2563EB"  />
+          <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A" />
+          <MetricCard value={metrics.completed} label="Completadas" valueColor="#2563EB" />
+          <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#DC2626" />
         </div>
       </div>
 
@@ -686,12 +683,12 @@ export default function WorkerApplications() {
           }}>
             <FileText size={48} color="#CBD5E1" style={{ margin: '0 auto 16px', display: 'block' }} />
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0F172A', margin: '0 0 8px' }}>
-              Sin postulaciones
+              Sin historial
             </h2>
             <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>
               {filter === 'Todas'
-                ? 'Todavía no te postulaste a ningún trabajo.'
-                : `No tenés postulaciones en "${filter}".`}
+                ? 'Todavía no tenés trabajos finalizados.'
+                : `No tenés trabajos en "${filter}".`}
             </p>
           </div>
         ) : (
@@ -770,7 +767,7 @@ export default function WorkerApplications() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .wa-metrics-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+        .wa-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .wa-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         @media (max-width: 900px) {
           .wa-metrics-grid { grid-template-columns: repeat(3, 1fr); }
