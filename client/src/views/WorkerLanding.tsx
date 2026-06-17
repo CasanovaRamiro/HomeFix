@@ -218,7 +218,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* FOOTER */}
-      <footer className="lp-footer">
+      <footer id="redes-sociales" className="lp-footer">
         <div className="lp-container">
           <div className="lp-footer-grid">
             <div className="lp-footer-brand">

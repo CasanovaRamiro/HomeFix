@@ -70,14 +70,17 @@ export default function Navbar(): React.ReactElement | null {
     <nav style={{ background: theme.card, borderBottom: `1px solid ${theme.border}` }}
       className="sticky top-0 z-50 backdrop-blur-md">
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
-
-          {/* Logo, marginLeft -10px is intended to center the logo */}
-          <Link to={homeRoute} className="flex items-center flex-shrink-0" style={{ textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
+          {/* Logo - spans both rows on worker landing */}
+          <Link to={homeRoute} className="flex items-center flex-shrink-0" style={{ textDecoration: 'none', paddingRight: '8px' }}>
             <img src={logo} alt="HomeFix" style={{ height: '40px', width: 'auto', marginLeft: '-10px' }} />
           </Link>
 
-          {/* Desktop nav links */}
+          {/* Center column: main row + optional second row */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: isWorkerLanding ? '48px' : '72px', paddingTop: '10px', paddingBottom: '10px' }}>
+
+              {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
             {isLanding && (
               <Link
@@ -115,15 +118,14 @@ export default function Navbar(): React.ReactElement | null {
                 >
                   ¿Cómo me valido?
                 </button>
-                <Link
-                  to="/"
-                  onClick={() => window.scrollTo(0, 0)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, border: `1px solid ${theme.border}`, transition: 'background 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                <button
+                  onClick={() => document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
-                  Soy Cliente!
-                </Link>
+                  Nuestras redes sociales
+                </button>
               </>
             )}
             {navLinks.map((link) => {
@@ -227,10 +229,28 @@ export default function Navbar(): React.ReactElement | null {
             )}
           </div>
 
+            </div>
+
+            {/* Worker landing second row */}
+            {isWorkerLanding && (
+              <div className="hidden md:flex" style={{ borderTop: `1px solid ${theme.border}`, padding: '8px 0', justifyContent: 'center' }}>
+                <Link
+                  to="/"
+                  onClick={() => window.scrollTo(0, 0)}
+                  style={{ padding: '7px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, border: `1px solid ${theme.border}`, transition: 'background 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¡Llévame a HomeFix Clientes!
+                </Link>
+              </div>
+            )}
+          </div>
+
           {/* Mobile menu button */}
           <button
             onClick={() => { setMobileOpen(!mobileOpen) }}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted, alignSelf: 'center' }}
             className="md:hidden"
           >
             {mobileOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
@@ -265,6 +285,10 @@ export default function Navbar(): React.ReactElement | null {
                   <button onClick={() => { document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
                     style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
                     ¿Cómo me valido?
+                  </button>
+                  <button onClick={() => { document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    Nuestras redes sociales
                   </button>
                 </>
               )}
