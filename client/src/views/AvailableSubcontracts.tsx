@@ -83,6 +83,8 @@ export default function AvailableSubcontracts() {
       if (!isRefresh) {
         setError(axiosErr.response?.data?.error ?? 'No se pudieron cargar los subcontratos')
         setSubcontratos([])
+      } else {
+        mostrarNotificacion('error', axiosErr.response?.data?.error ?? 'Error al actualizar')
       }
     } finally {
       setLoading(false)
@@ -90,15 +92,16 @@ export default function AvailableSubcontracts() {
     }
   }
 
-  useEffect(() => {
-    fetchSubcontratos()
-  }, [])
-
-  const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
+  function mostrarNotificacion(tipo: 'error' | 'exito', mensaje: string) {
     if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
     setNotificacion({ tipo, mensaje })
     notifTimeoutRef.current = setTimeout(() => setNotificacion(null), 4000)
   }
+
+  useEffect(() => {
+    if (!categoriesReady) return
+    fetchSubcontratos()
+  }, [categoriesReady])
 
   function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371

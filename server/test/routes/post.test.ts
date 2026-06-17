@@ -74,6 +74,7 @@ describe('GET /posts/available', () => {
         endDate: new Date('2026-06-15'),
         address: 'Calle 123',
         status: 'Active',
+        type: PostType.Post,
         categories: { create: { categoryId } },
       },
     })
@@ -107,6 +108,7 @@ describe('GET /posts/available', () => {
         endDate: new Date('2026-06-15'),
         address: 'Calle 1',
         status: 'Active',
+        type: PostType.Post,
         categories: { create: { categoryId } },
       },
     })
@@ -310,6 +312,7 @@ describe('GET /posts/search-location', () => {
         endDate: new Date('2026-06-15'),
         address: 'Calle 123',
         status: 'Active',
+        type: PostType.Post,
         latitude: -34.6,
         longitude: -58.4,
         categories: { create: { categoryId } },

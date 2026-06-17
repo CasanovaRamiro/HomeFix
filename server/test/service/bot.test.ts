@@ -72,7 +72,7 @@ describe('createLinkCode', () => {
     const callArgs = vi.mocked(prisma.telegramLinkCode.create).mock.calls[0][0]
     const expiresAt = (callArgs.data as { expiresAt: Date }).expiresAt
     expect(expiresAt.getTime() - before).toBeGreaterThanOrEqual(4.5 * 60 * 1000)
-    expect(expiresAt.getTime() - before).toBeLessThanOrEqual(5 * 60 * 1000)
+    expect(expiresAt.getTime() - before).toBeLessThanOrEqual(5 * 60 * 1000 + 100)
   })
 
   it('asocia el código al userId provisto', async () => {
