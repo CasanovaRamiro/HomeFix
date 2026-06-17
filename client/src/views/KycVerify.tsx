@@ -174,10 +174,7 @@ export default function KycVerify() {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!user?.email) {
-      queueMicrotask(() => setCheckingStatus(false))
-      return
-    }
+    if (!user?.email) return
 
     let cancelled = false
     fetchKycStatus()
@@ -191,7 +188,7 @@ export default function KycVerify() {
         if (!cancelled) setCheckingStatus(false)
       })
     return () => { cancelled = true }
-  }, [])
+  }, [user?.email])
 
   useEffect(() => {
     if (!currentStatus || currentStatus === 'NOT_STARTED') return
@@ -230,10 +227,10 @@ export default function KycVerify() {
     await handleStart()
   }
 
-  const email = user?.email
   const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
+    const email = user?.email
     if (!email) {
       setErrorMessage('No se pudo identificar tu usuario')
       setState('error')
@@ -247,7 +244,7 @@ export default function KycVerify() {
       setErrorMessage(err.response?.data?.error ?? 'Error al confirmar la verificación')
       setState('error')
     }
-  }, [email])
+  }, [user?.email])
 
   const handleModalCancelled = () => {
     setIsModalOpen(false)
