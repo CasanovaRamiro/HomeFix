@@ -94,7 +94,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section ref={howItWorksRef} className="lp-section lp-navy-band">
+      <section id="como-funciona" ref={howItWorksRef} className="lp-section lp-navy-band">
         <div className="lp-container">
           <div className="lp-head">
             <p className="lp-eyebrow">Cómo Funciona</p>
@@ -119,7 +119,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* VERIFY = MORE WORK (split media) */}
-      <section className="lp-section">
+      <section id="como-validarme" className="lp-section">
         <div className="lp-container lp-split">
           <div>
             <p className="lp-eyebrow">Perfil verificado</p>
@@ -145,7 +145,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* FEATURES */}
-      <section className="lp-feat-band">
+      <section id="que-ofrecemos" className="lp-feat-band">
         <div className="lp-container lp-feat-grid">
           <div className="lp-feat-logo">
             <div className="lp-feat-glow" />

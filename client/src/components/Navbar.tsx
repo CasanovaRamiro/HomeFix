@@ -90,14 +90,41 @@ export default function Navbar(): React.ReactElement | null {
               </Link>
             )}
             {isWorkerLanding && (
-              <Link
-                to="/"
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                Soy Cliente
-              </Link>
+              <>
+                <button
+                  onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Cómo funciona HomeFix Profesional?
+                </button>
+                <button
+                  onClick={() => document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Qué te ofrecemos?
+                </button>
+                <button
+                  onClick={() => document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Cómo me valido?
+                </button>
+                <Link
+                  to="/"
+                  onClick={() => window.scrollTo(0, 0)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, border: `1px solid ${theme.border}`, transition: 'background 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Soy Cliente
+                </Link>
+              </>
             )}
             {navLinks.map((link) => {
               const active  = pathname === link.href
