@@ -1,5 +1,5 @@
-import { useEffect, useReducer } from 'react'
-import { fetchSubcontractById } from '../services/posts'
+import { useCallback, useEffect, useReducer, useState } from 'react'
+import { fetchSubcontractById, fetchSubcontractGroupDetail } from '../services/posts'
 import type { SubcontractDetailDTO } from '../types/post'
 
 type State = {
@@ -30,14 +30,17 @@ function reducer(_state: State, action: Action): State {
   }
 }
 
-export function useSubcontractDetail(
+function useSubcontractDetailBase(
   id: string | undefined,
+  fetcher: (id: string) => Promise<{ data: SubcontractDetailDTO }>,
 ): {
   subcontract: SubcontractDetailDTO | null
   loading: boolean
   error: string
+  refetch: () => void
 } {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (!id) {
@@ -47,7 +50,7 @@ export function useSubcontractDetail(
 
     let ignore = false
 
-    fetchSubcontractById(id)
+    fetcher(id)
       .then((res) => {
         if (!ignore) {
           dispatch({ type: 'SUCCESS', subcontract: res.data, id })
@@ -64,9 +67,32 @@ export function useSubcontractDetail(
       })
 
     return (): void => { ignore = true }
-  }, [id])
+  }, [id, fetcher, refreshKey])
 
   const loading = id !== state.syncId || (!state.subcontract && !state.error)
+  const refetch = useCallback(() => setRefreshKey((k) => k + 1), [])
 
-  return { subcontract: state.subcontract, loading, error: state.error }
+  return { subcontract: state.subcontract, loading, error: state.error, refetch }
+}
+
+export function useSubcontractDetail(
+  id: string | undefined,
+): {
+  subcontract: SubcontractDetailDTO | null
+  loading: boolean
+  error: string
+  refetch: () => void
+} {
+  return useSubcontractDetailBase(id, fetchSubcontractById)
+}
+
+export function useSubcontractGroupDetail(
+  id: string | undefined,
+): {
+  subcontract: SubcontractDetailDTO | null
+  loading: boolean
+  error: string
+  refetch: () => void
+} {
+  return useSubcontractDetailBase(id, fetchSubcontractGroupDetail)
 }

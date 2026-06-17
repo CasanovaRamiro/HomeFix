@@ -57,6 +57,7 @@ model Post {
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            String           @default("client")
   parentPostId    String?
+  subcontractGroupId String?
   parentPost      Post?            @relation("SubPosts", fields: [parentPostId], references: [id])
   subPosts        Post[]           @relation("SubPosts")
   startDate       DateTime

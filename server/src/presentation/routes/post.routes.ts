@@ -22,6 +22,7 @@ import { UserRole } from '../../domain/types/userRole.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
 import { validateCreateSubcontractBody } from '../middleware/subcontract.middleware.js'
 import type { CreateSubcontractRequest } from '../types/post.types.js'
+import { getMySubcontractManager, getSubcontractGroupDetail } from '../../domain/services/post.service.js'
 
 const router = Router()
 
@@ -128,6 +129,48 @@ router.get('/availableSubcontracts', async (req, res, next) => {
 
     const result = await findAvailableSubcontracts()
     res.json(result.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/subcontracts/my-subcontracts', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as Auth0Claims | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await getMySubcontractManager(user.id)
+    res.json({
+      stats: result.stats,
+      subcontracts: result.subcontracts.map(toPostDTO),
+    })
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/subcontracts/group/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as Auth0Claims | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await getSubcontractGroupDetail(req.params.id)
+    if (!result) return res.status(404).json({ error: 'Subcontract group not found' })
+    res.json(toPostDTO(result))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400

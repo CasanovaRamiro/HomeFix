@@ -7,7 +7,7 @@ import {
   deleteApplication,
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
-import { findPostById, updatePostStatus } from '../../infrastructure/database/post.database.js'
+import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount } from '../../infrastructure/database/post.database.js'
 import { findUserById } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
@@ -98,6 +98,10 @@ export const acceptApplication = async (clientId: string, applicationId: string)
   const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
   await updatePostStatus(application.postId, PostStatus.InProgress)
 
+  if (application.post.type === PostType.SubContract) {
+    await incrementPostFilledCount(application.postId)
+  }
+
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
     postTitle: application.post.title,
   })
@@ -130,6 +134,10 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
   const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
   // Reopen the post so the client can hire a different worker; other pending applicants are kept.
   await updatePostStatus(application.postId, PostStatus.Active)
+
+  if (application.post.type === PostType.SubContract) {
+    await decrementPostFilledCount(application.postId)
+  }
 
   notifyUser(getProvider(), application.workerId, 'worker_dismissed', {
     postTitle: application.post.title,

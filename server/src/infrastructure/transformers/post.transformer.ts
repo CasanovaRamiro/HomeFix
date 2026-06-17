@@ -6,6 +6,7 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   userId: post.userId,
   type: post.type,
   parentPostId: post.parentPostId,
+  subcontractGroupId: post.subcontractGroupId,
   title: post.title,
   description: post.description,
   startDate: post.startDate,

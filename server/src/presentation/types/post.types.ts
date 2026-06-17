@@ -67,4 +67,5 @@ export interface PostDTO {
   workerRating?: number
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }

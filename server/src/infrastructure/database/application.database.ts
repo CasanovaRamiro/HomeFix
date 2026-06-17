@@ -29,7 +29,7 @@ export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true } },
+      post: { select: { userId: true, title: true, status: true, type: true } },
     },
   })
 

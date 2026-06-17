@@ -49,7 +49,7 @@ const mockApplication = {
   availableTimeTo: null,
   chargesVisit: false,
   visitCost: null,
-  post: { userId: "client-1", title: "Test post", status: "Active" },
+  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post" },
 }
 
 describe("acceptApplication", () => {
@@ -86,7 +86,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is not Active", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "In progress" },
+      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post" },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -95,7 +95,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is Paused", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Paused" },
+      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post" },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -333,7 +333,7 @@ describe("dismissWorker", () => {
   const acceptedApplication = {
     ...mockApplication,
     status: "Accepted",
-    post: { userId: "client-1", title: "Test post", status: "In progress" },
+    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post" },
   }
 
   it("dismisses the worker and reopens the post when valid", async () => {
@@ -373,7 +373,7 @@ describe("dismissWorker", () => {
   it("throws 400 if post is not In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedApplication,
-      post: { userId: "client-1", title: "Test post", status: "Completed" },
+      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post" },
     })
 
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })

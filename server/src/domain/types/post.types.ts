@@ -5,6 +5,7 @@ export interface DomainPost {
   userId: string
   type?: PostType
   parentPostId?: string
+  subcontractGroupId?: string
   title: string
   description: string
   startDate: Date
@@ -27,6 +28,7 @@ export interface DomainPost {
   workerRating?: number
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }
 
 export interface DomainUserPost {

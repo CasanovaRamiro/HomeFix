@@ -10,6 +10,8 @@ import {
   findEmergencyPosts as findEmergencyPostsData,
   searchByDistance,
   deletePostImages,
+  findMySubcontracts,
+  findPostsByGroupId,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
@@ -23,6 +25,7 @@ import { getWorkerRating, getClientRating, getUserRating } from './user.service.
 import { EMERGENCY_DURATION_MS } from '../constants.js'
 import { PostType } from '../types/postType.js'
 import type { CreatePostInput, CreateSubcontractCommand, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
+import crypto from 'node:crypto'
 
 const verifySubcontractParent = async (parentPostId: string, userId: string): Promise<DomainPost> => {
   const parent = await findPostById(parentPostId)
@@ -100,11 +103,14 @@ export const createSubContract = async (input: CreateSubcontractCommand): Promis
   const address   = input.address?.trim() || parentPost?.address || 'Por definir'
   const baseTitle = input.title?.trim() || (parentPost ? `Subcontratación: ${parentPost.title}` : 'Subcontratación')
 
+  const groupId = crypto.randomUUID()
+
   const results = await Promise.all(
     input.positions.map((pos) =>
       createSubPost({
         userId: input.userId,
         parentPostId: input.parentPostId,
+        subcontractGroupId: groupId,
         title: pos.roleDescription
           ? `${baseTitle} - ${pos.roleDescription}`
           : baseTitle,
@@ -207,6 +213,84 @@ export const getSubcontractById = async (id: string): Promise<DomainPost | null>
     workerRating,
     parentUser,
   }
+}
+
+export interface MySubcontractStats {
+  active: number
+  paused: number
+  completed: number
+  averageRating: number
+  reviewCount: number
+}
+
+export const getMySubcontractManager = async (userId: string): Promise<{
+  stats: MySubcontractStats
+  subcontracts: DomainPost[]
+}> => {
+  const [all, rating] = await Promise.all([
+    findMySubcontracts(userId),
+    getClientRating(userId),
+  ])
+
+  const grouped = new Map<string, DomainPost[]>()
+  for (const post of all) {
+    const key = post.subcontractGroupId ?? post.parentPostId ?? post.id
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(post)
+  }
+
+  const subcontracts: DomainPost[] = Array.from(grouped.values()).map((posts) => {
+    const first = { ...posts[0] }
+    first.categories = posts.flatMap((p) => p.categories)
+    const statusOrder = [PostStatus.Active, PostStatus.Paused, PostStatus.InProgress, PostStatus.Completed, PostStatus.Cancelled]
+    first.status = statusOrder.find((s) => posts.some((p) => p.status === s)) ?? PostStatus.Active
+    return first
+  })
+
+  const stats: MySubcontractStats = {
+    active: subcontracts.filter((s) => s.status === PostStatus.Active).length,
+    paused: subcontracts.filter((s) => s.status === PostStatus.Paused).length,
+    completed: subcontracts.filter((s) => s.status === PostStatus.Completed).length,
+    averageRating: rating.averageRating,
+    reviewCount: rating.reviewCount,
+  }
+
+  return { stats, subcontracts }
+}
+
+export const getSubcontractGroupDetail = async (firstPostId: string): Promise<DomainPost | null> => {
+  const post = await findPostById(firstPostId)
+  if (!post || post.type !== PostType.SubContract) return null
+
+  const groupId = post.subcontractGroupId ?? post.parentPostId
+  let allPosts: DomainPost[]
+
+  if (groupId) {
+    allPosts = await findPostsByGroupId(groupId)
+  } else {
+    allPosts = [post]
+  }
+
+  const merged = { ...allPosts[0] }
+  merged.categories = allPosts.flatMap((p) => p.categories)
+  merged.postIds = allPosts.map((p) => p.id)
+
+  const workerRatingResult = await getWorkerRating(merged.userId)
+  merged.workerRating = workerRatingResult.averageRating
+
+  if (merged.parentPostId) {
+    const parent = await findPostById(merged.parentPostId)
+    if (parent) {
+      const clientRatingResult = await getClientRating(parent.userId)
+      merged.clientRating = clientRatingResult.averageRating
+      merged.parentUser = { name: parent.user.name, surname: parent.user.surname }
+    }
+  } else {
+    const rating = await getUserRating(merged.userId)
+    merged.clientRating = rating.averageRating
+  }
+
+  return merged
 }
 
 export const getUserPosts = (userId: string): Promise<DomainUserPost[]> =>

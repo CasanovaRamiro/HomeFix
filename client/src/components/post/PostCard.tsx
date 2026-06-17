@@ -10,6 +10,7 @@ interface PostCardProps {
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
   onEdit?: (id: string) => void
+  children?: React.ReactNode
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' | 'info' | 'primary' }> = {
@@ -30,7 +31,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewReview, onPause, onCancel, onEdit, children }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
@@ -82,35 +83,36 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewRe
         <strong>Publicado:</strong> {new Date(post.createdAt).toLocaleDateString()}
       </div>
 
-      <div className="flex justify-between items-center" style={{ marginTop: '0.5rem' }}>
-        <div className="info-row" style={{ marginBottom: 0, minWidth: 0, flex: 1, marginRight: '1rem' }}>
-          <strong>Direccion:</strong>{' '}
-          <span
-            title={post.address}
-            style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
-          >
-            {post.address}
-          </span>
-        </div>
+      <div className="info-row" style={{ marginBottom: 0 }}>
+        <strong>Direccion:</strong>{' '}
+        <span
+          title={post.address}
+          style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
+        >
+          {post.address}
+        </span>
+      </div>
+
+      {children}
+
+      <div className="post-actions" style={{ marginTop: '0.75rem' }}>
         {post.status === 'Completed' && (
-          <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-            <button className="btn-primary" onClick={onViewReview}>Ver resena</button>
-          </div>
+          <button className="btn-primary" onClick={onViewReview}>Ver resena</button>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
-          <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+          <>
             <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
             <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar contratacion</button>
-          </div>
+          </>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (
-          <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+          <>
             <button className="btn-outline" onClick={() => onEdit?.(post.id)}>Editar</button>
             <button className={`btn-pause${post.status === 'Paused' ? ' activating' : ''}`} onClick={() => onPause?.(post.id)}>
               {post.status === 'Paused' ? 'Activar' : 'Pausar'}
             </button>
             <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar</button>
-          </div>
+          </>
         )}
       </div>
     </div>

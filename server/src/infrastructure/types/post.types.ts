@@ -5,6 +5,7 @@ export interface PrismaPostFull {
   userId: string
   type: PostType
   parentPostId?: string
+  subcontractGroupId?: string
   title: string
   description: string
   startDate: Date
