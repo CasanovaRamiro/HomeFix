@@ -122,7 +122,7 @@ export default function Navbar(): React.ReactElement | null {
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
-                  Soy Cliente
+                  Soy Cliente!
                 </Link>
               </>
             )}
@@ -252,6 +252,22 @@ export default function Navbar(): React.ReactElement | null {
                   {link.label}
                 </Link>
               ))}
+              {isWorkerLanding && (
+                <>
+                  <button onClick={() => { document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Cómo funciona HomeFix Profesional?
+                  </button>
+                  <button onClick={() => { document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Qué te ofrecemos?
+                  </button>
+                  <button onClick={() => { document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Cómo me valido?
+                  </button>
+                </>
+              )}
             </div>
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
@@ -267,6 +283,12 @@ export default function Navbar(): React.ReactElement | null {
                 </>
               ) : (
                 <>
+                  {isWorkerLanding && (
+                    <Link to="/" onClick={() => { setMobileOpen(false); window.scrollTo(0, 0) }}
+                      style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
+                      Soy Cliente
+                    </Link>
+                  )}
                   <Link to="/login" onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.primaryDark}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Iniciar Sesión
