@@ -594,10 +594,38 @@ export default function RegisterWorker() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
-                  className="w-full mt-3 h-12 rounded-lg border border-slate-200 bg-white text-slate-500 font-medium flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    try {
+                      setIsSubmitting(true)
+                      await api.post<RegisterResponse>('/auth/register/worker', {
+                        name: form.name,
+                        lastName: form.lastName,
+                        email: form.email,
+                        password: form.password,
+                        phone: form.phone || undefined,
+                        categories: selected,
+                      })
+                      navigate('/login', { state: { registered: true, email: form.email } })
+                    } catch (err) {
+                      const axiosErr = err as { response?: { data?: { error?: string } } }
+                      const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
+                      setErrors({ email: msg })
+                      setStep(1)
+                    } finally {
+                      setIsSubmitting(false)
+                    }
+                  }}
+                  className="w-full mt-3 h-12 rounded-lg border border-slate-200 bg-white text-slate-500 font-medium flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors disabled:opacity-70"
                 >
-                  Omitir KYC e iniciar sesión
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                      Registrando…
+                    </>
+                  ) : (
+                    'Omitir KYC e iniciar sesión'
+                  )}
                 </button>
 
                 {/* Security Footer */}
