@@ -11,6 +11,7 @@ export const formatPostDate = (value: string): string => {
 
 export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; lng?: number | null } => ({
   id: post.id,
+  userId: post.userId,
   titulo: post.title,
   descripcion: post.description,
   categoria: post.categories[0]?.name ?? 'Sin rubro',

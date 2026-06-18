@@ -377,6 +377,7 @@ export default function AvailableJobs(): JSX.Element {
                 trabajo={trabajo}
                 isSelected={selected?.id === trabajo.id}
                 isApplied={yaPostulado(trabajo.id)}
+                isOwnPost={trabajo.userId === user?.id}
                 onClick={() => { setSelected(trabajo); setShowDetailModal(true) }}
                 onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -451,6 +452,7 @@ export default function AvailableJobs(): JSX.Element {
             <TrabajoDetail
               selected={selected}
               yaPostulado={yaPostulado(selected.id)}
+              esPropio={selected.userId === user?.id}
               onClose={() => setShowDetailModal(false)}
               onPostular={() => { setShowDetailModal(false); setShowModal(true) }}
             />

@@ -680,7 +680,11 @@ export default function AvailableSubcontracts() {
 
               {/* Postular button */}
               <div style={{ paddingTop: 4 }}>
-                {yaPostulado(selected.id) ? (
+                {selected.userId === user?.id ? (
+                  <p style={{ color: '#64748B', fontSize: 14, textAlign: 'center', padding: 12 }}>
+                    Es tu publicación
+                  </p>
+                ) : yaPostulado(selected.id) ? (
                   <p style={{
                     background: '#E8F5E9', color: '#2D6A4F',
                     padding: 12, borderRadius: 6, fontSize: 14, textAlign: 'center',
