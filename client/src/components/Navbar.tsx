@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
-import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, GitBranch } from 'lucide-react'
+import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -16,6 +16,7 @@ interface NavLinkDef {
 const WORKER_LINKS: NavLinkDef[] = [
   { href: '/worker',                          label: 'Inicio',               icon: Home },
   { href: '/worker/available-jobs',           label: 'Trabajos Disponibles', icon: Briefcase },
+  { href: '/worker/calendar',                 label: 'Mi Agenda',            icon: CalendarDays },
   { href: '/worker/available-subcontracts',   label: 'Subcontratos',         icon: GitBranch },
   { href: '/worker/my-applications',          label: 'Mis Postulaciones',    icon: ClipboardList },
   { href: '/create-subcontract',              label: 'Subcontratar',         icon: Users },

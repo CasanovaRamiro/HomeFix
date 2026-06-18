@@ -12,6 +12,7 @@ import PublicWorkerProfile from './views/PublicWorkerProfile'
 import PostDetail from './views/PostDetail'
 import WorkerDashboard from './views/WorkerDashboard'
 import WorkerApplications from './views/WorkerApplications'
+import WorkerCalendar from './views/WorkerCalendar'
 import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
@@ -100,6 +101,7 @@ export default function App(): ReactNode {
         <Route path="/posts/:id" element={<ClientRoute><PostDetail /></ClientRoute>} />
         <Route path="/create-subcontract" element={<WorkerRoute><CreateSubcontract /></WorkerRoute>} />
         <Route path="/worker" element={<WorkerRoute><WorkerDashboard /></WorkerRoute>} />
+        <Route path="/worker/calendar" element={<WorkerRoute><WorkerCalendar /></WorkerRoute>} />
         <Route path="/worker/my-applications" element={<WorkerRoute><WorkerApplications /></WorkerRoute>} />
         <Route path="/worker/available-subcontracts" element={<WorkerRoute><AvailableSubcontracts /></WorkerRoute>} />
         <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
