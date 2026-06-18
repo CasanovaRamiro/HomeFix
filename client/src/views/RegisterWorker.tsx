@@ -4,7 +4,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
-  CreditCard, MailCheck, Fingerprint,
+  CreditCard, MailCheck,
 } from 'lucide-react'
 import api from '../services/api'
 import { useTheme } from '../hooks/useTheme'
