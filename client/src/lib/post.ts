@@ -25,6 +25,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   clientRating: post.clientRating ?? 0,
   address: post.address,
   isEmergency: post.isEmergency,
+  emergencyExpiresAt: post.emergencyExpiresAt,
   lat: post.latitude,
   lng: post.longitude,
 })
