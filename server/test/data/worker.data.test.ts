@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, prisma, createUser } from '../helpers/db.js'
-import { findWorkerById, findAllWorkers } from '../../src/infrastructure/database/worker.database.js'
+import { findWorkerById, findAllWorkers, updateWorker } from '../../src/infrastructure/database/worker.database.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
 
 beforeEach(() => cleanDb())
@@ -122,5 +122,75 @@ describe('findAllWorkers', () => {
 
     expect(workers[0].categories).toHaveLength(1)
     expect(workers[0].categories[0].name).toBe('Electrical')
+  })
+})
+
+describe('updateWorker', () => {
+  it('updates basic text fields', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+
+    const updated = await updateWorker(worker.id, { bio: 'Experienced plumber' })
+
+    expect(updated.bio).toBe('Experienced plumber')
+  })
+
+  it('assigns new categories replacing existing ones', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const cat1 = await prisma.category.create({ data: { name: 'Plumbing' } })
+    const cat2 = await prisma.category.create({ data: { name: 'Electrical' } })
+    await prisma.userCategory.create({ data: { userId: worker.id, categoryId: cat1.id } })
+
+    const updated = await updateWorker(worker.id, { categoryIds: [cat2.id] })
+
+    expect(updated.categories).toHaveLength(1)
+    expect(updated.categories[0].name).toBe('Electrical')
+  })
+
+  it('persists and returns availability as parsed array', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const availability = [{ day: 'monday', slots: ['09:00', '10:00'] }]
+
+    const updated = await updateWorker(worker.id, { availability })
+
+    expect(updated.availability).toEqual(availability)
+  })
+
+  it('persists and returns certificates as parsed array', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const certificates = [{ name: 'Cert A', url: 'https://example.com' }]
+
+    const updated = await updateWorker(worker.id, { certificates })
+
+    expect(updated.certificates).toEqual(certificates)
+  })
+
+  it('persists and returns gallery as parsed array', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const gallery = ['https://img1.com', 'https://img2.com']
+
+    const updated = await updateWorker(worker.id, { gallery })
+
+    expect(updated.gallery).toEqual(gallery)
+  })
+
+  it('does not modify categories when categoryIds is not provided', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const cat = await prisma.category.create({ data: { name: 'Plumbing' } })
+    await prisma.userCategory.create({ data: { userId: worker.id, categoryId: cat.id } })
+
+    const updated = await updateWorker(worker.id, { bio: 'New bio' })
+
+    expect(updated.categories).toHaveLength(1)
+    expect(updated.bio).toBe('New bio')
+  })
+
+  it('can set categories to empty array', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const cat = await prisma.category.create({ data: { name: 'Plumbing' } })
+    await prisma.userCategory.create({ data: { userId: worker.id, categoryId: cat.id } })
+
+    const updated = await updateWorker(worker.id, { categoryIds: [] })
+
+    expect(updated.categories).toHaveLength(0)
   })
 })
