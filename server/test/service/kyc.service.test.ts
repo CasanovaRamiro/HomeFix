@@ -284,6 +284,22 @@ describe("confirmKyc", () => {
     })
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
+
+  it("uses getDecision directly when it succeeds (happy path)", async () => {
+    mockFindByEmail.mockResolvedValue(user)
+    mockGetDecision.mockResolvedValue({ status: "Approved", sessionId: "sess-abc" })
+
+    const result = await confirmKyc("foo@bar.com", "sess-abc")
+
+    expect(mockGetDecision).toHaveBeenCalledWith("sess-abc")
+    expect(mockGetSessionStatus).not.toHaveBeenCalled()
+    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
+      kycStatus: "APPROVED",
+      kycVerifiedAt: expect.any(Date),
+      diditVerificationId: "sess-abc",
+    })
+    expect(result).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
+  })
 })
 
 describe("getKycStatus", () => {
@@ -334,6 +350,63 @@ describe("getKycStatus", () => {
       status: 404,
       message: "Usuario autenticado no encontrado en la base de datos",
     })
+  })
+
+  it("updates DB and returns new status when Didit reports a change via getDecision", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-uuid-123",
+      email: "foo@bar.com",
+      kycStatus: "IN_REVIEW",
+      kycVerifiedAt: null,
+      diditVerificationId: "sess-abc",
+    })
+    mockGetDecision.mockResolvedValue({ status: "Approved" })
+    mockUpdateUserKycStatus.mockResolvedValue({})
+
+    const result = await getKycStatus("foo@bar.com")
+
+    expect(mockGetDecision).toHaveBeenCalledWith("sess-abc")
+    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
+      kycStatus: "APPROVED",
+      kycVerifiedAt: expect.any(Date),
+      diditVerificationId: "sess-abc",
+    })
+    expect(result.kycStatus).toBe("APPROVED")
+  })
+
+  it("falls back to getSessionStatus when getDecision fails and updates on change", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-uuid-123",
+      email: "foo@bar.com",
+      kycStatus: "IN_REVIEW",
+      kycVerifiedAt: null,
+      diditVerificationId: "sess-abc",
+    })
+    mockGetDecision.mockRejectedValue(new Error("not found"))
+    mockGetSessionStatus.mockResolvedValue({ status: "Approved" })
+    mockUpdateUserKycStatus.mockResolvedValue({})
+
+    const result = await getKycStatus("foo@bar.com")
+
+    expect(mockGetSessionStatus).toHaveBeenCalledWith("sess-abc")
+    expect(mockUpdateUserKycStatus).toHaveBeenCalled()
+    expect(result.kycStatus).toBe("APPROVED")
+  })
+
+  it("does not update DB when Didit returns the same status", async () => {
+    mockFindByEmail.mockResolvedValue({
+      id: "user-uuid-123",
+      email: "foo@bar.com",
+      kycStatus: "APPROVED",
+      kycVerifiedAt: new Date("2026-06-07T12:00:00Z"),
+      diditVerificationId: "sess-abc",
+    })
+    mockGetDecision.mockResolvedValue({ status: "Approved" })
+
+    const result = await getKycStatus("foo@bar.com")
+
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+    expect(result.kycStatus).toBe("APPROVED")
   })
 })
 
@@ -507,5 +580,35 @@ describe("handleKycWebhook", () => {
       kycVerifiedAt: null,
       diditVerificationId: "sess-abc",
     })
+  })
+
+  it("returns processed: false when vendor_data is missing", async () => {
+    const result = await handleKycWebhook({
+      event_id: "evt-5",
+      webhook_type: "status.updated",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Approved",
+    })
+
+    expect(result).toEqual({ processed: false })
+    expect(mockFindByEmail).not.toHaveBeenCalled()
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
+
+  it("returns processed: false when user is not found", async () => {
+    mockFindByEmail.mockResolvedValue(null)
+
+    const result = await handleKycWebhook({
+      event_id: "evt-6",
+      webhook_type: "status.updated",
+      timestamp: Math.floor(Date.now() / 1000),
+      session_id: "sess-abc",
+      status: "Approved",
+      vendor_data: "unknown@bar.com",
+    })
+
+    expect(result).toEqual({ processed: false })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 })
