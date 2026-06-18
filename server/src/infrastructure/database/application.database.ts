@@ -31,7 +31,7 @@ export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true, type: true } },
+      post: { select: { userId: true, title: true, status: true, type: true, subcontractGroupId: true } },
       category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
@@ -48,6 +48,7 @@ export const createApplication = (workerId: string, input: CreateApplicationInpu
       workerId,
       postId: input.postId,
       categoryId: input.categoryId ?? null,
+      subcontractGroupId: input.subcontractGroupId ?? null,
       status: ApplicationStatus.Pending,
       message: input.message ?? null,
       availableDays: JSON.stringify(input.availableDays),

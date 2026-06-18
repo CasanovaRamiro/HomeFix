@@ -1,6 +1,7 @@
 export interface CreateApplicationInput {
   postId: string
   categoryId?: string
+  subcontractGroupId?: string
   message?: string
   availableDays: string[]
   availableTimeFrom: string

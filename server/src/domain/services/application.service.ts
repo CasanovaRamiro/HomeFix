@@ -84,7 +84,10 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
     throw Object.assign(new Error('visitCost debe ser un número positivo cuando chargesVisit es true'), { status: 400 })
 
-  const created = await createApplication(workerId, input)
+  const created = await createApplication(workerId, {
+    ...input,
+    subcontractGroupId: post.subcontractGroupId ?? undefined,
+  })
 
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {
@@ -106,32 +109,36 @@ export const acceptApplication = async (clientId: string, applicationId: string)
     if (!application.category || application.category.filledCount >= application.category.quantity) {
       throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400 })
     }
-    const alreadyAccepted = await prisma.application.findFirst({
-      where: {
-        workerId: application.workerId,
-        postId: application.postId,
-        status: ApplicationStatus.Accepted,
-        id: { not: applicationId },
-      },
-    })
-    if (alreadyAccepted) {
-      throw Object.assign(new Error('El trabajador ya fue contratado para otro rubro'), { status: 400 })
-    }
   }
 
-  const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
+  try {
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.application.updateMany({
+        where: { id: applicationId, status: ApplicationStatus.Pending },
+        data: { status: ApplicationStatus.Accepted },
+      })
+      if (updated.count === 0) {
+        throw Object.assign(new Error('Application is not pending'), { status: 400 })
+      }
 
-  if (application.post.type === PostType.SubContract) {
-    await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
-  } else {
-    await updatePostStatus(application.postId, PostStatus.InProgress)
+      if (application.post.type === PostType.SubContract) {
+        await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
+      } else {
+        await updatePostStatus(application.postId, PostStatus.InProgress)
+      }
+    })
+  } catch (err: any) {
+    if (err?.code === 'P2002' || err?.message?.includes('Unique constraint')) {
+      throw Object.assign(new Error('El trabajador ya fue contratado para otro rubro'), { status: 400 })
+    }
+    throw err
   }
 
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
     postTitle: application.post.title,
   })
 
-  return { id: accepted.id, status: accepted.status }
+  return { id: applicationId, status: ApplicationStatus.Accepted }
 }
 
 export const rejectApplication = async (clientId: string, applicationId: string) => {

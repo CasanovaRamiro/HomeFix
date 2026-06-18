@@ -138,6 +138,7 @@ model Application {
   workerId           String
   postId             String
   categoryId         String?
+  subcontractGroupId String?
   status             String         @default("Pending")
   message            String?        @db.Text
   availableDays      String?        @db.Text
