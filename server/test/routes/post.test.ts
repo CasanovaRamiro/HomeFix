@@ -837,7 +837,7 @@ describe('PATCH /posts/:id/finalize', () => {
   })
 
   it('returns 400 when post is not Paused', async () => {
-    await prisma.post.update({ where: { id: postId }, data: { status: 'Active' } })
+    await prisma.post.update({ where: { id: postId }, data: { status: 'In progress' } })
 
     const res = await request(app)
       .patch(`/posts/${postId}/finalize`)

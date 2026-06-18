@@ -14,6 +14,7 @@ import {
   searchPostsByDistance,
   completePost,
   reopenPost,
+  markInProgress,
   updatePost,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
@@ -351,6 +352,21 @@ router.patch('/:id/reopen', async (req, res, next) => {
     }
     const user = await syncAuth0User(claims)
     const result = await reopenPost(req.params.id, user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.patch('/:id/mark-in-progress', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    const result = await markInProgress(req.params.id, user.id)
     res.json(result)
   } catch (err) {
     next(err)

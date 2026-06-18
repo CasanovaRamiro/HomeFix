@@ -406,3 +406,8 @@ export const decrementPostFilledCount = (postId: string) =>
     where: { postId, filledCount: { gt: 0 } },
     data: { filledCount: { decrement: 1 } },
   })
+
+export const findPostCategories = (postId: string) =>
+  prisma.postCategory.findMany({
+    where: { postId },
+  })

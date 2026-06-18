@@ -42,4 +42,5 @@ export interface PrismaApplicationWithWorker {
     reviewsReceived: { rating: number }[]
     applications: { id: string }[]
   }
+  review: { id: string } | null
 }

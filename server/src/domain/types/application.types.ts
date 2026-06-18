@@ -48,4 +48,5 @@ export interface DomainPostApplication {
   chargesVisit: boolean
   visitCost: number | null
   phone: string | null
+  hasReview: boolean
 }

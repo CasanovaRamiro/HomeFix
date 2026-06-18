@@ -64,6 +64,11 @@ export const findAcceptedApplication = (postId: string) =>
     where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
   })
 
+export const findAcceptedApplications = (postId: string) =>
+  prisma.application.findMany({
+    where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
+  })
+
 export const findApplicationsByPost = async (postId: string): Promise<DomainPostApplication[]> => {
   const raw = await prisma.application.findMany({
     where: { postId },
@@ -83,6 +88,7 @@ export const findApplicationsByPost = async (postId: string): Promise<DomainPost
           },
         },
       },
+      review: { select: { id: true } },
     },
     orderBy: { createdAt: 'desc' },
   })

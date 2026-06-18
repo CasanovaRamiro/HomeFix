@@ -12,9 +12,10 @@ import {
   deletePostImages,
   findMySubcontracts,
   findPostsByGroupId,
+  findPostCategories,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
-import { findAcceptedApplication, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
+import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -300,6 +301,17 @@ export const pausePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
+    for (const p of groupPosts) {
+      if (p.status !== PostStatus.Active && p.status !== PostStatus.Paused) continue
+      await updatePostStatus(p.id, newStatus)
+    }
+    return { id: post.id, status: newStatus }
+  }
+
   if (post.status !== PostStatus.Active && post.status !== PostStatus.Paused) {
     throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
   }
@@ -311,6 +323,21 @@ export const cancelPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    for (const p of groupPosts) {
+      if (p.status === PostStatus.Completed || p.status === PostStatus.Cancelled) continue
+      await deletePostImages(p.id).catch(() => {})
+      await updatePostStatus(p.id, PostStatus.Cancelled)
+      const accepted = await findAcceptedApplications(p.id)
+      for (const app of accepted) {
+        notifyWorker(app.workerId, 'post_cancelled', p.title)
+      }
+    }
+    return { id: post.id, status: PostStatus.Cancelled }
+  }
+
   if (post.status === PostStatus.Completed || post.status === PostStatus.Cancelled) {
     throw Object.assign(new Error(`Post cannot be cancelled in its current state (${post.status})`), { status: 400 })
   }
@@ -319,34 +346,46 @@ export const cancelPost = async (postId: string, userId: string) => {
 
   const result = await updatePostStatus(postId, PostStatus.Cancelled)
 
-  const accepted = await findAcceptedApplication(postId)
-  if (accepted) {
-    notifyUser(getProvider(), accepted.workerId, 'post_cancelled', {
-      postTitle: post.title,
-    })
+  const accepted = await findAcceptedApplications(postId)
+  for (const app of accepted) {
+    notifyWorker(app.workerId, 'post_cancelled', post.title)
   }
 
   return result
 }
 
-const notifyOtherOnComplete = (postTitle: string, accepted: { workerId: string } | null) => {
-  if (!accepted) return
-  notifyUser(getProvider(), accepted.workerId, 'post_completed', { postTitle })
+const notifyWorker = (workerId: string, event: string, postTitle: string) => {
+  notifyUser(getProvider(), workerId, event as never, { postTitle })
 }
 
 export const finalizePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== PostStatus.Paused) {
-    throw Object.assign(new Error('Post must be paused to be finalized'), { status: 400 })
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    for (const p of groupPosts) {
+      if (p.status !== PostStatus.Paused) continue
+      const accepted = await findAcceptedApplications(p.id)
+      for (const app of accepted) {
+        await updateApplicationStatus(app.id, ApplicationStatus.Completed)
+        notifyWorker(app.workerId, 'post_completed', p.title)
+      }
+      await updatePostStatus(p.id, PostStatus.Completed)
+    }
+    return { id: post.id, status: PostStatus.Completed }
   }
-  const accepted = await findAcceptedApplication(postId)
-  if (accepted) {
-    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
+
+  if (post.status !== PostStatus.Paused && post.status !== PostStatus.Active) {
+    throw Object.assign(new Error('Post must be paused or active to be finalized'), { status: 400 })
+  }
+  const accepted = await findAcceptedApplications(postId)
+  for (const app of accepted) {
+    await updateApplicationStatus(app.id, ApplicationStatus.Completed)
+    notifyWorker(app.workerId, 'post_completed', post.title)
   }
   const result = await updatePostStatus(postId, PostStatus.Completed)
-  notifyOtherOnComplete(post.title, accepted)
   return result
 }
 
@@ -354,15 +393,30 @@ export const completePost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== PostStatus.InProgress) {
-    throw Object.assign(new Error('Post must be in progress to be completed'), { status: 400 })
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    for (const p of groupPosts) {
+      if (p.status !== PostStatus.InProgress) continue
+      const accepted = await findAcceptedApplications(p.id)
+      for (const app of accepted) {
+        await updateApplicationStatus(app.id, ApplicationStatus.Completed)
+        notifyWorker(app.workerId, 'post_completed', p.title)
+      }
+      await updatePostStatus(p.id, PostStatus.Completed)
+    }
+    return { id: post.id, status: PostStatus.Completed }
   }
-  const accepted = await findAcceptedApplication(postId)
-  if (accepted) {
-    await updateApplicationStatus(accepted.id, ApplicationStatus.Completed)
+
+  if (post.status !== PostStatus.InProgress && post.status !== PostStatus.Active) {
+    throw Object.assign(new Error('Post must be in progress or active to be completed'), { status: 400 })
   }
-  const result = await updatePostStatus(postId, ApplicationStatus.Completed)
-  notifyOtherOnComplete(post.title, accepted)
+  const accepted = await findAcceptedApplications(postId)
+  for (const app of accepted) {
+    await updateApplicationStatus(app.id, ApplicationStatus.Completed)
+    notifyWorker(app.workerId, 'post_completed', post.title)
+  }
+  const result = await updatePostStatus(postId, PostStatus.Completed)
   return result
 }
 
@@ -370,14 +424,54 @@ export const reopenPost = async (postId: string, userId: string) => {
   const post = await findPostById(postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    for (const p of groupPosts) {
+      if (p.status !== PostStatus.InProgress) continue
+      const accepted = await findAcceptedApplications(p.id)
+      for (const app of accepted) {
+        await updateApplicationStatus(app.id, ApplicationStatus.Pending)
+      }
+      await updatePostStatus(p.id, PostStatus.Active)
+    }
+    return { id: post.id, status: PostStatus.Active }
+  }
+
   if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
   }
-  const accepted = await findAcceptedApplication(postId)
-  if (accepted) {
-    await updateApplicationStatus(accepted.id, ApplicationStatus.Pending)
+  const accepted = await findAcceptedApplications(postId)
+  for (const app of accepted) {
+    await updateApplicationStatus(app.id, ApplicationStatus.Pending)
   }
   return updatePostStatus(postId, PostStatus.Active)
+}
+
+export const markInProgress = async (postId: string, userId: string) => {
+  const post = await findPostById(postId)
+  if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
+  if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (post.status !== PostStatus.Active) {
+    throw Object.assign(new Error(`Post must be active to mark in progress (${post.status})`), { status: 400 })
+  }
+
+  const categories = await findPostCategories(postId)
+  const hasHired = categories.some((c) => c.filledCount > 0)
+  if (!hasHired) {
+    throw Object.assign(new Error('Must have at least one hired worker'), { status: 400 })
+  }
+
+  if (post.type === PostType.SubContract && post.subcontractGroupId) {
+    const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    for (const p of groupPosts) {
+      if (p.status !== PostStatus.Active) continue
+      await updatePostStatus(p.id, PostStatus.InProgress)
+    }
+    return { id: post.id, status: PostStatus.InProgress }
+  }
+
+  return updatePostStatus(postId, PostStatus.InProgress)
 }
 
 export const updatePost = async (postId: string, userId: string, input: Omit<UpdatePostInput, 'userId'>) => {

@@ -5,8 +5,9 @@ import type { Post } from '../../types/post'
 interface PostCardProps {
   post: Post
   hasAcceptedWorker?: boolean
+  hasUnreviewedWorkers?: boolean
   onComplete?: () => void
-  onViewReview?: () => void
+  onMarkInProgress?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
   onEdit?: (id: string) => void
@@ -31,7 +32,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewReview, onPause, onCancel, onEdit, children }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, hasUnreviewedWorkers, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
@@ -51,6 +52,9 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewRe
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
         <h2 className="!mb-0">{post.title}</h2>
         <Badge variant={status.variant}>{status.label}</Badge>
+        {post.status === 'Completed' && hasUnreviewedWorkers && (
+          <Badge variant="warning">Falta Calificar</Badge>
+        )}
       </div>
 
       <div className="categories">
@@ -96,13 +100,14 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewRe
       {children}
 
       <div className="post-actions" style={{ marginTop: '0.75rem' }}>
-        {post.status === 'Completed' && (
-          <button className="btn-primary" onClick={onViewReview}>Ver resena</button>
-        )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
           <>
-            <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
-            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar contratacion</button>
+            {post.status === 'Active' && onMarkInProgress ? (
+              <button className="btn-primary" onClick={onMarkInProgress}>Marcar en progreso</button>
+            ) : (
+              <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
+            )}
+            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar publicación</button>
           </>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (

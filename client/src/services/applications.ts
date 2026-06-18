@@ -35,6 +35,7 @@ export interface PostApplicant {
   phone: string | null
   chargesVisit: boolean
   visitCost: number | null
+  hasReview: boolean
 }
 
 export const applyToPost = (input: ApplyToPostInput) =>

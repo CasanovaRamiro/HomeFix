@@ -1,13 +1,15 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { Users, X, Loader } from 'lucide-react'
 import { useSubcontractDetail, useSubcontractGroupDetail } from '../hooks/useSubcontractDetail'
 import StarRating from '../components/ui/StarRating'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
 import { ApplicationStatus } from '../types/application'
 import ApplicantCard from '../components/post/ApplicantCard'
 import PostCard from '../components/post/PostCard'
+import { PostStatus } from '../types/post'
 import type { Post } from '../types/post'
 
 export default function SubcontractDetail() {
@@ -21,8 +23,9 @@ export default function SubcontractDetail() {
   const refetchSubcontract = isGroup ? groupHook.refetch : detailHook.refetch
   const [showModal, setShowModal] = useState(false)
   const [applicants, setApplicants] = useState<PostApplicant[]>([])
-  const [filter, setFilter] = useState<string>('Todos')
   const [loadingApplicants, setLoadingApplicants] = useState(false)
+  const [showReactivateConfirm, setShowReactivateConfirm] = useState(false)
+  const [pendingReviewNav, setPendingReviewNav] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     if (!isGroup || !subcontract) return
@@ -48,17 +51,6 @@ export default function SubcontractDetail() {
       .catch(() => {})
       .finally(() => setLoadingApplicants(false))
   }, [isGroup, subcontract])
-
-  const categoryFilters = useMemo(() => {
-    if (!subcontract) return []
-    return [...new Set(subcontract.categories.map((c) => c.name))]
-  }, [subcontract])
-
-  const filteredApplicants = useMemo(() => {
-    if (filter === 'Contratados') return applicants.filter((a) => a.status === ApplicationStatus.Accepted)
-    if (filter === 'Todos') return applicants
-    return applicants.filter((a) => a.category === filter)
-  }, [applicants, filter])
 
   const refreshApplicants = useCallback(() => {
     if (!isGroup || !subcontract) return
@@ -145,6 +137,34 @@ export default function SubcontractDetail() {
     } catch { alert('No se pudo cancelar') }
   }
 
+  const handleMarkInProgress = async () => {
+    try {
+      const { markPostInProgress } = await import('../services/api')
+      await markPostInProgress(subcontract.id)
+      window.location.reload()
+    } catch { alert('No se pudo marcar en progreso') }
+  }
+
+  const handleComplete = async () => {
+    try {
+      const { completePost } = await import('../services/api')
+      await completePost(subcontract.id)
+      window.location.reload()
+    } catch { alert('No se pudo completar') }
+  }
+
+  const handleReactivateConfirm = async () => {
+    try {
+      const { reopenPost } = await import('../services/api')
+      await reopenPost(subcontract.id)
+      setShowReactivateConfirm(false)
+      if (pendingReviewNav) {
+        navigate('/review', { state: pendingReviewNav })
+        setPendingReviewNav(null)
+      }
+    } catch { alert('No se pudo reactivar la publicación') }
+  }
+
   return (
     <>
       <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
@@ -189,6 +209,9 @@ export default function SubcontractDetail() {
           <PostCard
             post={postForCard}
             hasAcceptedWorker={hasAcceptedWorker}
+            hasUnreviewedWorkers={applicants.some(a => (a.status === 'Accepted' || a.status === 'Completed') && !a.hasReview)}
+            onComplete={handleComplete}
+            onMarkInProgress={handleMarkInProgress}
             onPause={handlePause}
             onCancel={handleCancel}
           >
@@ -237,24 +260,10 @@ export default function SubcontractDetail() {
           {/* Filters & applicants (group view only) */}
           {isGroup && (
             <>
-              <div className="flex gap-2 flex-wrap my-4">
-                {['Todos', ...categoryFilters, 'Contratados'].map((label) => (
-                  <button
-                    key={label}
-                    onClick={() => setFilter(label)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-none cursor-pointer transition-all duration-150 ${
-                      filter === label
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
               <h3 className="section-title">
-                {filter === 'Contratados' ? 'Contratados' : 'Postulantes'} ({filteredApplicants.length})
+                {subcontract.status === PostStatus.Completed || subcontract.status === PostStatus.Cancelled
+                  ? 'Contratados'
+                  : 'Postulantes'} ({applicants.length})
               </h3>
 
               {loadingApplicants && (
@@ -263,56 +272,65 @@ export default function SubcontractDetail() {
                 </div>
               )}
 
-              {!loadingApplicants && filteredApplicants.length === 0 && (
-                <p className="text-slate-400 text-sm mt-2">
-                  {filter === 'Contratados' ? 'Todavía no hay trabajadores contratados' : 'Todavía no hay trabajadores postulados'}
-                </p>
+              {!loadingApplicants && applicants.length === 0 && (
+                <p className="text-slate-400 text-sm mt-2">Todavía no hay trabajadores postulados</p>
               )}
 
-              {filteredApplicants.map((a) => (
-                <ApplicantCard
-                  key={a.applicationId}
-                  applicant={{
+              {applicants.map((a) => {
+                const reviewState = {
+                  postId: subcontract.id,
+                  applicationId: a.applicationId,
+                  titulo: subcontract.title,
+                  fecha: subcontract.endDate,
+                  ubicacion: subcontract.address,
+                  trabajador: {
                     id: a.workerId,
-                    name: a.name,
-                    photo: a.photo,
-                    category: a.category ?? '',
-                    address: a.address,
-                    rating: a.rating,
-                    reviewCount: a.reviewCount,
-                    jobCount: a.jobCount,
-                    message: a.message,
-                    availableDays: a.availableDays,
-                    availableTimeFrom: a.availableTimeFrom,
-                    availableTimeTo: a.availableTimeTo,
-                    chargesVisit: a.chargesVisit,
-                    visitCost: a.visitCost,
-                    phone: a.phone,
-                  }}
-                  applicationId={a.applicationId}
-                  applicationStatus={a.status}
-                  postStatus={subcontract.status}
-                  postTitle={subcontract.title}
-                  onHire={refreshApplicants}
-                  onDismiss={() =>
-                    navigate('/review', {
-                      state: {
-                        postId: subcontract.id,
-                        applicationId: a.applicationId,
-                        titulo: subcontract.title,
-                        fecha: subcontract.endDate,
-                        ubicacion: subcontract.address,
-                        trabajador: {
-                          id: a.workerId,
-                          nombre: a.name,
-                          categoria: a.category ?? '',
-                          verificado: false,
-                        },
-                      },
-                    })
-                  }
-                />
-              ))}
+                    nombre: a.name,
+                    categoria: a.category ?? '',
+                    verificado: false,
+                  },
+                }
+
+                const acceptedCount = applicants.filter((x) => x.status === ApplicationStatus.Accepted).length
+
+                return (
+                  <ApplicantCard
+                    key={a.applicationId}
+                    applicant={{
+                      id: a.workerId,
+                      name: a.name,
+                      photo: a.photo,
+                      category: a.category ?? '',
+                      address: a.address,
+                      rating: a.rating,
+                      reviewCount: a.reviewCount,
+                      jobCount: a.jobCount,
+                      message: a.message,
+                      availableDays: a.availableDays,
+                      availableTimeFrom: a.availableTimeFrom,
+                      availableTimeTo: a.availableTimeTo,
+                      chargesVisit: a.chargesVisit,
+                      visitCost: a.visitCost,
+                      phone: a.phone,
+                      hasReview: a.hasReview,
+                    }}
+                    applicationId={a.applicationId}
+                    applicationStatus={a.status}
+                    postStatus={subcontract.status}
+                    postTitle={subcontract.title}
+                    onHire={refreshApplicants}
+                    onDismiss={() => {
+                      if (subcontract.status === PostStatus.InProgress && acceptedCount >= 2) {
+                        setPendingReviewNav(reviewState)
+                        setShowReactivateConfirm(true)
+                      } else {
+                        navigate('/review', { state: reviewState })
+                      }
+                    }}
+                    onReview={() => navigate('/review', { state: reviewState })}
+                  />
+                )
+              })}
             </>
           )}
 
@@ -362,6 +380,17 @@ export default function SubcontractDetail() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={showReactivateConfirm}
+        title="Reactivar publicación"
+        message="Había más de un trabajador contratado. ¿Querés reactivar la publicación para que los demás sigan trabajando?"
+        onConfirm={handleReactivateConfirm}
+        onCancel={() => {
+          setShowReactivateConfirm(false)
+          setPendingReviewNav(null)
+        }}
+      />
     </>
   )
 }

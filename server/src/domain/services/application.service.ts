@@ -7,7 +7,7 @@ import {
   deleteApplication,
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
-import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount } from '../../infrastructure/database/post.database.js'
+import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
 import { findUserById } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
@@ -96,10 +96,11 @@ export const acceptApplication = async (clientId: string, applicationId: string)
   if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
 
   const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
-  await updatePostStatus(application.postId, PostStatus.InProgress)
 
   if (application.post.type === PostType.SubContract) {
     await incrementPostFilledCount(application.postId)
+  } else {
+    await updatePostStatus(application.postId, PostStatus.InProgress)
   }
 
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
@@ -129,14 +130,28 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
   if (application.status !== ApplicationStatus.Accepted) throw Object.assign(new Error('Application is not accepted'), { status: 400 })
-  if (application.post.status !== PostStatus.InProgress) throw Object.assign(new Error('Post is not in progress'), { status: 400 })
+
+  const isSubContract = application.post.type === PostType.SubContract
+
+  if (isSubContract) {
+    if (application.post.status !== PostStatus.Active && application.post.status !== PostStatus.InProgress) {
+      throw Object.assign(new Error('Post is not active or in progress'), { status: 400 })
+    }
+  } else if (application.post.status !== PostStatus.InProgress) {
+    throw Object.assign(new Error('Post is not in progress'), { status: 400 })
+  }
 
   const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
-  // Reopen the post so the client can hire a different worker; other pending applicants are kept.
-  await updatePostStatus(application.postId, PostStatus.Active)
 
-  if (application.post.type === PostType.SubContract) {
+  if (isSubContract) {
     await decrementPostFilledCount(application.postId)
+    const categories = await findPostCategories(application.postId)
+    const anyFilled = categories.some((c) => c.filledCount > 0)
+    if (!anyFilled && application.post.status === PostStatus.InProgress) {
+      await updatePostStatus(application.postId, PostStatus.Active)
+    }
+  } else {
+    await updatePostStatus(application.postId, PostStatus.Active)
   }
 
   notifyUser(getProvider(), application.workerId, 'worker_dismissed', {

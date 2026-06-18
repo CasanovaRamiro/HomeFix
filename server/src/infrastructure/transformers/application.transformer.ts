@@ -51,5 +51,6 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     chargesVisit: a.chargesVisit,
     visitCost: a.visitCost,
     phone: a.worker.phone,
+    hasReview: a.review !== null,
   }
 }

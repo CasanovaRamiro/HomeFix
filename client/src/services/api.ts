@@ -102,6 +102,14 @@ export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
 
 export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
 
+export const completePost = (id: string) => api.patch(`/posts/${id}/complete`)
+
+export const reopenPost = (id: string) => api.patch(`/posts/${id}/reopen`)
+
+export const finalizePost = (id: string) => api.patch(`/posts/${id}/finalize`)
+
+export const markPostInProgress = (id: string) => api.patch(`/posts/${id}/mark-in-progress`)
+
 export interface UpdatePostData {
   title: string
   categoryId: string
