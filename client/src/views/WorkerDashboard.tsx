@@ -3,17 +3,20 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
   CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
-  Eye, ChevronRight, Shield, MessageSquare, FileText,
+  ChevronRight, Shield, MessageSquare, FileText,
+  Navigation,
 } from 'lucide-react'
 import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
-import { fetchAvailablePosts, fetchEmergencyPosts } from '../services/posts'
+import { fetchEmergencyPosts, searchPostsByLocation } from '../services/posts'
 import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
+import TrabajoCard from '../components/worker/TrabajoCard'
 import { fetchKycStatus, type KycStatus } from '../services/kyc'
+import type { LocationFilter } from '../components/worker/types'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -599,157 +602,139 @@ interface Application {
   clientPhone: string | null
 }
 
-// ─── Priority helpers ────────────────────────────────────────────────────────
-
-type Priority = 'Urgente' | 'Flexible' | 'Normal'
-
-function derivePriority(description: string): Priority {
-  const lower = description.toLowerCase()
-  if (lower.includes('urgent') || lower.includes('urgencia')) return 'Urgente'
-  if (lower.includes('flexible') || lower.includes('sin prisa') || lower.includes('cuando pueda')) return 'Flexible'
-  return 'Normal'
-}
-
-const PRIORITY_STYLES: Record<Priority, { bg: string; color: string }> = {
-  Urgente:  { bg: '#FEE2E2', color: '#DC2626' },
-  Normal:   { bg: '#FEF9C3', color: '#92400E' },
-  Flexible: { bg: '#D1FAE5', color: '#065F46' },
-}
-
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
 
-function JobCard({ post, index }: { post: Post; index: number }) {
-  const navigate = useNavigate()
-  const priority = derivePriority(post.description)
-  const style = PRIORITY_STYLES[priority]
-  const date = post.startDate ? new Date(post.startDate).toISOString().slice(0, 10) : '—'
-  const mockDistances = [1.8, 2.5, 3.1]
-  const distance = mockDistances[index % mockDistances.length]
-  const trabajo = postToTrabajo(post)
+const LOCATION_FILTER_KEY = 'homefix_dashboard_location_filter'
 
-  return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid #E2E8F0',
-        borderRadius: 16,
-        padding: '18px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        transition: 'box-shadow 0.2s',
-      }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)' }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Badge + date */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <span style={{
-            background: style.bg, color: style.color,
-            fontSize: 11, fontWeight: 700,
-            padding: '2px 10px', borderRadius: 20,
-          }}>
-            {priority}
-          </span>
-          <span style={{ fontSize: 12, color: '#94A3B8' }}>{date}</span>
-        </div>
-
-        {/* Title */}
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
-          {post.title}
-        </h3>
-
-        {/* Description */}
-        <p style={{
-          fontSize: 13, color: '#10B981', margin: '0 0 8px',
-          display: '-webkit-box', WebkitLineClamp: 1,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>
-          {post.description}
-        </p>
-
-        {/* Location + distance */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94A3B8' }}>
-          <MapPin size={12} />
-          <span>{post.address ?? 'Buenos Aires'}</span>
-          <span style={{ color: '#10B981', fontWeight: 600, marginLeft: 4 }}>{distance} km</span>
-        </div>
-
-        {/* Client name + rating */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontSize: 12, color: '#475569' }}>
-          <User size={12} color="#94A3B8" />
-          <span>{trabajo.clientName}</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <span key={i}>{i < Math.round(trabajo.clientRating) ? '★' : '☆'}</span>
-            ))}
-            <span style={{ color: '#94A3B8', fontSize: 11, marginLeft: 2 }}>{trabajo.clientRating}</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Ver button */}
-      <button
-        onClick={() => navigate('/worker/available-jobs')}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: '#0F172A', color: '#fff',
-          border: 'none', borderRadius: 10,
-          padding: '10px 16px', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', flexShrink: 0,
-          transition: 'background 0.15s',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E293B' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#0F172A' }}
-      >
-        <Eye size={14} />
-        Ver
-      </button>
-    </div>
-  )
+function loadStoredLocationFilter(): LocationFilter | null {
+  try {
+    const raw = localStorage.getItem(LOCATION_FILTER_KEY)
+    if (raw) return JSON.parse(raw) as LocationFilter
+  } catch { /* ignore */ }
+  return null
 }
 
-function JobsInZoneSection({ posts, loading }: { posts: Post[]; loading: boolean }) {
+function JobsInZoneSection({
+  posts,
+  loading,
+  locationFilter,
+  onToggleLocation,
+}: {
+  posts: Post[]
+  loading: boolean
+  locationFilter: LocationFilter | null
+  onToggleLocation: () => void
+}) {
+  const navigate = useNavigate()
+
   return (
     <div>
-      {/* Section header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>
           Trabajos en tu zona
         </h2>
-        <Link
-          to="/worker/available-jobs"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            fontSize: 13, fontWeight: 600, color: '#64748B',
-            textDecoration: 'none', transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
-        >
-          Ver todos <ChevronRight size={15} />
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={onToggleLocation}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontSize: 13, fontWeight: 600,
+              border: 'none', borderRadius: 20,
+              padding: '6px 14px 6px 12px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+              background: locationFilter ? '#10B981' : '#E2E8F0',
+              color: locationFilter ? '#fff' : '#475569',
+            }}
+            title={locationFilter ? 'Desactivar ubicación' : 'Activar ubicación'}
+          >
+            <Navigation size={14} />
+            <span style={{
+              width: 14, height: 14, borderRadius: '50%',
+              background: locationFilter ? '#fff' : '#94A3B8',
+              transition: 'background 0.15s',
+              flexShrink: 0,
+            }} />
+            {locationFilter ? 'Ubicación activa' : 'Activar ubicación'}
+          </button>
+          <Link
+            to="/worker/available-jobs"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              fontSize: 13, fontWeight: 600, color: '#64748B',
+              textDecoration: 'none', transition: 'color 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+          >
+            Ver todos <ChevronRight size={15} />
+          </Link>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {!locationFilter && !loading && (
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
+            padding: '32px 24px', textAlign: 'center',
+          }}>
+            <Navigation size={32} style={{ color: '#94A3B8', marginBottom: 12 }} />
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', margin: '0 0 6px' }}>
+              ¿Quieres conocer los trabajos cerca de tu ubicación?
+            </p>
+            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
+              Activa la ubicación para ver los trabajos disponibles en tu zona.
+            </p>
+            <button
+              type="button"
+              onClick={onToggleLocation}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: '#10B981', color: '#fff',
+                border: 'none', borderRadius: 8,
+                padding: '10px 20px', fontSize: 14, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <Navigation size={16} />
+              Activar ubicación
+            </button>
+          </div>
+        )}
         {loading && (
           <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando trabajos...</p>
         )}
-        {!loading && posts.length === 0 && (
+        {locationFilter && !loading && posts.length === 0 && (
           <div style={{
             background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
             padding: '28px 20px', textAlign: 'center',
           }}>
             <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
-              No hay trabajos disponibles en tu zona por ahora.
+              No hay trabajos disponibles cerca de tu ubicación por ahora.
             </p>
           </div>
         )}
-        {!loading && posts.map((post, i) => (
-          <JobCard key={post.id} post={post} index={i} />
-        ))}
+        {locationFilter && !loading && posts.map((post) => {
+          const trabajo = postToTrabajo(post)
+          return (
+            <TrabajoCard
+              key={post.id}
+              trabajo={trabajo}
+              isSelected={false}
+              isApplied={false}
+              onClick={() => navigate(`/worker/available-jobs?id=${post.id}`)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate(`/worker/available-jobs?id=${post.id}`)
+                }
+              }}
+            />
+          )
+        })}
       </div>
     </div>
   )
@@ -1184,6 +1169,7 @@ export default function WorkerDashboard() {
   const [applications, setApplications] = useState<Application[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
   const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredLocationFilter)
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const appsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1201,16 +1187,21 @@ export default function WorkerDashboard() {
   }, [])
 
   const fetchNearbyJobs = useCallback(async () => {
+    if (!locationFilter) {
+      setNearbyJobs([])
+      setJobsLoading(false)
+      return
+    }
     try {
       const category = localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-      const res = await fetchAvailablePosts(category, { page: 1, limit: 3, sortOrder: 'desc' })
-      setNearbyJobs(res.data.data)
+      const { data } = await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
+      setNearbyJobs(data.slice(0, 5))
     } catch {
       setNearbyJobs([])
     } finally {
       setJobsLoading(false)
     }
-  }, [])
+  }, [locationFilter])
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -1231,6 +1222,25 @@ export default function WorkerDashboard() {
       // keep default NOT_STARTED
     }
   }, [])
+
+  const handleToggleLocation = () => {
+    if (locationFilter) {
+      setLocationFilter(null)
+      localStorage.removeItem(LOCATION_FILTER_KEY)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const filter = { lat: pos.coords.latitude, lng: pos.coords.longitude, radius: 20 }
+        setLocationFilter(filter)
+        localStorage.setItem(LOCATION_FILTER_KEY, JSON.stringify(filter))
+      },
+      () => {
+        // user denied or error — do nothing
+      },
+      { timeout: 5000 }
+    )
+  }
 
   useEffect(() => {
     void fetchDashboard()
@@ -1308,7 +1318,7 @@ export default function WorkerDashboard() {
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
         <div>
-          <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} />
+          <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} />
           <MisPostulacionesSection apps={applications} loading={appsLoading} />
           <ProximasCitasSection apps={applications} loading={appsLoading} />
         </div>
