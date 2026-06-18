@@ -16,8 +16,8 @@ interface NavLinkDef {
 const WORKER_LINKS: NavLinkDef[] = [
   { href: '/worker',                 label: 'Inicio',               icon: Home },
   { href: '/worker/available-jobs',  label: 'Trabajos Disponibles', icon: Briefcase },
-  { href: '/worker/my-applications', label: 'Mis Postulaciones',    icon: ClipboardList },
   { href: '/worker/calendar',        label: 'Mi Agenda',            icon: CalendarDays },
+  { href: '/worker/my-applications', label: 'Mis Postulaciones',    icon: ClipboardList },
 ]
 
 const CLIENT_LINKS: NavLinkDef[] = [
