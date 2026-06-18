@@ -23,7 +23,7 @@ export default function AiDiagnosis() {
     }
   }, [chatImagePreview])
 
-  const { messages, input, setInput, loading, suggestion, conversationDone, chatEndRef, handleSend, handleKeyDown } = useDiagnosisChat((data) => {
+  const { messages, input, setInput, loading, suggestion, conversationDone, chatEndRef, handleSend } = useDiagnosisChat((data) => {
     setForm({
       title: data.suggestedTitle || '',
       categoryId: String(data.suggestedCategoryId || ''),
