@@ -206,6 +206,10 @@ export default function WorkerProfile() {
 
   const handleSave = async () => {
     if (!worker) return
+    if (selectedCategories.length === 0) {
+      setError('Debes seleccionar al menos un rubro de trabajo.')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
