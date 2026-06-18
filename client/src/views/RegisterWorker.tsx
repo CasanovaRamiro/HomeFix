@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import {
@@ -10,10 +10,6 @@ import api from '../services/api'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
-import { startKycVerification, confirmKycSession } from '../services/kyc'
-import DiditVerificationModal from '../components/DiditVerificationModal'
-import { emitAuthChange } from '../hooks/useAuth'
-import { UserRole } from '../types/user'
 
 type RegisterResponse = {
   userId: string
@@ -53,8 +49,6 @@ export default function RegisterWorker() {
   })
   const [selected, setSelected] = useState<string[]>([])
   const [kycMethod, setKycMethod] = useState<'automatic' | 'manual'>('automatic')
-  const [sessionUrl, setSessionUrl] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleChange = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -117,25 +111,9 @@ export default function RegisterWorker() {
         phone: form.phone || undefined,
         categories: selected,
       })
-
+      setErrors({})
       if (kycMethod === 'automatic') {
-        try {
-          const { data: loginData } = await api.post<{
-            accessToken: string
-            user: { id: string; name: string; email: string; photo: string | null; role: UserRole }
-          }>('/auth/login', { email: form.email, password: form.password })
-          localStorage.setItem('token', loginData.accessToken)
-          localStorage.setItem('user', JSON.stringify({ id: loginData.user.id, name: loginData.user.name, email: loginData.user.email, role: loginData.user.role, photo: loginData.user.photo ?? null }))
-          emitAuthChange()
-
-          const { sessionUrl: url } = await startKycVerification()
-          setSessionUrl(url)
-          setIsModalOpen(true)
-          setErrors({})
-          return
-        } catch {
-          setSubmitted(true)
-        }
+        navigate('/kyc')
       } else {
         setSubmitted(true)
       }
@@ -147,28 +125,6 @@ export default function RegisterWorker() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
-    setIsModalOpen(false)
-    setSessionUrl(null)
-    const email = form.email
-    if (!email) return
-    try {
-      await confirmKycSession(sessionId, email, status)
-    } catch {
-      // silent
-    }
-  }, [form.email])
-
-  const handleModalCancelled = () => {
-    setIsModalOpen(false)
-    setSessionUrl(null)
-  }
-
-  const handleModalFailed = () => {
-    setIsModalOpen(false)
-    setSessionUrl(null)
   }
 
   const strength = passwordStrength()
@@ -190,17 +146,11 @@ export default function RegisterWorker() {
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900">
-                {kycMethod === 'automatic'
-                  ? 'Verificá tu email para continuar'
-                  : '¡Verificá tu email!'}
-              </h1>
+              <h1 className="text-2xl font-bold text-slate-900">¡Verificá tu email!</h1>
               <p className="mt-3 text-slate-500">
-                {kycMethod === 'automatic'
-                  ? <>Antes de poder validar tu identidad con Didit, debés verificar tu correo.</>
-                  : <>Te enviamos un email de verificación a{' '}
-                    {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
-                    Hacé clic en el enlace para activar tu cuenta.</>}
+                Te enviamos un email de verificación a{' '}
+                {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
+                Hacé clic en el enlace para activar tu cuenta.
               </p>
               <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
@@ -208,10 +158,10 @@ export default function RegisterWorker() {
               <div className="mt-6 flex gap-3 text-left bg-slate-900/5 border border-slate-900/10 rounded-xl p-4">
                 <Shield className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-slate-900">Después de verificar</p>
+                  <p className="font-medium text-slate-900">Después de verificar: completá tu identidad</p>
                   <p className="text-slate-500 mt-1">
                     {kycMethod === 'automatic'
-                      ? 'Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.'
+                      ? 'Deberás completar la verificación automática (DNI + Reconocimiento Facial) al iniciar sesión.'
                       : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
                   </p>
                 </div>
@@ -240,7 +190,6 @@ export default function RegisterWorker() {
   }
 
   return (
-    <>
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       <div style={{ width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '16px 2rem 0' }}>
         <button
@@ -718,15 +667,5 @@ export default function RegisterWorker() {
         </div>
       </main>
     </div>
-
-      <DiditVerificationModal
-        sessionUrl={sessionUrl ?? ''}
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSessionUrl(null) }}
-        onComplete={handleModalComplete}
-        onCancelled={handleModalCancelled}
-        onFailed={handleModalFailed}
-      />
-    </>
   )
 }
