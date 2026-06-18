@@ -542,7 +542,7 @@ export default function WorkerApplications() {
     const fetchApplications = async () => {
       try {
         const res = await api.get<Application[]>('/applications/my-applications')
-        const data = res.data.filter((a) => HISTORY_STATUSES.has(a.status as ApplicationStatus))
+        const data = res.data.filter((a) => HISTORY_STATUSES.has(a.status))
         if (cancelled) return
         setApplications((prev) => {
           const prevMap = new Map(prev.map((a) => [a.id, a.status]))
