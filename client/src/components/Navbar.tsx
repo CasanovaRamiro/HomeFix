@@ -72,32 +72,106 @@ export default function Navbar(): React.ReactElement | null {
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
 
-          {/* Logo, marginLeft -10px is intended to center the logo */}
-          <Link to={homeRoute} className="flex items-center flex-shrink-0" style={{ textDecoration: 'none' }}>
+          {/* Logo */}
+          <Link
+            to={isWorkerLanding ? '/workerlanding' : homeRoute}
+            onClick={() => { if (isLanding || isWorkerLanding) window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            className="flex items-center flex-shrink-0"
+            style={{ textDecoration: 'none' }}
+          >
             <img src={logo} alt="HomeFix" style={{ height: '40px', width: 'auto', marginLeft: '-10px' }} />
           </Link>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
             {isLanding && (
-              <Link
-                to="/workerLanding"
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                Soy Profesional
-              </Link>
+              <>
+                <button
+                  onClick={() => document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Cómo funciona HomeFix?
+                </button>
+                <button
+                  onClick={() => document.getElementById('que-ofrecemos-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Qué te ofrecemos?
+                </button>
+                <button
+                  onClick={() => document.getElementById('confia-en-nosotros')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¡Confiá en nosotros!
+                </button>
+                <button
+                  onClick={() => document.getElementById('redes-sociales-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Nuestras redes sociales
+                </button>
+                <Link
+                  to="/workerLanding"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: '700', textDecoration: 'none', color: theme.primaryDark, transition: 'background 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Quiero trabajar!
+                </Link>
+              </>
             )}
             {isWorkerLanding && (
-              <Link
-                to="/"
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                Soy Cliente
-              </Link>
+              <>
+                <button
+                  onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Cómo funciona HomeFix?
+                </button>
+                <button
+                  onClick={() => document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Qué te ofrecemos?
+                </button>
+                <button
+                  onClick={() => document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  ¿Cómo me valido?
+                </button>
+                <button
+                  onClick={() => document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Nuestras redes sociales
+                </button>
+                <Link
+                  to="/"
+                  onClick={() => window.scrollTo(0, 0)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: '700', textDecoration: 'none', color: theme.primaryDark, transition: 'background 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  HomeFix Clientes
+                </Link>
+              </>
             )}
             {navLinks.map((link) => {
               const active  = pathname === link.href
@@ -133,10 +207,18 @@ export default function Navbar(): React.ReactElement | null {
           <div className="hidden md:flex items-center gap-3">
             {!isLoggedIn ? (
               <>
-                <Link to="/login" style={{ color: theme.muted, textDecoration: 'none', fontSize: '14px', fontWeight: '500', padding: '8px 12px' }}>
+                <Link to="/login"
+                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...((isWorkerLanding || isLanding) ? { background: theme.primaryDark, color: '#fff' } : { color: theme.muted }) }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
                   Iniciar Sesión
                 </Link>
-                <Link to="/signup" style={{ background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px' }}>
+                <Link to="/signup"
+                  style={{ display: 'block', width: '130px', textAlign: 'center', background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
                   Registrarse
                 </Link>
               </>
@@ -200,10 +282,11 @@ export default function Navbar(): React.ReactElement | null {
             )}
           </div>
 
+
           {/* Mobile menu button */}
           <button
             onClick={() => { setMobileOpen(!mobileOpen) }}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted, alignSelf: 'center' }}
             className="md:hidden"
           >
             {mobileOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
@@ -225,6 +308,46 @@ export default function Navbar(): React.ReactElement | null {
                   {link.label}
                 </Link>
               ))}
+              {isLanding && (
+                <>
+                  <button onClick={() => { document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Cómo funciona HomeFix?
+                  </button>
+                  <button onClick={() => { document.getElementById('que-ofrecemos-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Qué te ofrecemos?
+                  </button>
+                  <button onClick={() => { document.getElementById('confia-en-nosotros')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¡Confiá en nosotros!
+                  </button>
+                  <button onClick={() => { document.getElementById('redes-sociales-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    Nuestras redes sociales
+                  </button>
+                </>
+              )}
+              {isWorkerLanding && (
+                <>
+                  <button onClick={() => { document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Cómo funciona HomeFix Profesional?
+                  </button>
+                  <button onClick={() => { document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Qué te ofrecemos?
+                  </button>
+                  <button onClick={() => { document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    ¿Cómo me valido?
+                  </button>
+                  <button onClick={() => { document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
+                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
+                    Nuestras redes sociales
+                  </button>
+                </>
+              )}
             </div>
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
@@ -240,6 +363,12 @@ export default function Navbar(): React.ReactElement | null {
                 </>
               ) : (
                 <>
+                  {isWorkerLanding && (
+                    <Link to="/" onClick={() => { setMobileOpen(false); window.scrollTo(0, 0) }}
+                      style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
+                      Soy Cliente
+                    </Link>
+                  )}
                   <Link to="/login" onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'block', textAlign: 'center', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.primaryDark}`, borderRadius: '8px', padding: '10px', textDecoration: 'none' }}>
                     Iniciar Sesión

@@ -13,7 +13,7 @@ export default function LandingFooter() {
   const navigate = useNavigate()
 
   return (
-    <footer className="bg-[#0F172A] text-white">
+    <footer id="redes-sociales-cliente" className="bg-[#0F172A] text-white">
       <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:gap-12 md:grid-cols-5">
           <div className="col-span-2 space-y-6">

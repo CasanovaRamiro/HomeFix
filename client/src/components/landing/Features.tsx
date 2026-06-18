@@ -20,7 +20,7 @@ export default function Features() {
   const navigate = useNavigate()
 
   return (
-    <section className="bg-[#0F172A]/5 pt-24">
+    <section id="que-ofrecemos-cliente" className="bg-[#0F172A]/5 pt-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 pb-24 sm:px-6 lg:grid-cols-2 lg:px-8">
         <div className="relative hidden justify-center lg:flex">
           <div className="absolute -inset-8 rounded-full bg-accent/10 blur-3xl" />
