@@ -478,6 +478,66 @@ export default function WorkerProfile() {
               </div>
             </div>
 
+            {/* Documentos y Validaciones */}
+            {isOwner && (
+              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Documentos y Validaciones</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
+                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Domicilio</span>
+                    <button
+                      type="button"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        background: '#10B981', border: 'none',
+                        color: '#fff', fontSize: 13, fontWeight: 600,
+                        padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                        minWidth: 160,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                    >
+                      Editar
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
+                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Antecedentes</span>
+                    <button
+                      type="button"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        background: '#10B981', border: 'none',
+                        color: '#fff', fontSize: 13, fontWeight: 600,
+                        padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                        minWidth: 160,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                    >
+                      Cargar Antecedentes
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
+                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Matrícula</span>
+                    <button
+                      type="button"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        background: '#10B981', border: 'none',
+                        color: '#fff', fontSize: 13, fontWeight: 600,
+                        padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                        minWidth: 160,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                    >
+                      Cargar Matrícula
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Categories */}
             {(worker.categories.length > 0 || isEditing) && (
               <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
