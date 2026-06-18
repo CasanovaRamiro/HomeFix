@@ -148,7 +148,7 @@ describe('updateWorker', () => {
 
   it('persists and returns availability as parsed array', async () => {
     const worker = await makeWorker('ana@test.com', 'Ana')
-    const availability = [{ day: 'monday', slots: ['09:00', '10:00'] }]
+    const availability = ['monday', 'tuesday']
 
     const updated = await updateWorker(worker.id, { availability })
 
@@ -157,7 +157,7 @@ describe('updateWorker', () => {
 
   it('persists and returns certificates as parsed array', async () => {
     const worker = await makeWorker('ana@test.com', 'Ana')
-    const certificates = [{ name: 'Cert A', url: 'https://example.com' }]
+    const certificates = [{ id: 'cert-1', title: 'Cert A', imageUrl: 'https://example.com/cert.jpg' }]
 
     const updated = await updateWorker(worker.id, { certificates })
 
@@ -166,7 +166,7 @@ describe('updateWorker', () => {
 
   it('persists and returns gallery as parsed array', async () => {
     const worker = await makeWorker('ana@test.com', 'Ana')
-    const gallery = ['https://img1.com', 'https://img2.com']
+    const gallery = [{ id: 'img-1', imageUrl: 'https://img1.com' }, { id: 'img-2', imageUrl: 'https://img2.com' }]
 
     const updated = await updateWorker(worker.id, { gallery })
 
