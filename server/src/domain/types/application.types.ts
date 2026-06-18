@@ -1,5 +1,6 @@
 export interface CreateApplicationInput {
   postId: string
+  categoryId?: string
   message?: string
   availableDays: string[]
   availableTimeFrom: string
@@ -20,6 +21,7 @@ export interface DomainMyApplication {
   serviceDate: Date
   status: string
   category: string | null
+  categoryId: string | null
   hasReview: boolean
   clientRating: number
   message: string | null

@@ -86,14 +86,15 @@ model Category {
 }
 
 model PostCategory {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   postId          String
   categoryId      String
-  quantity        Int      @default(1)
-  filledCount     Int      @default(0)
+  quantity        Int           @default(1)
+  filledCount     Int           @default(0)
   roleDescription String?
-  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  applications    Application[]
 
   @@unique([postId, categoryId])
 }
@@ -136,6 +137,7 @@ model Application {
   id                 String         @id @default(uuid())
   workerId           String
   postId             String
+  categoryId         String?
   status             String         @default("Pending")
   message            String?        @db.Text
   availableDays      String?        @db.Text
@@ -147,10 +149,11 @@ model Application {
   updatedAt          DateTime       @updatedAt
   post               Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
   worker             User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  category           PostCategory?  @relation(fields: [categoryId], references: [id])
   review             WorkerReview?
   clientReview       ClientReview?
 
-  @@unique([workerId, postId])
+  @@index([workerId, postId])
 }
 
 model ClientReview {

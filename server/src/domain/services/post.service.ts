@@ -218,6 +218,7 @@ export const getSubcontractById = async (id: string): Promise<DomainPost | null>
 
 export interface MySubcontractStats {
   active: number
+  inProgress: number
   paused: number
   completed: number
   averageRating: number
@@ -250,6 +251,7 @@ export const getMySubcontractManager = async (userId: string): Promise<{
 
   const stats: MySubcontractStats = {
     active: subcontracts.filter((s) => s.status === PostStatus.Active).length,
+    inProgress: subcontracts.filter((s) => s.status === PostStatus.InProgress).length,
     paused: subcontracts.filter((s) => s.status === PostStatus.Paused).length,
     completed: subcontracts.filter((s) => s.status === PostStatus.Completed).length,
     averageRating: rating.averageRating,

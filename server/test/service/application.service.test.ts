@@ -40,6 +40,7 @@ const mockApplication = {
   id: "app-1",
   workerId: "worker-1",
   postId: "post-1",
+  categoryId: null,
   status: "Pending",
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -50,6 +51,7 @@ const mockApplication = {
   chargesVisit: false,
   visitCost: null,
   post: { userId: "client-1", title: "Test post", status: "Active", type: "Post" },
+  category: null,
 }
 
 describe("acceptApplication", () => {
@@ -119,7 +121,7 @@ describe("applyToPost", () => {
   }
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
-    message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+    categoryId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
   }
 
@@ -149,7 +151,7 @@ describe("applyToPost", () => {
   it("lanza 409 si el worker ya se postuló al post", async () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
-      message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+      categoryId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
@@ -188,6 +190,7 @@ describe("applyToPost", () => {
 describe("applyToSubcontract", () => {
   const validInput = {
     postId: "subcontract-1",
+    categoryId: "cat-1",
     availableDays: ["Lunes", "Martes"],
     availableTimeFrom: "09:00",
     availableTimeTo: "18:00",
@@ -218,7 +221,7 @@ describe("applyToSubcontract", () => {
 
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
-    message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+    categoryId: "cat-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
   }
 
@@ -264,10 +267,10 @@ describe("applyToSubcontract", () => {
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 
-  it("lanza 409 si el worker ya se postuló", async () => {
+  it("lanza 409 si el worker ya se postuló a este rubro", async () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
-      message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+      categoryId: "cat-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })

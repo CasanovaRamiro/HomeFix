@@ -13,6 +13,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
           categories: { include: { category: { select: { name: true } } } },
         },
       },
+      category: { include: { category: { select: { name: true } } } },
       clientReview: { select: { id: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -20,16 +21,18 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
   return raw.map(toDomainMyApplication)
 }
 
-export const findApplication = (workerId: string, postId: string) =>
-  prisma.application.findUnique({
-    where: { workerId_postId: { workerId, postId } },
-  })
+export const findApplication = (workerId: string, postId: string, categoryId?: string) => {
+  const where: any = { workerId, postId }
+  if (categoryId) where.categoryId = categoryId
+  return prisma.application.findFirst({ where })
+}
 
 export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
       post: { select: { userId: true, title: true, status: true, type: true } },
+      category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
 
@@ -44,6 +47,7 @@ export const createApplication = (workerId: string, input: CreateApplicationInpu
     data: {
       workerId,
       postId: input.postId,
+      categoryId: input.categoryId ?? null,
       status: ApplicationStatus.Pending,
       message: input.message ?? null,
       availableDays: JSON.stringify(input.availableDays),
@@ -89,6 +93,7 @@ export const findApplicationsByPost = async (postId: string): Promise<DomainPost
         },
       },
       review: { select: { id: true } },
+      category: { include: { category: { select: { name: true } } } },
     },
     orderBy: { createdAt: 'desc' },
   })

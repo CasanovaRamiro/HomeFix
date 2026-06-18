@@ -7,6 +7,7 @@ import {
   deleteApplication,
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
+import prisma from '../../lib/prisma.js'
 import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
 import { findUserById } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
@@ -68,11 +69,17 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta subcontratación ya no está disponible'), { status: 400 })
   if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propia subcontratación'), { status: 400 })
 
-  const hasVacancies = post.categories.some((c) => (c.quantity != null ? c.filledCount! < c.quantity : false))
-  if (!hasVacancies) throw Object.assign(new Error('No hay vacantes disponibles'), { status: 400 })
+  if (!input.categoryId) throw Object.assign(new Error('Debes seleccionar un rubro para postularte'), { status: 400 })
 
-  const existing = await findApplication(workerId, input.postId)
-  if (existing) throw Object.assign(new Error('Ya te postulaste a esta subcontratación'), { status: 409 })
+  const category = post.categories.find((c) => c.id === input.categoryId)
+  if (!category) throw Object.assign(new Error('El rubro seleccionado no pertenece a esta subcontratación'), { status: 400 })
+
+  if ((category.quantity != null ? category.filledCount! >= category.quantity : true)) {
+    throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400 })
+  }
+
+  const existing = await findApplication(workerId, input.postId, input.categoryId)
+  if (existing) throw Object.assign(new Error('Ya te postulaste a este rubro'), { status: 409 })
 
   if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
     throw Object.assign(new Error('visitCost debe ser un número positivo cuando chargesVisit es true'), { status: 400 })
@@ -95,10 +102,27 @@ export const acceptApplication = async (clientId: string, applicationId: string)
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
   if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
 
+  if (application.post.type === PostType.SubContract) {
+    if (!application.category || application.category.filledCount >= application.category.quantity) {
+      throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400 })
+    }
+    const alreadyAccepted = await prisma.application.findFirst({
+      where: {
+        workerId: application.workerId,
+        postId: application.postId,
+        status: ApplicationStatus.Accepted,
+        id: { not: applicationId },
+      },
+    })
+    if (alreadyAccepted) {
+      throw Object.assign(new Error('El trabajador ya fue contratado para otro rubro'), { status: 400 })
+    }
+  }
+
   const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
 
   if (application.post.type === PostType.SubContract) {
-    await incrementPostFilledCount(application.postId)
+    await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
   } else {
     await updatePostStatus(application.postId, PostStatus.InProgress)
   }
@@ -144,7 +168,7 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
   const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
 
   if (isSubContract) {
-    await decrementPostFilledCount(application.postId)
+    await decrementPostFilledCount(application.postId, application.categoryId ?? undefined)
     const categories = await findPostCategories(application.postId)
     const anyFilled = categories.some((c) => c.filledCount > 0)
     if (!anyFilled && application.post.status === PostStatus.InProgress) {

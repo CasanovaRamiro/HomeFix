@@ -55,6 +55,7 @@ const mockAcceptedApp = {
   id: 'app-uuid-1',
   workerId,
   postId,
+  categoryId: null,
   status: 'Accepted',
   createdAt: new Date(),
   updatedAt: new Date(),

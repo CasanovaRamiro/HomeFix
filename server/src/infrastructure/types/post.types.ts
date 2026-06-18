@@ -19,6 +19,7 @@ export interface PrismaPostFull {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   categories: {
+    id: string
     category: { id: string; name: string }
     quantity: number
     filledCount: number

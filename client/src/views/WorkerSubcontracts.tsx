@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlayCircle, PauseCircle, CheckCircle, Star, ArrowLeft, GitBranch, Calendar, Users, AlertCircle, XCircle } from 'lucide-react'
+import { PlayCircle, PauseCircle, CheckCircle, Star, ArrowLeft, GitBranch, Calendar, Users, AlertCircle, XCircle, Activity } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 import { fetchMySubcontractManager } from '../services/posts'
 import type { SubcontractDetailDTO } from '../types/post'
@@ -63,48 +63,30 @@ function RatingCard({
         border: '1px solid #E2E8F0',
         borderRadius: 16,
         padding: '24px 20px',
-        display: 'flex', alignItems: 'center', gap: 16,
+        display: 'flex', alignItems: 'center', gap: 10,
         cursor: 'default',
       }}
     >
-      <div style={{
-        width: 48, height: 48, borderRadius: 12,
-        background: 'rgba(139, 92, 246, 0.1)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <Star size={22} color="#8B5CF6" />
-      </div>
-      <div>
-        {reviewCount > 0 ? (
-          <>
-            <p style={{ fontSize: 28, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.1 }}>
-              {averageRating}
-            </p>
-            <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', fontWeight: 500 }}>
-              Calificación ({reviewCount} {reviewCount === 1 ? 'reseña' : 'reseñas'})
-            </p>
-          </>
-        ) : (
-          <>
-            <p style={{ fontSize: 22, fontWeight: 700, color: '#94A3B8', margin: 0, lineHeight: 1.1 }}>
-              &mdash;
-            </p>
-            <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', fontWeight: 500 }}>
-              Sin reseñas
-            </p>
-          </>
-        )}
-      </div>
+      {reviewCount > 0 ? (
+        <>
+          <span style={{ fontSize: 28, fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
+            {averageRating.toFixed(1)}
+          </span>
+          <Star size={22} color="#F59E0B" fill="#F59E0B" />
+        </>
+      ) : (
+        <span style={{ fontSize: 14, color: '#94A3B8', fontWeight: 500 }}>Sin reseñas</span>
+      )}
     </div>
   )
 }
 
-type FilterTab = 'Todas' | 'Active' | 'Paused' | 'Completed' | 'Cancelled'
+type FilterTab = 'Todas' | 'Active' | 'InProgress' | 'Paused' | 'Completed' | 'Cancelled'
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'Todas', label: 'Todas' },
   { key: 'Active', label: 'Activas' },
+  { key: 'InProgress', label: 'En desarrollo' },
   { key: 'Paused', label: 'Pausadas' },
   { key: 'Completed', label: 'Completadas' },
   { key: 'Cancelled', label: 'Canceladas' },
@@ -112,6 +94,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 
 const statusColor: Record<string, string> = {
   Active: '#2563EB',
+  'In progress': '#8B5CF6',
   Paused: '#F59E0B',
   Completed: '#10B981',
   Cancelled: '#EF4444',
@@ -119,6 +102,7 @@ const statusColor: Record<string, string> = {
 
 const statusBg: Record<string, string> = {
   Active: 'rgba(37, 99, 235, 0.1)',
+  'In progress': 'rgba(139, 92, 246, 0.1)',
   Paused: 'rgba(245, 158, 11, 0.1)',
   Completed: 'rgba(16, 185, 129, 0.1)',
   Cancelled: 'rgba(239, 68, 68, 0.1)',
@@ -126,6 +110,7 @@ const statusBg: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   Active: 'Activa',
+  'In progress': 'En desarrollo',
   Paused: 'Pausada',
   Completed: 'Completada',
   Cancelled: 'Cancelada',
@@ -134,7 +119,7 @@ const statusLabel: Record<string, string> = {
 export default function WorkerSubcontracts() {
   const navigate = useNavigate()
   const [data, setData] = useState<{
-    stats: { active: number; paused: number; completed: number; averageRating: number; reviewCount: number }
+    stats: { active: number; inProgress: number; paused: number; completed: number; averageRating: number; reviewCount: number }
     subcontracts: SubcontractDetailDTO[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -150,6 +135,7 @@ export default function WorkerSubcontracts() {
   const filtered = useMemo(() => {
     if (!data) return []
     if (filter === 'Todas') return data.subcontracts
+    if (filter === 'InProgress') return data.subcontracts.filter((s) => s.status === 'In progress')
     return data.subcontracts.filter((s) => s.status === filter)
   }, [data, filter])
 
@@ -203,8 +189,9 @@ export default function WorkerSubcontracts() {
           </div>
         ) : (
           <>
-            <div className="wd-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="wd-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
               <MetricCard icon={PlayCircle} iconColor="#2563EB" iconBg="rgba(37, 99, 235, 0.1)" value={data.stats.active} label="Activas" />
+              <MetricCard icon={Activity} iconColor="#8B5CF6" iconBg="rgba(139, 92, 246, 0.1)" value={data.stats.inProgress} label="En desarrollo" />
               <MetricCard icon={PauseCircle} iconColor="#F59E0B" iconBg="rgba(245, 158, 11, 0.1)" value={data.stats.paused} label="Pausadas" />
               <MetricCard icon={CheckCircle} iconColor="#10B981" iconBg="rgba(16, 185, 129, 0.1)" value={data.stats.completed} label="Completadas" />
               <RatingCard averageRating={data.stats.averageRating} reviewCount={data.stats.reviewCount} />

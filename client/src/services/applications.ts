@@ -9,6 +9,7 @@ export interface ApplicationResponse {
 
 export interface ApplyToPostInput {
   postId: string
+  categoryId?: string
   message?: string
   availableDays: string[]
   availableTimeFrom: string
