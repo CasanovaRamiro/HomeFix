@@ -255,7 +255,7 @@ export default function AvailableSubcontracts() {
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
   const paginated = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const totalVacantes = subcontratos.reduce(
+  const totalVacantes = filtrados.reduce(
     (acc, s) => acc + s.categories.reduce((a, c) => a + (c.quantity - c.filledCount), 0),
     0,
   )
