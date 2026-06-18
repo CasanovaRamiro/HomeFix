@@ -4,7 +4,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
-  CreditCard, MailCheck, Fingerprint,
+  CreditCard, MailCheck,
 } from 'lucide-react'
 import api from '../services/api'
 import { useTheme } from '../hooks/useTheme'
@@ -112,11 +112,7 @@ export default function RegisterWorker() {
         categories: selected,
       })
       setErrors({})
-      if (kycMethod === 'automatic') {
-        navigate('/kyc')
-      } else {
-        setSubmitted(true)
-      }
+      setSubmitted(true)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
@@ -169,10 +165,10 @@ export default function RegisterWorker() {
 
               <button
                 type="button"
-                onClick={() => navigate(kycMethod === 'automatic' ? '/kyc' : '/login')}
+                onClick={() => navigate('/login')}
                 className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
-                {kycMethod === 'automatic' ? 'Iniciar verificación de identidad' : 'Ir a iniciar sesión'}
+                Ir a iniciar sesión
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -589,7 +585,7 @@ export default function RegisterWorker() {
                       </>
                     ) : (
                       <>
-                        {kycMethod === 'automatic' ? 'Iniciar verificación' : 'Continuar con verificación'}
+                        Continuar con verificación
                         <ArrowRight className="w-5 h-5" />
                       </>
                     )}
