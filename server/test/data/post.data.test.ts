@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import type { CreatePostInput } from "../../src/domain/types/post.types.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus, createSubPost, findEmergencyPosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -278,5 +278,270 @@ describe("findAvailableSubcontracts", () => {
   it("should return empty array when no subcontracts exist", async () => {
     const posts = await findAvailableSubcontracts();
     expect(posts).toEqual([]);
+  });
+});
+
+describe("createSubPost", () => {
+  it("should create a subcontract post with positions", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Subcontract for electrical",
+      description: "Need electricians",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 2, roleDescription: "Senior electrician" }],
+    });
+
+    expect(post.title).toBe("Subcontract for electrical");
+    expect(post.type).toBe("subcontract");
+    expect(post.categories).toHaveLength(1);
+    expect(post.categories[0].quantity).toBe(2);
+    expect(post.categories[0].roleDescription).toBe("Senior electrician");
+  });
+
+  it("should create a subcontract linked to a parent post", async () => {
+    const parent = await createPost(createValidPost());
+
+    const sub = await createSubPost({
+      userId,
+      parentPostId: parent.id,
+      title: "Sub post",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+
+    expect(sub.parentPostId).toBe(parent.id);
+    expect(sub.type).toBe("subcontract");
+  });
+
+  it("should default status to Active", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Sub",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+
+    expect(post.status).toBe("Active");
+  });
+
+  it("should not be an emergency post", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Sub",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+
+    expect(post.isEmergency).toBe(false);
+  });
+});
+
+describe("findEmergencyPosts", () => {
+  const futureExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+  it("should return active emergency posts not yet expired", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Emergency Post",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        isEmergency: true,
+        emergencyExpiresAt: futureExpiry,
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findEmergencyPosts();
+    expect(posts.length).toBeGreaterThanOrEqual(1);
+    expect(posts.every((p) => p.isEmergency)).toBe(true);
+  });
+
+  it("should return empty array when no emergency posts exist", async () => {
+    const posts = await findEmergencyPosts();
+    expect(posts).toEqual([]);
+  });
+
+  it("should filter by category when provided", async () => {
+    const otherCat = await createCategory("Other Category");
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Emergency Post",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        isEmergency: true,
+        emergencyExpiresAt: futureExpiry,
+        categories: { create: { categoryId } },
+      },
+    });
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Other Emergency",
+        description: "Other",
+        address: "Calle 456",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        isEmergency: true,
+        emergencyExpiresAt: futureExpiry,
+        categories: { create: { categoryId: otherCat.id } },
+      },
+    });
+
+    const posts = await findEmergencyPosts("Test Category");
+    expect(posts.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
+  });
+
+  it("should not return non-emergency posts", async () => {
+    await createPost(createValidPost());
+
+    const posts = await findEmergencyPosts();
+    expect(posts).toEqual([]);
+  });
+});
+
+describe("createPost with images", () => {
+  it("should attach images when provided", async () => {
+    const post = await createPost({
+      ...createValidPost(),
+      images: [{ url: "https://example.com/img1.jpg" }, { url: "https://example.com/img2.jpg" }],
+    });
+
+    expect(post.images).toHaveLength(2);
+    expect(post.images.map((i: { url: string }) => i.url)).toContain("https://example.com/img1.jpg");
+  });
+});
+
+describe("searchByDistance", () => {
+  const BA_LAT = -34.6037;
+  const BA_LNG = -58.3816;
+
+  it("returns empty array when no posts are within the radius", async () => {
+    const results = await searchByDistance(BA_LAT, BA_LNG, 1);
+    expect(results).toEqual([]);
+  });
+
+  it("returns posts within the radius with distance field", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Nearby Post",
+        description: "Near Buenos Aires",
+        address: "Corrientes 1000",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        latitude: BA_LAT,
+        longitude: BA_LNG,
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const results = await searchByDistance(BA_LAT, BA_LNG, 1);
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0].distance).toBeDefined();
+    expect(typeof results[0].distance).toBe("number");
+  });
+
+  it("filters by category when provided", async () => {
+    const otherCat = await createCategory("Other");
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Nearby Post",
+        description: "Near",
+        address: "Corrientes 1000",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        latitude: BA_LAT,
+        longitude: BA_LNG,
+        categories: { create: { categoryId } },
+      },
+    });
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Other Post",
+        description: "Near other",
+        address: "Corrientes 2000",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        latitude: BA_LAT,
+        longitude: BA_LNG,
+        categories: { create: { categoryId: otherCat.id } },
+      },
+    });
+
+    const results = await searchByDistance(BA_LAT, BA_LNG, 1, "Test Category");
+    expect(results.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
+  });
+
+  it("orders results by distance ascending", async () => {
+    const CLOSE_LAT = BA_LAT;
+    const CLOSE_LNG = BA_LNG;
+    const FAR_LAT = BA_LAT + 0.05;
+    const FAR_LNG = BA_LNG;
+
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Far Post",
+        description: "Far",
+        address: "Far address",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        latitude: FAR_LAT,
+        longitude: FAR_LNG,
+        categories: { create: { categoryId } },
+      },
+    });
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Close Post",
+        description: "Close",
+        address: "Close address",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        latitude: CLOSE_LAT,
+        longitude: CLOSE_LNG,
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const results = await searchByDistance(BA_LAT, BA_LNG, 10);
+    expect(results.length).toBeGreaterThanOrEqual(2);
+    expect(results[0].distance).toBeLessThanOrEqual(results[1].distance);
   });
 });
