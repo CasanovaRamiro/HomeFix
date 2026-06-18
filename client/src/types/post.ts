@@ -155,4 +155,5 @@ export interface TrabajoView {
   clientRating: number
   address: string
   isEmergency: boolean
+  emergencyExpiresAt: string | null
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
 
@@ -9,6 +10,9 @@ interface Props {
 }
 
 export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostular }: Props) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [zoomed, setZoomed] = useState(false)
+
   return (
     <div className="trabajos-detail-card">
       <div className="trabajos-detail-head">
@@ -20,10 +24,37 @@ export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostul
       {selected.images && selected.images.length > 0 && (
         <div className="trabajo-detail-images">
           {selected.images.map((img, i) => (
-            <a key={i} href={img.url} target="_blank" rel="noreferrer">
+            <button
+              key={i}
+              type="button"
+              onClick={() => { setSelectedImage(img.url); setZoomed(false) }}
+              style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}
+            >
               <img src={img.url} alt={`Foto ${i + 1}`} />
-            </a>
+            </button>
           ))}
+        </div>
+      )}
+      {selectedImage && (
+        <div
+          className="modal-overlay"
+          role="presentation"
+          onClick={() => setSelectedImage(null)}
+          style={{ zIndex: 9999, cursor: 'zoom-out' }}
+        >
+          <img
+            src={selectedImage}
+            alt="Foto ampliada"
+            onClick={(e) => { e.stopPropagation(); setZoomed(z => !z) }}
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              borderRadius: 8, boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+              objectFit: 'contain',
+              transform: zoomed ? 'scale(2)' : 'scale(1)',
+              transition: 'transform 0.2s ease',
+              cursor: 'zoom-in',
+            }}
+          />
         </div>
       )}
       <div className="trabajos-detail-body">
