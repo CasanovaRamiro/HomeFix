@@ -77,7 +77,7 @@ export default function AiDiagnosis() {
     chatMessages: { padding: '24px', background: theme.card, border: `1px solid ${theme.border}`, minHeight: '420px', maxHeight: '500px', overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const, gap: '16px' },
     userBubble: { maxWidth: '75%', padding: '12px 16px', fontSize: '14px', lineHeight: '1.625', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.background, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 4px 18px', color: theme.primaryDark, alignSelf: 'flex-end' as const },
     aiBubble: { maxWidth: '75%', padding: '12px 16px', fontSize: '14px', lineHeight: '1.625', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.background, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 18px 4px', color: theme.primaryDark, alignSelf: 'flex-start' as const },
-    chatImage: { maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain', display: 'block' },
+    chatImage: { maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain' as const, display: 'block' },
     typingBubble: { padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 18px 4px', display: 'flex', alignItems: 'center', gap: '8px' },
     loaderDot: (delay: number) => ({ width: '8px', height: '8px', borderRadius: '50%', background: theme.muted, animation: `bounce 1s infinite`, animationDelay: `${delay}ms` }),
     chatInputBar: { padding: '16px 24px', background: theme.background, borderTop: `1px solid ${theme.border}` },
