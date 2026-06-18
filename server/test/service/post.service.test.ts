@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
+import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
@@ -14,6 +15,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
   findAvailableSubcontracts: vi.fn(),
+  findEmergencyPosts: vi.fn(),
   searchByDistance: vi.fn(),
   deletePostImages: vi.fn(),
   createSubPost: vi.fn(),
@@ -28,6 +30,19 @@ vi.mock("../../src/domain/services/user.service.js", () => ({
   getUserRating: vi.fn(),
   getWorkerRating: vi.fn(),
   getClientRating: vi.fn(),
+}));
+
+vi.mock("../../src/domain/services/notification.service.js", () => ({
+  notifyUser: vi.fn(),
+  broadcastEmergency: vi.fn(),
+}));
+
+vi.mock("../../src/infrastructure/providers/telegram.provider.js", () => ({
+  createTelegramProvider: vi.fn(() => ({ name: 'telegram', send: vi.fn() })),
+}));
+
+vi.mock("../../src/infrastructure/providers/cloudinary.provider.js", () => ({
+  deleteImage: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -834,5 +849,227 @@ describe('post.service - createSubContract', () => {
       positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
       parentPostId: undefined,
     }))
+  })
+})
+
+describe('post.service - createPost emergency', () => {
+  const emergencyInput: CreatePostInput = {
+    userId: 'uuid-user-1',
+    title: 'Caño roto urgente',
+    description: 'Se inundó el baño',
+    address: 'Calle 123',
+    categoryId: 'uuid-category-1',
+    isEmergency: true,
+  }
+
+  const createdEmergencyPost: DomainPost = {
+    id: 'uuid-emergency-1',
+    userId: 'uuid-user-1',
+    title: 'Caño roto urgente',
+    description: 'Se inundó el baño',
+    address: 'Calle 123',
+    startDate: new Date(),
+    endDate: new Date(),
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
+  }
+
+  it('creates emergency post and broadcasts to workers', async () => {
+    vi.mocked(createPost).mockResolvedValue(createdEmergencyPost)
+    vi.mocked(broadcastEmergency).mockResolvedValue(undefined)
+
+    const result = await postService.createPost(emergencyInput)
+
+    expect(createPost).toHaveBeenCalledWith(
+      expect.objectContaining({ emergencyExpiresAt: expect.any(Date) })
+    )
+    expect(broadcastEmergency).toHaveBeenCalledWith(
+      expect.anything(),
+      createdEmergencyPost.id,
+      emergencyInput.title,
+      emergencyInput.description,
+      emergencyInput.categoryId,
+    )
+    expect(result.id).toBe('uuid-emergency-1')
+  })
+
+  it('does not fail when broadcastEmergency throws', async () => {
+    vi.mocked(createPost).mockResolvedValue(createdEmergencyPost)
+    vi.mocked(broadcastEmergency).mockRejectedValue(new Error('Telegram down'))
+
+    const result = await postService.createPost(emergencyInput)
+
+    expect(result.id).toBe('uuid-emergency-1')
+  })
+})
+
+describe('post.service - validatePostInput', () => {
+  it('skips date validation when isEmergency is true', () => {
+    expect(() =>
+      postService.validatePostInput({
+        userId: 'u-1',
+        title: 'Emergency',
+        description: 'Urgent',
+        address: 'Calle 1',
+        categoryId: 'cat-1',
+        isEmergency: true,
+      })
+    ).not.toThrow()
+  })
+
+  it('throws when startDate and endDate are missing for non-emergency', () => {
+    expect(() =>
+      postService.validatePostInput({
+        userId: 'u-1',
+        title: 'Title',
+        description: 'Desc',
+        address: 'Addr',
+        categoryId: 'cat-1',
+      })
+    ).toThrow('startDate and endDate are required')
+  })
+})
+
+describe('post.service - listEmergencyPosts', () => {
+  const mockEmergencyPost: DomainPost = {
+    id: 'emg-1',
+    userId: 'user-1',
+    title: 'Caño roto',
+    description: 'Urgente',
+    address: 'Calle 1',
+    startDate: new Date(),
+    endDate: new Date(),
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'user-1', name: 'Test', surname: 'User' },
+  }
+
+  it('returns emergency posts enriched with client rating', async () => {
+    vi.mocked(findEmergencyPosts).mockResolvedValue([mockEmergencyPost])
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 3.5, reviewCount: 2 })
+
+    const result = await postService.listEmergencyPosts()
+
+    expect(findEmergencyPosts).toHaveBeenCalledWith(undefined)
+    expect(result[0].clientRating).toBe(3.5)
+  })
+
+  it('filters by category when provided', async () => {
+    vi.mocked(findEmergencyPosts).mockResolvedValue([])
+
+    await postService.listEmergencyPosts('Plomería')
+
+    expect(findEmergencyPosts).toHaveBeenCalledWith('Plomería')
+  })
+})
+
+describe('post.service - cancelPost with accepted application', () => {
+  const activePost: DomainPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
+  }
+
+  it('notifies accepted worker when cancelling', async () => {
+    vi.mocked(findPostById).mockResolvedValue(activePost)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled' } as never)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
+    } as never)
+
+    await postService.cancelPost('uuid-1', 'user-uuid-1')
+
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      'worker-1',
+      'post_cancelled',
+      { postTitle: 'Reparación de caño' },
+    )
+  })
+})
+
+describe('post.service - finalizePost with accepted application', () => {
+  const pausedPost: DomainPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Paused',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
+  }
+
+  it('marks accepted application as Completed before finalizing', async () => {
+    vi.mocked(findPostById).mockResolvedValue(pausedPost)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
+    } as never)
+    vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Completed' } as never)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...pausedPost, status: 'Completed' } as never)
+
+    await postService.finalizePost('uuid-1', 'user-uuid-1')
+
+    expect(updateApplicationStatus).toHaveBeenCalledWith('app-1', 'Completed')
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      'worker-1',
+      'post_completed',
+      { postTitle: 'Reparación de caño' },
+    )
+  })
+})
+
+describe('post.service - completePost with accepted application', () => {
+  const inProgressPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Reparación de caño',
+    status: 'In progress',
+  }
+
+  it('marks accepted application as Completed before completing', async () => {
+    vi.mocked(findPostById).mockResolvedValue(inProgressPost as never)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
+    } as never)
+    vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Completed' } as never)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...inProgressPost, status: 'Completed' } as never)
+
+    await postService.completePost('uuid-1', 'user-uuid-1')
+
+    expect(updateApplicationStatus).toHaveBeenCalledWith('app-1', 'Completed')
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      'worker-1',
+      'post_completed',
+      { postTitle: 'Reparación de caño' },
+    )
   })
 })
