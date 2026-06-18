@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, Send, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 import ReviewStarRating from '../components/review/ReviewStarRating'
 import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
