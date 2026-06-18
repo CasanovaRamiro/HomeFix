@@ -1,3 +1,4 @@
+import { type JSX } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 interface Props {
@@ -8,7 +9,7 @@ interface Props {
   iconColor?: string
 }
 
-export default function StatCard({ label, value, icon: Icon, iconColor = '#2563EB' }: Props) {
+export default function StatCard({ label, value, icon: Icon, iconColor = '#2563EB' }: Props): JSX.Element {
   return (
     <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
       <span

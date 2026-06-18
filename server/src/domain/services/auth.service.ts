@@ -2,7 +2,7 @@ import { createHttpError } from '../../lib/errors.js'
 import { env } from '../../lib/envConfig.js'
 import { findByEmail, createUser, addUserCategories, updateUserByEmail } from '../../infrastructure/database/user.database.js'
 import { upsertCategoryByName } from '../../infrastructure/database/category.database.js'
-import { createAuth0User, loginWithAuth0, getAuth0UserInfo, assignAuth0Role, sendAuth0PasswordReset } from '../../infrastructure/providers/auth0.provider.js'
+import { createAuth0User, loginWithAuth0, getAuth0UserInfo, assignAuth0Role, sendAuth0PasswordReset, getAuth0UserByEmail, sendAuth0VerificationEmail } from '../../infrastructure/providers/auth0.provider.js'
 import { UserRole } from '../types/userRole.js'
 import type { CreateUserInput } from '../types/user.types.js'
 
@@ -109,7 +109,7 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
     email,
     password: managedPassword,
     phone,
-    role: 'worker',
+    role: UserRole.Worker,
   })
 
   const categoryIds = await Promise.all(
@@ -139,6 +139,10 @@ export const loginUser = async (input: LoginInput) => {
   const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
+  if (profile.email_verified !== true) {
+    throw createHttpError(403, 'Debes verificar tu correo electrónico antes de iniciar sesión. Revisá tu bandeja de entrada.')
+  }
+
   const profileEmail = profile.email?.toLowerCase() ?? email
   const existing = await findByEmail(profileEmail)
   const user = existing
@@ -147,6 +151,7 @@ export const loginUser = async (input: LoginInput) => {
         name: existing.name,
         email: existing.email,
         phone: existing.phone,
+        photo: existing.photo,
         role: existing.role,
         createdAt: existing.createdAt,
       }
@@ -163,8 +168,21 @@ export const loginUser = async (input: LoginInput) => {
     idToken: tokenData.id_token,
     tokenType: tokenData.token_type,
     expiresIn: tokenData.expires_in,
-    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, photo: user.photo, role: user.role, createdAt: user.createdAt },
   }
+}
+
+export const resendVerificationEmail = async (email: string | undefined) => {
+  const normalizedEmail = email?.trim().toLowerCase()
+  if (!normalizedEmail) throw createHttpError(400, 'El correo electrónico es obligatorio')
+
+  const auth0User = await getAuth0UserByEmail(normalizedEmail)
+  if (!auth0User) throw createHttpError(404, 'No encontramos una cuenta con ese correo')
+  if (auth0User.email_verified) throw createHttpError(400, 'El correo ya fue verificado')
+
+  await sendAuth0VerificationEmail(auth0User.user_id)
+
+  return { message: 'Email de verificación reenviado. Revisá tu bandeja de entrada.' }
 }
 
 export const forgotPassword = async (email: string | undefined) => {

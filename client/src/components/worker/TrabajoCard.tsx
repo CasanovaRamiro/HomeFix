@@ -1,5 +1,7 @@
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
+import { MapPin } from 'lucide-react'
+import { getCategoryMeta } from '../../views/categoryMeta'
 
 interface Props {
   trabajo: TrabajoView & { lat?: number | null; lng?: number | null }
@@ -9,7 +11,32 @@ interface Props {
   onKeyDown: (e: React.KeyboardEvent) => void
 }
 
+const PROVINCIAS = new Set([
+  'CABA', 'Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán', 'Entre Ríos',
+  'Salta', 'Corrientes', 'Santiago del Estero', 'Chaco', 'Río Negro', 'Formosa',
+  'Neuquén', 'Chubut', 'San Juan', 'Misiones', 'La Rioja', 'Catamarca', 'La Pampa',
+  'San Luis', 'Santa Cruz', 'Tierra del Fuego', 'Jujuy',
+])
+
+function shortAddress(addr: string): string {
+  const parts = addr.split(',').map((s) => s.trim()).filter(Boolean)
+  if (parts.length <= 2) return parts.join(' - ')
+  const filtered = parts.filter((p) => !/^\d+$/.test(p) && p !== 'Argentina')
+  let provIdx = -1
+  for (let i = filtered.length - 1; i >= 0; i--) {
+    if (PROVINCIAS.has(filtered[i])) { provIdx = i; break }
+  }
+  if (provIdx >= 1) {
+    let city = filtered[provIdx - 1]
+    if (city.startsWith('Partido de ') && provIdx >= 2) city = filtered[provIdx - 2]
+    return `${city} - ${filtered[provIdx]}`
+  }
+  return filtered.slice(-2).join(' - ')
+}
+
 export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, onKeyDown }: Props) {
+  const meta = getCategoryMeta(trabajo.categoria)
+
   return (
     <article
       className={`trabajo-card ${isSelected ? 'is-selected' : ''} ${isApplied ? 'is-applied' : ''}`}
@@ -18,21 +45,26 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, o
       role="button"
       tabIndex={0}
     >
-      {trabajo.photo && (
-        <img src={trabajo.photo} alt="" className="trabajo-card-img" />
-      )}
+      <div className={`trabajo-card-strip ${meta.strip}`} />
       <div className="trabajo-card-body">
        <div className="trabajo-card-head">
-         <span className="badge badge-open">{trabajo.categoria}</span>
-         {trabajo.isEmergency && (
-           <span className="badge badge-emergency">Emergencia</span>
-         )}
-         {isApplied && (
-           <span className="badge badge-applied">Postulado</span>
-         )}
+          <span className={`badge ${meta.bg} ${meta.text}`}>
+            <meta.Icon size={14} style={{ marginRight: 4 }} />
+            {trabajo.categoria}
+          </span>
+          {trabajo.isEmergency && (
+            <span className="badge badge-emergency">Emergencia</span>
+          )}
+          {isApplied && (
+            <span className="badge badge-applied">Postulado</span>
+          )}
        </div>
         <h3>{trabajo.titulo}</h3>
         <p className="trabajo-desc">{trabajo.descripcion}</p>
+        <p className="trabajo-address">
+          <MapPin size={12} />
+          {shortAddress(trabajo.address)}
+        </p>
       </div>
       <div className="trabajo-card-footer">
         <div className="trabajo-client">
@@ -42,7 +74,12 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, o
           <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
           <StarRating rating={trabajo.clientRating} />
         </div>
-        <span className="trabajo-date">{trabajo.fechaServicio}</span>
+        <div className="trabajo-card-actions">
+          <span className="trabajo-date">{trabajo.fechaServicio}</span>
+          <button type="button" className="btn-ver-detalle" onClick={(e) => { e.stopPropagation(); onClick() }}>
+            Ver detalle
+          </button>
+        </div>
       </div>
     </article>
   )

@@ -10,6 +10,7 @@ interface ConfirmModalProps {
   onConfirm: () => void
   onCancel: () => void
   loading?: boolean
+  danger?: boolean
 }
 
 export default function ConfirmModal({
@@ -21,6 +22,7 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
   loading = false,
+  danger = false,
 }: ConfirmModalProps) {
   useEffect(() => {
     if (!open) return
@@ -42,7 +44,7 @@ export default function ConfirmModal({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+            className={`px-4 py-2 rounded-lg text-white disabled:opacity-50 transition-colors flex items-center gap-2 ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
           >
             {loading && <LoadingSpinner />}
             {confirmLabel}
@@ -50,7 +52,7 @@ export default function ConfirmModal({
           <button
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-red-500 hover:text-white disabled:opacity-50 transition-colors"
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 disabled:opacity-50"
           >
             {cancelLabel}
           </button>

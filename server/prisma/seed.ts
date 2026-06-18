@@ -1,27 +1,42 @@
 import prisma from '../src/lib/prisma.js'
+import { UserRole } from '../src/domain/types/userRole.js'
 const MANAGED_PASSWORD = 'AUTH0_MANAGED_ACCOUNT'
 
 const JOB_IMAGES: Record<string, string[]> = {
-  Electricista: [
+  Electricidad: [
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
     'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
     'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
     'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=800&q=80',
-    'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
   ],
-  Plomero: [
+  Plomería: [
     'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800&q=80',
     'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&q=80',
     'https://images.unsplash.com/photo-1504148455328-c376907d9e1a?w=800&q=80',
-    'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
-    'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80',
   ],
-  Gasista: [
-    'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
-    'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
-    'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
+  Carpintería: [
+    'https://images.unsplash.com/photo-1530125724549-b8ec6a5f3ab3?w=800&q=80',
+    'https://images.unsplash.com/photo-1567789884554-0b844b597180?w=800&q=80',
+  ],
+  Pintura: [
+    'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=800&q=80',
     'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=800&q=80',
+  ],
+  Albañilería: [
+    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
+    'https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=800&q=80',
+  ],
+  Cerrajería: [
+    'https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=800&q=80',
+    'https://images.unsplash.com/photo-1599658880436-c1f8e1f1a5b1?w=800&q=80',
+  ],
+  'Aire / HVAC': [
+    'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80',
+    'https://images.unsplash.com/photo-1631545806606-38e1c1b8ca15?w=800&q=80',
+  ],
+  Electrónica: [
+    'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80',
+    'https://images.unsplash.com/photo-1531494391841-6b21c120eefe?w=800&q=80',
   ],
 }
 
@@ -141,17 +156,19 @@ async function main() {
       nationalId: '2033344455',
       nationalIdTypeId: dni.id,
       addressId: addressPalermo.id,
-      role: 'worker',
+      role: UserRole.Worker,
       phone: '+541198765432',
     },
   })
 
-  // Categorías
-  const categories = await Promise.all([
-    prisma.category.create({ data: { name: 'Electricista' } }),
-    prisma.category.create({ data: { name: 'Plomero' } }),
-    prisma.category.create({ data: { name: 'Gasista' } }),
-  ])
+  // Categorías — solo estas 8
+  const CATEGORY_NAMES = [
+    'Electricidad', 'Plomería', 'Carpintería', 'Pintura',
+    'Albañilería', 'Cerrajería', 'Aire / HVAC', 'Electrónica',
+  ] as const
+  const categories = await Promise.all(
+    CATEGORY_NAMES.map((name) => prisma.category.create({ data: { name } })),
+  )
   const categoryByName = new Map(categories.map((c) => [c.name, c]))
 
   const jobDates = [
@@ -162,110 +179,110 @@ async function main() {
     { from: new Date('2026-06-05'), until: new Date('2026-06-06') },
   ]
 
-  // 15 publicaciones — una por cada cliente, variando categorías
+  // 15 publicaciones — una por cada cliente, variando categorías (cubriendo las 8)
   const posts = [
     {
       title: 'Instalar spots LED en cocina - Recoleta',
       description: 'Necesito instalar 6 spots LED empotrables en el techo de durlock de la cocina. Las medidas son estándar.',
-      category: 'Electricista', address: 'Recoleta, CABA',
+      category: 'Electricidad', address: 'Recoleta, CABA',
       latitude: -34.5889, longitude: -58.3910,
       ...jobDates[0],
     },
     {
       title: 'Cambio de llave termomagnética - Belgrano',
       description: 'La llave térmica general salta cada vez que uso el horno eléctrico. Necesito que la revisen y la cambien.',
-      category: 'Electricista', address: 'Belgrano, CABA',
+      category: 'Electricidad', address: 'Belgrano, CABA',
       latitude: -34.5631, longitude: -58.4556,
       ...jobDates[1],
     },
     {
       title: 'Reparar pérdida de agua en baño - Almagro',
       description: 'El tanque del inodoro pierde agua constantemente. Ya cambié la válvula pero sigue perdiendo.',
-      category: 'Plomero', address: 'Almagro, CABA',
+      category: 'Plomería', address: 'Almagro, CABA',
       latitude: -34.6045, longitude: -58.4212,
       ...jobDates[2],
     },
     {
-      title: 'Colocar calefón tiro balanceado - Caballito',
-      description: 'Compré un calefón nuevo a gas (tiro balanceado) y necesito que lo instalen y conecten a la salida existente.',
-      category: 'Gasista', address: 'Caballito, CABA',
+      title: 'Colocar estantes de madera - Caballito',
+      description: 'Necesito fabricar e instalar 3 estantes flotantes de madera maciza en la pared del living.',
+      category: 'Carpintería', address: 'Caballito, CABA',
       latitude: -34.6196, longitude: -58.4457,
       ...jobDates[3],
     },
     {
       title: 'Revisar tablero eléctrico - Palermo',
       description: 'El tablero salta seguido sin motivo aparente. Quiero que un electricista revise todas las térmicas y conexiones.',
-      category: 'Electricista', address: 'Palermo, CABA',
+      category: 'Electricidad', address: 'Palermo, CABA',
       latitude: -34.5889, longitude: -58.4306,
       ...jobDates[1],
     },
     {
-      title: 'Destapar cañería principal - San Justo',
-      description: 'Urgente: la bacha de la cocina no drena. Ya probé con destapador químico pero no funcionó.',
-      category: 'Plomero', address: 'San Justo, Buenos Aires',
+      title: 'Pintar living comedor - San Justo',
+      description: 'Quiero pintar el living de 40m². Paredes lisas, color a definir. Incluye materiales.',
+      category: 'Pintura', address: 'San Justo, Buenos Aires',
       latitude: -34.6703, longitude: -58.5628,
       ...jobDates[0],
     },
     {
-      title: 'Cambiar cableado completo - Ramos Mejía',
-      description: 'Departamento de 2 ambientes con cableado viejo. Necesito cambiar todos los cables y las térmicas.',
-      category: 'Electricista', address: 'Ramos Mejía, Buenos Aires',
+      title: 'Arreglar pared con grietas - Ramos Mejía',
+      description: 'Pared con grietas profundas en el living. Necesito revocar y dejar lista para pintar.',
+      category: 'Albañilería', address: 'Ramos Mejía, Buenos Aires',
       latitude: -34.6436, longitude: -58.5639,
       ...jobDates[2],
     },
     {
-      title: 'Instalar termotanque eléctrico - Morón',
-      description: 'Compré un termotanque eléctrico de 80 litros. Necesito instalación con soporte de pared y conexión.',
-      category: 'Plomero', address: 'Morón, Buenos Aires',
+      title: 'Cambiar cilindro de cerradura - Morón',
+      description: 'La cerradura principal de la puerta de calle está trabada. Cambio de cilindro urgente.',
+      category: 'Cerrajería', address: 'Morón, Buenos Aires',
       latitude: -34.6514, longitude: -58.6212,
       ...jobDates[4],
     },
     {
-      title: 'Reparar calefactor tiro balanceado - Castelar',
-      description: 'El piloto del calefactor no se enciende. Creo que tiene suciedad en el inyector.',
-      category: 'Gasista', address: 'Castelar, Buenos Aires',
+      title: 'Instalar aire acondicionado split - Castelar',
+      description: 'Necesito instalación de split de 3000 frigorías en habitación. Pared de ladrillo vista.',
+      category: 'Aire / HVAC', address: 'Castelar, Buenos Aires',
       latitude: -34.6482, longitude: -58.6481,
       ...jobDates[4],
     },
     {
-      title: 'Fuga de agua en pared - Avellaneda',
-      description: 'Tengo una filtración en la pared del baño. Necesito romper y reparar el caño interno.',
-      category: 'Plomero', address: 'Avellaneda, Buenos Aires',
+      title: 'Reparar PC de escritorio - Avellaneda',
+      description: 'La PC no enciende. Hace un ruido extraño en la fuente. Posible cambio de fuente o placa.',
+      category: 'Electrónica', address: 'Avellaneda, Buenos Aires',
       latitude: -34.6622, longitude: -58.3653,
       ...jobDates[1],
     },
     {
-      title: 'Puesta a tierra de toda la casa - Lanús',
-      description: 'Necesito la instalación de jabalina y conexión a tierra para toda la vivienda.',
-      category: 'Electricista', address: 'Lanús, Buenos Aires',
+      title: 'Cambiar canilla de cocina - Lanús',
+      description: 'La canilla de la cocina pierde por la base. Necesito cambiarla por una nueva.',
+      category: 'Plomería', address: 'Lanús, Buenos Aires',
       latitude: -34.6939, longitude: -58.3961,
       ...jobDates[3],
     },
     {
-      title: 'Cambiar junta del inodoro - Lomas de Zamora',
-      description: 'La junta del inodoro pierde y mancha el piso. Hay que reemplazar el anillo de cera y ajustar.',
-      category: 'Plomero', address: 'Lomas de Zamora, Buenos Aires',
+      title: 'Reparar mueble de cocina - Lomas de Zamora',
+      description: 'La puerta de un mueble bajo de cocina se descolgó. Necesito arreglar bisagras y nivelar.',
+      category: 'Carpintería', address: 'Lomas de Zamora, Buenos Aires',
       latitude: -34.7619, longitude: -58.4056,
       ...jobDates[2],
     },
     {
-      title: 'Instalación de estufa tiro balanceado - Martínez',
-      description: 'Colocación de estufa a gas con salida al exterior. Incluye perforación de pared.',
-      category: 'Gasista', address: 'Martínez, Buenos Aires',
+      title: 'Pintar frente de casa - Martínez',
+      description: 'Necesito pintar el frente de la casa. Aprox 30m² de pared exterior. Incluye preparación.',
+      category: 'Pintura', address: 'Martínez, Buenos Aires',
       latitude: -34.4947, longitude: -58.5094,
       ...jobDates[2],
     },
     {
-      title: 'Cortocircuito en llaves - San Isidro',
-      description: 'Cuando llueve salta la térmica del circuito de enchufes. Posible filtraciones en caja.',
-      category: 'Electricista', address: 'San Isidro, Buenos Aires',
+      title: 'Construir tabique de durlock - San Isidro',
+      description: 'Necesito levantar un tabique divisor de 6x2.5m con durlock en un ambiente.',
+      category: 'Albañilería', address: 'San Isidro, Buenos Aires',
       latitude: -34.4701, longitude: -58.5189,
       ...jobDates[0],
     },
     {
-      title: 'Reparar pérdida de gas - Vicente López',
-      description: 'Siento olor a gas cerca del medidor. Necesito revisión urgente de la instalación.',
-      category: 'Gasista', address: 'Vicente López, Buenos Aires',
+      title: 'Mantenimiento de aire acondicionado - Vicente López',
+      description: 'Limpieza y mantenimiento de 2 splits. Filtros sucios, posible recarga de gas.',
+      category: 'Aire / HVAC', address: 'Vicente López, Buenos Aires',
       latitude: -34.5296, longitude: -58.4750,
       ...jobDates[4],
     },
@@ -324,7 +341,7 @@ async function main() {
   })
 
   console.log('Seed OK')
-  console.log(' 15 clientes, 1 trabajador, 15 posts distribuidos en AMBA')
+  console.log(` 15 clientes, 1 trabajador, ${CATEGORY_NAMES.length} categorías, 15 posts distribuidos en AMBA`)
 }
 
 main()

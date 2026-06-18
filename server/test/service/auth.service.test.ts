@@ -24,14 +24,23 @@ const mockUser = {
   phone: null as string | null,
   bio: null as string | null,
   surname: 'Test',
-  role: 'client',
+  role: UserRole.Client,
   createdAt: new Date(),
   active: true,
   deleted: false,
   emergenciesEnabled: false,
+  photo: null as string | null,
+  availability: null as string | null,
+  telegramChatId: null as string | null,
+  telegramLinkedAt: null as Date | null,
   nationalId: '12345678',
   nationalIdTypeId: 'uuid-dni',
   addressId: 'uuid-addr',
+  certificates: null as string | null,
+  gallery: null as string | null,
+  kycStatus: 'NOT_STARTED',
+  kycVerifiedAt: null,
+  diditVerificationId: null,
 }
 
 describe('auth.service - syncAuth0User', () => {
@@ -191,6 +200,7 @@ describe('auth.service - loginUser', () => {
           sub: 'auth0|1',
           email: 'jane@test.com',
           name: 'Jane',
+          email_verified: true,
         }),
       } as Response)
 

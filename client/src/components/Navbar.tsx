@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
-import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, LogOut, ChevronDown, CalendarDays } from 'lucide-react'
+import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -14,16 +14,18 @@ interface NavLinkDef {
 }
 
 const WORKER_LINKS: NavLinkDef[] = [
-  { href: '/worker',                 label: 'Inicio',               icon: Home },
-  { href: '/worker/available-jobs',  label: 'Trabajos Disponibles', icon: Briefcase },
-  { href: '/worker/calendar',        label: 'Mi Agenda',            icon: CalendarDays },
-  { href: '/worker/my-applications', label: 'Mis Postulaciones',    icon: ClipboardList },
+  { href: '/worker',                          label: 'Inicio',               icon: Home },
+  { href: '/worker/available-jobs',           label: 'Trabajos Disponibles', icon: Briefcase },
+  { href: '/worker/calendar',                 label: 'Mi Agenda',            icon: CalendarDays },
+  { href: '/worker/available-subcontracts',   label: 'Subcontratos',         icon: GitBranch },
+  { href: '/worker/my-applications',          label: 'Mis Postulaciones',    icon: ClipboardList },
+  { href: '/create-subcontract',              label: 'Subcontratar',         icon: Users },
 ]
 
 const CLIENT_LINKS: NavLinkDef[] = [
   { href: '/dashboard',        label: 'Inicio',               icon: Home },
   { href: '/post-options', label: 'Nueva Solicitud',      icon: FileText },
-  { href: '/dashboard',    label: 'Mis Publicaciones',    icon: ClipboardList },
+  { href: '/client/history', label: 'Historial', icon: ClipboardList },
 ]
 
 const AUTH_ROUTES = ['/login']
@@ -158,9 +160,13 @@ export default function Navbar(): React.ReactElement | null {
                     color:      'inherit',
                   }}
                 >
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: theme.primaryDark, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' }}>
-                    {displayInitial}
-                  </div>
+                  {user?.photo ? (
+                    <img src={user.photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: theme.primaryDark, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' }}>
+                      {displayInitial}
+                    </div>
+                  )}
                   <span style={{ fontSize: '14px', fontWeight: '500', color: theme.primaryDark, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {displayName}
                   </span>

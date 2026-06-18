@@ -8,6 +8,7 @@ vi.mock('../../src/presentation/middleware/auth0.middleware.js', async () => {
 })
 
 import { app } from '../../src/index.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 beforeEach(() => cleanDb())
 
@@ -58,7 +59,7 @@ describe('GET /auth/me', () => {
       .set('x-auth-source', 'register')
 
     expect(res.status).toBe(200)
-    expect(res.body.role).toBe('client')
+    expect(res.body.role).toBe(UserRole.Client)
   })
 })
 
@@ -145,6 +146,7 @@ describe('POST /auth/login', () => {
           sub: 'auth0|1',
           email: 'test@test.com',
           name: 'Test User',
+          email_verified: true,
         }),
       } as Response)
 

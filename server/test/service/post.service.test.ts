@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
 import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
-import { getUserRating } from "../../src/domain/services/user.service.js";
+import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
-import type { CreatePostInput, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
+import { PostType } from "../../src/domain/types/postType.js";
+import type { CreatePostInput, CreateSubcontractCommand, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   createPost: vi.fn(),
@@ -12,8 +13,10 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   updatePostStatus: vi.fn(),
   updatePost: vi.fn(),
   findAvailablePosts: vi.fn(),
+  findAvailableSubcontracts: vi.fn(),
   searchByDistance: vi.fn(),
   deletePostImages: vi.fn(),
+  createSubPost: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -23,6 +26,8 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
 
 vi.mock("../../src/domain/services/user.service.js", () => ({
   getUserRating: vi.fn(),
+  getWorkerRating: vi.fn(),
+  getClientRating: vi.fn(),
 }));
 
 beforeEach(() => vi.clearAllMocks());
@@ -167,34 +172,164 @@ describe("post.service - listAvailablePosts", () => {
   })
 
   it("should return available posts without category filter", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [mockPost], total: 1 });
 
     const result = await postService.listAvailablePosts();
 
-    expect(findAvailablePosts).toHaveBeenCalledWith(undefined);
-    expect(result).toHaveLength(1);
-    expect(result[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
-    expect(result[0].clientRating).toBe(4.5);
+    expect(findAvailablePosts).toHaveBeenCalledWith(undefined, undefined);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].categories).toEqual([{ id: "uuid-cat-1", name: "Plomero" }]);
+    expect(result.data[0].clientRating).toBe(4.5);
+    expect(result.total).toBe(1);
   });
 
   it("should filter available posts by category", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([mockPost]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [mockPost], total: 1 });
 
     const result = await postService.listAvailablePosts("Plomero");
 
-    expect(findAvailablePosts).toHaveBeenCalledWith("Plomero");
-    expect(result).toHaveLength(1);
-    expect(result[0].clientRating).toBe(4.5);
+    expect(findAvailablePosts).toHaveBeenCalledWith("Plomero", undefined);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].clientRating).toBe(4.5);
   });
 
   it("should return empty array when no posts match", async () => {
-    vi.mocked(findAvailablePosts).mockResolvedValue([]);
+    vi.mocked(findAvailablePosts).mockResolvedValue({ posts: [], total: 0 });
 
     const result = await postService.listAvailablePosts("NonExistent");
+
+    expect(result.data).toEqual([]);
+    expect(result.total).toBe(0);
+  });
+});
+
+describe("post.service - findAvailableSubcontracts", () => {
+  const mockSubcontract: DomainPost = {
+    id: "uuid-sub-1",
+    userId: "uuid-user-1",
+    title: "Electricista needed",
+    description: "Subcontract for electrical work",
+    address: "Calle 123",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ id: "uuid-cat-1", name: "Electricista" }],
+    user: { id: "uuid-user-1", name: "Test", surname: "User" },
+  };
+
+  beforeEach(() => {
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 });
+  });
+
+  it("should return available subcontracts with client rating", async () => {
+    vi.mocked(findAvailableSubcontracts).mockResolvedValue([mockSubcontract]);
+
+    const result = await postService.findAvailableSubcontracts();
+
+    expect(findAvailableSubcontracts).toHaveBeenCalledOnce();
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Electricista needed");
+    expect(result[0].clientRating).toBe(4.5);
+  });
+
+  it("should return empty array when no subcontracts are available", async () => {
+    vi.mocked(findAvailableSubcontracts).mockResolvedValue([]);
+
+    const result = await postService.findAvailableSubcontracts();
 
     expect(result).toEqual([]);
   });
 });
+
+describe("post.service - getSubcontractById", () => {
+  const subcontractMock: DomainPost = {
+    id: "uuid-sub-1",
+    userId: "mmo-user-id",
+    type: PostType.SubContract,
+    parentPostId: "parent-post-id",
+    title: "Electricista needed",
+    description: "Subcontract for electrical work",
+    address: "Calle 123",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2026-06-15"),
+    status: "Active",
+    createdAt: new Date("2026-05-25"),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [{ id: "uuid-cat-1", name: "Electricista" }],
+    user: { id: "mmo-user-id", name: "MMO", surname: "Test" },
+  }
+
+  const parentPostMock: DomainPost = {
+    id: "parent-post-id",
+    userId: "client-user-id",
+    type: PostType.Post,
+    title: "Arreglo de cocina",
+    description: "Arreglar cocina completa",
+    address: "Calle 123",
+    startDate: new Date("2026-07-01"),
+    endDate: new Date("2026-07-15"),
+    status: "Active",
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: "client-user-id", name: "Client", surname: "Test" },
+  }
+
+  it("should return subcontract with workerRating, original clientRating and parentUser", async () => {
+    vi.mocked(findPostById).mockResolvedValueOnce(subcontractMock)
+    vi.mocked(findPostById).mockResolvedValueOnce(parentPostMock)
+    vi.mocked(getWorkerRating).mockResolvedValue({ averageRating: 4.2, reviewCount: 5 })
+    vi.mocked(getClientRating).mockResolvedValue({ averageRating: 3.8, reviewCount: 2 })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(findPostById).toHaveBeenNthCalledWith(1, "uuid-sub-1")
+    expect(findPostById).toHaveBeenNthCalledWith(2, "parent-post-id")
+    expect(getWorkerRating).toHaveBeenCalledWith("mmo-user-id")
+    expect(getClientRating).toHaveBeenCalledWith("client-user-id")
+    expect(result).not.toBeNull()
+    expect(result!.type).toBe(PostType.SubContract)
+    expect(result!.workerRating).toBe(4.2)
+    expect(result!.clientRating).toBe(3.8)
+    expect(result!.parentUser).toEqual({ name: "Client", surname: "Test" })
+  })
+
+  it("should return null for regular post (type: post)", async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...subcontractMock, type: PostType.Post })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(result).toBeNull()
+  })
+
+  it("should return null when post does not exist", async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    const result = await postService.getSubcontractById("non-existent-id")
+
+    expect(result).toBeNull()
+  })
+
+  it("should return subcontract without parentPostId (no originalClientRating)", async () => {
+    const noParentSub = { ...subcontractMock, parentPostId: undefined }
+    vi.mocked(findPostById).mockResolvedValue(noParentSub)
+    vi.mocked(getWorkerRating).mockResolvedValue({ averageRating: 4.0, reviewCount: 3 })
+
+    const result = await postService.getSubcontractById("uuid-sub-1")
+
+    expect(result).not.toBeNull()
+    expect(result!.workerRating).toBe(4.0)
+    expect(result!.clientRating).toBeUndefined()
+  })
+})
 
 describe("post.service - searchPostsByDistance", () => {
   it("should call searchByDistance with correct params", async () => {
@@ -461,6 +596,12 @@ describe('post.service - reopenPost', () => {
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      message: null,
+      availableDays: null,
+      availableTimeFrom: null,
+      availableTimeTo: null,
+      chargesVisit: false,
+      visitCost: null,
     })
     vi.mocked(updateApplicationStatus).mockResolvedValue({
       id: 'app-1',
@@ -469,6 +610,12 @@ describe('post.service - reopenPost', () => {
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      message: null,
+      availableDays: null,
+      availableTimeFrom: null,
+      availableTimeTo: null,
+      chargesVisit: false,
+      visitCost: null,
     })
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 
@@ -576,5 +723,116 @@ describe('post.service - updatePost', () => {
   it('lanza error si endDate <= startDate', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
     await expect(postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, endDate: new Date('2026-05-01') })).rejects.toThrow('endDate must be after startDate')
+  })
+})
+
+describe('post.service - createSubContract', () => {
+  const validInput: CreateSubcontractCommand = {
+    userId: 'mmo-user-id',
+    parentPostId: 'parent-post-id',
+    positions: [
+      { categoryId: 'cat-1', quantity: 2, roleDescription: 'Albañilería general' },
+      { categoryId: 'cat-2', quantity: 1, roleDescription: 'Instalación eléctrica' },
+    ],
+  }
+
+  const parentPostMock: DomainPost = {
+    id: 'parent-post-id',
+    userId: 'client-user-id',
+    title: 'Arreglo de cocina',
+    description: 'Arreglar cocina completa',
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-15'),
+    address: 'Calle 123',
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'client-user-id', name: 'Client', surname: 'Test' },
+  }
+
+  const createMockSubPost = (overrides: Partial<DomainPost> = {}): DomainPost => ({
+    id: `sub-post-${Math.random().toString(36).slice(2, 8)}`,
+    userId: 'mmo-user-id',
+    title: 'Subcontratación: Arreglo de cocina',
+    description: '',
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-15'),
+    address: 'Calle 123',
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'mmo-user-id', name: 'MMO', surname: 'Test' },
+    ...overrides,
+  })
+
+  it('creates one subcontract per position with parentPostId', async () => {
+    vi.mocked(findPostById).mockResolvedValue(parentPostMock)
+    vi.mocked(findAcceptedApplication).mockResolvedValue({
+      id: 'app-1',
+      workerId: 'mmo-user-id',
+      postId: 'parent-post-id',
+      status: 'Accepted',
+    } as never)
+    vi.mocked(createSubPost)
+      .mockResolvedValueOnce(createMockSubPost({ title: 'Subcontratación: Arreglo de cocina - Albañilería general' }))
+      .mockResolvedValueOnce(createMockSubPost({ title: 'Subcontratación: Arreglo de cocina - Instalación eléctrica' }))
+
+    const results = await postService.createSubContract(validInput)
+
+    expect(findPostById).toHaveBeenCalledWith('parent-post-id')
+    expect(findAcceptedApplication).toHaveBeenCalledWith('parent-post-id')
+    expect(createSubPost).toHaveBeenCalledTimes(2)
+    expect(results).toHaveLength(2)
+    expect(results[0].title).toBe('Subcontratación: Arreglo de cocina - Albañilería general')
+    expect(results[1].title).toBe('Subcontratación: Arreglo de cocina - Instalación eléctrica')
+    expect(createSubPost).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      positions: [{ categoryId: 'cat-1', quantity: 2, roleDescription: 'Albañilería general' }],
+    }))
+    expect(createSubPost).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      positions: [{ categoryId: 'cat-2', quantity: 1, roleDescription: 'Instalación eléctrica' }],
+    }))
+  })
+
+  it('throws 404 when parentPost does not exist', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.createSubContract(validInput)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('throws 403 when user is not the accepted MMO on parentPost', async () => {
+    vi.mocked(findPostById).mockResolvedValue(parentPostMock)
+    vi.mocked(findAcceptedApplication).mockResolvedValue(null)
+
+    await expect(postService.createSubContract(validInput)).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('creates one subcontract per position without parentPostId', async () => {
+    const noParentInput: CreateSubcontractCommand = {
+      userId: 'mmo-user-id',
+      startDate: new Date('2026-08-01'),
+      endDate: new Date('2026-08-15'),
+      address: 'Otra calle 456',
+      positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
+    }
+    vi.mocked(createSubPost).mockResolvedValue(
+      createMockSubPost({ parentPostId: undefined, title: 'Subcontratación - Pintura' })
+    )
+
+    const results = await postService.createSubContract(noParentInput)
+
+    expect(createSubPost).toHaveBeenCalledTimes(1)
+    expect(results).toHaveLength(1)
+    expect(results[0].parentPostId).toBeUndefined()
+    expect(results[0].title).toBe('Subcontratación - Pintura')
+    expect(createSubPost).toHaveBeenCalledWith(expect.objectContaining({
+      positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
+      parentPostId: undefined,
+    }))
   })
 })

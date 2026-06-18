@@ -9,12 +9,19 @@ const publicFields = {
   name: true,
   email: true,
   phone: true,
+  photo: true,
   role: true,
   createdAt: true,
 } as const
 
 export const findByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email } })
+
+export const findUserById = (id: string) =>
+  prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, phone: true, telegramChatId: true },
+  })
 
 export const findAll = (): Promise<DomainUser[]> =>
   prisma.user.findMany({ select: publicFields })
@@ -142,4 +149,14 @@ export const updateUserByEmail = (
     where: { email },
     data,
     select: publicFields,
+  })
+
+export const updateUserKycStatus = (
+  email: string,
+  data: { kycStatus: string; kycVerifiedAt?: Date | null; diditVerificationId?: string | null },
+) =>
+  prisma.user.update({
+    where: { email },
+    data,
+    select: { ...publicFields, kycStatus: true, kycVerifiedAt: true, diditVerificationId: true },
   })

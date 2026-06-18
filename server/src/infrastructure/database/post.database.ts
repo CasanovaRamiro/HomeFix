@@ -1,14 +1,62 @@
 import prisma from '../../lib/prisma.js'
 import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
+import { PostType } from '../../domain/types/postType.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
 import { PostStatus } from '../../domain/types/postStatus.js'
 import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import { EMERGENCY_DURATION_MS } from '../../domain/constants.js'
 
+type _CreatePostRecordInput = {
+  userId: string
+  type: PostType
+  parentPostId: string | null
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  isEmergency: boolean
+  emergencyExpiresAt: Date | null
+  images?: { url: string }[]
+  categories: {
+    categoryId: string
+    quantity?: number
+    filledCount?: number
+    roleDescription?: string | null
+  }[]
+}
+
+async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPost> {
+  const raw = await prisma.post.create({
+    data: {
+      userId: data.userId,
+      type: data.type,
+      parentPostId: data.parentPostId,
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      address: data.address,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      isEmergency: data.isEmergency,
+      emergencyExpiresAt: data.emergencyExpiresAt,
+      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
+      categories: { create: data.categories },
+    },
+    select: postFields,
+  }) as unknown as PrismaPostFull
+  return toDomainPost(raw)
+}
+
 const postFields = {
   id: true,
   userId: true,
+  type: true,
+  parentPostId: true,
   title: true,
   description: true,
   startDate: true,
@@ -31,6 +79,9 @@ const postFields = {
           name: true,
         },
       },
+      quantity: true,
+      filledCount: true,
+      roleDescription: true,
     },
   },
   user: {
@@ -46,32 +97,60 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
   const now = new Date()
   const startDate = data.startDate ? new Date(data.startDate) : now
   const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
-  const raw = await prisma.post.create({
-    data: {
-      userId: data.userId,
-      title: data.title,
-      description: data.description,
-      startDate,
-      endDate,
-      address: data.address,
-      isEmergency: data.isEmergency ?? false,
-      emergencyExpiresAt: data.emergencyExpiresAt ?? null,
-      categories: {
-        create: { categoryId: data.categoryId },
-      },
-      ...(data.images?.length ? {
-        images: {
-          create: data.images.map((img) => ({ url: img.url })),
-        },
-      } : {}),
-    },
-    select: postFields,
-  }) as unknown as PrismaPostFull
-  return toDomainPost(raw)
+  return _createPostRecord({
+    userId: data.userId,
+    type: PostType.Post,
+    parentPostId: null,
+    title: data.title,
+    description: data.description,
+    startDate,
+    endDate,
+    address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    isEmergency: data.isEmergency ?? false,
+    emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    images: data.images,
+    categories: [{ categoryId: data.categoryId }],
+  })
 }
+
+export const createSubPost = async (data: {
+  userId: string
+  parentPostId?: string
+  title: string
+  description: string
+  startDate: Date
+  endDate: Date
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  positions: { categoryId: string; quantity: number; roleDescription: string }[]
+}): Promise<DomainPost> =>
+  _createPostRecord({
+    userId: data.userId,
+    type: PostType.SubContract,
+    parentPostId: data.parentPostId ?? null,
+    title: data.title,
+    description: data.description,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    isEmergency: false,
+    emergencyExpiresAt: null,
+    categories: data.positions.map(p => ({
+      categoryId: p.categoryId,
+      quantity: p.quantity,
+      filledCount: 0,
+      roleDescription: p.roleDescription,
+    })),
+  })
 
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
+  type: PostType.Post,
   ...(category?.trim()
     ? {
         categories: {
@@ -85,9 +164,40 @@ const availablePostWhere = (category?: string) => ({
     : {}),
 })
 
-export const findAvailablePosts = async (category?: string): Promise<DomainPost[]> => {
+export interface PaginationParams {
+  page: number
+  limit: number
+  sortOrder: 'asc' | 'desc'
+}
+
+export interface PaginatedPosts {
+  posts: DomainPost[]
+  total: number
+}
+
+export const findAvailablePosts = async (
+  category?: string,
+  pagination?: PaginationParams,
+): Promise<PaginatedPosts> => {
+  const where = availablePostWhere(category)
+  const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
+
+  const [raw, total] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      orderBy,
+      select: postFields,
+      ...(pagination ? { skip: (pagination.page - 1) * pagination.limit, take: pagination.limit } : {}),
+    }) as unknown as Promise<PrismaPostFull[]>,
+    prisma.post.count({ where }),
+  ])
+
+  return { posts: raw.map(toDomainPost), total }
+}
+
+export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
-    where: availablePostWhere(category),
+    where: { type: PostType.SubContract, status: 'Active' } as never,
     orderBy: { createdAt: 'desc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
@@ -121,7 +231,14 @@ export interface LocationSearchResult extends DomainPost {
 
 export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]> => {
   const posts = await prisma.post.findMany({
-    where: { userId, status: { in: [PostStatus.Active, PostStatus.InProgress, PostStatus.Paused, PostStatus.Completed] } },
+    where: {
+      userId,
+      OR: [
+        { status: { in: [PostStatus.Active, PostStatus.InProgress, PostStatus.Paused, PostStatus.Completed] } },
+        // Cancelled posts that had a hired worker — surfaced so the client can still review them.
+        { status: PostStatus.Cancelled, applications: { some: { status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } } } },
+      ],
+    },
     include: {
       categories: { include: { category: true } },
       applications: {
@@ -217,6 +334,7 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
+      AND p.type = 'Post'
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}

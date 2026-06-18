@@ -3,6 +3,9 @@ export interface CreateReviewInput {
   rating: number
   description?: string
   mediaUrls?: string
+  // When set, reviews this specific application (used to review a dismissed worker)
+  // instead of resolving the accepted worker from the post.
+  applicationId?: string
 }
 
 export interface DomainClientReview {

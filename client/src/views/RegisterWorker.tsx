@@ -3,11 +3,10 @@ import { useNavigate, Link } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
-  AlertCircle, ArrowRight, ArrowLeft, Shield, Check, CheckCircle2,
-  CreditCard,
+  AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
+  CreditCard, MailCheck,
 } from 'lucide-react'
 import api from '../services/api'
-import { emitAuthChange } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
@@ -113,18 +112,7 @@ export default function RegisterWorker() {
         categories: selected,
       })
       setErrors({})
-      const { data: loginData } = await api.post<{
-        accessToken: string
-        user: { id: string; name: string; role: string }
-      }>('/auth/login', { email: form.email, password: form.password })
-      localStorage.setItem('token', loginData.accessToken)
-      localStorage.setItem('user', JSON.stringify(loginData.user))
-      emitAuthChange()
-      if (kycMethod === 'automatic') {
-        navigate('/kyc')
-      } else {
-        setSubmitted(true)
-      }
+      setSubmitted(true)
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
@@ -149,23 +137,24 @@ export default function RegisterWorker() {
                 <span className="absolute inset-0 rounded-full bg-accent/15 animate-ping" />
                 <span className="relative flex items-center justify-center w-20 h-20 rounded-full bg-accent/10">
                   <span className="flex items-center justify-center w-14 h-14 rounded-full bg-accent">
-                    <CheckCircle2 className="w-8 h-8 text-white" />
+                    <MailCheck className="w-8 h-8 text-white" />
                   </span>
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900">¡Cuenta creada con éxito!</h1>
+              <h1 className="text-2xl font-bold text-slate-900">¡Verificá tu email!</h1>
               <p className="mt-3 text-slate-500">
-                Tu cuenta de profesional fue creada correctamente
-                {form.email ? <> para <span className="font-medium text-slate-900">{form.email}</span></> : null}.
-                Ya puedes iniciar sesión.
+                Te enviamos un email de verificación a{' '}
+                {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
+                Hacé clic en el enlace para activar tu cuenta.
               </p>
+              <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
               {/* KYC next step */}
               <div className="mt-6 flex gap-3 text-left bg-slate-900/5 border border-slate-900/10 rounded-xl p-4">
                 <Shield className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-slate-900">Siguiente paso: verifica tu identidad</p>
+                  <p className="font-medium text-slate-900">Después de verificar: completá tu identidad</p>
                   <p className="text-slate-500 mt-1">
                     {kycMethod === 'automatic'
                       ? 'Deberás completar la verificación automática (DNI + Reconocimiento Facial) al iniciar sesión.'
@@ -605,10 +594,38 @@ export default function RegisterWorker() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
-                  className="w-full mt-3 h-12 rounded-lg border border-slate-200 bg-white text-slate-500 font-medium flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    try {
+                      setIsSubmitting(true)
+                      await api.post<RegisterResponse>('/auth/register/worker', {
+                        name: form.name,
+                        lastName: form.lastName,
+                        email: form.email,
+                        password: form.password,
+                        phone: form.phone || undefined,
+                        categories: selected,
+                      })
+                      navigate('/login', { state: { registered: true, email: form.email } })
+                    } catch (err) {
+                      const axiosErr = err as { response?: { data?: { error?: string } } }
+                      const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
+                      setErrors({ email: msg })
+                      setStep(1)
+                    } finally {
+                      setIsSubmitting(false)
+                    }
+                  }}
+                  className="w-full mt-3 h-12 rounded-lg border border-slate-200 bg-white text-slate-500 font-medium flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors disabled:opacity-70"
                 >
-                  Omitir KYC e iniciar sesión
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                      Registrando…
+                    </>
+                  ) : (
+                    'Omitir KYC e iniciar sesión'
+                  )}
                 </button>
 
                 {/* Security Footer */}

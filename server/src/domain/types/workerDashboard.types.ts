@@ -5,9 +5,11 @@ export interface DomainWorkerProfile {
   email: string
   phone: string | null
   bio: string | null
+  photo: string | null
   createdAt: Date
   location: string | null
   categories: { id: string; name: string }[]
+  emergenciesEnabled: boolean
 }
 
 export interface DomainWorkerStats {

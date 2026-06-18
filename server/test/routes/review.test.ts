@@ -96,6 +96,64 @@ describe('POST /reviews', () => {
     expect(res.body.rating).toBe(4)
   })
 
+  it('should create a review for a dismissed worker via applicationId on an active post', async () => {
+    const reopenedPost = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Reopened job',
+        description: 'Worker was dismissed',
+        address: '456 Other St',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-02'),
+        status: 'Active',
+      },
+    })
+    const dismissed = await prisma.application.create({
+      data: { workerId, postId: reopenedPost.id, status: 'Dismissed' },
+    })
+
+    const res = await request(app)
+      .post('/reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        postId: reopenedPost.id,
+        applicationId: dismissed.id,
+        rating: 1,
+        description: 'No se presentó',
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.rating).toBe(1)
+  })
+
+  it('should return 400 when reviewing via applicationId a worker that is not dismissed', async () => {
+    const activePost = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Ongoing job',
+        description: 'Worker still hired',
+        address: '789 Test Ave',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-02'),
+        status: 'In progress',
+      },
+    })
+    const accepted = await prisma.application.create({
+      data: { workerId, postId: activePost.id, status: 'Accepted' },
+    })
+
+    const res = await request(app)
+      .post('/reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        postId: activePost.id,
+        applicationId: accepted.id,
+        rating: 3,
+      })
+
+    expect(res.status).toBe(400)
+  })
+
   it('should return 400 when rating is invalid', async () => {
     const res = await request(app)
       .post('/reviews')
@@ -180,7 +238,7 @@ describe('POST /reviews', () => {
       })
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toBe('Post must be completed before reviewing')
+    expect(res.body.error).toBe('Post must be completed or cancelled before reviewing')
   })
 
   it('should return 400 when no accepted application exists', async () => {

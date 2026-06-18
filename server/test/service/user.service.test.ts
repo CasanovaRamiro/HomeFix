@@ -3,6 +3,7 @@ import { findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAg
 import { getUserReviews, getUserRating } from '../../src/domain/services/user.service.js'
 import type { DomainClientReview } from '../../src/domain/types/review.types.js'
 import type { DomainWorkerReview } from '../../src/domain/types/worker.types.js'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 vi.mock('../../src/infrastructure/database/user.database.js', () => ({
   findClientReviewsByUserId: vi.fn(),
@@ -41,7 +42,7 @@ describe('getUserReviews', () => {
   it('returns client reviews when as=client', async () => {
     vi.mocked(findClientReviewsByUserId).mockResolvedValue([mockClientReview])
 
-    const reviews = await getUserReviews(userId, 'client')
+    const reviews = await getUserReviews(userId, UserRole.Client)
 
     expect(findClientReviewsByUserId).toHaveBeenCalledWith(userId)
     expect(reviews).toHaveLength(1)
@@ -51,7 +52,7 @@ describe('getUserReviews', () => {
   it('returns worker reviews when as=worker', async () => {
     vi.mocked(findWorkerReviewsByUserId).mockResolvedValue([mockWorkerReview])
 
-    const reviews = await getUserReviews(userId, 'worker')
+    const reviews = await getUserReviews(userId, UserRole.Worker)
 
     expect(findWorkerReviewsByUserId).toHaveBeenCalledWith(userId)
     expect(reviews).toHaveLength(1)

@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
-  CheckCircle2, User, MapPin, AlertCircle, X,
+  CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
   Eye, ChevronRight, Shield, MessageSquare, FileText,
 } from 'lucide-react'
 import api from '../services/api'
@@ -12,7 +12,9 @@ import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
-import ApplyModal from '../components/worker/ApplyModal'
+import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
+import { fetchKycStatus, type KycStatus } from '../services/kyc'
+import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +25,7 @@ interface DashboardProfile {
   email: string
   phone: string | null
   bio: string | null
+  photo: string | null
   createdAt: string
   location: string | null
   categories: { id: string; name: string }[]
@@ -70,16 +73,22 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
           {/* Left: Avatar + Info */}
           <div className="wd-left-info">
             {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
-              border: '3px solid rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, fontWeight: 700, color: '#94A3B8',
-              flexShrink: 0,
-            }}>
-              {getInitials(profile.name, profile.surname)}
-            </div>
+            {profile.photo ? (
+              <img src={profile.photo} alt={profile.name}
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.15)', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
+                border: '3px solid rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, fontWeight: 700, color: '#94A3B8',
+                flexShrink: 0,
+              }}>
+                {getInitials(profile.name, profile.surname)}
+              </div>
+            )}
 
             {/* Name & details */}
             <div>
@@ -368,7 +377,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   const [emergencies, setEmergencies] = useState<Post[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedEmergency, setSelectedEmergency] = useState<Post | null>(null)
-  const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [exito, setExito] = useState(false)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
@@ -398,16 +406,23 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
     }
   }
 
-  const handlePostular = async () => {
+  const handlePostular = async (formData: ApplicationFormData) => {
     if (!selectedEmergency) return
     setEnviando(true)
     try {
-      await applyToPost(selectedEmergency.id)
+      await applyToPost({
+        postId: selectedEmergency.id,
+        message: formData.message || undefined,
+        availableDays: formData.availableDays,
+        availableTimeFrom: formData.availableTimeFrom,
+        availableTimeTo: formData.availableTimeTo,
+        chargesVisit: formData.chargesVisit,
+        visitCost: formData.visitCost,
+      })
       setAppliedIds((prev) => [...prev, selectedEmergency.id])
       setExito(true)
       setTimeout(() => {
         setSelectedEmergency(null)
-        setMensaje('')
         setExito(false)
       }, 1500)
     } catch (err: unknown) {
@@ -420,7 +435,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
 
   const handleCloseModal = () => {
     setSelectedEmergency(null)
-    setMensaje('')
     setExito(false)
   }
 
@@ -479,7 +493,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
             </div>
             <div>
               <h2 style={{ fontSize: isActive ? 20 : 16, fontWeight: 700, color: '#fff', margin: 0, transition: 'all 0.3s' }}>
-                {isActive ? 'Urgencias Entrantes' : 'Urgencias Pausadas'}
+                {isActive ? 'Urgencias Entrantes' : 'Urgencias Ocultas'}
               </h2>
               {isActive && (
                 <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>
@@ -543,7 +557,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
             textAlign: 'center', padding: '10px 20px',
             color: '#64748B', fontSize: 13,
           }}>
-            Activa el switch para recibir solicitudes urgentes.
+            Activa el switch para para ver las solicitudes urgentes.
           </div>
         )}
       </div>
@@ -561,8 +575,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
         ) : (
           <ApplyModal
             selected={postToTrabajo(selectedEmergency)}
-            mensaje={mensaje}
-            onMensajeChange={setMensaje}
             onEnviar={handlePostular}
             onClose={handleCloseModal}
             enviando={enviando}
@@ -584,6 +596,7 @@ interface Application {
   appliedAt: string
   serviceDate: string
   status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
+  clientPhone: string | null
 }
 
 // ─── Priority helpers ────────────────────────────────────────────────────────
@@ -753,18 +766,112 @@ const VALIDATIONS = [
 
 const QUICK_LINKS = [
   { label: 'Buscar Trabajos',   icon: Briefcase,     href: '/worker/available-jobs' },
-  { label: 'Mi Perfil',         icon: User,           href: '/worker' },
+  { label: 'Mi Perfil',         icon: User,           href: '' },
   { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
   { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
   { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
 ]
 
-function Sidebar({ workerId }: { workerId: string }) {
+const KYC_BADGE: Record<string, { icon: typeof CheckCircle2; bg: string; color: string }> = {
+  APPROVED:   { icon: CheckCircle2, bg: '#ECFDF5', color: '#059669' },
+  DECLINED:   { icon: XCircle, bg: '#FEF2F2', color: '#DC2626' },
+  EXPIRED:    { icon: Clock, bg: '#FEF2F2', color: '#DC2626' },
+  IN_REVIEW:  { icon: Clock, bg: '#FFFBEB', color: '#D97706' },
+}
+
+function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStatus }) {
   const navigate = useNavigate()
+  const links = QUICK_LINKS.map((l) => l.label === 'Mi Perfil' ? { ...l, href: `/worker/${workerId}` } : l)
+
+  function renderKycButton() {
+    const badge = KYC_BADGE[kycStatus]
+    if (kycStatus === 'APPROVED') {
+      const B = badge
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Verificada
+          </span>
+        </div>
+      )
+    }
+
+    if (kycStatus === 'DECLINED' || kycStatus === 'EXPIRED') {
+      const B = badge
+      return (
+        <button
+          type="button"
+          onClick={() => navigate('/kyc')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', background: 'transparent', border: 'none', padding: 0,
+            cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+        >
+          <span style={{ fontSize: 13 }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Rechazada
+          </span>
+        </button>
+      )
+    }
+
+    if (kycStatus === 'IN_REVIEW') {
+      const B = badge
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: B.bg, color: B.color,
+            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+          }}>
+            <B.icon size={12} />
+            Pendiente
+          </span>
+        </div>
+      )
+    }
+
+    return (
+      <button
+        key="dni"
+        type="button"
+        onClick={() => navigate('/kyc')}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', background: 'transparent', border: 'none', padding: 0,
+          cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+      >
+        <span style={{ fontSize: 13 }}>Dni</span>
+        <ChevronRight size={18} color="#94A3B8" />
+      </button>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Mis Validaciones */}
+        {/* Telegram */}
+        <TelegramLinkCard />
+
+        {/* Mis Validaciones */}
       <div style={{
         background: '#fff', border: '1px solid #E2E8F0',
         borderRadius: 16, padding: '20px 20px 16px',
@@ -779,12 +886,17 @@ function Sidebar({ workerId }: { workerId: string }) {
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {VALIDATIONS.map((v) => (
-            <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
-              <CheckCircle2 size={18} color="#10B981" />
-            </div>
-          ))}
+          {VALIDATIONS.map((v) => {
+            if (v.label === 'Dni') {
+              return <div key={v.label}>{renderKycButton()}</div>
+            }
+            return (
+              <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
+                <CheckCircle2 size={18} color="#10B981" />
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -797,7 +909,7 @@ function Sidebar({ workerId }: { workerId: string }) {
           Accesos Rapidos
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {QUICK_LINKS.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.label}
               to={link.href}
@@ -937,6 +1049,30 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
                 </span>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>{date}</span>
               </div>
+              {app.status === 'Accepted' && (
+                <div style={{ marginTop: 10 }}>
+                  <button
+                    onClick={() => {
+                      const phone = app.clientPhone?.replace(/\D/g, '')
+                      if (!phone) return
+                      window.open(
+                        `https://wa.me/${phone}?text=${encodeURIComponent('Hola, me contrataste para: ' + app.title)}`,
+                        '_blank'
+                      )
+                    }}
+                    style={{
+                      background: '#10B981', border: 'none', borderRadius: 8,
+                      color: '#fff', fontSize: 12, fontWeight: 600,
+                      padding: '6px 16px', cursor: app.clientPhone ? 'pointer' : 'not-allowed',
+                      opacity: app.clientPhone ? 1 : 0.5,
+                    }}
+                    onMouseEnter={(e) => { if (app.clientPhone) (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                  >
+                    Contactar
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
@@ -1036,6 +1172,8 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
 
 // ─── Main View ───────────────────────────────────────────────────────────────
 
+const DASHBOARD_POLL_MS = 60000
+
 export default function WorkerDashboard() {
   useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -1045,6 +1183,11 @@ export default function WorkerDashboard() {
   const [jobsLoading, setJobsLoading] = useState(true)
   const [applications, setApplications] = useState<Application[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
+  const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const appsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const kycIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -1060,8 +1203,8 @@ export default function WorkerDashboard() {
   const fetchNearbyJobs = useCallback(async () => {
     try {
       const category = localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-      const { data: posts } = await fetchAvailablePosts(category)
-      setNearbyJobs(posts.slice(0, 3))
+      const res = await fetchAvailablePosts(category, { page: 1, limit: 3, sortOrder: 'desc' })
+      setNearbyJobs(res.data.data)
     } catch {
       setNearbyJobs([])
     } finally {
@@ -1080,11 +1223,33 @@ export default function WorkerDashboard() {
     }
   }, [])
 
+  const fetchKyc = useCallback(async () => {
+    try {
+      const { kycStatus: status } = await fetchKycStatus()
+      setKycStatus(status)
+    } catch {
+      // keep default NOT_STARTED
+    }
+  }, [])
+
   useEffect(() => {
     void fetchDashboard()
     void fetchNearbyJobs()
     void fetchApplications()
-  }, [fetchDashboard, fetchNearbyJobs, fetchApplications])
+    void fetchKyc()
+
+    dashIntervalRef.current = setInterval(() => { void fetchDashboard() }, DASHBOARD_POLL_MS)
+    jobsIntervalRef.current = setInterval(() => { void fetchNearbyJobs() }, DASHBOARD_POLL_MS)
+    appsIntervalRef.current = setInterval(() => { void fetchApplications() }, DASHBOARD_POLL_MS)
+    kycIntervalRef.current = setInterval(() => { void fetchKyc() }, DASHBOARD_POLL_MS)
+
+    return () => {
+      if (dashIntervalRef.current) clearInterval(dashIntervalRef.current)
+      if (jobsIntervalRef.current) clearInterval(jobsIntervalRef.current)
+      if (appsIntervalRef.current) clearInterval(appsIntervalRef.current)
+      if (kycIntervalRef.current) clearInterval(kycIntervalRef.current)
+    }
+  }, [fetchDashboard, fetchNearbyJobs, fetchApplications, fetchKyc])
 
   if (loading) {
     return (
@@ -1149,7 +1314,7 @@ export default function WorkerDashboard() {
         </div>
 
         {/* Right sidebar */}
-        <Sidebar workerId={data.profile.id} />
+        <Sidebar workerId={data.profile.id} kycStatus={kycStatus} />
       </div>
 
       <style>{`

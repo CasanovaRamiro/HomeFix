@@ -38,6 +38,107 @@ export interface PostDTO {
 export type Post = PostDTO
 export type PostCategory = PostCategoryDTO
 
+export interface CreateSubcontractInput {
+  parentPostId?: string
+  title?: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  address?: string
+  latitude?: number | null
+  longitude?: number | null
+  positions: {
+    categoryId: string
+    quantity: number
+    roleDescription: string
+  }[]
+}
+
+// --- Subcontract types ---
+
+export interface SubcontractPosition {
+  categoryId: string
+  quantity: number
+  roleDescription: string
+}
+
+export interface SubcontractDTO {
+  id: string
+  userId: string
+  parentPostId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  categories: PostCategoryDTO[]
+  user: {
+    id: string
+    name: string
+    surname: string
+  }
+  clientRating: number
+}
+
+export interface SubcontractCategoryDTO {
+  id: string
+  name: string
+  quantity: number
+  filledCount: number
+  roleDescription: string
+}
+
+export interface AvailableSubcontractDTO {
+  id: string
+  userId: string
+  parentPostId: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  images: { url: string }[]
+  latitude: number | null
+  longitude: number | null
+  categories: SubcontractCategoryDTO[]
+  user: { id: string; name: string; surname: string }
+  clientRating: number
+}
+
+export interface SubcontractDetailCategory {
+  id: string
+  name: string
+  quantity: number
+  filledCount: number
+  roleDescription: string
+}
+
+export interface SubcontractDetailDTO {
+  id: string
+  userId: string
+  type: string
+  parentPostId?: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  status: string
+  createdAt: string
+  images: { url: string }[]
+  latitude: number | null
+  longitude: number | null
+  categories: SubcontractDetailCategory[]
+  user: { id: string; name: string; surname: string }
+  clientRating: number
+  workerRating?: number
+  parentUser?: { name: string; surname: string }
+}
+
 export interface TrabajoView {
   id: string
   titulo: string
@@ -48,6 +149,7 @@ export interface TrabajoView {
   createdAt: string
   startDate: string
   photo: string
+  images: { url: string }[]
   clientName: string
   clientSurname: string
   clientRating: number

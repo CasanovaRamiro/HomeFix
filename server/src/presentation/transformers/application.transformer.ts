@@ -13,5 +13,12 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   status: app.status,
   category: app.category,
   hasReview: app.hasReview,
+  clientPhone: app.clientPhone,
   clientRating: app.clientRating,
+  message: app.message,
+  availableDays: app.availableDays,
+  availableTimeFrom: app.availableTimeFrom,
+  availableTimeTo: app.availableTimeTo,
+  chargesVisit: app.chargesVisit,
+  visitCost: app.visitCost,
 })

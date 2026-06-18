@@ -7,6 +7,7 @@ import { useCreatePost } from '../hooks/useCreatePost'
 import SuccessScreen from '../components/post/SuccessScreen'
 import SubmitButton from '../components/ui/SubmitButton'
 import FileUpload from '../components/ui/FileUpload'
+import AddressAutocomplete from '../components/ui/AddressAutocomplete'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -185,16 +186,17 @@ export default function CreatePost() {
 
               <div style={{ marginBottom: '32px' }}>
                 <label style={s.formLabel}>Dirección</label>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={form.address}
-                  onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
-                  placeholder="Ingresá tu dirección"
-                  required
-                  style={s.formInput}
+                  onChange={(address, lat, lng) => setForm(p => ({ ...p, address, latitude: lat, longitude: lng }))}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                 />
+                {form.latitude && form.longitude && (
+                  <p style={{ margin: '6px 0 0', fontSize: '12px', color: theme.accent }}>
+                    ✓ Ubicación confirmada
+                  </p>
+                )}
               </div>
 
               <div style={{ marginBottom: '24px' }}>

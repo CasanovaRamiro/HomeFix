@@ -8,4 +8,5 @@ export interface StoredUser {
   name: string
   email: string
   role: UserRole
+  photo?: string | null
 }

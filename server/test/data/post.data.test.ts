@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import type { CreatePostInput } from "../../src/domain/types/post.types.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -111,7 +111,7 @@ describe("findAvailablePosts", () => {
     const p2 = await createPost({ ...createValidPost(), title: "Cancelled post" });
     await prisma.post.update({ where: { id: p2.id }, data: { status: "Cancelled" } });
 
-    const posts = await findAvailablePosts();
+    const { posts } = await findAvailablePosts();
     expect(posts.length).toBeGreaterThanOrEqual(1);
     expect(posts.every((p) => p.status === "Active")).toBe(true);
   });
@@ -121,13 +121,13 @@ describe("findAvailablePosts", () => {
     await createPost(createValidPost());
     await createPost({ ...createValidPost(), title: "Plumbing post", categoryId: cat2.id });
 
-    const posts = await findAvailablePosts("Test Category");
+    const { posts } = await findAvailablePosts("Test Category");
     expect(posts.length).toBeGreaterThanOrEqual(1);
     expect(posts.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
   });
 
   it("should return empty array when no active posts match category", async () => {
-    const posts = await findAvailablePosts("NonExistentCategory");
+    const { posts } = await findAvailablePosts("NonExistentCategory");
     expect(posts).toEqual([]);
   });
 });
@@ -193,6 +193,17 @@ describe("findPostsByUser", () => {
     expect(posts).toHaveLength(1);
   });
 
+  it("should include a Cancelled post that had a hired worker", async () => {
+    const worker = await createUser("worker@test.com", "Worker", "hashed");
+    const post = await createPost(createValidPost());
+    await prisma.application.create({ data: { workerId: worker.id, postId: post.id, status: "Accepted" } });
+    await prisma.post.update({ where: { id: post.id }, data: { status: "Cancelled" } });
+
+    const posts = await findPostsByUser(userId);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].status).toBe("Cancelled");
+  });
+
   it("should return empty array when user has no posts", async () => {
     const posts = await findPostsByUser('non-existent-id');
     expect(posts).toEqual([]);
@@ -213,5 +224,59 @@ describe("findPostsByUser", () => {
     const posts = await findPostsByUser(userId);
     expect(posts).toHaveLength(2);
     expect(posts[0].title).toBe("Second post");
+  });
+});
+
+describe("findAvailableSubcontracts", () => {
+  it("should return only active subcontracts", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Electricista needed",
+        description: "Subcontract for electrical work",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        address: "Calle 123",
+        status: "Active",
+        type: "subcontract",
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toHaveLength(1);
+    expect(posts[0].title).toBe("Electricista needed");
+    expect(posts[0].type).toBe("subcontract");
+  });
+
+  it("should exclude regular posts", async () => {
+    await createPost(createValidPost());
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
+  });
+
+  it("should exclude non-active subcontracts", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Cancelled subcontract",
+        description: "Test",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        address: "Calle 123",
+        status: "Cancelled",
+        type: "subcontract",
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
+  });
+
+  it("should return empty array when no subcontracts exist", async () => {
+    const posts = await findAvailableSubcontracts();
+    expect(posts).toEqual([]);
   });
 });

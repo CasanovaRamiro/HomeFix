@@ -2,6 +2,7 @@ import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorke
 import type { DomainClientReview } from '../types/review.types.js'
 import type { DomainWorkerReview } from '../types/worker.types.js'
 import type { DomainUserRating, ReviewTarget } from '../types/user.types.js'
+import { UserRole } from '../types/userRole.js'
 
 export const listUsers = () => findAll()
 
@@ -9,13 +10,19 @@ export const getUserReviews = (
   userId: string,
   as?: ReviewTarget,
 ): Promise<DomainWorkerReview[] | DomainClientReview[]> => {
-  if (as === 'client') return findClientReviewsByUserId(userId)
-  if (as === 'worker') return findWorkerReviewsByUserId(userId)
+  if (as === UserRole.Client) return findClientReviewsByUserId(userId)
+  if (as === UserRole.Worker) return findWorkerReviewsByUserId(userId)
   return Promise.resolve([])
 }
 
 export const getClientRating = async (userId: string): Promise<DomainUserRating> => {
   const agg = await getClientReviewAggregate(userId)
+  const averageRating = agg._count > 0 ? Math.round((agg._avg.rating ?? 0) * 10) / 10 : 0
+  return { averageRating, reviewCount: agg._count }
+}
+
+export const getWorkerRating = async (userId: string): Promise<DomainUserRating> => {
+  const agg = await getWorkerReviewAggregate(userId)
   const averageRating = agg._count > 0 ? Math.round((agg._avg.rating ?? 0) * 10) / 10 : 0
   return { averageRating, reviewCount: agg._count }
 }

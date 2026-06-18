@@ -1,12 +1,15 @@
 import { Router } from 'express'
 import {
   createPost,
+  createSubContract,
   getUserPosts,
   getPostById,
+  getSubcontractById,
   finalizePost,
   pausePost,
   cancelPost,
   listAvailablePosts,
+  findAvailableSubcontracts,
   listEmergencyPosts,
   searchPostsByDistance,
   completePost,
@@ -14,7 +17,11 @@ import {
   updatePost,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
+import type { Auth0Claims } from '../../domain/services/auth.service.js'
+import { UserRole } from '../../domain/types/userRole.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
+import { validateCreateSubcontractBody } from '../middleware/subcontract.middleware.js'
+import type { CreateSubcontractRequest } from '../types/post.types.js'
 
 const router = Router()
 
@@ -23,13 +30,17 @@ router.get('/', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
 
-    const result = await listAvailablePosts()
-    res.json(result.map(toPostDTO))
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10))
+    const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc'
+
+    const result = await listAvailablePosts(undefined, { page, limit, sortOrder })
+    res.json({ ...result, data: result.data.map(toPostDTO) })
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
@@ -42,14 +53,18 @@ router.get('/available', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
 
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
-    const result = await listAvailablePosts(category)
-    res.json(result.map(toPostDTO))
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10))
+    const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc'
+
+    const result = await listAvailablePosts(category, { page, limit, sortOrder })
+    res.json({ ...result, data: result.data.map(toPostDTO) })
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
@@ -62,7 +77,7 @@ router.get('/emergency', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -82,7 +97,7 @@ router.get('/search-location', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
 
-    if (user.role !== 'worker') {
+    if (user.role !== UserRole.Worker) {
       res.status(403).json({ error: 'Worker access required' })
       return
     }
@@ -94,6 +109,45 @@ router.get('/search-location', async (req, res, next) => {
 
     const posts = await searchPostsByDistance(lat, lng, radius, category)
     res.json(posts.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/availableSubcontracts', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await findAvailableSubcontracts()
+    res.json(result.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/subcontracts/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const result = await getSubcontractById(req.params.id)
+    if (!result) return res.status(404).json({ error: 'Subcontract not found' })
+    res.json(toPostDTO(result))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
@@ -118,6 +172,25 @@ router.post('/create', async (req, res, next) => {
     const user = await syncAuth0User(claims)
     const result = await createPost({ ...req.body, userId: user.id })
     res.status(201).json(toPostDTO(result))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.post('/create-subcontract', validateCreateSubcontractBody, async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as Auth0Claims | undefined
+    const user = await syncAuth0User(claims)
+    const body = req.body as CreateSubcontractRequest
+    const results = await createSubContract({
+      ...body,
+      userId: user.id,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+    })
+    res.status(201).json(results.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400

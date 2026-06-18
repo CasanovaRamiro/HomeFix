@@ -32,36 +32,61 @@ export default function Login() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailNotVerified, setEmailNotVerified] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const googleUnregistered = searchParams.get('google') === 'unregistered'
 
-  const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
+  const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value })
+    if (emailNotVerified) setEmailNotVerified(false)
+    if (error) setError('')
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setSuccess('')
+    setEmailNotVerified(false)
+    setResendSuccess('')
 
     try {
       setIsSubmitting(true)
       const { data } = await api.post<{
         accessToken: string
         idToken?: string
-        user: { id: string; name: string; email: string; role: UserRole }
+        user: { id: string; name: string; email: string; photo: string | null; role: UserRole }
       }>('/auth/login', form)
       localStorage.setItem('token', data.accessToken)
-      localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, role: data.user.role }))
+      localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, email:data.user.email, role: data.user.role, photo: data.user.photo ?? null }))
       emitAuthChange()
       const destination = data.user.role === UserRole.Worker ? '/worker' : '/dashboard'
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { error?: string } } }
-      setError(axiosErr.response?.data?.error ?? 'Error al iniciar sesion')
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
+      if (axiosErr.response?.status === 403) {
+        setEmailNotVerified(true)
+      } else {
+        setError(axiosErr.response?.data?.error ?? 'Error al iniciar sesion')
+      }
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleResendVerification = async () => {
+    setResendLoading(true)
+    setResendSuccess('')
+    try {
+      await api.post('/auth/resend-verification', { email: form.email })
+      setResendSuccess('Email reenviado. Revisá tu bandeja de entrada.')
+    } catch {
+      setResendSuccess('No se pudo reenviar. Intentá de nuevo más tarde.')
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -89,6 +114,29 @@ export default function Login() {
             )}
             {success && (
               <div className="au-success"><CheckCircle2 /> {success}</div>
+            )}
+            {emailNotVerified && (
+              <div className="flex flex-col gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>
+                    Debés verificar tu correo antes de iniciar sesión. Revisá tu bandeja de entrada
+                    {form.email ? <> en <strong>{form.email}</strong></> : null}.
+                  </span>
+                </div>
+                {resendSuccess ? (
+                  <p className="text-xs text-amber-700 pl-6">{resendSuccess}</p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void handleResendVerification()}
+                    disabled={resendLoading || !form.email}
+                    className="self-start ml-6 text-xs font-semibold underline underline-offset-2 hover:text-amber-900 disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Reenviando…' : 'Reenviar email de verificación'}
+                  </button>
+                )}
+              </div>
             )}
 
             <form className="au-form" onSubmit={handleSubmit} noValidate>

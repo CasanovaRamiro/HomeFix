@@ -6,7 +6,6 @@ interface PostCardProps {
   post: Post
   hasAcceptedWorker?: boolean
   onComplete?: () => void
-  onReopen?: () => void
   onViewReview?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
@@ -31,7 +30,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, onComplete, onViewReview, onPause, onCancel, onEdit }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
@@ -61,6 +60,20 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
 
       <p className="desc">{post.description}</p>
 
+      {post.images && post.images.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', margin: '0 0 0.75rem', paddingBottom: '4px' }}>
+          {post.images.map((img, i) => (
+            <a key={i} href={img.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0 }}>
+              <img
+                src={img.url}
+                alt={`Foto ${i + 1}`}
+                style={{ width: '96px', height: '72px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+              />
+            </a>
+          ))}
+        </div>
+      )}
+
       <div className="info-row">
         <strong>Fechas:</strong>{' '}
         {new Date(post.startDate).toLocaleDateString()} — {new Date(post.endDate).toLocaleDateString()}
@@ -70,8 +83,14 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
       </div>
 
       <div className="flex justify-between items-center" style={{ marginTop: '0.5rem' }}>
-        <div className="info-row" style={{ marginBottom: 0 }}>
-          <strong>Direccion:</strong> {post.address}
+        <div className="info-row" style={{ marginBottom: 0, minWidth: 0, flex: 1, marginRight: '1rem' }}>
+          <strong>Direccion:</strong>{' '}
+          <span
+            title={post.address}
+            style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
+          >
+            {post.address}
+          </span>
         </div>
         {post.status === 'Completed' && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
@@ -81,7 +100,7 @@ export default function PostCard({ post, hasAcceptedWorker, onComplete, onReopen
         {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
           <div className="post-actions" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
             <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
-            <button className="btn-reopen" onClick={onReopen}>Reabrir busqueda</button>
+            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar contratacion</button>
           </div>
         )}
         {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (

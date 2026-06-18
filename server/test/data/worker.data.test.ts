@@ -6,7 +6,7 @@ import { UserRole } from '../../src/domain/types/userRole.js'
 beforeEach(() => cleanDb())
 
 const makeWorker = (email: string, name: string, extra: Record<string, unknown> = {}) =>
-  createUser(email, name, 'hashed', { role: 'worker', ...extra })
+  createUser(email, name, 'hashed', { role: UserRole.Worker, ...extra })
 
 const makeUser = (email: string, name: string, extra: Record<string, unknown> = {}) =>
   createUser(email, name, 'hashed', { role: 'user', ...extra })

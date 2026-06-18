@@ -4,6 +4,8 @@ import type { PostDTO, UserPostDTO } from '../types/post.types.js'
 export const toPostDTO = (post: DomainPost): PostDTO => ({
   id: post.id,
   userId: post.userId,
+  type: post.type,
+  parentPostId: post.parentPostId,
   title: post.title,
   description: post.description,
   startDate: post.startDate.toISOString(),
@@ -19,6 +21,9 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   categories: post.categories,
   user: post.user,
   clientRating: post.clientRating ?? 0,
+  workerRating: post.workerRating,
+  originalClientRating: post.originalClientRating,
+  parentUser: post.parentUser,
 })
 
 export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({

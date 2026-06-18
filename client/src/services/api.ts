@@ -28,7 +28,8 @@ export const getWorkerReviews = (id: string): Promise<WorkerReview[]> =>
   api.get<WorkerReview[]>(`/workers/${id}/reviews`).then((r) => r.data)
 
 export interface WorkerCategory {
-  category: { id: string; name: string }
+  id: string
+  name: string
 }
 
 export interface Worker {
@@ -38,10 +39,28 @@ export interface Worker {
   phone: string | null
   bio: string | null
   role: string
+  photo: string | null
+  availability: string[]
   createdAt: string
-  categories: WorkerCategory[]
+  categories: { id: string; name: string }[]
   emergenciesEnabled: boolean
+  certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
+  gallery: { id: string; imageUrl: string; caption: string | null }[]
 }
+
+export interface WorkerUpdateData {
+  name?: string
+  phone?: string | null
+  bio?: string | null
+  photo?: string | null
+  categoryIds?: string[]
+  availability?: string[]
+  certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]
+  gallery?: { id: string; imageUrl: string; caption?: string | null }[]
+}
+
+export const updateWorkerProfile = (id: string, data: WorkerUpdateData): Promise<Worker> =>
+  api.patch<Worker>(`/workers/${id}`, data).then((r) => r.data)
 
 export interface WorkerReview {
   id: string
@@ -97,5 +116,14 @@ export const updatePost = (id: string, data: UpdatePostData) =>
 
 export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
   api.patch(`/users/${id}/emergencies`, { enabled })
+
+export const telegramLink = (): Promise<{ code: string; deepLink: string; message: string }> =>
+  api.post('/telegram/link').then((r) => r.data)
+
+export const telegramStatus = (): Promise<{ linked: boolean; linkedAt: string | null }> =>
+  api.get('/telegram/status').then((r) => r.data)
+
+export const telegramUnlink = () =>
+  api.delete('/telegram/unlink')
 
 export default api
