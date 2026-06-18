@@ -619,11 +619,13 @@ function JobsInZoneSection({
   loading,
   locationFilter,
   onToggleLocation,
+  userId,
 }: {
   posts: Post[]
   loading: boolean
   locationFilter: LocationFilter | null
   onToggleLocation: () => void
+  userId?: string
 }) {
   const navigate = useNavigate()
 
@@ -725,6 +727,7 @@ function JobsInZoneSection({
               trabajo={trabajo}
               isSelected={false}
               isApplied={false}
+              isOwnPost={trabajo.userId === userId}
               onClick={() => navigate(`/worker/available-jobs?id=${post.id}`)}
               onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -1318,7 +1321,7 @@ export default function WorkerDashboard() {
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
         <div>
-          <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} />
+          <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} userId={data.profile.id} />
           <MisPostulacionesSection apps={applications} loading={appsLoading} />
           <ProximasCitasSection apps={applications} loading={appsLoading} />
         </div>

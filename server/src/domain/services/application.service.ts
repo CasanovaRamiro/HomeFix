@@ -43,6 +43,7 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   const post = await findPostById(input.postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
+  if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propio trabajo'), { status: 400 })
 
   const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })

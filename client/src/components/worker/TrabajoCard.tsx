@@ -8,6 +8,7 @@ interface Props {
   trabajo: TrabajoView & { lat?: number | null; lng?: number | null }
   isSelected: boolean
   isApplied: boolean
+  isOwnPost: boolean
   onClick: () => void
   onKeyDown: (e: React.KeyboardEvent) => void
 }
@@ -45,7 +46,7 @@ function shortAddress(addr: string): string {
   return filtered.slice(-2).join(' - ')
 }
 
-export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, onKeyDown }: Props) {
+export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost, onClick, onKeyDown }: Props) {
   const meta = getCategoryMeta(trabajo.categoria)
   const [timeLeft, setTimeLeft] = useState(() =>
     trabajo.emergencyExpiresAt ? calcTimeLeft(trabajo.emergencyExpiresAt) : ''
@@ -96,6 +97,9 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, onClick, o
             <meta.Icon size={14} style={{ marginRight: 4 }} />
             {trabajo.categoria}
           </span>
+          {isOwnPost && (
+            <span className="badge badge-own">Tu publicación</span>
+          )}
           {isApplied && (
             <span className="badge badge-applied">Postulado</span>
           )}
