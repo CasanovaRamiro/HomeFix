@@ -371,7 +371,7 @@ export const finalizePost = async (postId: string, userId: string) => {
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
     for (const p of groupPosts) {
-      if (p.status !== PostStatus.Paused) continue
+      if (p.status === PostStatus.Completed || p.status === PostStatus.Cancelled) continue
       const accepted = await findAcceptedApplications(p.id)
       for (const app of accepted) {
         await updateApplicationStatus(app.id, ApplicationStatus.Completed)
@@ -404,7 +404,7 @@ export const completePost = async (postId: string, userId: string) => {
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
     for (const p of groupPosts) {
-      if (p.status !== PostStatus.InProgress) continue
+      if (p.status === PostStatus.Completed || p.status === PostStatus.Cancelled) continue
       const accepted = await findAcceptedApplications(p.id)
       for (const app of accepted) {
         await updateApplicationStatus(app.id, ApplicationStatus.Completed)

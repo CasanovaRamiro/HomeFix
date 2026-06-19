@@ -116,6 +116,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
       )
     }
     if (applicationStatus === 'Rejected') return null
+    if ((postStatus === 'Completed' || postStatus === 'Cancelled') && applicationStatus === 'Pending') return null
     if (applicationStatus === 'Dismissed') {
       return <span className="text-red-700 bg-red-100 px-3 py-1 rounded text-sm font-medium">Despedido</span>
     }

@@ -700,7 +700,7 @@ describe('post.service - finalizePost', () => {
     expect(updatePostStatus).toHaveBeenCalledTimes(2)
   })
 
-  it('salta posts no Paused en grupo SubContract al finalizar', async () => {
+  it('procesa todos los posts no Completed/Cancelled en grupo SubContract al finalizar', async () => {
     const subcontractPost: DomainPost = {
       ...mockPost,
       type: PostType.SubContract,
@@ -717,12 +717,13 @@ describe('post.service - finalizePost', () => {
 
     await postService.finalizePost('uuid-1', 'user-uuid-1')
 
-    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
     expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
-    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
     expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
-    expect(updatePostStatus).toHaveBeenCalledTimes(1)
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
   })
 })
 
@@ -783,7 +784,7 @@ describe('post.service - completePost', () => {
     expect(updatePostStatus).toHaveBeenCalledTimes(2)
   })
 
-  it('salta posts no In progress en grupo SubContract al completar', async () => {
+  it('procesa todos los posts no Completed/Cancelled en grupo SubContract al completar', async () => {
     const subcontractPost = {
       ...mockPost,
       type: PostType.SubContract,
@@ -800,12 +801,13 @@ describe('post.service - completePost', () => {
 
     await postService.completePost('uuid-1', 'user-uuid-1')
 
-    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
     expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
-    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
     expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
-    expect(updatePostStatus).toHaveBeenCalledTimes(1)
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
   })
 })
 

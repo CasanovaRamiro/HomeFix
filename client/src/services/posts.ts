@@ -50,6 +50,7 @@ export const fetchSubcontractById = (id: string) =>
 export interface SubcontractManagerData {
   stats: {
     active: number
+    inProgress: number
     paused: number
     completed: number
     averageRating: number

@@ -335,7 +335,7 @@ export default function SubcontractDetail() {
           )}
 
           {/* Apply button (non-group) */}
-          {!isGroup && (
+          {!isGroup && subcontract.status === PostStatus.Active && (
             <div className="pt-2 pb-8">
               <button className="btn-primary" onClick={() => setShowModal(true)}>
                 Postularme
