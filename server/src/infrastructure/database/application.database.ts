@@ -2,6 +2,7 @@ import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import prisma from '../../lib/prisma.js'
 import { toDomainMyApplication, toDomainPostApplication } from '../transformers/application.transformer.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
+import type { Prisma } from '@prisma/client'
 
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
@@ -22,7 +23,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
 }
 
 export const findApplication = (workerId: string, postId: string, categoryId?: string) => {
-  const where: any = { workerId, postId }
+  const where: Prisma.ApplicationFindFirstArgs['where'] = { workerId, postId }
   if (categoryId) where.categoryId = categoryId
   return prisma.application.findFirst({ where })
 }

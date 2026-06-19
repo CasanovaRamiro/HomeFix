@@ -39,7 +39,7 @@ const mockPrisma = vi.hoisted(() => {
   return {
     fn_updateMany: fn,
     application: { updateMany: fn },
-    $transaction: vi.fn((cb: (tx: any) => Promise<any>) => cb({
+    $transaction: vi.fn(<T>(cb: (tx: { application: { updateMany: typeof fn } }) => T): T => cb({
       application: { updateMany: fn },
     })),
   }

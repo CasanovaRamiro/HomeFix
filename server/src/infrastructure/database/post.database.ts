@@ -396,23 +396,17 @@ export const searchByDistance = async (
     .sort((a, b) => a.distance - b.distance)
 }
 
-export const incrementPostFilledCount = (postId: string, categoryId?: string) => {
-  const where: any = { postId }
-  if (categoryId) where.id = categoryId
-  return prisma.postCategory.updateMany({
-    where,
+export const incrementPostFilledCount = (postId: string, categoryId?: string) =>
+  prisma.postCategory.updateMany({
+    where: { postId, ...(categoryId ? { id: categoryId } : {}) },
     data: { filledCount: { increment: 1 } },
   })
-}
 
-export const decrementPostFilledCount = (postId: string, categoryId?: string) => {
-  const where: any = { postId, filledCount: { gt: 0 } }
-  if (categoryId) where.id = categoryId
-  return prisma.postCategory.updateMany({
-    where,
+export const decrementPostFilledCount = (postId: string, categoryId?: string) =>
+  prisma.postCategory.updateMany({
+    where: { postId, filledCount: { gt: 0 }, ...(categoryId ? { id: categoryId } : {}) },
     data: { filledCount: { decrement: 1 } },
   })
-}
 
 export const findPostCategories = (postId: string) =>
   prisma.postCategory.findMany({

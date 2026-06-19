@@ -127,8 +127,9 @@ export const acceptApplication = async (clientId: string, applicationId: string)
         await updatePostStatus(application.postId, PostStatus.InProgress)
       }
     })
-  } catch (err: any) {
-    if (err?.code === 'P2002' || err?.message?.includes('Unique constraint')) {
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string }
+    if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
       throw Object.assign(new Error('El trabajador ya fue contratado para otro rubro'), { status: 400 })
     }
     throw err
