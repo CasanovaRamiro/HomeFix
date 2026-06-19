@@ -69,6 +69,7 @@ model Post {
   longitude       Float?
   isEmergency     Boolean          @default(false)
   emergencyExpiresAt DateTime?
+  allowsSubcontracting Boolean    @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   categories      PostCategory[]

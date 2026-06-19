@@ -85,6 +85,12 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
             <dt>Fecha servicio</dt>
             <dd>{selected.fechaServicio}</dd>
           </div>
+          <div>
+            <dt>Subcontratación</dt>
+            <dd style={{ color: selected.allowsSubcontracting ? '#059669' : '#DC2626', fontWeight: 600 }}>
+              {selected.allowsSubcontracting ? 'Permitida' : 'No permitida'}
+            </dd>
+          </div>
         </dl>
         {esPropio ? (
           <p className="trabajos-applied-msg" style={{ color: '#64748B' }}>Es tu publicación</p>

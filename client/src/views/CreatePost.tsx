@@ -8,6 +8,7 @@ import SuccessScreen from '../components/post/SuccessScreen'
 import SubmitButton from '../components/ui/SubmitButton'
 import FileUpload from '../components/ui/FileUpload'
 import AddressAutocomplete from '../components/ui/AddressAutocomplete'
+import InfoTooltip from '../components/ui/InfoTooltip'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -102,6 +103,41 @@ export default function CreatePost() {
                    ))}
                  </select>
                </div>
+
+               {/* Subcontracting toggle */}
+               <div style={{ ...s.emergencyCard, background: form.allowsSubcontracting ? '#F0FDF4' : '#FEF2F2', border: form.allowsSubcontracting ? '1px solid #BBF7D0' : '1px solid #FECACA' }}>
+                 <div style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                   <input
+                     type="checkbox"
+                     id="allowsSubcontracting"
+                     checked={form.allowsSubcontracting}
+                     onChange={e => setForm(p => ({ ...p, allowsSubcontracting: e.target.checked }))}
+                     style={{ opacity: 0, width: '100%', height: '100%', position: 'absolute', cursor: 'pointer', zIndex: 2 }}
+                   />
+                   <div style={{
+                     width: '44px', height: '24px', borderRadius: '12px',
+                     background: form.allowsSubcontracting ? '#10B981' : '#D1D5DB',
+                     transition: 'background 0.2s', position: 'absolute', top: 0, left: 0,
+                   }} />
+                   <div style={{
+                     width: '20px', height: '20px', background: '#fff', borderRadius: '50%',
+                     position: 'absolute', top: '2px', left: form.allowsSubcontracting ? '22px' : '2px',
+                     transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', zIndex: 1
+                   }} />
+                 </div>
+                 <div>
+                   <label htmlFor="allowsSubcontracting" style={{ ...s.emergencyLabel, color: form.allowsSubcontracting ? '#059669' : '#DC2626' }}>
+                     Permitir subcontratación
+                     <InfoTooltip text="La subcontratación permite que el trabajador contratado pueda sumar a otros profesionales para completar la tarea. Si desactivás esta opción, solo podrá trabajar él de forma individual." />
+                   </label>
+                   <p style={{ fontSize: '13px', color: form.allowsSubcontracting ? '#065F46' : '#B91C1C', margin: 0, lineHeight: '1.4' }}>
+                     {form.allowsSubcontracting
+                       ? 'El trabajador podrá contratar a otros profesionales si es necesario.'
+                       : 'El trabajador deberá realizar la tarea de forma individual.'}
+                   </p>
+                 </div>
+               </div>
+
                <div style={s.emergencyCard}>
                  <div style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
                    <input
