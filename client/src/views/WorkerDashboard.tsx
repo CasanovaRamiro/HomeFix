@@ -12,7 +12,7 @@ import { fetchEmergencyPosts, searchPostsByLocation } from '../services/posts'
 import { applyToPost } from '../services/applications'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
-import { WORKER_CATEGORY_KEY, DEFAULT_WORKER_CATEGORY, postToTrabajo } from '../lib/post'
+import { postToTrabajo } from '../lib/post'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import TrabajoCard from '../components/worker/TrabajoCard'
 import { fetchKycStatus, type KycStatus } from '../services/kyc'
@@ -70,28 +70,30 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
 
   return (
     <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+      <div className="wd-header-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
         <div className="wd-header-row">
 
           {/* Left: Avatar + Info */}
           <div className="wd-left-info">
             {/* Avatar */}
-            {profile.photo ? (
-              <img src={profile.photo} alt={profile.name}
-                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.15)', flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
-                border: '3px solid rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 24, fontWeight: 700, color: '#94A3B8',
-                flexShrink: 0,
-              }}>
-                {getInitials(profile.name, profile.surname)}
-              </div>
-            )}
+            <div className="wd-profile-avatar">
+              {profile.photo ? (
+                <img src={profile.photo} alt={profile.name}
+                  style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.15)', flexShrink: 0 }}
+                />
+              ) : (
+                <div style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+                  border: '3px solid rgba(255,255,255,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 24, fontWeight: 700, color: '#fff',
+                  flexShrink: 0,
+                }}>
+                  {getInitials(profile.name, profile.surname)}
+                </div>
+              )}
+            </div>
 
             {/* Name & details */}
             <div>
@@ -188,7 +190,7 @@ function MetricCard({
   label: string
 }) {
   return (
-    <div
+    <div className="wd-metric-card"
       style={{
         background: '#fff',
         border: '1px solid #E2E8F0',
@@ -198,19 +200,19 @@ function MetricCard({
         cursor: 'default',
       }}
     >
-      <div style={{
+      <div className="wd-metric-icon" style={{
         width: 48, height: 48, borderRadius: 12,
         background: iconBg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <Icon size={22} color={iconColor} />
+        <Icon size={22} color={iconColor} className="wd-metric-icon-svg" />
       </div>
       <div>
-        <p style={{ fontSize: 28, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.1 }}>
+        <p className="wd-metric-value" style={{ fontSize: 28, fontWeight: 700, color: '#0F172A', margin: 0, lineHeight: 1.1 }}>
           {value}
         </p>
-        <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', fontWeight: 500 }}>
+        <p className="wd-metric-label" style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0', fontWeight: 500 }}>
           {label}
         </p>
       </div>
@@ -220,7 +222,7 @@ function MetricCard({
 
 function MetricsStrip({ stats }: { stats: DashboardStats }) {
   return (
-    <div style={{
+    <div className="wd-section" style={{
       maxWidth: 1280, margin: '0 auto', padding: '0 32px',
       marginTop: -28, position: 'relative', zIndex: 10,
     }}>
@@ -463,7 +465,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   }, [isActive])
 
   return (
-    <div style={{
+    <div className="wd-section" style={{
       maxWidth: 1280, margin: '0 auto', padding: '0 32px',
       marginTop: 36,
       transition: 'all 0.3s ease'
@@ -538,7 +540,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
           loading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#94A3B8' }}>Cargando urgencias...</div>
           ) : emergencies.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 24 }}>
+            <div className="wd-emergency-grid" style={{ marginTop: 24 }}>
               {emergencies.map((post) => (
                 <EmergencyCard key={post.id} post={post} isApplied={isApplied(post.id)} onPostular={setSelectedEmergency} />
               ))}
@@ -1196,8 +1198,7 @@ export default function WorkerDashboard() {
       return
     }
     try {
-      const category = localStorage.getItem(WORKER_CATEGORY_KEY) ?? DEFAULT_WORKER_CATEGORY
-      const { data } = await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, category)
+      const { data } = await searchPostsByLocation(locationFilter.lat, locationFilter.lng, locationFilter.radius, '')
       setNearbyJobs(data.slice(0, 5))
     } catch {
       setNearbyJobs([])
@@ -1270,6 +1271,7 @@ export default function WorkerDashboard() {
         minHeight: '100vh', background: '#F3F4F6',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Montserrat', system-ui, sans-serif",
+        overflowX: 'hidden', width: '100%', maxWidth: '100%',
       }}>
         <div style={{
           width: 40, height: 40,
@@ -1289,6 +1291,7 @@ export default function WorkerDashboard() {
         alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Montserrat', system-ui, sans-serif",
         gap: 12,
+        overflowX: 'hidden', width: '100%', maxWidth: '100%',
       }}>
         <AlertCircle size={40} color="#EF4444" />
         <p style={{ color: '#EF4444', fontSize: 15, fontWeight: 500, margin: 0 }}>
@@ -1312,6 +1315,7 @@ export default function WorkerDashboard() {
     <div style={{
       minHeight: '100vh', background: '#F3F4F6',
       fontFamily: "'Montserrat', system-ui, sans-serif",
+      overflowX: 'hidden', width: '100%', maxWidth: '100%',
     }}>
       <ProfileHeader profile={data.profile} stats={data.stats} />
       <MetricsStrip stats={data.stats} />
@@ -1337,12 +1341,42 @@ export default function WorkerDashboard() {
         .wd-action-buttons { display: flex; gap: 10px; flex-shrink: 0; }
         .wd-metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
         .wd-main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+        .wd-emergency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .wd-header-container,
+        .wd-section,
+        .wd-main-grid { box-sizing: border-box; }
         @media (max-width: 1024px) { .wd-main-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px) {
-          .wd-left-info { gap: 12px; }
-          .wd-action-buttons { width: 100%; }
-          .wd-metrics-grid { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 768px) {
+          .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+          .wd-emergency-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+          .wd-header-row { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+          .wd-left-info { flex-direction: column; align-items: center; text-align: center; }
+          .wd-action-buttons { width: 100%; justify-content: center; }
+          .wd-emergency-grid { grid-template-columns: 1fr; }
+          .wd-metric-card { padding: 16px 14px !important; gap: 12px !important; }
+          .wd-metric-icon { width: 36px !important; height: 36px !important; }
+          .wd-metric-icon-svg { width: 18px !important; height: 18px !important; }
+          .wd-metric-value { font-size: 22px !important; }
+          .wd-metric-label { font-size: 11px !important; }
+          .wd-header-container,
+          .wd-section,
+          .wd-main-grid { padding-left: 16px !important; padding-right: 16px !important; }
+          .wd-profile-avatar img,
+          .wd-profile-avatar > div {
+            width: 100px !important;
+            height: 100px !important;
+            font-size: 36px !important;
+          }
+        }
+        @media (max-width: 360px) {
+          .wd-header-container,
+          .wd-section,
+          .wd-main-grid { padding-left: 12px !important; padding-right: 12px !important; }
+          .wd-action-buttons { flex-direction: column; align-items: stretch; }
+          .wd-action-buttons button { width: 100%; justify-content: center; }
+          .wd-header-row { gap: 12px; }
         }
       `}</style>
       <div style={{ marginTop: 48 }}>
