@@ -70,7 +70,7 @@ export const handleTextMessage = async (ctx: Context): Promise<void> => {
     await ctx.reply(
       '👋 ¡Hola! No tengo tu cuenta vinculada todavía.\n\n'
       + 'Para recibir notificaciones de HomeFix:\n'
-      + '1. Iniciá sesión en homefix.vercel.app\n'
+      + '1. Iniciá sesión en https://home-fix-mauve.vercel.app/\n'
       + '2. Andá a tu perfil → "Vincular Telegram"\n'
       + '3. Generá un código y enviá /link <código>',
     )
