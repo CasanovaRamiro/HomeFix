@@ -42,6 +42,12 @@ export const updateApplicationStatus = (id: string, status: string) =>
     data: { status },
   })
 
+export const rejectPendingApplications = (postId: string) =>
+  prisma.application.updateMany({
+    where: { postId, status: ApplicationStatus.Pending },
+    data: { status: ApplicationStatus.Rejected },
+  })
+
 export const createApplication = (workerId: string, input: CreateApplicationInput) =>
   prisma.application.create({
     data: {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories } from "../../src/infrastructure/database/post.database.js";
-import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
+import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
@@ -25,6 +25,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   findAcceptedApplications: vi.fn(),
   updateApplicationStatus: vi.fn(),
+  rejectPendingApplications: vi.fn(),
 }));
 
 vi.mock("../../src/domain/services/user.service.js", () => ({
@@ -517,6 +518,7 @@ describe('post.service - cancelPost', () => {
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
@@ -528,6 +530,7 @@ describe('post.service - cancelPost', () => {
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
@@ -539,6 +542,7 @@ describe('post.service - cancelPost', () => {
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
@@ -585,6 +589,10 @@ describe('post.service - cancelPost', () => {
     await postService.cancelPost('uuid-1', 'user-uuid-1')
 
     expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-3')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(3)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Cancelled')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-3', 'Cancelled')
@@ -608,6 +616,10 @@ describe('post.service - cancelPost', () => {
 
     await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
     expect(updatePostStatus).toHaveBeenCalledTimes(1)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(updatePostStatus).not.toHaveBeenCalledWith('uuid-2', 'Cancelled')
@@ -640,6 +652,7 @@ describe('post.service - finalizePost', () => {
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
     expect(result.status).toBe('Completed')
   })
@@ -679,6 +692,9 @@ describe('post.service - finalizePost', () => {
     await postService.finalizePost('uuid-1', 'user-uuid-1')
 
     expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
     expect(updatePostStatus).toHaveBeenCalledTimes(2)
@@ -701,6 +717,10 @@ describe('post.service - finalizePost', () => {
 
     await postService.finalizePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
     expect(updatePostStatus).toHaveBeenCalledTimes(1)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
   })
@@ -719,6 +739,7 @@ describe('post.service - completePost', () => {
 
     await postService.completePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
   })
 
@@ -754,6 +775,9 @@ describe('post.service - completePost', () => {
     await postService.completePost('uuid-1', 'user-uuid-1')
 
     expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
     expect(updatePostStatus).toHaveBeenCalledTimes(2)
@@ -776,6 +800,10 @@ describe('post.service - completePost', () => {
 
     await postService.completePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
     expect(updatePostStatus).toHaveBeenCalledTimes(1)
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
   })
@@ -1129,11 +1157,12 @@ describe('post.service - markInProgress', () => {
 
   it('should cascade to all posts in subcontractGroupId', async () => {
     const groupId = 'group-1'
-    const groupPost2 = { ...mockPost, id: 'post-2', subcontractGroupId: groupId }
-    const groupPost3 = { ...mockPost, id: 'post-3', status: 'In progress', subcontractGroupId: groupId }
+    const categoriesWithHired = [{ id: 'cat-1', name: 'Test', quantity: 1, filledCount: 1, roleDescription: null }]
+    const groupPost2 = { ...mockPost, id: 'post-2', subcontractGroupId: groupId, categories: categoriesWithHired }
+    const groupPost3 = { ...mockPost, id: 'post-3', status: 'In progress', subcontractGroupId: groupId, categories: categoriesWithHired }
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, type: PostType.SubContract, subcontractGroupId: groupId })
     vi.mocked(findPostCategories).mockResolvedValue([{ id: 'cat-1', postId, quantity: 1, filledCount: 1 } as never])
-    vi.mocked(findPostsByGroupId).mockResolvedValue([{ ...mockPost, type: PostType.SubContract, subcontractGroupId: groupId }, groupPost2, groupPost3])
+    vi.mocked(findPostsByGroupId).mockResolvedValue([{ ...mockPost, type: PostType.SubContract, subcontractGroupId: groupId, categories: categoriesWithHired }, groupPost2, groupPost3])
     await postService.markInProgress(postId, userId)
     expect(updatePostStatus).toHaveBeenCalledWith(postId, 'In progress')
     expect(updatePostStatus).toHaveBeenCalledWith('post-2', 'In progress')

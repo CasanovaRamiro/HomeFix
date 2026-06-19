@@ -15,7 +15,7 @@ import {
   findPostCategories,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
-import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus } from '../../infrastructure/database/application.database.js'
+import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -331,6 +331,7 @@ export const cancelPost = async (postId: string, userId: string) => {
     for (const p of groupPosts) {
       if (p.status === PostStatus.Completed || p.status === PostStatus.Cancelled) continue
       await deletePostImages(p.id).catch(() => {})
+      await rejectPendingApplications(p.id)
       await updatePostStatus(p.id, PostStatus.Cancelled)
       const accepted = await findAcceptedApplications(p.id)
       for (const app of accepted) {
@@ -345,6 +346,8 @@ export const cancelPost = async (postId: string, userId: string) => {
   }
   await Promise.all(post.images.map((img) => deleteImage(img.url).catch(() => {})))
   await deletePostImages(postId)
+
+  await rejectPendingApplications(postId)
 
   const result = await updatePostStatus(postId, PostStatus.Cancelled)
 
@@ -374,6 +377,7 @@ export const finalizePost = async (postId: string, userId: string) => {
         await updateApplicationStatus(app.id, ApplicationStatus.Completed)
         notifyWorker(app.workerId, 'post_completed', p.title)
       }
+      await rejectPendingApplications(p.id)
       await updatePostStatus(p.id, PostStatus.Completed)
     }
     return { id: post.id, status: PostStatus.Completed }
@@ -387,6 +391,7 @@ export const finalizePost = async (postId: string, userId: string) => {
     await updateApplicationStatus(app.id, ApplicationStatus.Completed)
     notifyWorker(app.workerId, 'post_completed', post.title)
   }
+  await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
   return result
 }
@@ -405,6 +410,7 @@ export const completePost = async (postId: string, userId: string) => {
         await updateApplicationStatus(app.id, ApplicationStatus.Completed)
         notifyWorker(app.workerId, 'post_completed', p.title)
       }
+      await rejectPendingApplications(p.id)
       await updatePostStatus(p.id, PostStatus.Completed)
     }
     return { id: post.id, status: PostStatus.Completed }
@@ -418,6 +424,7 @@ export const completePost = async (postId: string, userId: string) => {
     await updateApplicationStatus(app.id, ApplicationStatus.Completed)
     notifyWorker(app.workerId, 'post_completed', post.title)
   }
+  await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
   return result
 }
@@ -458,19 +465,24 @@ export const markInProgress = async (postId: string, userId: string) => {
     throw Object.assign(new Error(`Post must be active to mark in progress (${post.status})`), { status: 400 })
   }
 
-  const categories = await findPostCategories(postId)
-  const hasHired = categories.some((c) => c.filledCount > 0)
-  if (!hasHired) {
-    throw Object.assign(new Error('Must have at least one hired worker'), { status: 400 })
-  }
-
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
+    const allCategories = groupPosts.flatMap((p) => p.categories)
+    const hasHired = allCategories.some((c) => c.filledCount && c.filledCount > 0)
+    if (!hasHired) {
+      throw Object.assign(new Error('Must have at least one hired worker'), { status: 400 })
+    }
     for (const p of groupPosts) {
       if (p.status !== PostStatus.Active) continue
       await updatePostStatus(p.id, PostStatus.InProgress)
     }
     return { id: post.id, status: PostStatus.InProgress }
+  }
+
+  const categories = await findPostCategories(postId)
+  const hasHired = categories.some((c) => c.filledCount > 0)
+  if (!hasHired) {
+    throw Object.assign(new Error('Must have at least one hired worker'), { status: 400 })
   }
 
   return updatePostStatus(postId, PostStatus.InProgress)
