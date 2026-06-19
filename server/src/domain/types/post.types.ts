@@ -18,7 +18,7 @@ export interface DomainPost {
   longitude: number | null
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
-  categories: ({ id: string; name: string } & {
+  categories: ({ id: string; categoryId?: string; name: string } & {
     quantity?: number
     filledCount?: number
     roleDescription?: string | null

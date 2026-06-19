@@ -21,6 +21,7 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   emergencyExpiresAt: post.emergencyExpiresAt,
   categories: post.categories.map((pc) => ({
     id: pc.id,
+    categoryId: pc.categoryId,
     name: pc.category.name,
     quantity: pc.quantity,
     filledCount: pc.filledCount,

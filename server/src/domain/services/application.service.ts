@@ -86,6 +86,7 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
 
   const created = await createApplication(workerId, {
     ...input,
+    categoryId: category.id,
     subcontractGroupId: post.subcontractGroupId ?? undefined,
   })
 

@@ -305,7 +305,7 @@ describe("applyToSubcontract", () => {
   it("lanza 409 si el worker ya se postuló a este rubro", async () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
-      categoryId: "cat-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+      categoryId: "pc-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
@@ -333,6 +333,30 @@ describe("applyToSubcontract", () => {
       "worker-1",
       expect.objectContaining({ chargesVisit: true, visitCost: 500, subcontractGroupId: "group-1" }),
     )
+  })
+
+  it("lanza 400 si el categoryId no existe en el subcontract", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, categoryId: "cat-nonexistent" }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("pasa subcontractGroupId a createApplication", async () => {
+    vi.mocked(applicationData.createApplication).mockResolvedValue(mockCreated)
+    await applyToSubcontract("worker-1", validInput)
+    expect(applicationData.createApplication).toHaveBeenCalledWith(
+      "worker-1",
+      expect.objectContaining({ subcontractGroupId: "group-1" }),
+    )
+  })
+
+  it("lanza 400 si filledCount >= quantity", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockSubcontract,
+      categories: [
+        { id: "cat-1", name: "Albañil", quantity: 2, filledCount: 2, roleDescription: "Albañilería general" },
+      ],
+    })
+    await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 })
 

@@ -301,6 +301,63 @@ describe('GET /posts/subcontracts/:id', () => {
   })
 })
 
+describe('GET /posts/subcontracts/my-subcontracts', () => {
+  it('devuelve subcontratos agrupados del worker autenticado', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Busco pintor',
+        description: 'Pintar pared',
+        address: 'Calle 1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        type: 'subcontract',
+        categories: { create: { categoryId, quantity: 1, filledCount: 0, roleDescription: 'Pintor' } },
+      },
+    })
+    const res = await request(app)
+      .get('/posts/subcontracts/my-subcontracts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveProperty('stats')
+    expect(res.body).toHaveProperty('subcontracts')
+    expect(res.body.subcontracts).toHaveLength(1)
+    expect(res.body.subcontracts[0].title).toBe('Busco pintor')
+  })
+
+  it('devuelve stats correctas', async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: 'Busco albañil',
+        description: 'Test',
+        address: 'Calle 2',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        type: 'subcontract',
+        categories: { create: { categoryId, quantity: 1, filledCount: 0, roleDescription: 'Albañil' } },
+      },
+    })
+    const res = await request(app)
+      .get('/posts/subcontracts/my-subcontracts')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.stats.active).toBe(1)
+    expect(res.body.stats.inProgress).toBe(0)
+    expect(res.body.stats.paused).toBe(0)
+    expect(res.body.stats.completed).toBe(0)
+  })
+
+  it('retorna 401 sin token', async () => {
+    const res = await request(app).get('/posts/subcontracts/my-subcontracts')
+    expect(res.status).toBe(401)
+  })
+})
+
 describe('GET /posts/search-location', () => {
   it('returns posts within the given radius', async () => {
     await prisma.post.create({

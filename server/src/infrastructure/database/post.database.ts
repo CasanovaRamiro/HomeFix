@@ -74,10 +74,11 @@ const postFields = {
   longitude: true,
   isEmergency: true,
   emergencyExpiresAt: true,
-  categories: {
-    select: {
-      id: true,
-      category: {
+      categories: {
+        select: {
+          id: true,
+          categoryId: true,
+          category: {
         select: {
           id: true,
           name: true,
