@@ -20,6 +20,10 @@ export default function SubcontractCard({ subcontract, onClick, style }: Props) 
       })
     : ''
 
+  const shortDate = subcontract.startDate
+    ? new Date(subcontract.startDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+    : ''
+
   return (
     <article
       className="subcontract-card"
@@ -71,7 +75,8 @@ export default function SubcontractCard({ subcontract, onClick, style }: Props) 
           </span>
           <StarRating rating={subcontract.clientRating} />
         </div>
-        {serviceDate && <span className="trabajo-date">{serviceDate}</span>}
+        {serviceDate && <span className="trabajo-date trabajo-date-full">{serviceDate}</span>}
+        {shortDate && <span className="trabajo-date trabajo-date-short">{shortDate}</span>}
       </div>
     </article>
   )

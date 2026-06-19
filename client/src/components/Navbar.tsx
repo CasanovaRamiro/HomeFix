@@ -84,7 +84,7 @@ export default function Navbar(): React.ReactElement | null {
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {isLanding && (
               <>
                 <button
@@ -205,7 +205,7 @@ export default function Navbar(): React.ReactElement | null {
           </div>
 
           {/* Desktop right side */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {!isLoggedIn ? (
               <>
                 <Link to="/login"
@@ -288,7 +288,7 @@ export default function Navbar(): React.ReactElement | null {
           <button
             onClick={() => { setMobileOpen(!mobileOpen) }}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted, alignSelf: 'center' }}
-            className="md:hidden"
+            className="lg:hidden"
           >
             {mobileOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
           </button>
@@ -296,7 +296,7 @@ export default function Navbar(): React.ReactElement | null {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div style={{ borderTop: `1px solid ${theme.border}`, padding: '16px 0' }} className="md:hidden">
+          <div style={{ borderTop: `1px solid ${theme.border}`, padding: '16px 0' }} className="lg:hidden">
             <div className="space-y-1">
               {navLinks.map((link) => (
                 <Link
