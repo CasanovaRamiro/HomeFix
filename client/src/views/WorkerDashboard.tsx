@@ -748,10 +748,10 @@ function JobsInZoneSection({
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
 const VALIDATIONS = [
-  { label: 'Dni' },
-  { label: 'Antecedentes' },
-  { label: 'Matricula' },
-  { label: 'Domicilio' },
+  { label: 'DNI + Biometría Facial', required: true },
+  { label: 'Antecedentes (Opcional)', required: false },
+  { label: 'Matrícula (Opcional)', required: false },
+  { label: 'Domicilio', required: true },
 ]
 
 const QUICK_LINKS = [
@@ -779,7 +779,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
       const B = badge
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{ fontSize: 13, color: '#475569' }}>DNI + Biometría Facial</span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: B.bg, color: B.color,
@@ -806,7 +806,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
         >
-          <span style={{ fontSize: 13 }}>Dni</span>
+          <span style={{ fontSize: 13 }}>DNI + Biometría Facial</span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: B.bg, color: B.color,
@@ -823,7 +823,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
       const B = badge
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, color: '#475569' }}>Dni</span>
+          <span style={{ fontSize: 13, color: '#475569' }}>DNI + Biometría Facial</span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: B.bg, color: B.color,
@@ -849,7 +849,7 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
       >
-        <span style={{ fontSize: 13 }}>Dni</span>
+        <span style={{ fontSize: 13 }}>DNI + Biometría Facial</span>
         <ChevronRight size={18} color="#94A3B8" />
       </button>
     )
@@ -877,14 +877,25 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {VALIDATIONS.map((v) => {
-            if (v.label === 'Dni') {
+            if (v.label === 'DNI + Biometría Facial') {
               return <div key={v.label}>{renderKycButton()}</div>
             }
             return (
-              <div key={v.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, color: '#475569' }}>{v.label}</span>
-                <CheckCircle2 size={18} color="#10B981" />
-              </div>
+              <button
+                key={v.label}
+                type="button"
+                onClick={() => navigate(`/worker/${workerId}`)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', background: 'transparent', border: 'none', padding: 0,
+                  cursor: 'pointer', color: '#475569', transition: 'color 0.15s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569' }}
+              >
+                <span style={{ fontSize: 13 }}>{v.label}</span>
+                <ChevronRight size={18} color="#94A3B8" />
+              </button>
             )
           })}
         </div>
