@@ -203,6 +203,10 @@ export default function AvailableJobs(): JSX.Element {
 
   const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
     if (!selected) return
+    if (kycStatus !== 'APPROVED') {
+      setShowKycRequired(true)
+      return
+    }
     setEnviando(true)
     try {
       await applyToPost({
@@ -463,8 +467,6 @@ export default function AvailableJobs(): JSX.Element {
               selected={selected}
               yaPostulado={yaPostulado(selected.id)}
               esPropio={selected.userId === user?.id}
-              onClose={() => setShowDetailModal(false)}
-              onPostular={() => { setShowDetailModal(false); setShowModal(true) }}
               onClose={() => setSelected(null)}
               onPostular={() => {
                 if (kycStatus !== 'APPROVED') {
