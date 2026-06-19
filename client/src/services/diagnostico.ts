@@ -3,6 +3,8 @@ import api from './api'
 export interface AiMessage {
   role: 'user' | 'model'
   text: string
+  imageBase64?: string
+  mimeType?: string
 }
 
 export interface AiQuestionResponse {

@@ -141,6 +141,7 @@ export interface SubcontractDetailDTO {
 
 export interface TrabajoView {
   id: string
+  userId: string
   titulo: string
   descripcion: string
   categoria: string

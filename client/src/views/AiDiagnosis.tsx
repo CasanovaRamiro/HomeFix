@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Send, Sparkles, Zap, Target, Bot, Loader2, CheckCircle, Image, X, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
@@ -13,10 +13,17 @@ export default function AiDiagnosis() {
   const theme = useTheme()
   const { form, setForm, formError, formSubmitting, formSuccess, handleFocus, handleBlur, handleSubmit } = useCreatePost()
   const [files, setFiles] = useState<File[]>([])
-  const [chatImage, setChatImage] = useState<string | null>(null)
+  const [chatImageFile, setChatImageFile] = useState<File | null>(null)
+  const [chatImagePreview, setChatImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { messages, input, setInput, loading, suggestion, conversationDone, chatEndRef, handleSend, handleKeyDown } = useDiagnosisChat((data) => {
+  useEffect(() => {
+    return () => {
+      if (chatImagePreview) URL.revokeObjectURL(chatImagePreview)
+    }
+  }, [chatImagePreview])
+
+  const { messages, input, setInput, loading, suggestion, conversationDone, chatEndRef, handleSend } = useDiagnosisChat((data) => {
     setForm({
       title: data.suggestedTitle || '',
       categoryId: String(data.suggestedCategoryId || ''),
@@ -28,6 +35,25 @@ export default function AiDiagnosis() {
       longitude: null,
     })
   })
+
+  const handleSendWithImage = () => {
+    if (chatImageFile) {
+      setFiles(prev => [...prev, chatImageFile])
+      const file = chatImageFile
+      setChatImageFile(null)
+      setChatImagePreview(null)
+      handleSend(file)
+    } else {
+      handleSend()
+    }
+  }
+
+  const handleKeyDownWithImage = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendWithImage()
+    }
+  }
 
   const s = {
     main: { minHeight: '100vh', background: theme.background },
@@ -51,6 +77,7 @@ export default function AiDiagnosis() {
     chatMessages: { padding: '24px', background: theme.card, border: `1px solid ${theme.border}`, minHeight: '420px', maxHeight: '500px', overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const, gap: '16px' },
     userBubble: { maxWidth: '75%', padding: '12px 16px', fontSize: '14px', lineHeight: '1.625', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.background, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 4px 18px', color: theme.primaryDark, alignSelf: 'flex-end' as const },
     aiBubble: { maxWidth: '75%', padding: '12px 16px', fontSize: '14px', lineHeight: '1.625', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.background, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 18px 4px', color: theme.primaryDark, alignSelf: 'flex-start' as const },
+    chatImage: { maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain' as const, display: 'block' },
     typingBubble: { padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '18px 18px 18px 4px', display: 'flex', alignItems: 'center', gap: '8px' },
     loaderDot: (delay: number) => ({ width: '8px', height: '8px', borderRadius: '50%', background: theme.muted, animation: `bounce 1s infinite`, animationDelay: `${delay}ms` }),
     chatInputBar: { padding: '16px 24px', background: theme.background, borderTop: `1px solid ${theme.border}` },
@@ -148,6 +175,10 @@ export default function AiDiagnosis() {
 
             {messages.map((msg, idx) => (
               <div key={idx} style={msg.role === 'user' ? s.userBubble : s.aiBubble}>
+                {msg.imageBase64 && (
+                  <img src={msg.imageBase64} alt="Foto adjunta"
+                    style={{ ...s.chatImage, marginBottom: msg.text ? '8px' : 0 }} />
+                )}
                 {msg.text}
               </div>
             ))}
@@ -163,7 +194,7 @@ export default function AiDiagnosis() {
             <div ref={chatEndRef} />
           </div>
 
-          {chatImage && (
+          {chatImagePreview && (
             <div style={{
               padding: '8px 24px', display: 'flex', alignItems: 'center',
               gap: '12px', background: theme.card,
@@ -173,10 +204,15 @@ export default function AiDiagnosis() {
                 position: 'relative', borderRadius: '8px', overflow: 'hidden',
                 maxWidth: '200px', maxHeight: '120px',
               }}>
-                <img src={chatImage} alt="Foto seleccionada"
+                <img src={chatImagePreview} alt="Foto seleccionada"
                   style={{ width: '100%', height: 'auto', maxHeight: '120px', objectFit: 'contain', display: 'block' }} />
               </div>
-              <button type="button" onClick={() => { setChatImage(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+              <button type="button" onClick={() => {
+                if (chatImagePreview) URL.revokeObjectURL(chatImagePreview)
+                setChatImageFile(null)
+                setChatImagePreview(null)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+              }}
                 style={{
                   width: '28px', height: '28px', borderRadius: '50%', border: 'none',
                   background: theme.danger, color: '#fff', cursor: 'pointer', flexShrink: 0,
@@ -197,14 +233,18 @@ export default function AiDiagnosis() {
                   hidden
                   onChange={e => {
                     const file = e.target.files?.[0]
-                    if (file) setChatImage(URL.createObjectURL(file))
+                    if (file) {
+                      if (chatImagePreview) URL.revokeObjectURL(chatImagePreview)
+                      setChatImageFile(file)
+                      setChatImagePreview(URL.createObjectURL(file))
+                    }
                   }}
                 />
                 <input
                   type="text"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={handleKeyDownWithImage}
                   placeholder="Escribí tu mensaje..."
                   disabled={loading}
                   style={s.chatInput}
@@ -227,10 +267,10 @@ export default function AiDiagnosis() {
                   <Image style={{ width: '20px', height: '20px', color: theme.muted }} />
                 </button>
                 <button
-                  onClick={handleSend}
-                  disabled={loading || !input.trim()}
-                  style={{ ...s.chatSendBtn, opacity: (loading || !input.trim()) ? 0.5 : 1 }}
-                  onMouseEnter={e => { if (!loading && input.trim()) e.currentTarget.style.background = theme.accentHover }}
+                  onClick={handleSendWithImage}
+                  disabled={loading || (!input.trim() && !chatImageFile)}
+                  style={{ ...s.chatSendBtn, opacity: (loading || (!input.trim() && !chatImageFile)) ? 0.5 : 1 }}
+                  onMouseEnter={e => { if (!loading && (input.trim() || chatImageFile)) e.currentTarget.style.background = theme.accentHover }}
                   onMouseLeave={e => { e.currentTarget.style.background = theme.accent }}
                 >
                   <Send style={s.chatSendIcon} />

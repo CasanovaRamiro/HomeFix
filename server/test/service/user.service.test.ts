@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate } from '../../src/infrastructure/database/user.database.js'
-import { getUserReviews, getUserRating } from '../../src/domain/services/user.service.js'
+import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications } from '../../src/infrastructure/database/user.database.js'
+import { listUsers, getUserReviews, getUserRating, getClientRating, getWorkerRating, setEmergencyNotifications } from '../../src/domain/services/user.service.js'
 import type { DomainClientReview } from '../../src/domain/types/review.types.js'
 import type { DomainWorkerReview } from '../../src/domain/types/worker.types.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
 
 vi.mock('../../src/infrastructure/database/user.database.js', () => ({
+  findAll: vi.fn(),
   findClientReviewsByUserId: vi.fn(),
   findWorkerReviewsByUserId: vi.fn(),
   getWorkerReviewAggregate: vi.fn(),
   getClientReviewAggregate: vi.fn(),
+  updateEmergencyNotifications: vi.fn(),
 }))
 
 beforeEach(() => vi.clearAllMocks())
@@ -109,5 +111,69 @@ describe('getUserRating', () => {
 
     expect(rating.averageRating).toBe(5)
     expect(rating.reviewCount).toBe(1)
+  })
+})
+
+describe('listUsers', () => {
+  it('delegates to findAll', async () => {
+    const mockUsers = [{ id: 'user-1', name: 'Alice', email: 'alice@test.com' }]
+    vi.mocked(findAll).mockResolvedValue(mockUsers as never)
+
+    const result = await listUsers()
+
+    expect(findAll).toHaveBeenCalledTimes(1)
+    expect(result).toEqual(mockUsers)
+  })
+})
+
+describe('getClientRating', () => {
+  it('calculates average rating when reviews exist', async () => {
+    vi.mocked(getClientReviewAggregate).mockResolvedValue({ _avg: { rating: 4.2 }, _count: 5 })
+
+    const rating = await getClientRating(userId)
+
+    expect(getClientReviewAggregate).toHaveBeenCalledWith(userId)
+    expect(rating.averageRating).toBe(4.2)
+    expect(rating.reviewCount).toBe(5)
+  })
+
+  it('returns zero rating when no reviews exist', async () => {
+    vi.mocked(getClientReviewAggregate).mockResolvedValue({ _avg: { rating: null }, _count: 0 })
+
+    const rating = await getClientRating(userId)
+
+    expect(rating.averageRating).toBe(0)
+    expect(rating.reviewCount).toBe(0)
+  })
+})
+
+describe('getWorkerRating', () => {
+  it('calculates average rating when reviews exist', async () => {
+    vi.mocked(getWorkerReviewAggregate).mockResolvedValue({ _avg: { rating: 3.8 }, _count: 10 })
+
+    const rating = await getWorkerRating(userId)
+
+    expect(getWorkerReviewAggregate).toHaveBeenCalledWith(userId)
+    expect(rating.averageRating).toBe(3.8)
+    expect(rating.reviewCount).toBe(10)
+  })
+
+  it('returns zero rating when no reviews exist', async () => {
+    vi.mocked(getWorkerReviewAggregate).mockResolvedValue({ _avg: { rating: null }, _count: 0 })
+
+    const rating = await getWorkerRating(userId)
+
+    expect(rating.averageRating).toBe(0)
+    expect(rating.reviewCount).toBe(0)
+  })
+})
+
+describe('setEmergencyNotifications', () => {
+  it('delegates to updateEmergencyNotifications', async () => {
+    vi.mocked(updateEmergencyNotifications).mockResolvedValue(undefined as never)
+
+    await setEmergencyNotifications(userId, true)
+
+    expect(updateEmergencyNotifications).toHaveBeenCalledWith(userId, true)
   })
 })

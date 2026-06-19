@@ -5,11 +5,12 @@ import StarRating from '../ui/StarRating'
 interface Props {
   selected: TrabajoView & { lat?: number | null; lng?: number | null }
   yaPostulado: boolean
+  esPropio: boolean
   onClose: () => void
   onPostular: () => void
 }
 
-export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostular }: Props) {
+export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose, onPostular }: Props) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [zoomed, setZoomed] = useState(false)
 
@@ -85,7 +86,9 @@ export default function TrabajoDetail({ selected, yaPostulado, onClose, onPostul
             <dd>{selected.fechaServicio}</dd>
           </div>
         </dl>
-        {yaPostulado ? (
+        {esPropio ? (
+          <p className="trabajos-applied-msg" style={{ color: '#64748B' }}>Es tu publicación</p>
+        ) : yaPostulado ? (
           <p className="trabajos-applied-msg">Ya te postulaste a este trabajo.</p>
         ) : (
           <button type="button" className="btn-accent" onClick={onPostular}>

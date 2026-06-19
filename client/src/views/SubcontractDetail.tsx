@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, MapPin, Users, GitBranch, X, Loader } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useSubcontractDetail } from '../hooks/useSubcontractDetail'
+import { useAuth } from '../hooks/useAuth'
 import StarRating from '../components/ui/StarRating'
 
 function formatDate(dateStr: string) {
@@ -18,6 +19,7 @@ export default function SubcontractDetail() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { subcontract, loading, error } = useSubcontractDetail(id)
+  const { user } = useAuth()
   const [showModal, setShowModal] = useState(false)
 
   const s = {
@@ -302,14 +304,20 @@ export default function SubcontractDetail() {
 
         {/* Apply button */}
         <div style={{ paddingTop: '8px', paddingBottom: '32px' }}>
-          <button
-            onClick={() => setShowModal(true)}
-            style={s.btnPrimary}
-            onMouseEnter={e => { e.currentTarget.style.background = theme.accentHover }}
-            onMouseLeave={e => { e.currentTarget.style.background = theme.accent }}
-          >
-            Postularme
-          </button>
+          {subcontract?.userId === user?.id ? (
+            <p style={{ color: '#64748B', fontSize: 14, textAlign: 'center', padding: 12 }}>
+              Es tu publicación
+            </p>
+          ) : (
+            <button
+              onClick={() => setShowModal(true)}
+              style={s.btnPrimary}
+              onMouseEnter={e => { e.currentTarget.style.background = theme.accentHover }}
+              onMouseLeave={e => { e.currentTarget.style.background = theme.accent }}
+            >
+              Postularme
+            </button>
+          )}
         </div>
       </div>
 

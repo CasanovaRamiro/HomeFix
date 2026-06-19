@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { findUniqueMock, findManyMock, createMock, findFirstMock, upsertNationalIdMock, upsertAddressMock, clientFindManyMock, clientAggregateMock, workerFindManyMock, workerAggregateMock } = vi.hoisted(() => ({
+const { findUniqueMock, findManyMock, createMock, findFirstMock, upsertNationalIdMock, upsertAddressMock, clientFindManyMock, clientAggregateMock, workerFindManyMock, workerAggregateMock, userUpdateMock, userCategoryCreateManyMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
   findManyMock: vi.fn<(args: unknown) => Promise<unknown[]>>(),
   createMock: vi.fn<(args: unknown) => Promise<unknown>>(),
@@ -11,6 +11,8 @@ const { findUniqueMock, findManyMock, createMock, findFirstMock, upsertNationalI
   clientAggregateMock: vi.fn<(args: unknown) => Promise<unknown>>(),
   workerFindManyMock: vi.fn<(args: unknown) => Promise<unknown[]>>(),
   workerAggregateMock: vi.fn<(args: unknown) => Promise<unknown>>(),
+  userUpdateMock: vi.fn<(args: unknown) => Promise<unknown>>(),
+  userCategoryCreateManyMock: vi.fn<(args: unknown) => Promise<unknown>>(),
 }))
 
 vi.mock('../../src/lib/prisma.js', () => ({
@@ -19,6 +21,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
       findUnique: findUniqueMock,
       findMany: findManyMock,
       create: createMock,
+      update: userUpdateMock,
     },
     nationalIdType: {
       findFirst: findFirstMock,
@@ -35,10 +38,13 @@ vi.mock('../../src/lib/prisma.js', () => ({
       findMany: workerFindManyMock,
       aggregate: workerAggregateMock,
     },
+    userCategory: {
+      createMany: userCategoryCreateManyMock,
+    },
   },
 }))
 
-import { findByEmail, findAll, createUser, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate } from '../../src/infrastructure/database/user.database.js'
+import { findByEmail, findAll, createUser, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, addUserCategories, updateEmergencyNotifications, updateUserByEmail, updateUserKycStatus } from '../../src/infrastructure/database/user.database.js'
 
 const mockUser = {
   id: 1,
@@ -242,5 +248,114 @@ describe('getClientReviewAggregate', () => {
 
     expect(result._avg.rating).toBeNull()
     expect(result._count).toBe(0)
+  })
+})
+
+describe('addUserCategories', () => {
+  it('calls createMany with the correct data', async () => {
+    userCategoryCreateManyMock.mockResolvedValue({ count: 2 })
+
+    await addUserCategories('user-1', ['cat-1', 'cat-2'])
+
+    expect(userCategoryCreateManyMock).toHaveBeenCalledWith({
+      data: [
+        { userId: 'user-1', categoryId: 'cat-1' },
+        { userId: 'user-1', categoryId: 'cat-2' },
+      ],
+    })
+  })
+
+  it('returns the result from createMany', async () => {
+    const mockResult = { count: 3 }
+    userCategoryCreateManyMock.mockResolvedValue(mockResult)
+
+    const result = await addUserCategories('user-1', ['a', 'b', 'c'])
+
+    expect(result).toEqual(mockResult)
+  })
+})
+
+describe('updateEmergencyNotifications', () => {
+  it('calls user.update with enabled: true', async () => {
+    userUpdateMock.mockResolvedValue({ id: 'user-1', emergenciesEnabled: true })
+
+    const result = await updateEmergencyNotifications('user-1', true)
+
+    expect(userUpdateMock).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { emergenciesEnabled: true },
+      select: { id: true, emergenciesEnabled: true },
+    })
+    expect(result).toEqual({ id: 'user-1', emergenciesEnabled: true })
+  })
+
+  it('calls user.update with enabled: false', async () => {
+    userUpdateMock.mockResolvedValue({ id: 'user-1', emergenciesEnabled: false })
+
+    await updateEmergencyNotifications('user-1', false)
+
+    expect(userUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: { emergenciesEnabled: false },
+    }))
+  })
+})
+
+describe('updateUserByEmail', () => {
+  it('calls user.update with the provided fields', async () => {
+    const mockResult = { id: 'u1', name: 'New Name', email: 'new@test.com', phone: null, role: 'user', createdAt: new Date(), photo: null }
+    userUpdateMock.mockResolvedValue(mockResult)
+
+    const result = await updateUserByEmail('old@test.com', { name: 'New Name', email: 'new@test.com' })
+
+    expect(userUpdateMock).toHaveBeenCalledWith({
+      where: { email: 'old@test.com' },
+      data: { name: 'New Name', email: 'new@test.com' },
+      select: expect.any(Object),
+    })
+    expect(result).toEqual(mockResult)
+  })
+
+  it('can update only the role field', async () => {
+    userUpdateMock.mockResolvedValue({ id: 'u1', name: 'User', email: 'u@test.com', phone: null, role: 'worker', createdAt: new Date(), photo: null })
+
+    await updateUserByEmail('u@test.com', { role: 'worker' })
+
+    expect(userUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: { role: 'worker' },
+    }))
+  })
+})
+
+describe('updateUserKycStatus', () => {
+  it('calls user.update with kycStatus and related fields', async () => {
+    const now = new Date()
+    const mockResult = {
+      id: 'u1', name: 'User', email: 'u@test.com', phone: null, role: 'user', createdAt: now, photo: null,
+      kycStatus: 'approved', kycVerifiedAt: now, diditVerificationId: 'did-123',
+    }
+    userUpdateMock.mockResolvedValue(mockResult)
+
+    const result = await updateUserKycStatus('u@test.com', {
+      kycStatus: 'approved',
+      kycVerifiedAt: now,
+      diditVerificationId: 'did-123',
+    })
+
+    expect(userUpdateMock).toHaveBeenCalledWith({
+      where: { email: 'u@test.com' },
+      data: { kycStatus: 'approved', kycVerifiedAt: now, diditVerificationId: 'did-123' },
+      select: expect.any(Object),
+    })
+    expect(result).toEqual(mockResult)
+  })
+
+  it('can set kycVerifiedAt and diditVerificationId to null', async () => {
+    userUpdateMock.mockResolvedValue({ id: 'u1', name: 'U', email: 'u@test.com', phone: null, role: 'user', createdAt: new Date(), photo: null, kycStatus: 'pending', kycVerifiedAt: null, diditVerificationId: null })
+
+    await updateUserKycStatus('u@test.com', { kycStatus: 'pending', kycVerifiedAt: null, diditVerificationId: null })
+
+    expect(userUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: { kycStatus: 'pending', kycVerifiedAt: null, diditVerificationId: null },
+    }))
   })
 })

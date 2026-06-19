@@ -136,6 +136,30 @@ describe('notifyUser', () => {
       parseMode: 'HTML',
     })
   })
+
+  it('usa el template worker_dismissed', async () => {
+    vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
+    mockSend.mockResolvedValue(true)
+
+    await notifyUser(mockProvider, 'user-1', 'worker_dismissed', { postTitle: 'Arreglo caño' })
+
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
+      text: expect.stringContaining('Contratación cancelada'),
+      parseMode: 'HTML',
+    })
+  })
+
+  it('usa el template emergency_new', async () => {
+    vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
+    mockSend.mockResolvedValue(true)
+
+    await notifyUser(mockProvider, 'user-1', 'emergency_new', { postTitle: 'Caño roto', postDescription: 'Se inundó el baño' })
+
+    expect(mockSend).toHaveBeenCalledWith('123456789', {
+      text: expect.stringContaining('Nueva publicación urgente'),
+      parseMode: 'HTML',
+    })
+  })
 })
 
 describe('broadcastEmergency', () => {
