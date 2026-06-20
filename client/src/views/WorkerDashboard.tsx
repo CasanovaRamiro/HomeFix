@@ -306,7 +306,7 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
       </div>
 
       {/* Title */}
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {title}
       </h3>
 
@@ -1039,7 +1039,7 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                   {app.title}
                 </h3>
                 <AppStatusBadge status={app.status} />
@@ -1144,7 +1144,7 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
             >
               {/* Left: info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {app.title}
                 </h3>
                 <p style={{ fontSize: 12, color: '#10B981', fontWeight: 500, margin: '0 0 4px' }}>
@@ -1335,7 +1335,7 @@ export default function WorkerDashboard() {
       {/* Central section: main content + sidebar */}
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
-        <div>
+        <div className="wd-content">
           <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} userId={data.profile.id} />
           <MisPostulacionesSection apps={applications} loading={appsLoading} />
           <ProximasCitasSection apps={applications} loading={appsLoading} />
@@ -1356,6 +1356,8 @@ export default function WorkerDashboard() {
         .wd-header-container,
         .wd-section,
         .wd-main-grid { box-sizing: border-box; }
+        .wd-content { min-width: 0; }
+        .wd-content h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 1024px) { .wd-main-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
           .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); }
