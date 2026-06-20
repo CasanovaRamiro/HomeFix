@@ -17,6 +17,7 @@ export interface DomainPost {
   longitude: number | null
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+  allowsSubcontracting?: boolean
   categories: ({ id: string; name: string } & {
     quantity?: number
     filledCount?: number
@@ -59,6 +60,7 @@ export interface CreatePostInput {
   images?: { url: string }[]
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+  allowsSubcontracting?: boolean
 }
 
 export interface UpdatePostInput {

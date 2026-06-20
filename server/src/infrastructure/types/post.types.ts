@@ -17,6 +17,7 @@ export interface PrismaPostFull {
   longitude: number | null
   isEmergency: boolean
   emergencyExpiresAt: Date | null
+  allowsSubcontracting: boolean
   categories: {
     category: { id: string; name: string }
     quantity: number

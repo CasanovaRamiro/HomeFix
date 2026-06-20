@@ -20,6 +20,7 @@ type _CreatePostRecordInput = {
   longitude?: number | null
   isEmergency: boolean
   emergencyExpiresAt: Date | null
+  allowsSubcontracting?: boolean
   images?: { url: string }[]
   categories: {
     categoryId: string
@@ -44,6 +45,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       longitude: data.longitude ?? null,
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
+      allowsSubcontracting: data.allowsSubcontracting ?? true,
       images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
       categories: { create: data.categories },
     },
@@ -71,6 +73,7 @@ const postFields = {
   longitude: true,
   isEmergency: true,
   emergencyExpiresAt: true,
+  allowsSubcontracting: true,
   categories: {
     select: {
       category: {
@@ -110,6 +113,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     longitude: data.longitude ?? null,
     isEmergency: data.isEmergency ?? false,
     emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    allowsSubcontracting: data.allowsSubcontracting ?? true,
     images: data.images,
     categories: [{ categoryId: data.categoryId }],
   })
