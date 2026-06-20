@@ -6,7 +6,7 @@ import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
 import { ApplicationStatus } from '../types/application'
 
 const PAGE_SIZE = 8
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -377,8 +377,17 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
 
           {/* Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <ClientAvatar name={app.client} />
-            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+            {app.clientId ? (
+              <Link to={`/profile/client/${app.clientId}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', color: 'inherit' }}>
+                <ClientAvatar name={app.client} />
+                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+              </Link>
+            ) : (
+              <>
+                <ClientAvatar name={app.client} />
+                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+              </>
+            )}
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12, marginLeft: 4 }}>
               {Array.from({ length: 5 }, (_, i) => (
                 <span key={i}>{i < Math.round(app.clientRating) ? '★' : '☆'}</span>

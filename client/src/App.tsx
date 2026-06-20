@@ -17,6 +17,8 @@ import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
 import ClientHistory from './views/ClientHistory'
+import ClientProfile from './views/ClientProfile'
+import PublicClientProfile from './views/PublicClientProfile'
 
 import WorkerLanding from './views/WorkerLanding'
 
@@ -98,6 +100,8 @@ export default function App(): ReactNode {
         <Route path="/manual-post" element={<ClientRoute><CreatePost /></ClientRoute>} />
         <Route path="/post-options" element={<ClientRoute><PostOptions /></ClientRoute>} />
         <Route path="/profile/worker/:id" element={<PublicWorkerProfile />} />
+        <Route path="/profile/client/:clientId" element={<PublicClientProfile />} />
+        <Route path="/client/:id" element={<ClientRoute><ClientProfile /></ClientRoute>} />
         <Route path="/posts/:id" element={<ClientRoute><PostDetail /></ClientRoute>} />
         <Route path="/create-subcontract" element={<WorkerRoute><CreateSubcontract /></WorkerRoute>} />
         <Route path="/worker" element={<WorkerRoute><WorkerDashboard /></WorkerRoute>} />

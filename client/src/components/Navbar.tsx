@@ -67,6 +67,11 @@ export default function Navbar(): React.ReactElement | null {
     user?.role === UserRole.Client ? '/dashboard' :
     '/'
 
+  const profileRoute =
+    user?.role === UserRole.Worker && user?.id ? `/worker/${user.id}` :
+    user?.role === UserRole.Client && user?.id ? `/client/${user.id}` :
+    homeRoute
+
   const displayName    = user?.name ?? 'Mi cuenta'
   const displayInitial = displayName.charAt(0).toUpperCase()
 
@@ -270,7 +275,7 @@ export default function Navbar(): React.ReactElement | null {
                 {userMenuOpen && (
                   <div style={{ position: 'absolute', right: 0, marginTop: '8px', width: '208px', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '4px 0', zIndex: 50 }}>
                     <Link
-                      to={user?.role === UserRole.Worker ? `/worker/${user.id}` : homeRoute}
+                      to={profileRoute}
                       onClick={() => { setUserMenuOpen(false) }}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', fontSize: '14px', color: theme.primaryDark, textDecoration: 'none' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
@@ -365,7 +370,7 @@ export default function Navbar(): React.ReactElement | null {
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
                 <>
-                  <Link to={user?.role === UserRole.Worker ? `/worker/${user.id}` : homeRoute} onClick={() => { setMobileOpen(false) }}
+                  <Link to={profileRoute} onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '10px 16px', textDecoration: 'none' }}>
                     <User style={{ width: '16px', height: '16px' }} /> Mi Perfil
                   </Link>

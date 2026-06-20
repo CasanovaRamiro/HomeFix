@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText } from 'lucide-react'
+import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText, User } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
@@ -9,6 +10,7 @@ import { PostStatus } from '../types/post'
 
 export default function ClientDashboard() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
   const [showEmergencies, setShowEmergencies] = useState(false)
@@ -57,8 +59,21 @@ export default function ClientDashboard() {
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Modo Cliente
           </span>
-          <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-slate-900">Mi Tablero</h1>
-          <p className="mt-1.5 text-sm text-slate-600">Gestiona tus publicaciones y conversaciones</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-slate-900">Mi Tablero</h1>
+              <p className="mt-1.5 text-sm text-slate-600">Gestiona tus publicaciones y conversaciones</p>
+            </div>
+            {user?.id && (
+              <button
+                onClick={() => navigate(`/client/${user.id}`)}
+                className="mt-3.5 inline-flex items-center gap-2 rounded-lg border border-blue-600/20 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50"
+              >
+                <User size={16} />
+                Mi Perfil
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
