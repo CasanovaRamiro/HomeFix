@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, MapPin, ArrowLeft, Clock, CheckCircle, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, MapPin, ArrowLeft, Clock, CheckCircle } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
@@ -162,28 +162,16 @@ function JobCard({ app }: { app: CalendarApplication }) {
           </div>
           <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            background: '#ECFDF5', border: '1px solid #A7F3D0',
-            borderRadius: 8, padding: '4px 10px',
-            fontSize: 12, fontWeight: 700, color: '#059669',
-            cursor: 'pointer',
-          }}>
-            <MessageCircle size={12} />
-            Chatear
-          </button>
-          <Link
-            to={`/posts/${app.postId}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 3,
-              fontSize: 13, fontWeight: 700, color: '#10B981',
-              textDecoration: 'none',
-            }}
-          >
-            Ver <ChevronRight size={14} />
-          </Link>
-        </div>
+        <Link
+          to={`/worker/posts/${app.postId}`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 3,
+            fontSize: 13, fontWeight: 700, color: '#10B981',
+            textDecoration: 'none',
+          }}
+        >
+          Ver <ChevronRight size={14} />
+        </Link>
       </div>
     </div>
   )

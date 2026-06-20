@@ -1050,30 +1050,19 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
                 </span>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>{date}</span>
               </div>
-              {app.status === 'Accepted' && (
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    onClick={() => {
-                      const phone = app.clientPhone?.replace(/\D/g, '')
-                      if (!phone) return
-                      window.open(
-                        `https://wa.me/${phone}?text=${encodeURIComponent('Hola, me contrataste para: ' + app.title)}`,
-                        '_blank'
-                      )
-                    }}
-                    style={{
-                      background: '#10B981', border: 'none', borderRadius: 8,
-                      color: '#fff', fontSize: 12, fontWeight: 600,
-                      padding: '6px 16px', cursor: app.clientPhone ? 'pointer' : 'not-allowed',
-                      opacity: app.clientPhone ? 1 : 0.5,
-                    }}
-                    onMouseEnter={(e) => { if (app.clientPhone) (e.currentTarget as HTMLElement).style.background = '#059669' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
-                  >
-                    Contactar
-                  </button>
-                </div>
-              )}
+              <div style={{ marginTop: 10 }}>
+                <Link
+                  to={`/worker/posts/${app.postId}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: '#0F172A', borderRadius: 8,
+                    color: '#fff', fontSize: 12, fontWeight: 600,
+                    padding: '6px 16px', textDecoration: 'none',
+                  }}
+                >
+                  Ver
+                </Link>
+              </div>
             </div>
           )
         })}
