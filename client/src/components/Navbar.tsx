@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
 import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch } from 'lucide-react'
@@ -39,6 +39,18 @@ export default function Navbar(): React.ReactElement | null {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [userBtnHover, setUserBtnHover] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [userMenuOpen])
 
   if (AUTH_ROUTES.includes(pathname)) return null
 
@@ -224,7 +236,7 @@ export default function Navbar(): React.ReactElement | null {
                 </Link>
               </>
             ) : (
-              <div style={{ position: 'relative' }}>
+              <div ref={userMenuRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => { setUserMenuOpen(!userMenuOpen) }}
                   onMouseEnter={() => { setUserBtnHover(true) }}
@@ -258,7 +270,7 @@ export default function Navbar(): React.ReactElement | null {
                 {userMenuOpen && (
                   <div style={{ position: 'absolute', right: 0, marginTop: '8px', width: '208px', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '4px 0', zIndex: 50 }}>
                     <Link
-                      to={homeRoute}
+                      to={user?.role === UserRole.Worker ? `/worker/${user.id}` : homeRoute}
                       onClick={() => { setUserMenuOpen(false) }}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', fontSize: '14px', color: theme.primaryDark, textDecoration: 'none' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
@@ -353,7 +365,7 @@ export default function Navbar(): React.ReactElement | null {
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
                 <>
-                  <Link to={homeRoute} onClick={() => { setMobileOpen(false) }}
+                  <Link to={user?.role === UserRole.Worker ? `/worker/${user.id}` : homeRoute} onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '10px 16px', textDecoration: 'none' }}>
                     <User style={{ width: '16px', height: '16px' }} /> Mi Perfil
                   </Link>
