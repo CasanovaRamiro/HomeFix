@@ -1,10 +1,10 @@
 import {
   findWorkerProfile,
-  countWorkerReviews,
   countWorkerApplications,
   countNewJobsForWorker,
   countCompletedJobs,
 } from '../../infrastructure/database/workerDashboard.database.js'
+import { getUserRating } from './user.service.js'
 
 export const getWorkerDashboard = async (workerId: string) => {
   const profile = await findWorkerProfile(workerId)
@@ -13,7 +13,7 @@ export const getWorkerDashboard = async (workerId: string) => {
   }
 
   const [reviewStats, applicationGroups, completedJobs] = await Promise.all([
-    countWorkerReviews(workerId),
+    getUserRating(workerId),
     countWorkerApplications(workerId),
     countCompletedJobs(workerId),
   ])
@@ -50,8 +50,8 @@ export const getWorkerDashboard = async (workerId: string) => {
 
     stats: {
       totalJobs: completedJobs,
-      reviewCount: reviewStats.count,
-      avgRating: Math.round(reviewStats.avgRating * 10) / 10,
+      reviewCount: reviewStats.reviewCount,
+      avgRating: reviewStats.averageRating,
       newJobs,
       pendingApplications,
       upcomingAppointments: acceptedApplications,
