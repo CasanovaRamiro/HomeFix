@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import LoadingSpinner from './LoadingSpinner'
 
 interface ConfirmModalProps {
   open: boolean
@@ -46,7 +45,9 @@ export default function ConfirmModal({
             disabled={loading}
             className={`px-4 py-2 rounded-lg text-white disabled:opacity-50 transition-colors flex items-center gap-2 ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
           >
-            {loading && <LoadingSpinner />}
+            {loading && (
+              <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            )}
             {confirmLabel}
           </button>
           <button
