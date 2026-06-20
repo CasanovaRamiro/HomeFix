@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
   CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
-  Eye, ChevronRight, Shield, MessageSquare, FileText, GitBranch,
+  ChevronRight, Shield, MessageSquare, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
 import api from '../services/api'
