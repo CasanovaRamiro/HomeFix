@@ -16,6 +16,7 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   location: a.post.address,
   appliedAt: a.createdAt,
   serviceDate: a.post.startDate,
+  endDate: a.post.endDate,
   status: a.status,
   category: a.category?.category.name ?? a.post.categories[0]?.category.name ?? null,
   categoryId: a.categoryId,

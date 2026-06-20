@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
-import { createReview, createClientReview } from '../../src/infrastructure/database/review.database.js'
+import { createReview, createClientReview, findWorkerReviewByApplicationId, findReviewsByWorkerId, findClientReviewByApplicationId } from '../../src/infrastructure/database/review.database.js'
 
 let clientId: string
 let workerId: string
@@ -185,5 +185,62 @@ describe('createClientReview (data layer)', () => {
       clientId: 'non-existent-id',
       rating: 5,
     })).rejects.toThrow()
+  })
+})
+
+describe('findWorkerReviewByApplicationId', () => {
+  it('returns null when no review exists for the application', async () => {
+    const result = await findWorkerReviewByApplicationId('non-existent-id')
+    expect(result).toBeNull()
+  })
+
+  it('returns the review when it exists', async () => {
+    const review = await createReview({
+      applicationId,
+      reviewerId: clientId,
+      workerId,
+      rating: 5,
+      description: 'Great work',
+    })
+
+    const result = await findWorkerReviewByApplicationId(applicationId)
+    expect(result).not.toBeNull()
+    expect(result!.id).toBe(review.id)
+  })
+})
+
+describe('findReviewsByWorkerId', () => {
+  it('returns empty array when worker has no reviews', async () => {
+    const result = await findReviewsByWorkerId('non-existent-id')
+    expect(result).toEqual([])
+  })
+
+  it('returns reviews for the given worker', async () => {
+    await createReview({ applicationId, reviewerId: clientId, workerId, rating: 4 })
+
+    const result = await findReviewsByWorkerId(workerId)
+    expect(result).toHaveLength(1)
+    expect(result[0].rating).toBe(4)
+  })
+})
+
+describe('findClientReviewByApplicationId', () => {
+  it('returns null when no client review exists for the application', async () => {
+    const result = await findClientReviewByApplicationId('non-existent-id')
+    expect(result).toBeNull()
+  })
+
+  it('returns the client review when it exists', async () => {
+    const review = await createClientReview({
+      applicationId,
+      reviewerId: workerId,
+      clientId,
+      rating: 3,
+      description: 'OK client',
+    })
+
+    const result = await findClientReviewByApplicationId(applicationId)
+    expect(result).not.toBeNull()
+    expect(result!.id).toBe(review.id)
   })
 })

@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/infrastructure/database/application.database.js"
 import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
+import * as userService from "../../src/domain/services/user.service.js"
 import { PostType } from "../../src/domain/types/postType.js"
-import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract } from "../../src/domain/services/application.service.js"
+import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract, getMyApplications, cancelApplication, getPostApplications } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -11,6 +12,8 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   createApplication: vi.fn(),
   findApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn(),
+  deleteApplication: vi.fn(),
+  findApplicationsByPost: vi.fn(),
 }))
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
@@ -46,6 +49,10 @@ const mockPrisma = vi.hoisted(() => {
 })
 vi.mock("../../src/lib/prisma.js", () => ({
   default: mockPrisma,
+}))
+
+vi.mock("../../src/domain/services/user.service.js", () => ({
+  getClientRating: vi.fn(),
 }))
 
 beforeEach(() => vi.clearAllMocks())
@@ -440,5 +447,130 @@ describe("dismissWorker", () => {
 
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
     expect(postData.updatePostStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe("getMyApplications", () => {
+  const mockApp = {
+    id: "app-1",
+    postId: "post-1",
+    title: "Fix pipes",
+    client: "Client One",
+    clientId: "client-1",
+    clientPhone: null,
+    location: "Buenos Aires",
+    appliedAt: new Date(),
+    serviceDate: new Date(),
+    status: "Pending",
+    message: null,
+  }
+
+  it("returns applications enriched with client rating", async () => {
+    vi.mocked(applicationData.findApplicationsByWorker).mockResolvedValue([mockApp] as never)
+    vi.mocked(userService.getClientRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 3 })
+
+    const result = await getMyApplications("worker-1")
+
+    expect(applicationData.findApplicationsByWorker).toHaveBeenCalledWith("worker-1")
+    expect(userService.getClientRating).toHaveBeenCalledWith("client-1")
+    expect(result[0].clientRating).toBe(4.5)
+  })
+
+  it("returns zero client rating when clientId is null", async () => {
+    vi.mocked(applicationData.findApplicationsByWorker).mockResolvedValue([{ ...mockApp, clientId: null }] as never)
+
+    const result = await getMyApplications("worker-1")
+
+    expect(userService.getClientRating).not.toHaveBeenCalled()
+    expect(result[0].clientRating).toBe(0)
+  })
+
+  it("returns empty array when worker has no applications", async () => {
+    vi.mocked(applicationData.findApplicationsByWorker).mockResolvedValue([])
+
+    const result = await getMyApplications("worker-1")
+
+    expect(result).toEqual([])
+  })
+})
+
+describe("cancelApplication", () => {
+  it("cancels application successfully", async () => {
+    vi.mocked(applicationData.deleteApplication).mockResolvedValue({ count: 1 } as never)
+
+    const result = await cancelApplication("worker-1", "app-1")
+
+    expect(applicationData.deleteApplication).toHaveBeenCalledWith("worker-1", "app-1")
+    expect(result.message).toBe("Postulación cancelada")
+  })
+
+  it("throws 404 when application is not found or not cancelable", async () => {
+    vi.mocked(applicationData.deleteApplication).mockResolvedValue({ count: 0 } as never)
+
+    await expect(cancelApplication("worker-1", "app-1")).rejects.toMatchObject({ status: 404 })
+  })
+})
+
+describe("getPostApplications", () => {
+  const mockPost = {
+    id: "post-1",
+    userId: "client-1",
+    title: "Fix pipes",
+    status: "Active",
+    description: "",
+    address: "",
+    startDate: new Date(),
+    endDate: new Date(),
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: "client-1", name: "Client", surname: "One" },
+  }
+
+  const mockPostApplications = [
+    {
+      applicationId: "app-1",
+      workerId: "worker-1",
+      name: "Worker One",
+      photo: null,
+      category: "Plumbing",
+      address: "Buenos Aires",
+      rating: 4.5,
+      reviewCount: 5,
+      jobCount: 10,
+      status: "Pending",
+      message: null,
+      availableDays: ["Lunes"],
+      availableTimeFrom: "09:00",
+      availableTimeTo: "18:00",
+      chargesVisit: false,
+      visitCost: null,
+      phone: null,
+    },
+  ]
+
+  it("returns applications for the post owner", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue(mockPost)
+    vi.mocked(applicationData.findApplicationsByPost).mockResolvedValue(mockPostApplications as never)
+
+    const result = await getPostApplications("client-1", "post-1")
+
+    expect(postData.findPostById).toHaveBeenCalledWith("post-1")
+    expect(applicationData.findApplicationsByPost).toHaveBeenCalledWith("post-1")
+    expect(result).toEqual(mockPostApplications)
+  })
+
+  it("throws 404 when post does not exist", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue(null)
+
+    await expect(getPostApplications("client-1", "post-1")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("throws 403 when requester is not the post owner", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue(mockPost)
+
+    await expect(getPostApplications("other-client", "post-1")).rejects.toMatchObject({ status: 403 })
   })
 })

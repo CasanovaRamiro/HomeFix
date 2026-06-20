@@ -3,6 +3,7 @@
 // Companion to Landing.tsx. All styles come from landing.css + worker-landing.css
 // (both scoped under .lp-root) so the app's global button/a/input/body rules
 // in index.css cannot interfere. Uses lucide-react + react-router only.
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Check, CheckCircle2, TrendingUp, CalendarClock, Star,
@@ -30,6 +31,7 @@ const footerCols: { title: string; links: string[] }[] = [
 
 export default function WorkerLanding() {
   const navigate = useNavigate()
+  const howItWorksRef = useRef<HTMLElement>(null)
 
   return (
     <main className="lp-root">
@@ -45,7 +47,7 @@ export default function WorkerLanding() {
             <p className="lp-hero-sub">Sumate a HomeFix y recibí solicitudes de trabajo de hogares cerca tuyo. Vos elegís qué aceptar, cuándo y cómo.</p>
             <div className="lp-hero-cta">
               <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Registrarme como profesional <ArrowRight className="lp-btn-ico" /></button>
-              <button className="lp-btn lp-btn-lg lp-btn-glass" onClick={() => navigate('/diagnosis')}>¿Cómo funciona?</button>
+              <button className="lp-btn lp-btn-lg lp-btn-glass" onClick={() => howItWorksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>¿Cómo funciona?</button>
             </div>
             <div className="lp-hero-trust">
               <span><CheckCircle2 size={18} /> Registro gratis</span>
@@ -92,7 +94,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="lp-section lp-navy-band">
+      <section id="como-funciona" ref={howItWorksRef} className="lp-section lp-navy-band">
         <div className="lp-container">
           <div className="lp-head">
             <p className="lp-eyebrow">Cómo Funciona</p>
@@ -117,7 +119,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* VERIFY = MORE WORK (split media) */}
-      <section className="lp-section">
+      <section id="como-validarme" className="lp-section">
         <div className="lp-container lp-split">
           <div>
             <p className="lp-eyebrow">Perfil verificado</p>
@@ -143,7 +145,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* FEATURES */}
-      <section className="lp-feat-band">
+      <section id="que-ofrecemos" className="lp-feat-band">
         <div className="lp-container lp-feat-grid">
           <div className="lp-feat-logo">
             <div className="lp-feat-glow" />
@@ -216,7 +218,7 @@ export default function WorkerLanding() {
       </section>
 
       {/* FOOTER */}
-      <footer className="lp-footer">
+      <footer id="redes-sociales" className="lp-footer">
         <div className="lp-container">
           <div className="lp-footer-grid">
             <div className="lp-footer-brand">

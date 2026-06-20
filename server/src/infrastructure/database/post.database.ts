@@ -178,6 +178,15 @@ export interface PaginationParams {
   sortOrder: 'asc' | 'desc'
 }
 
+const deleteExpiredEmergencyPosts = async (): Promise<void> => {
+  await prisma.post.deleteMany({
+    where: {
+      isEmergency: true,
+      emergencyExpiresAt: { lte: new Date() },
+    },
+  })
+}
+
 export interface PaginatedPosts {
   posts: DomainPost[]
   total: number
@@ -187,6 +196,7 @@ export const findAvailablePosts = async (
   category?: string,
   pagination?: PaginationParams,
 ): Promise<PaginatedPosts> => {
+  await deleteExpiredEmergencyPosts()
   const where = availablePostWhere(category)
   const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
 
@@ -231,6 +241,7 @@ export const findPostsByGroupId = async (groupId: string): Promise<DomainPost[]>
 }
 
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
+  await deleteExpiredEmergencyPosts()
   const raw = await prisma.post.findMany({
     where: {
       ...availablePostWhere(category),
@@ -341,6 +352,7 @@ export const searchByDistance = async (
   radiusKm: number,
   category?: string,
 ): Promise<LocationSearchResult[]> => {
+  await deleteExpiredEmergencyPosts()
   const hasCategory = !!category?.trim()
 
   const categoryFilter = hasCategory

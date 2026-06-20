@@ -357,7 +357,13 @@ export default function AvailableJobs(): JSX.Element {
 
       <div className="trabajos-grid-container" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
         {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
-        {!loading && filtradosYOrdenados.length === 0 && (
+        {!loading && categoriesReady && workerCategories.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
+            <h3 style={{ marginBottom: 8, fontSize: '1.1rem', color: '#0F172A' }}>Sin rubros asignados</h3>
+            <p style={{ color: '#64748B', fontSize: 14 }}>Asignate un rubro desde tu perfil para ver trabajos disponibles.</p>
+          </div>
+        )}
+        {!loading && categoriesReady && workerCategories.length > 0 && filtradosYOrdenados.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
             <h3 style={{ marginBottom: 8, fontSize: '1.1rem', color: '#0F172A' }}>No hay trabajos disponibles</h3>
             <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
@@ -371,6 +377,7 @@ export default function AvailableJobs(): JSX.Element {
                 trabajo={trabajo}
                 isSelected={selected?.id === trabajo.id}
                 isApplied={yaPostulado(trabajo.id)}
+                isOwnPost={trabajo.userId === user?.id}
                 onClick={() => { setSelected(trabajo); setShowDetailModal(true) }}
                 onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -445,6 +452,7 @@ export default function AvailableJobs(): JSX.Element {
             <TrabajoDetail
               selected={selected}
               yaPostulado={yaPostulado(selected.id)}
+              esPropio={selected.userId === user?.id}
               onClose={() => setShowDetailModal(false)}
               onPostular={() => { setShowDetailModal(false); setShowModal(true) }}
             />

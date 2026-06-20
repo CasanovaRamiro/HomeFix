@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { sendMessage, type AiMessage, type AiSuggestionData } from '../services/diagnostico'
 
+function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve({ base64: reader.result as string, mimeType: file.type })
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void) {
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [input, setInput] = useState('')
@@ -37,11 +46,24 @@ export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void
     init()
   }, [])
 
-  const handleSend = async () => {
+  const handleSend = async (imageFile?: File) => {
     const text = input.trim()
-    if (!text || loading) return
+    if ((!text && !imageFile) || loading) return
+
+    let imageBase64: string | undefined
+    let mimeType: string | undefined
+    if (imageFile) {
+      const result = await fileToBase64(imageFile)
+      imageBase64 = result.base64
+      mimeType = result.mimeType
+    }
+
     setInput('')
-    const userMsg: AiMessage = { role: 'user', text }
+    const userMsg: AiMessage = {
+      role: 'user',
+      text,
+      ...(imageBase64 && mimeType ? { imageBase64, mimeType } : {}),
+    }
     const updated = [...messages, userMsg]
     setMessages(updated)
     setLoading(true)
@@ -62,10 +84,10 @@ export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent, imageFile?: File) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSend()
+      handleSend(imageFile)
     }
   }
 

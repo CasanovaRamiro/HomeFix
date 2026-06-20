@@ -260,7 +260,7 @@ export default function AvailableSubcontracts() {
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
   const paginated = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const totalVacantes = subcontratos.reduce(
+  const totalVacantes = filtrados.reduce(
     (acc, s) => acc + s.categories.reduce((a, c) => a + (c.quantity - c.filledCount), 0),
     0,
   )
@@ -701,6 +701,33 @@ export default function AvailableSubcontracts() {
                   })}
                 </div>
               </div>
+
+
+              {/* Postular button */}
+              <div style={{ paddingTop: 4 }}>
+                {selected.userId === user?.id ? (
+                  <p style={{ color: '#64748B', fontSize: 14, textAlign: 'center', padding: 12 }}>
+                    Es tu publicación
+                  </p>
+                ) : yaPostulado(selected.id) ? (
+                  <p style={{
+                    background: '#E8F5E9', color: '#2D6A4F',
+                    padding: 12, borderRadius: 6, fontSize: 14, textAlign: 'center',
+                  }}>
+                    Ya te postulaste a esta subcontratación.
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-accent"
+                    onClick={() => { setShowDetailModal(false); setShowApplyModal(true) }}
+                    style={{ width: '100%' }}
+                  >
+                    Postularme
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
         </div>

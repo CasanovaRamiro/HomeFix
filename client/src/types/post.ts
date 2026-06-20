@@ -142,6 +142,7 @@ export interface SubcontractDetailDTO {
 
 export interface TrabajoView {
   id: string
+  userId: string
   titulo: string
   descripcion: string
   categoria: string
@@ -156,4 +157,5 @@ export interface TrabajoView {
   clientRating: number
   address: string
   isEmergency: boolean
+  emergencyExpiresAt: string | null
 }
