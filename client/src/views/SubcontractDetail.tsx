@@ -2,10 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useSubcontractDetail, useSubcontractGroupDetail } from '../hooks/useSubcontractDetail'
-{/*import { ArrowLeft, Calendar, MapPin, GitBranch } from 'lucide-react'*/}
 import { Users, X, Loader } from 'lucide-react'
-{/*import { useTheme } from '../hooks/useTheme'
-import { useAuth } from '../hooks/useAuth'/¡¡¡*/}
 import StarRating from '../components/ui/StarRating'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import { getPostApplicants } from '../services/applications'
@@ -25,8 +22,6 @@ export default function SubcontractDetail() {
   const detailHook = useSubcontractDetail(!isGroup ? id : undefined)
   const { subcontract, loading, error } = isGroup ? groupHook : detailHook
   const refetchSubcontract = isGroup ? groupHook.refetch : detailHook.refetch
-  {/*   const theme = useTheme()
-  const { user } = useAuth() */}
   const [showModal, setShowModal] = useState(false)
   const [applicants, setApplicants] = useState<PostApplicant[]>([])
   const [loadingApplicants, setLoadingApplicants] = useState(false)
