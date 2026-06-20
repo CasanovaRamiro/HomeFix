@@ -155,7 +155,8 @@ model Application {
   review             WorkerReview?
   clientReview       ClientReview?
 
-  @@index([workerId, postId])
+  // Uniqueness on (workerId, postId, COALESCE(categoryId,'__none__')) is enforced by a functional
+  // unique index in migration 20260619000001 — Prisma can't express it, so it isn't declared here.
 }
 
 model ClientReview {
