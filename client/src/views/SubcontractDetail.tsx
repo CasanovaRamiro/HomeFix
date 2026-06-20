@@ -118,6 +118,7 @@ export default function SubcontractDetail() {
     ...subcontract,
     isEmergency: false,
     emergencyExpiresAt: null,
+    allowsSubcontracting: false,
     categories: subcontract.categories,
   }
   const hasAcceptedWorker = applicants.some((a) => a.status === ApplicationStatus.Accepted)
