@@ -2,6 +2,7 @@ import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
 import prisma from '../../lib/prisma.js'
 import { toDomainMyApplication, toDomainPostApplication } from '../transformers/application.transformer.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
+import type { Prisma } from '@prisma/client'
 
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
@@ -13,6 +14,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
           categories: { include: { category: { select: { name: true } } } },
         },
       },
+      category: { include: { category: { select: { name: true } } } },
       clientReview: { select: { id: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -20,16 +22,18 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
   return raw.map(toDomainMyApplication)
 }
 
-export const findApplication = (workerId: string, postId: string) =>
-  prisma.application.findUnique({
-    where: { workerId_postId: { workerId, postId } },
-  })
+export const findApplication = (workerId: string, postId: string, categoryId?: string) => {
+  const where: Prisma.ApplicationFindFirstArgs['where'] = { workerId, postId }
+  if (categoryId) where.categoryId = categoryId
+  return prisma.application.findFirst({ where })
+}
 
 export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true } },
+      post: { select: { userId: true, title: true, status: true, type: true, subcontractGroupId: true } },
+      category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
 
@@ -39,11 +43,19 @@ export const updateApplicationStatus = (id: string, status: string) =>
     data: { status },
   })
 
+export const rejectPendingApplications = (postId: string) =>
+  prisma.application.updateMany({
+    where: { postId, status: ApplicationStatus.Pending },
+    data: { status: ApplicationStatus.Rejected },
+  })
+
 export const createApplication = (workerId: string, input: CreateApplicationInput) =>
   prisma.application.create({
     data: {
       workerId,
       postId: input.postId,
+      categoryId: input.categoryId ?? null,
+      subcontractGroupId: input.subcontractGroupId ?? null,
       status: ApplicationStatus.Pending,
       message: input.message ?? null,
       availableDays: JSON.stringify(input.availableDays),
@@ -61,6 +73,11 @@ export const deleteApplication = (workerId: string, applicationId: string) =>
 
 export const findAcceptedApplication = (postId: string) =>
   prisma.application.findFirst({
+    where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
+  })
+
+export const findAcceptedApplications = (postId: string) =>
+  prisma.application.findMany({
     where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
   })
 
@@ -83,6 +100,8 @@ export const findApplicationsByPost = async (postId: string): Promise<DomainPost
           },
         },
       },
+      review: { select: { id: true } },
+      category: { include: { category: { select: { name: true } } } },
     },
     orderBy: { createdAt: 'desc' },
   })

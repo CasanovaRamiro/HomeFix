@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories } from "../../src/infrastructure/database/post.database.js";
 import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
-import { findAcceptedApplication, updateApplicationStatus } from "../../src/infrastructure/database/application.database.js";
+import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
@@ -17,13 +17,17 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findAvailableSubcontracts: vi.fn(),
   findEmergencyPosts: vi.fn(),
   searchByDistance: vi.fn(),
-  deletePostImages: vi.fn(),
+  deletePostImages: vi.fn().mockResolvedValue(undefined),
   createSubPost: vi.fn(),
+  findPostsByGroupId: vi.fn(),
+  findPostCategories: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
+  findAcceptedApplications: vi.fn(),
   updateApplicationStatus: vi.fn(),
+  rejectPendingApplications: vi.fn(),
 }));
 
 vi.mock("../../src/domain/services/user.service.js", () => ({
@@ -440,6 +444,68 @@ describe('post.service - pausePost', () => {
 
     await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
+
+  it('pausa todos los posts Active de un grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...activePost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+
+    await postService.pausePost('uuid-1', 'user-uuid-1')
+
+    expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Paused')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Paused')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('activa todos los posts Paused de un grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...activePost,
+      status: 'Paused',
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+
+    await postService.pausePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Active')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('salta posts con estado no toggleable en grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...activePost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Completed' },
+      { ...subcontractPost, id: 'uuid-3', status: 'Cancelled' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+
+    await postService.pausePost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledTimes(1)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Paused')
+  })
 })
 
 describe('post.service - cancelPost', () => {
@@ -462,30 +528,36 @@ describe('post.service - cancelPost', () => {
 
   it('cancela un post activo', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
     vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
 
   it('cancela un post pausado', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
     vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
 
   it('cancela un post en In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'In progress' })
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
     vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled', updatedAt: new Date() } as never)
 
     const result = await postService.cancelPost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
     expect(result.status).toBe('Cancelled')
   })
@@ -512,6 +584,61 @@ describe('post.service - cancelPost', () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Cancelled' })
 
     await expect(postService.cancelPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('cancela todos los posts de un grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...activePost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Paused' },
+      { ...subcontractPost, id: 'uuid-3', status: 'In progress' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.cancelPost('uuid-1', 'user-uuid-1')
+
+    expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-3')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(3)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Cancelled')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-3', 'Cancelled')
+    expect(updatePostStatus).toHaveBeenCalledTimes(3)
+  })
+
+  it('salta posts Completed y Cancelled en grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...activePost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Completed' },
+      { ...subcontractPost, id: 'uuid-3', status: 'Cancelled' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.cancelPost('uuid-1', 'user-uuid-1')
+
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(1)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
+    expect(updatePostStatus).toHaveBeenCalledTimes(1)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Cancelled')
+    expect(updatePostStatus).not.toHaveBeenCalledWith('uuid-2', 'Cancelled')
+    expect(updatePostStatus).not.toHaveBeenCalledWith('uuid-3', 'Cancelled')
   })
 })
 
@@ -540,6 +667,7 @@ describe('post.service - finalizePost', () => {
 
     const result = await postService.finalizePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
     expect(result.status).toBe('Completed')
   })
@@ -556,10 +684,61 @@ describe('post.service - finalizePost', () => {
     await expect(postService.finalizePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
-  it('lanza 400 si el post no está en estado Paused', async () => {
-    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' })
+  it('lanza 400 si el post no está en estado Paused o Active', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'In progress' })
 
     await expect(postService.finalizePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('finaliza todos los posts Paused de un grupo SubContract', async () => {
+    const subcontractPost: DomainPost = {
+      ...mockPost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.finalizePost('uuid-1', 'user-uuid-1')
+
+    expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('procesa todos los posts no Completed/Cancelled en grupo SubContract al finalizar', async () => {
+    const subcontractPost: DomainPost = {
+      ...mockPost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Active' },
+      { ...subcontractPost, id: 'uuid-3', status: 'Completed' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.finalizePost('uuid-1', 'user-uuid-1')
+
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
   })
 })
 
@@ -576,6 +755,7 @@ describe('post.service - completePost', () => {
 
     await postService.completePost('uuid-1', 'user-uuid-1')
 
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
   })
 
@@ -589,9 +769,60 @@ describe('post.service - completePost', () => {
     await expect(postService.completePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
-  it('lanza 400 si el post no está In progress', async () => {
-    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Active' } as never)
+  it('lanza 400 si el post no está In progress o Active', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Paused' } as never)
     await expect(postService.completePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('completa todos los posts In progress de un grupo SubContract', async () => {
+    const subcontractPost = {
+      ...mockPost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost as never)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts as never)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.completePost('uuid-1', 'user-uuid-1')
+
+    expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('procesa todos los posts no Completed/Cancelled en grupo SubContract al completar', async () => {
+    const subcontractPost = {
+      ...mockPost,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Paused' },
+      { ...subcontractPost, id: 'uuid-3', status: 'Completed' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost as never)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts as never)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.completePost('uuid-1', 'user-uuid-1')
+
+    expect(rejectPendingApplications).toHaveBeenCalledTimes(2)
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-2')
+    expect(rejectPendingApplications).not.toHaveBeenCalledWith('uuid-3')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Completed')
   })
 })
 
@@ -604,20 +835,22 @@ describe('post.service - reopenPost', () => {
 
   it('reabre el post y resetea la aplicación aceptada a Pending', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
-    vi.mocked(findAcceptedApplication).mockResolvedValue({
+    vi.mocked(findAcceptedApplications).mockResolvedValue([{
       id: 'app-1',
       status: 'Accepted',
       createdAt: new Date(),
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      categoryId: null,
+      subcontractGroupId: null,
       message: null,
       availableDays: null,
       availableTimeFrom: null,
       availableTimeTo: null,
       chargesVisit: false,
       visitCost: null,
-    })
+    } as never])
     vi.mocked(updateApplicationStatus).mockResolvedValue({
       id: 'app-1',
       status: 'Pending',
@@ -625,13 +858,15 @@ describe('post.service - reopenPost', () => {
       updatedAt: new Date(),
       workerId: 'worker-uuid',
       postId: 'uuid-1',
+      categoryId: null,
+      subcontractGroupId: null,
       message: null,
       availableDays: null,
       availableTimeFrom: null,
       availableTimeTo: null,
       chargesVisit: false,
       visitCost: null,
-    })
+    } as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
@@ -642,7 +877,7 @@ describe('post.service - reopenPost', () => {
 
   it('funciona aunque no haya aplicación aceptada', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
-    vi.mocked(findAcceptedApplication).mockResolvedValue(null)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
@@ -664,6 +899,49 @@ describe('post.service - reopenPost', () => {
   it('lanza 400 si el post no está In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockInProgress, status: 'Active' } as never)
     await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('reactiva todos los posts In progress de un grupo SubContract', async () => {
+    const subcontractPost = {
+      ...mockInProgress,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost as never)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts as never)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.reopenPost('uuid-1', 'user-uuid-1')
+
+    expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Active')
+    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('salta posts no In progress en grupo SubContract al reabrir', async () => {
+    const subcontractPost = {
+      ...mockInProgress,
+      type: PostType.SubContract,
+      subcontractGroupId: 'group-1',
+    }
+    const groupPosts = [
+      { ...subcontractPost, id: 'uuid-1' },
+      { ...subcontractPost, id: 'uuid-2', status: 'Active' },
+      { ...subcontractPost, id: 'uuid-3', status: 'Completed' },
+    ]
+    vi.mocked(findPostById).mockResolvedValue(subcontractPost as never)
+    vi.mocked(findPostsByGroupId).mockResolvedValue(groupPosts as never)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
+
+    await postService.reopenPost('uuid-1', 'user-uuid-1')
+
+    expect(updatePostStatus).toHaveBeenCalledTimes(1)
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
   })
 })
 
@@ -852,6 +1130,63 @@ describe('post.service - createSubContract', () => {
   })
 })
 
+describe('post.service - markInProgress', () => {
+  const postId = 'post-1'
+  const userId = 'user-1'
+  const mockPost: DomainPost = {
+    id: postId, userId, title: 'Test', description: 'Test', address: 'Addr',
+    startDate: new Date(), endDate: new Date(), status: 'Active',
+    isEmergency: false, emergencyExpiresAt: undefined,
+    categories: [], images: [], createdAt: new Date(), updatedAt: new Date(),
+    latitude: null, longitude: null,
+    user: { id: userId, name: 'Test', surname: 'User' },
+  } as unknown as DomainPost
+
+  it('should reject if post not found', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.markInProgress(postId, userId)).rejects.toThrow('Post not found')
+  })
+
+  it('should reject if forbidden', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, userId: 'other' })
+    await expect(postService.markInProgress(postId, userId)).rejects.toThrow('Forbidden')
+  })
+
+  it('should reject if post is not Active', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'In progress' })
+    await expect(postService.markInProgress(postId, userId)).rejects.toThrow('Post must be active')
+  })
+
+  it('should reject if no hired workers', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+    vi.mocked(findPostCategories).mockResolvedValue([{ id: 'cat-1', postId, quantity: 2, filledCount: 0 } as never])
+    await expect(postService.markInProgress(postId, userId)).rejects.toThrow('Must have at least one hired worker')
+  })
+
+  it('should update status to InProgress for client post', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockPost)
+    vi.mocked(findPostCategories).mockResolvedValue([{ id: 'cat-1', postId, quantity: 2, filledCount: 1 } as never])
+    vi.mocked(updatePostStatus).mockResolvedValue({ id: postId, status: 'In progress' })
+    const result = await postService.markInProgress(postId, userId)
+    expect(updatePostStatus).toHaveBeenCalledWith(postId, 'In progress')
+    expect(result).toEqual({ id: postId, status: 'In progress' })
+  })
+
+  it('should cascade to all posts in subcontractGroupId', async () => {
+    const groupId = 'group-1'
+    const categoriesWithHired = [{ id: 'cat-1', name: 'Test', quantity: 1, filledCount: 1, roleDescription: null }]
+    const groupPost2 = { ...mockPost, id: 'post-2', subcontractGroupId: groupId, categories: categoriesWithHired }
+    const groupPost3 = { ...mockPost, id: 'post-3', status: 'In progress', subcontractGroupId: groupId, categories: categoriesWithHired }
+    vi.mocked(findPostById).mockResolvedValue({ ...mockPost, type: PostType.SubContract, subcontractGroupId: groupId })
+    vi.mocked(findPostCategories).mockResolvedValue([{ id: 'cat-1', postId, quantity: 1, filledCount: 1 } as never])
+    vi.mocked(findPostsByGroupId).mockResolvedValue([{ ...mockPost, type: PostType.SubContract, subcontractGroupId: groupId, categories: categoriesWithHired }, groupPost2, groupPost3])
+    await postService.markInProgress(postId, userId)
+    expect(updatePostStatus).toHaveBeenCalledWith(postId, 'In progress')
+    expect(updatePostStatus).toHaveBeenCalledWith('post-2', 'In progress')
+    expect(updatePostStatus).not.toHaveBeenCalledWith('post-3', 'In progress')
+  })
+})
+
 describe('post.service - createPost emergency', () => {
   const emergencyInput: CreatePostInput = {
     userId: 'uuid-user-1',
@@ -993,9 +1328,9 @@ describe('post.service - cancelPost with accepted application', () => {
   it('notifies accepted worker when cancelling', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
     vi.mocked(updatePostStatus).mockResolvedValue({ ...activePost, status: 'Cancelled' } as never)
-    vi.mocked(findAcceptedApplication).mockResolvedValue({
+    vi.mocked(findAcceptedApplications).mockResolvedValue([{
       id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
-    } as never)
+    }] as never)
 
     await postService.cancelPost('uuid-1', 'user-uuid-1')
 
@@ -1028,9 +1363,9 @@ describe('post.service - finalizePost with accepted application', () => {
 
   it('marks accepted application as Completed before finalizing', async () => {
     vi.mocked(findPostById).mockResolvedValue(pausedPost)
-    vi.mocked(findAcceptedApplication).mockResolvedValue({
+    vi.mocked(findAcceptedApplications).mockResolvedValue([{
       id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
-    } as never)
+    }] as never)
     vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Completed' } as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ ...pausedPost, status: 'Completed' } as never)
 
@@ -1056,9 +1391,9 @@ describe('post.service - completePost with accepted application', () => {
 
   it('marks accepted application as Completed before completing', async () => {
     vi.mocked(findPostById).mockResolvedValue(inProgressPost as never)
-    vi.mocked(findAcceptedApplication).mockResolvedValue({
+    vi.mocked(findAcceptedApplications).mockResolvedValue([{
       id: 'app-1', workerId: 'worker-1', postId: 'uuid-1', status: 'Accepted',
-    } as never)
+    }] as never)
     vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Completed' } as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ ...inProgressPost, status: 'Completed' } as never)
 

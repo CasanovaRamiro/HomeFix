@@ -189,8 +189,8 @@ export default function PostDetail() {
           <PostCard
             post={post}
             hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
+            hasUnreviewedWorkers={applicants.some(a => (a.status === 'Accepted' || a.status === 'Completed') && !a.hasReview)}
             onComplete={handleComplete}
-            onViewReview={() => navigate('/review')}
             onPause={handlePause}
             onCancel={() => setShowCancelModal(true)}
             onEdit={openEditModal}
@@ -218,11 +218,12 @@ export default function PostDetail() {
                 availableDays: a.availableDays,
                 availableTimeFrom: a.availableTimeFrom,
                 availableTimeTo: a.availableTimeTo,
-                chargesVisit: a.chargesVisit,
-                visitCost: a.visitCost,
-                phone: a.phone,
-              }}
-              applicationId={a.applicationId}
+                  chargesVisit: a.chargesVisit,
+                  visitCost: a.visitCost,
+                  phone: a.phone,
+                  hasReview: a.hasReview,
+                }}
+                applicationId={a.applicationId}
               applicationStatus={a.status}
               postStatus={post.status}
               postTitle={post.title}

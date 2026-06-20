@@ -2,13 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../src/infrastructure/database/workerDashboard.database.js', () => ({
   findWorkerProfile: vi.fn(),
-  countWorkerReviews: vi.fn(),
   countWorkerApplications: vi.fn(),
   countNewJobsForWorker: vi.fn(),
   countCompletedJobs: vi.fn(),
 }))
 
+vi.mock('../../src/domain/services/user.service.js', () => ({
+  getUserRating: vi.fn(),
+}))
+
 import * as workerDashboardData from '../../src/infrastructure/database/workerDashboard.database.js'
+import * as userService from '../../src/domain/services/user.service.js'
 import { getWorkerDashboard } from '../../src/domain/services/workerDashboard.service.js'
 
 const mockProfile = {
@@ -30,7 +34,7 @@ beforeEach(() => vi.clearAllMocks())
 describe('getWorkerDashboard', () => {
   it('returns dashboard data for an existing worker', async () => {
     vi.mocked(workerDashboardData.findWorkerProfile).mockResolvedValue(mockProfile)
-    vi.mocked(workerDashboardData.countWorkerReviews).mockResolvedValue({ count: 10, avgRating: 4.5 })
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 10, averageRating: 4.5 })
     vi.mocked(workerDashboardData.countWorkerApplications).mockResolvedValue([
       { status: 'Pending', _count: 3 },
       { status: 'Accepted', _count: 2 },
@@ -58,7 +62,7 @@ describe('getWorkerDashboard', () => {
 
   it('returns responseRate of 100 when there are no applications', async () => {
     vi.mocked(workerDashboardData.findWorkerProfile).mockResolvedValue(mockProfile)
-    vi.mocked(workerDashboardData.countWorkerReviews).mockResolvedValue({ count: 0, avgRating: 0 })
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
     vi.mocked(workerDashboardData.countWorkerApplications).mockResolvedValue([])
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
     vi.mocked(workerDashboardData.countNewJobsForWorker).mockResolvedValue(0)
@@ -71,7 +75,7 @@ describe('getWorkerDashboard', () => {
 
   it('calculates responseRate from answered vs total applications', async () => {
     vi.mocked(workerDashboardData.findWorkerProfile).mockResolvedValue(mockProfile)
-    vi.mocked(workerDashboardData.countWorkerReviews).mockResolvedValue({ count: 0, avgRating: 0 })
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
     vi.mocked(workerDashboardData.countWorkerApplications).mockResolvedValue([
       { status: 'Pending', _count: 2 },
       { status: 'Accepted', _count: 3 },
@@ -88,7 +92,7 @@ describe('getWorkerDashboard', () => {
 
   it('passes category ids to countNewJobsForWorker', async () => {
     vi.mocked(workerDashboardData.findWorkerProfile).mockResolvedValue(mockProfile)
-    vi.mocked(workerDashboardData.countWorkerReviews).mockResolvedValue({ count: 0, avgRating: 0 })
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
     vi.mocked(workerDashboardData.countWorkerApplications).mockResolvedValue([])
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
     vi.mocked(workerDashboardData.countNewJobsForWorker).mockResolvedValue(3)
@@ -98,9 +102,9 @@ describe('getWorkerDashboard', () => {
     expect(workerDashboardData.countNewJobsForWorker).toHaveBeenCalledWith(['cat-1'])
   })
 
-  it('rounds avgRating to one decimal place', async () => {
+  it('passes through already-rounded avgRating from getUserRating', async () => {
     vi.mocked(workerDashboardData.findWorkerProfile).mockResolvedValue(mockProfile)
-    vi.mocked(workerDashboardData.countWorkerReviews).mockResolvedValue({ count: 3, avgRating: 4.666 })
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 3, averageRating: 4.7 })
     vi.mocked(workerDashboardData.countWorkerApplications).mockResolvedValue([])
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
     vi.mocked(workerDashboardData.countNewJobsForWorker).mockResolvedValue(0)

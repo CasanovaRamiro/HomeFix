@@ -9,6 +9,7 @@ export interface ApplicationResponse {
 
 export interface ApplyToPostInput {
   postId: string
+  categoryId?: string
   message?: string
   availableDays: string[]
   availableTimeFrom: string
@@ -35,6 +36,7 @@ export interface PostApplicant {
   phone: string | null
   chargesVisit: boolean
   visitCost: number | null
+  hasReview: boolean
 }
 
 export const applyToPost = (input: ApplyToPostInput) =>

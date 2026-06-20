@@ -1,6 +1,7 @@
 export interface PrismaApplicationWithPost {
   id: string
   postId: string
+  categoryId: string | null
   workerId: string
   status: string
   createdAt: Date
@@ -18,12 +19,14 @@ export interface PrismaApplicationWithPost {
     user: { id: string; name: string; surname: string; phone: string | null }
     categories: { category: { name: string } }[]
   }
+  category: { id: string; category: { name: string } } | null
   clientReview: { id: string } | null
 }
 
 export interface PrismaApplicationWithWorker {
   id: string
   postId: string
+  categoryId: string | null
   status: string
   createdAt: Date
   message: string | null
@@ -43,4 +46,6 @@ export interface PrismaApplicationWithWorker {
     reviewsReceived: { rating: number }[]
     applications: { id: string }[]
   }
+  category: { id: string; category: { name: string } } | null
+  review: { id: string } | null
 }

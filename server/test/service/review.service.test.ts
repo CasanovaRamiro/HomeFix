@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { findPostById } from '../../src/infrastructure/database/post.database.js'
-import { findAcceptedApplication, findApplicationById } from '../../src/infrastructure/database/application.database.js'
+import { findAcceptedApplications, findApplicationById } from '../../src/infrastructure/database/application.database.js'
 import { createReview as createReviewData, createClientReview as createClientReviewData, findClientReviewByApplicationId, findWorkerReviewByApplicationId } from '../../src/infrastructure/database/review.database.js'
 import { createWorkerReview, createClientReview } from '../../src/domain/services/review.service.js'
 import type { CreateReviewInput, DomainClientReview } from '../../src/domain/types/review.types.js'
@@ -11,7 +11,7 @@ vi.mock('../../src/infrastructure/database/post.database.js', () => ({
 }))
 
 vi.mock('../../src/infrastructure/database/application.database.js', () => ({
-  findAcceptedApplication: vi.fn(),
+  findAcceptedApplications: vi.fn(),
   findApplicationById: vi.fn(),
 }))
 
@@ -55,6 +55,8 @@ const mockAcceptedApp = {
   id: 'app-uuid-1',
   workerId,
   postId,
+  categoryId: null,
+  subcontractGroupId: null,
   status: 'Accepted',
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -98,14 +100,14 @@ describe('createWorkerReview (validation)', () => {
 
   it('should not throw with valid input', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([mockAcceptedApp])
     vi.mocked(createReviewData).mockResolvedValue(mockReview)
     await expect(createWorkerReview(postId, userId, validInput)).resolves.toBeDefined()
   })
 
   it('should not throw when description is omitted', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([mockAcceptedApp])
     vi.mocked(createReviewData).mockResolvedValue(mockReview)
     await expect(createWorkerReview(postId, userId, { postId, rating: 5 })).resolves.toBeDefined()
   })
@@ -114,13 +116,13 @@ describe('createWorkerReview (validation)', () => {
 describe('createWorkerReview', () => {
   it('should create a review successfully', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([mockAcceptedApp])
     vi.mocked(createReviewData).mockResolvedValue(mockReview)
 
     const result = await createWorkerReview(postId, userId, validInput)
 
     expect(findPostById).toHaveBeenCalledWith(postId)
-    expect(findAcceptedApplication).toHaveBeenCalledWith(postId)
+    expect(findAcceptedApplications).toHaveBeenCalledWith(postId)
     expect(createReviewData).toHaveBeenCalledWith({
       applicationId: mockAcceptedApp.id,
       reviewerId: userId,
@@ -155,19 +157,19 @@ describe('createWorkerReview', () => {
 
   it('should create a review on a cancelled post that had a hired worker', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Cancelled' })
-    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([mockAcceptedApp])
     vi.mocked(createReviewData).mockResolvedValue(mockReview)
 
     const result = await createWorkerReview(postId, userId, validInput)
 
-    expect(findAcceptedApplication).toHaveBeenCalledWith(postId)
+    expect(findAcceptedApplications).toHaveBeenCalledWith(postId)
     expect(createReviewData).toHaveBeenCalled()
     expect(result).toEqual(mockReview)
   })
 
   it('should throw 400 when no accepted application exists (e.g. cancelled while Active)', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockPost, status: 'Cancelled' })
-    vi.mocked(findAcceptedApplication).mockResolvedValue(null)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([])
 
     await expect(createWorkerReview(postId, userId, validInput)).rejects.toMatchObject({ status: 400, message: 'No accepted application found for this post' })
     expect(createReviewData).not.toHaveBeenCalled()
@@ -176,7 +178,7 @@ describe('createWorkerReview', () => {
   it('should create a review without optional description', async () => {
     const inputWithoutDesc: CreateReviewInput = { postId, rating: 4 }
     vi.mocked(findPostById).mockResolvedValue(mockPost)
-    vi.mocked(findAcceptedApplication).mockResolvedValue(mockAcceptedApp)
+    vi.mocked(findAcceptedApplications).mockResolvedValue([mockAcceptedApp])
     vi.mocked(createReviewData).mockResolvedValue({ ...mockReview, rating: 4, description: '' })
 
     const result = await createWorkerReview(postId, userId, inputWithoutDesc)

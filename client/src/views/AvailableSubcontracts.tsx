@@ -55,7 +55,8 @@ export default function AvailableSubcontracts() {
   const [selected, setSelected] = useState<AvailableSubcontractDTO | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showApplyModal, setShowApplyModal] = useState(false)
-  const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
+  const [postulacionesIds, setPostulacionesIds] = useState<Set<string>>(new Set())
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [notificacion, setNotificacion] = useState<{ tipo: 'error' | 'exito'; mensaje: string } | null>(null)
   const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -83,10 +84,10 @@ export default function AvailableSubcontracts() {
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
     try {
-      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
-      setPostulacionesIds(res.data.map((a) => a.postId))
+      const res = await api.get<{ postId: string; categoryId: string | null }[]>('/applications/my-applications')
+      setPostulacionesIds(new Set(res.data.map((a) => a.categoryId ? `${a.postId}:${a.categoryId}` : a.postId)))
     } catch {
-      setPostulacionesIds([])
+      setPostulacionesIds(new Set())
     }
   }, [])
 
@@ -131,7 +132,8 @@ export default function AvailableSubcontracts() {
     }
   }, [loadPostulaciones, fetchSubcontratos])
 
-  const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
+  const yaPostulado = (id: string, categoryId?: string): boolean =>
+    categoryId ? postulacionesIds.has(`${id}:${categoryId}`) : postulacionesIds.has(id)
 
   const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
     if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
@@ -140,11 +142,12 @@ export default function AvailableSubcontracts() {
   }
 
   const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
-    if (!selected) return
+    if (!selected || !selectedCategoryId) return
     setEnviando(true)
     try {
       await applyToSubcontract({
         postId: selected.id,
+        categoryId: selectedCategoryId,
         message: formData.message || undefined,
         availableDays: formData.availableDays,
         availableTimeFrom: formData.availableTimeFrom,
@@ -152,12 +155,14 @@ export default function AvailableSubcontracts() {
         chargesVisit: formData.chargesVisit,
         visitCost: formData.visitCost,
       })
-      setPostulacionesIds((prev) => [...prev, selected.id])
+      setPostulacionesIds((prev) => new Set(prev).add(`${selected.id}:${selectedCategoryId}`))
       setShowApplyModal(false)
+      setSelectedCategoryId(null)
       mostrarNotificacion('exito', 'Te postulaste correctamente')
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setShowApplyModal(false)
+      setSelectedCategoryId(null)
       setEnviando(false)
       mostrarNotificacion('error', axiosErr.response?.data?.error ?? 'Error al postularte')
     }
@@ -687,6 +692,7 @@ export default function AvailableSubcontracts() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selected.categories.map((cat, i) => {
                     const needed = cat.quantity - cat.filledCount
+                    const applied = yaPostulado(selected.id, cat.id)
                     return (
                       <div key={i} style={{
                         padding: '10px 12px', borderRadius: 8,
@@ -710,11 +716,30 @@ export default function AvailableSubcontracts() {
                         <p style={{ margin: 0, fontSize: 11, color: '#94A3B8' }}>
                           {cat.filledCount} de {cat.quantity} cubierto{cat.filledCount !== 1 ? 's' : ''}
                         </p>
+                        {needed > 0 && !applied && (
+                          <button
+                            type="button"
+                            className="btn-accent"
+                            onClick={() => { setSelectedCategoryId(cat.id); setShowDetailModal(false); setShowApplyModal(true) }}
+                            style={{ width: '100%', marginTop: 8, fontSize: 13, padding: '6px 12px' }}
+                          >
+                            Postularme para {cat.name}
+                          </button>
+                        )}
+                        {applied && (
+                          <p style={{
+                            background: '#E8F5E9', color: '#2D6A4F',
+                            padding: '6px 12px', borderRadius: 6, fontSize: 12, textAlign: 'center', margin: '8px 0 0',
+                          }}>
+                            Ya te postulaste a este rubro
+                          </p>
+                        )}
                       </div>
                     )
                   })}
                 </div>
               </div>
+
 
               {/* Postular button */}
               <div style={{ paddingTop: 4 }}>
@@ -740,6 +765,7 @@ export default function AvailableSubcontracts() {
                   </button>
                 )}
               </div>
+
             </div>
           </div>
         </div>
@@ -750,7 +776,7 @@ export default function AvailableSubcontracts() {
         <ApplyModal
           selected={{ id: selected.id, titulo: selected.title }}
           onEnviar={(data) => { void handlePostular(data) }}
-          onClose={() => setShowApplyModal(false)}
+          onClose={() => { setShowApplyModal(false); setSelectedCategoryId(null) }}
           enviando={enviando}
         />
       )}

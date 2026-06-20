@@ -18,6 +18,7 @@ const WORKER_LINKS: NavLinkDef[] = [
   { href: '/worker/available-jobs',           label: 'Trabajos Disponibles', icon: Briefcase },
   { href: '/worker/calendar',                 label: 'Mi Agenda',            icon: CalendarDays },
   { href: '/worker/available-subcontracts',   label: 'Subcontratos',         icon: GitBranch },
+  { href: '/worker/subcontracts',             label: 'Gestor Subcontratos',  icon: GitBranch },
   { href: '/worker/my-applications',          label: 'Mis Postulaciones',    icon: ClipboardList },
   { href: '/create-subcontract',              label: 'Subcontratar',         icon: Users },
 ]

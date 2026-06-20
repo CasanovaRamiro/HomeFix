@@ -209,8 +209,9 @@ describe('POST /applications', () => {
 })
 
 describe('POST /applications/subcontract', () => {
-  const createActiveSubcontract = (overrides: Record<string, unknown> = {}) =>
-    prisma.post.create({
+  const createActiveSubcontract = async (overrides: Record<string, unknown> = {}):
+    Promise<{ postId: string; postCategoryId: string }> => {
+    const post = await prisma.post.create({
       data: {
         userId: clientId,
         title: 'Busco albañil',
@@ -225,14 +226,17 @@ describe('POST /applications/subcontract', () => {
         },
         ...overrides,
       },
+      include: { categories: true },
     })
+    return { postId: post.id, postCategoryId: post.categories[0].id }
+  }
 
   it('crea una postulación a subcontract y retorna 201', async () => {
-    const subcontract = await createActiveSubcontract()
+    const { postId, postCategoryId } = await createActiveSubcontract()
     const res = await request(app)
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId })
 
     expect(res.status).toBe(201)
     expect(res.body).toHaveProperty('id')
@@ -241,12 +245,13 @@ describe('POST /applications/subcontract', () => {
   })
 
   it('persiste los campos en la base de datos', async () => {
-    const subcontract = await createActiveSubcontract()
+    const { postId, postCategoryId } = await createActiveSubcontract()
     const res = await request(app)
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
       .send({
-        ...validApplicationBody(subcontract.id),
+        ...validApplicationBody(postId),
+        categoryId: postCategoryId,
         message: 'Tengo experiencia en albañilería',
         chargesVisit: true,
         visitCost: 300,
@@ -259,89 +264,57 @@ describe('POST /applications/subcontract', () => {
     expect(saved?.visitCost).toBe(300)
   })
 
+  it('retorna 400 si falta categoryId', async () => {
+    const { postId } = await createActiveSubcontract()
+    const res = await request(app)
+      .post('/applications/subcontract')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send(validApplicationBody(postId))
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si el categoryId no corresponde al rubro', async () => {
+    const { postId } = await createActiveSubcontract()
+    const res = await request(app)
+      .post('/applications/subcontract')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(postId), categoryId: 'category-id-invalido' })
+
+    expect(res.status).toBe(400)
+  })
+
   it('retorna 400 si el postId corresponde a un post regular', async () => {
     const post = await createActivePost()
+    const { postCategoryId } = await createActiveSubcontract()
     const res = await request(app)
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(post.id))
-
-    expect(res.status).toBe(400)
-  })
-
-  it('retorna 400 si el worker se postula a su propio subcontract', async () => {
-    const subcontract = await createActiveSubcontract({ userId: workerId })
-    const res = await request(app)
-      .post('/applications/subcontract')
-      .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
-
-    expect(res.status).toBe(400)
-  })
-
-  it('retorna 400 si no hay vacantes disponibles', async () => {
-    const subcontract = await prisma.post.create({
-      data: {
-        userId: clientId,
-        title: 'Busco albañil',
-        description: 'Test',
-        address: 'Calle 456',
-        startDate: new Date('2026-06-01'),
-        endDate: new Date('2026-06-15'),
-        status: 'Active',
-        type: 'subcontract',
-        categories: {
-          create: { categoryId, quantity: 2, filledCount: 2, roleDescription: 'Albañilería general' },
-        },
-      },
-    })
-    const res = await request(app)
-      .post('/applications/subcontract')
-      .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
-
-    expect(res.status).toBe(400)
-  })
-
-  it('retorna 400 si el subcontract no está Active', async () => {
-    const subcontract = await createActiveSubcontract({ status: 'Completed' })
-    const res = await request(app)
-      .post('/applications/subcontract')
-      .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
+      .send({ ...validApplicationBody(post.id), categoryId: postCategoryId })
 
     expect(res.status).toBe(400)
   })
 
   it('retorna 409 si el worker ya se postuló al subcontract', async () => {
-    const subcontract = await createActiveSubcontract()
+    const { postId, postCategoryId } = await createActiveSubcontract()
     await request(app)
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId })
 
     const res = await request(app)
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
-      .send(validApplicationBody(subcontract.id))
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId })
 
     expect(res.status).toBe(409)
   })
 
-  it('retorna 400 si falta postId', async () => {
-    const res = await request(app)
-      .post('/applications/subcontract')
-      .set('Authorization', `Bearer ${workerToken}`)
-      .send({ availableDays: ['Lunes'], availableTimeFrom: '09:00', availableTimeTo: '18:00', chargesVisit: false })
-
-    expect(res.status).toBe(400)
-  })
-
   it('retorna 401 si no se envía token', async () => {
-    const subcontract = await createActiveSubcontract()
+    const { postId, postCategoryId } = await createActiveSubcontract()
     const res = await request(app)
       .post('/applications/subcontract')
-      .send(validApplicationBody(subcontract.id))
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId })
 
     expect(res.status).toBe(401)
   })

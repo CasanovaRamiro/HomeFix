@@ -23,6 +23,7 @@ import WorkerLanding from './views/WorkerLanding'
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
 import SubcontractDetail from './views/SubcontractDetail'
+import WorkerSubcontracts from './views/WorkerSubcontracts'
 import CreateSubcontract from './views/CreateSubcontract'
 import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
@@ -104,6 +105,8 @@ export default function App(): ReactNode {
         <Route path="/worker/calendar" element={<WorkerRoute><WorkerCalendar /></WorkerRoute>} />
         <Route path="/worker/my-applications" element={<WorkerRoute><WorkerApplications /></WorkerRoute>} />
         <Route path="/worker/available-subcontracts" element={<WorkerRoute><AvailableSubcontracts /></WorkerRoute>} />
+        <Route path="/worker/subcontracts" element={<WorkerRoute><WorkerSubcontracts /></WorkerRoute>} />
+        <Route path="/worker/subcontracts/group/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/worker/available-jobs" element={<WorkerRoute><AvailableJobs /></WorkerRoute>} />
         <Route path="/worker/:id" element={<WorkerRoute><WorkerProfile /></WorkerRoute>} />

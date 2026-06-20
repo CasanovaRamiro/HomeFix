@@ -46,3 +46,21 @@ export const fetchAvailableSubcontracts = () =>
 
 export const fetchSubcontractById = (id: string) =>
   api.get<SubcontractDetailDTO>(`/posts/subcontracts/${id}`)
+
+export interface SubcontractManagerData {
+  stats: {
+    active: number
+    inProgress: number
+    paused: number
+    completed: number
+    averageRating: number
+    reviewCount: number
+  }
+  subcontracts: SubcontractDetailDTO[]
+}
+
+export const fetchMySubcontractManager = () =>
+  api.get<SubcontractManagerData>('/posts/subcontracts/my-subcontracts')
+
+export const fetchSubcontractGroupDetail = (id: string) =>
+  api.get<SubcontractDetailDTO>(`/posts/subcontracts/group/${id}`)

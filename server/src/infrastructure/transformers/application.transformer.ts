@@ -18,7 +18,8 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   serviceDate: a.post.startDate,
   endDate: a.post.endDate,
   status: a.status,
-  category: a.post.categories[0]?.category.name ?? null,
+  category: a.category?.category.name ?? a.post.categories[0]?.category.name ?? null,
+  categoryId: a.categoryId,
   hasReview: a.clientReview !== null,
   clientRating: 0,
   message: a.message,
@@ -39,7 +40,7 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     workerId: a.worker.id,
     name: `${a.worker.name} ${a.worker.surname}`.trim(),
     photo: a.worker.photo,
-    category: a.worker.categories[0]?.category.name ?? null,
+    category: a.category?.category.name ?? a.worker.categories[0]?.category.name ?? null,
     address: a.worker.address?.city ?? '',
     rating: Math.round(avgRating * 10) / 10,
     reviewCount: reviews.length,
@@ -52,5 +53,6 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     chargesVisit: a.chargesVisit,
     visitCost: a.visitCost,
     phone: a.worker.phone,
+    hasReview: a.review !== null,
   }
 }

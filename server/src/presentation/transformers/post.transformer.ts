@@ -25,6 +25,7 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   workerRating: post.workerRating,
   originalClientRating: post.originalClientRating,
   parentUser: post.parentUser,
+  postIds: post.postIds,
 })
 
 export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({

@@ -11,6 +11,7 @@ type _CreatePostRecordInput = {
   userId: string
   type: PostType
   parentPostId: string | null
+  subcontractGroupId: string | null
   title: string
   description: string
   startDate: Date
@@ -36,6 +37,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       userId: data.userId,
       type: data.type,
       parentPostId: data.parentPostId,
+      subcontractGroupId: data.subcontractGroupId,
       title: data.title,
       description: data.description,
       startDate: data.startDate,
@@ -59,6 +61,7 @@ const postFields = {
   userId: true,
   type: true,
   parentPostId: true,
+  subcontractGroupId: true,
   title: true,
   description: true,
   startDate: true,
@@ -76,6 +79,8 @@ const postFields = {
   allowsSubcontracting: true,
   categories: {
     select: {
+      id: true,
+      categoryId: true,
       category: {
         select: {
           id: true,
@@ -104,6 +109,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     userId: data.userId,
     type: PostType.Post,
     parentPostId: null,
+    subcontractGroupId: null,
     title: data.title,
     description: data.description,
     startDate,
@@ -122,6 +128,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
 export const createSubPost = async (data: {
   userId: string
   parentPostId?: string
+  subcontractGroupId?: string
   title: string
   description: string
   startDate: Date
@@ -135,6 +142,7 @@ export const createSubPost = async (data: {
     userId: data.userId,
     type: PostType.SubContract,
     parentPostId: data.parentPostId ?? null,
+    subcontractGroupId: data.subcontractGroupId ?? null,
     title: data.title,
     description: data.description,
     startDate: data.startDate,
@@ -213,6 +221,24 @@ export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
     where: { type: PostType.SubContract, status: 'Active' } as never,
     orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
+export const findMySubcontracts = async (userId: string): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: { userId, type: PostType.SubContract } as never,
+    orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
+export const findPostsByGroupId = async (groupId: string): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: { subcontractGroupId: groupId } as never,
+    orderBy: { createdAt: 'asc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
   return raw.map(toDomainPost)
@@ -386,3 +412,20 @@ export const searchByDistance = async (
     .filter((p): p is LocationSearchResult => p !== null)
     .sort((a, b) => a.distance - b.distance)
 }
+
+export const incrementPostFilledCount = (postId: string, categoryId?: string) =>
+  prisma.postCategory.updateMany({
+    where: { postId, ...(categoryId ? { id: categoryId } : {}) },
+    data: { filledCount: { increment: 1 } },
+  })
+
+export const decrementPostFilledCount = (postId: string, categoryId?: string) =>
+  prisma.postCategory.updateMany({
+    where: { postId, filledCount: { gt: 0 }, ...(categoryId ? { id: categoryId } : {}) },
+    data: { filledCount: { decrement: 1 } },
+  })
+
+export const findPostCategories = (postId: string) =>
+  prisma.postCategory.findMany({
+    where: { postId },
+  })

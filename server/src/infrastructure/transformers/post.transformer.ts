@@ -6,6 +6,7 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   userId: post.userId,
   type: post.type,
   parentPostId: post.parentPostId,
+  subcontractGroupId: post.subcontractGroupId,
   title: post.title,
   description: post.description,
   startDate: post.startDate,
@@ -20,7 +21,8 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   emergencyExpiresAt: post.emergencyExpiresAt,
   allowsSubcontracting: post.allowsSubcontracting,
   categories: post.categories.map((pc) => ({
-    id: pc.category.id,
+    id: pc.id,
+    categoryId: pc.categoryId,
     name: pc.category.name,
     quantity: pc.quantity,
     filledCount: pc.filledCount,

@@ -138,6 +138,7 @@ export interface SubcontractDetailDTO {
   clientRating: number
   workerRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }
 
 export interface TrabajoView {

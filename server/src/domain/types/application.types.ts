@@ -1,5 +1,7 @@
 export interface CreateApplicationInput {
   postId: string
+  categoryId?: string
+  subcontractGroupId?: string
   message?: string
   availableDays: string[]
   availableTimeFrom: string
@@ -21,6 +23,7 @@ export interface DomainMyApplication {
   endDate: Date
   status: string
   category: string | null
+  categoryId: string | null
   hasReview: boolean
   clientRating: number
   message: string | null
@@ -49,4 +52,5 @@ export interface DomainPostApplication {
   chargesVisit: boolean
   visitCost: number | null
   phone: string | null
+  hasReview: boolean
 }
