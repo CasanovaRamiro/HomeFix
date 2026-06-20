@@ -12,6 +12,7 @@ import SubcontractCard from '../components/worker/SubcontractCard'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import StarRating from '../components/ui/StarRating'
+import CustomSelect from '../components/ui/CustomSelect'
 import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
 
@@ -363,17 +364,16 @@ export default function AvailableSubcontracts() {
         <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
           <div className="trabajos-filters-row">
             <div className="filter-group filter-category">
-              <label htmlFor="sc-category">Rubro</label>
-              <select
+              <CustomSelect
                 id="sc-category"
+                label="Rubro"
+                options={[
+                  { value: '', label: 'Todos los rubros' },
+                  ...workerCategories.map(cat => ({ value: cat, label: cat }))
+                ]}
                 value={category}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-              >
-                <option value="">Todos los rubros</option>
-                {workerCategories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={handleCategoryChange}
+              />
             </div>
 
             <div className="filter-group filter-search">
@@ -388,15 +388,16 @@ export default function AvailableSubcontracts() {
             </div>
 
             <div className="filter-group filter-sort">
-              <label htmlFor="sc-sort">Orden</label>
-              <select
+              <CustomSelect
                 id="sc-sort"
+                label="Orden"
+                options={[
+                  { value: 'reciente', label: 'Mas recientes' },
+                  { value: 'antiguo', label: 'Mas antiguos' }
+                ]}
                 value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as 'reciente' | 'antiguo')}
-              >
-                <option value="reciente">Mas recientes</option>
-                <option value="antiguo">Mas antiguos</option>
-              </select>
+                onChange={(val) => handleSortChange(val as 'reciente' | 'antiguo')}
+              />
             </div>
 
             <div className="filter-group filter-location">
@@ -476,6 +477,42 @@ export default function AvailableSubcontracts() {
           </div>
         )}
 
+        {!loading && totalPages > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 6, marginBottom: 12,
+          }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                opacity: page === 1 ? 0.4 : 1,
+              }}
+            >
+              <ChevronLeft size={16} color="#475569" />
+            </button>
+            <span style={{ fontSize: 13, color: '#475569', fontWeight: 600, padding: '0 8px' }}>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                opacity: page === totalPages ? 0.4 : 1,
+              }}
+            >
+              <ChevronRight size={16} color="#475569" />
+            </button>
+          </div>
+        )}
         {!loading && paginated.length > 0 && (
           <>
             <div className="sc-grid" style={{ marginBottom: totalPages > 1 ? 24 : 0 }}>
@@ -511,25 +548,26 @@ export default function AvailableSubcontracts() {
                   <ChevronLeft size={16} color="#475569" />
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      border: p === page ? '1.5px solid #3B82F6' : '1.5px solid #E2E8F0',
-                      background: p === page ? '#3B82F6' : '#fff',
-                      color: p === page ? '#fff' : '#475569',
-                      fontSize: 13, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
-                    onMouseLeave={(e) => { if (p !== page) { (e.currentTarget as HTMLElement).style.background = '#fff'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
-                  >
-                    {p}
-                  </button>
-                ))}
-
+                <div className="page-numbers-wrapper" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      style={{
+                        width: 36, height: 36, borderRadius: 8,
+                        border: p === page ? '1.5px solid #3B82F6' : '1.5px solid #E2E8F0',
+                        background: p === page ? '#3B82F6' : '#fff',
+                        color: p === page ? '#fff' : '#475569',
+                        fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+                      onMouseLeave={(e) => { if (p !== page) { (e.currentTarget as HTMLElement).style.background = '#fff'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}

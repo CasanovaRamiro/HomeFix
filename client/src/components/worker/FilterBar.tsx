@@ -1,4 +1,5 @@
 import type { LocationFilter } from './types'
+import CustomSelect from '../ui/CustomSelect'
 
 interface Props {
   category: string
@@ -26,19 +27,16 @@ export default function FilterBar({
   return (
     <div className="trabajos-filters-row">
       <div className="filter-group filter-category">
-        <label htmlFor="cat-select">Rubro</label>
-        <select
+        <CustomSelect
           id="cat-select"
+          label="Rubro"
+          options={[
+            { value: '', label: 'Todos los rubros' },
+            ...workerCategories.map(cat => ({ value: cat, label: cat }))
+          ]}
           value={category}
-          onChange={(e) => onCategoryChange(e.target.value)}
-        >
-          <option value="">Todos los rubros</option>
-          {workerCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
+          onChange={onCategoryChange}
+        />
       </div>
 
       <div className="filter-group filter-search">
@@ -53,15 +51,16 @@ export default function FilterBar({
       </div>
 
       <div className="filter-group filter-sort">
-        <label htmlFor="sort-select">Orden</label>
-        <select
+        <CustomSelect
           id="sort-select"
+          label="Orden"
+          options={[
+            { value: 'reciente', label: 'Mas recientes' },
+            { value: 'antiguo', label: 'Mas antiguos' }
+          ]}
           value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as 'reciente' | 'antiguo')}
-        >
-          <option value="reciente">Mas recientes</option>
-          <option value="antiguo">Mas antiguos</option>
-        </select>
+          onChange={(val) => onSortChange(val as 'reciente' | 'antiguo')}
+        />
       </div>
 
       <div className="filter-group filter-location">

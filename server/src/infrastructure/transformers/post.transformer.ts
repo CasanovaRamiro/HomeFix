@@ -19,6 +19,7 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
   longitude: post.longitude,
   isEmergency: post.isEmergency,
   emergencyExpiresAt: post.emergencyExpiresAt,
+  allowsSubcontracting: post.allowsSubcontracting,
   categories: post.categories.map((pc) => ({
     id: pc.id,
     categoryId: pc.categoryId,

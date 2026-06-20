@@ -12,13 +12,14 @@ import { useState } from 'react'
     latitude: number | null
     longitude: number | null
     isEmergency?: boolean
+    allowsSubcontracting?: boolean
   }
 
   export function useCreatePost() {
     const { accent, border } = useTheme()
     const [form, setForm] = useState<PostFormData>({
       title: '', categoryId: '', description: '',
-      startDate: '', endDate: '', address: '', latitude: null, longitude: null, isEmergency: false,
+      startDate: '', endDate: '', address: '', latitude: null, longitude: null, isEmergency: false, allowsSubcontracting: true,
     })
     const [formError, setFormError] = useState('')
     const [formSubmitting, setFormSubmitting] = useState(false)
@@ -73,6 +74,7 @@ import { useState } from 'react'
             longitude: form.longitude,
             categoryId: form.categoryId,
             isEmergency: form.isEmergency,
+            allowsSubcontracting: form.allowsSubcontracting,
             images,
           })
           setFormSuccess(true)

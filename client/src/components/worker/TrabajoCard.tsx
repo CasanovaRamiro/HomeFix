@@ -46,6 +46,12 @@ function shortAddress(addr: string): string {
   return filtered.slice(-2).join(' - ')
 }
 
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+}
+
 export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost, onClick, onKeyDown }: Props) {
   const meta = getCategoryMeta(trabajo.categoria)
   const [timeLeft, setTimeLeft] = useState(() =>
@@ -120,7 +126,8 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
           <StarRating rating={trabajo.clientRating} />
         </div>
         <div className="trabajo-card-actions">
-          <span className="trabajo-date">{trabajo.fechaServicio}</span>
+          <span className="trabajo-date trabajo-date-full">{trabajo.fechaServicio}</span>
+          <span className="trabajo-date trabajo-date-short">{formatShortDate(trabajo.startDate)}</span>
           <button type="button" className="btn-ver-detalle" onClick={(e) => { e.stopPropagation(); onClick() }}>
             Ver detalle
           </button>

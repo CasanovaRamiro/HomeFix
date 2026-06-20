@@ -244,7 +244,7 @@ export default function AvailableJobs(): JSX.Element {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', width: '100%', overflowX: 'hidden', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
 
@@ -369,6 +369,42 @@ export default function AvailableJobs(): JSX.Element {
             <p style={{ color: '#64748B', fontSize: 14 }}>No encontramos trabajos activos para este rubro o búsqueda.</p>
           </div>
         )}
+        {!loading && totalPages > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 6, marginBottom: 12,
+          }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                opacity: page === 1 ? 0.4 : 1,
+              }}
+            >
+              <ChevronLeft size={16} color="#475569" />
+            </button>
+            <span style={{ fontSize: 13, color: '#475569', fontWeight: 600, padding: '0 8px' }}>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                opacity: page === totalPages ? 0.4 : 1,
+              }}
+            >
+              <ChevronRight size={16} color="#475569" />
+            </button>
+          </div>
+        )}
         {!loading && (
           <div className="trabajos-list-2col">
             {paginaActual.map((trabajo) => (
@@ -411,23 +447,24 @@ export default function AvailableJobs(): JSX.Element {
               <ChevronLeft size={16} color="#475569" />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                style={{
-                  width: 36, height: 36, borderRadius: 8,
-                  border: p === page ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
-                  background: p === page ? '#0F172A' : '#fff',
-                  color: p === page ? '#fff' : '#475569',
-                  fontSize: 13, fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {p}
-              </button>
-            ))}
-
+            <div className="page-numbers-wrapper" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    border: p === page ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
+                    background: p === page ? '#0F172A' : '#fff',
+                    color: p === page ? '#fff' : '#475569',
+                    fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
@@ -494,7 +531,7 @@ export default function AvailableJobs(): JSX.Element {
         @media (max-width: 640px) {
           .trabajos-list-2col { grid-template-columns: 1fr; }
           .trabajos-grid-container { padding-left: 16px !important; padding-right: 16px !important; margin-top: 16px !important; }
-          .filter-bar-container { padding-left: 0 !important; padding-right: 16px !important; }
+          .filter-bar-container { padding-left: 16px !important; padding-right: 16px !important; }
           .filter-bar-container .trabajos-filters-row { align-items: stretch; }
           .refresh-controls { display: none !important; }
         }
