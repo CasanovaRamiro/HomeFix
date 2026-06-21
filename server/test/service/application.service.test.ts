@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+﻿import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as applicationData from "../../src/infrastructure/database/application.database.js"
 import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
@@ -56,6 +56,7 @@ const mockApplication = {
   availableTimeTo: null,
   chargesVisit: false,
   visitCost: null,
+  scheduledDate: null,
   post: { userId: "client-1", title: "Test post", status: "Active" },
 }
 
@@ -127,7 +128,7 @@ describe("applyToPost", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
     message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
   }
 
   beforeEach(() => {
@@ -137,7 +138,7 @@ describe("applyToPost", () => {
     vi.mocked(userDatabase.findUserById).mockResolvedValue({ id: "worker-1", name: "Juan", email: "juan@test.com", phone: null, telegramChatId: null })
   })
 
-  it("crea la postulación y retorna id, status y mensaje de éxito", async () => {
+  it("crea la postulaciÃ³n y retorna id, status y mensaje de Ã©xito", async () => {
     const result = await applyToPost("worker-1", validInput)
     expect(result).toEqual({ id: "app-new", status: "Pending", message: "Application successful" })
     expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", validInput)
@@ -148,21 +149,21 @@ describe("applyToPost", () => {
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 404 })
   })
 
-  it("lanza 400 si el post no está Active", async () => {
+  it("lanza 400 si el post no estÃ¡ Active", async () => {
     vi.mocked(postData.findPostById).mockResolvedValue({ ...mockPost, status: "Completed" })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 
-  it("lanza 409 si el worker ya se postuló al post", async () => {
+  it("lanza 409 si el worker ya se postulÃ³ al post", async () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
       message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-      chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+      chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
 
-  it("lanza 400 cuando chargesVisit es true y visitCost no se envía", async () => {
+  it("lanza 400 cuando chargesVisit es true y visitCost no se envÃ­a", async () => {
     await expect(applyToPost("worker-1", { ...validInput, chargesVisit: true }))
       .rejects.toMatchObject({ status: 400 })
   })
@@ -177,7 +178,7 @@ describe("applyToPost", () => {
       .rejects.toMatchObject({ status: 400 })
   })
 
-  it("acepta la postulación cuando chargesVisit es true y visitCost es positivo", async () => {
+  it("acepta la postulaciÃ³n cuando chargesVisit es true y visitCost es positivo", async () => {
     const result = await applyToPost("worker-1", { ...validInput, chargesVisit: true, visitCost: 500 })
     expect(result.status).toBe("Pending")
     expect(applicationData.createApplication).toHaveBeenCalledWith(
@@ -186,7 +187,7 @@ describe("applyToPost", () => {
     )
   })
 
-  it("acepta la postulación sin visitCost cuando chargesVisit es false", async () => {
+  it("acepta la postulaciÃ³n sin visitCost cuando chargesVisit es false", async () => {
     const result = await applyToPost("worker-1", validInput)
     expect(result.status).toBe("Pending")
   })
@@ -205,7 +206,7 @@ describe("applyToSubcontract", () => {
     id: "subcontract-1",
     userId: "worker-creator",
     type: PostType.SubContract,
-    title: "Busco albañil",
+    title: "Busco albaÃ±il",
     status: "Active",
     description: "",
     address: "",
@@ -218,7 +219,7 @@ describe("applyToSubcontract", () => {
     isEmergency: false,
     emergencyExpiresAt: null,
     categories: [
-      { id: "cat-1", name: "Albañil", quantity: 2, filledCount: 0, roleDescription: "Albañilería general" },
+      { id: "cat-1", name: "AlbaÃ±il", quantity: 2, filledCount: 0, roleDescription: "AlbaÃ±ilerÃ­a general" },
     ],
     user: { id: "worker-creator", name: "Worker", surname: "Creator" },
   }
@@ -226,7 +227,7 @@ describe("applyToSubcontract", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
     message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
   }
 
   beforeEach(() => {
@@ -236,9 +237,9 @@ describe("applyToSubcontract", () => {
     vi.mocked(userDatabase.findUserById).mockResolvedValue({ id: "worker-1", name: "Juan", email: "juan@test.com", phone: null, telegramChatId: null })
   })
 
-  it("crea la postulación y retorna id, status y mensaje de éxito", async () => {
+  it("crea la postulaciÃ³n y retorna id, status y mensaje de Ã©xito", async () => {
     const result = await applyToSubcontract("worker-1", validInput)
-    expect(result).toEqual({ id: "app-new", status: "Pending", message: "Postulación a subcontrato exitosa" })
+    expect(result).toEqual({ id: "app-new", status: "Pending", message: "PostulaciÃ³n a subcontrato exitosa" })
     expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", validInput)
   })
 
@@ -252,7 +253,7 @@ describe("applyToSubcontract", () => {
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 
-  it("lanza 400 si el subcontract no está Active", async () => {
+  it("lanza 400 si el subcontract no estÃ¡ Active", async () => {
     vi.mocked(postData.findPostById).mockResolvedValue({ ...mockSubcontract, status: "Completed" })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
@@ -265,22 +266,22 @@ describe("applyToSubcontract", () => {
     vi.mocked(postData.findPostById).mockResolvedValue({
       ...mockSubcontract,
       categories: [
-        { id: "cat-1", name: "Albañil", quantity: 2, filledCount: 2, roleDescription: "Albañilería general" },
+        { id: "cat-1", name: "AlbaÃ±il", quantity: 2, filledCount: 2, roleDescription: "AlbaÃ±ilerÃ­a general" },
       ],
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
 
-  it("lanza 409 si el worker ya se postuló", async () => {
+  it("lanza 409 si el worker ya se postulÃ³", async () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
       message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-      chargesVisit: false, visitCost: null, createdAt: new Date(), updatedAt: new Date(),
+      chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
 
-  it("lanza 400 cuando chargesVisit es true y visitCost no se envía", async () => {
+  it("lanza 400 cuando chargesVisit es true y visitCost no se envÃ­a", async () => {
     await expect(applyToSubcontract("worker-1", { ...validInput, chargesVisit: true }))
       .rejects.toMatchObject({ status: 400 })
   })
@@ -295,7 +296,7 @@ describe("applyToSubcontract", () => {
       .rejects.toMatchObject({ status: 400 })
   })
 
-  it("acepta la postulación cuando chargesVisit es true y visitCost es positivo", async () => {
+  it("acepta la postulaciÃ³n cuando chargesVisit es true y visitCost es positivo", async () => {
     const result = await applyToSubcontract("worker-1", { ...validInput, chargesVisit: true, visitCost: 500 })
     expect(result.status).toBe("Pending")
     expect(applicationData.createApplication).toHaveBeenCalledWith(
@@ -439,7 +440,7 @@ describe("cancelApplication", () => {
     const result = await cancelApplication("worker-1", "app-1")
 
     expect(applicationData.deleteApplication).toHaveBeenCalledWith("worker-1", "app-1")
-    expect(result.message).toBe("Postulación cancelada")
+    expect(result.message).toBe("PostulaciÃ³n cancelada")
   })
 
   it("throws 404 when application is not found or not cancelable", async () => {
@@ -512,3 +513,6 @@ describe("getPostApplications", () => {
     await expect(getPostApplications("other-client", "post-1")).rejects.toMatchObject({ status: 403 })
   })
 })
+
+
+
