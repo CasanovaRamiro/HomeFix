@@ -73,8 +73,8 @@ export default function PostDetail() {
   }
 
   const refresh = () => {
-    if (!id) return
-    Promise.all([
+    if (!id) return Promise.resolve()
+    return Promise.all([
       api.get<Post>(`/posts/${id}`),
       getPostApplicants(id).catch(() => []),
     ]).then(([postRes, applicantsData]) => {

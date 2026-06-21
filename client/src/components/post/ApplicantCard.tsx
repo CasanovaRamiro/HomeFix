@@ -31,7 +31,7 @@ interface ApplicantCardProps {
   applicationStatus: string
   postStatus: string
   postTitle: string
-  onHire?: () => void
+  onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
 }
@@ -165,7 +165,10 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
   const handleConfirmHire = async (scheduledDate: string) => {
     setLoading(true)
     try {
-      await acceptApplication(applicationId, scheduledDate || undefined)
+      await Promise.all([
+        acceptApplication(applicationId, scheduledDate || undefined),
+        new Promise<void>(resolve => setTimeout(resolve, 2000)),
+      ])
       setHireModalOpen(false)
       onHire?.()
     } catch {
