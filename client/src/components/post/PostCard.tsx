@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import {
   AlertTriangle, CalendarRange, MapPin, Clock3, Pencil, Pause, Play, Trash2, Flag, CalendarCheck,
   CircleDot, Loader, Check, X,
 } from 'lucide-react'
 import { getCategoryMeta } from '../../views/categoryMeta'
+import ImageModal from '../ui/ImageModal'
 import type { Post } from '../../types/post'
 
 interface PostCardProps {
@@ -52,6 +54,8 @@ export default function PostCard({
   const TradeIcon = meta.Icon
 
   const closed = post.status === 'Cancelled' || post.status === 'Completed'
+  const [selectedImg, setSelectedImg] = useState<number | null>(null)
+  const images = post.images ?? []
 
   return (
     <aside className="post-card">
@@ -76,14 +80,24 @@ export default function PostCard({
         <h2 className="pc-title">{post.title}</h2>
         <p className="pc-desc">{post.description}</p>
 
-        {post.images && post.images.length > 0 && (
+        {images.length > 0 && (
           <div className="pc-photos">
-            {post.images.map((img, i) => (
-              <a key={i} href={img.url} target="_blank" rel="noreferrer">
+            {images.map((img, i) => (
+              <button key={i} className="pc-photo-btn" onClick={() => setSelectedImg(i)}>
                 <img src={img.url} alt={`Foto ${i + 1}`} />
-              </a>
+              </button>
             ))}
           </div>
+        )}
+
+        {selectedImg !== null && (
+          <ImageModal
+            src={images[selectedImg].url}
+            alt={`Foto ${selectedImg + 1}`}
+            onClose={() => setSelectedImg(null)}
+            onPrev={selectedImg > 0 ? () => setSelectedImg(selectedImg - 1) : undefined}
+            onNext={selectedImg < images.length - 1 ? () => setSelectedImg(selectedImg + 1) : undefined}
+          />
         )}
 
         <div className="pc-facts">
