@@ -317,10 +317,13 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
 
       {/* Client + location */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569' }}>
+        <Link
+          to={`/profile/client/${post.userId}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', textDecoration: 'none' }}
+        >
           <User size={12} color="#94A3B8" />
           {clientName} {clientSurname}
-        </span>
+        </Link>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
           {Array.from({ length: 5 }, (_, i) => (
             <span key={i}>{i < Math.round(clientRating) ? '★' : '☆'}</span>

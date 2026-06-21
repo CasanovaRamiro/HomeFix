@@ -75,6 +75,48 @@ export interface WorkerReview {
   }
 }
 
+export interface ClientProfile {
+  id: string
+  name: string
+  surname: string
+  bio: string | null
+  role: string
+  photo: string | null
+  createdAt: string
+  averageRating: number
+  reviewCount: number
+  completedJobs: number
+  // Only present when the requester is the owner.
+  email?: string
+  phone?: string | null
+}
+
+export interface ClientProfileUpdateData {
+  name?: string
+  surname?: string
+  phone?: string | null
+  bio?: string | null
+  photo?: string | null
+}
+
+export interface ClientReview {
+  id: string
+  rating: number
+  description: string | null
+  createdAt: string
+  reviewer: { id: string; name: string }
+  client: { id: string; name: string }
+}
+
+export const getClientProfile = (id: string): Promise<ClientProfile> =>
+  api.get<ClientProfile>(`/client-profiles/${id}`).then((r) => r.data)
+
+export const updateClientProfile = (id: string, data: ClientProfileUpdateData): Promise<ClientProfile> =>
+  api.patch<ClientProfile>(`/client-profiles/${id}`, data).then((r) => r.data)
+
+export const getClientReviews = (id: string): Promise<ClientReview[]> =>
+  api.get<ClientReview[]>(`/users/${id}/reviews`, { params: { as: 'client' } }).then((r) => r.data)
+
 export interface UserPost {
   id: string
   title: string

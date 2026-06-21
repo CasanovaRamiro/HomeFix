@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
 import { MapPin, TriangleAlert } from 'lucide-react'
@@ -119,10 +120,16 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
       </div>
       <div className="trabajo-card-footer">
         <div className="trabajo-client">
-          <div className="trabajo-client-avatar">
-            {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
-          </div>
-          <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+          <Link
+            to={`/profile/client/${trabajo.userId}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: 'inherit' }}
+          >
+            <div className="trabajo-client-avatar">
+              {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
+            </div>
+            <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+          </Link>
           <StarRating rating={trabajo.clientRating} />
         </div>
         <div className="trabajo-card-actions">
