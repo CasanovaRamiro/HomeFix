@@ -1,5 +1,8 @@
-import { AlertTriangle } from 'lucide-react'
-import Badge from '../ui/Badge'
+import {
+  AlertTriangle, CalendarRange, MapPin, Clock3, Pencil, Pause, Play, Trash2, Flag, CalendarCheck,
+  CircleDot, Loader, Check, X,
+} from 'lucide-react'
+import { getCategoryMeta } from '../../views/categoryMeta'
 import type { Post } from '../../types/post'
 
 interface PostCardProps {
@@ -9,23 +12,19 @@ interface PostCardProps {
   hasUnreviewedWorkers?: boolean
   onComplete?: () => void
   onMarkInProgress?: () => void
+  onViewReview?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
   onEdit?: (id: string) => void
   children?: React.ReactNode
 }
 
-const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' | 'danger' | 'info' | 'primary' }> = {
-  Active: { label: 'Activa', variant: 'accent' },
-  'In progress': { label: 'En desarrollo', variant: 'info' },
-  Paused: { label: 'Pausada', variant: 'warning' },
-  Cancelled: { label: 'Cancelada', variant: 'danger' },
-  Completed: { label: 'Completada', variant: 'primary' },
-}
-
-function parseLocalDate(iso: string): Date {
-  const [y, m, d] = iso.split('T')[0].split('-').map(Number)
-  return new Date(y, m - 1, d)
+const STATUS_MAP: Record<string, { label: string; cls: string; Icon: typeof CircleDot }> = {
+  Active:        { label: 'Activa',        cls: 'pd-badge--active',    Icon: CircleDot },
+  'In progress': { label: 'En desarrollo', cls: 'pd-badge--progress',  Icon: Loader },
+  Paused:        { label: 'Pausada',       cls: 'pd-badge--paused',    Icon: Pause },
+  Cancelled:     { label: 'Cancelada',     cls: 'pd-badge--cancelled', Icon: X },
+  Completed:     { label: 'Completada',    cls: 'pd-badge--completed', Icon: Check },
 }
 
 function getEmergencyTimeLeft(expiresAt: string | null): string | null {
@@ -38,100 +37,121 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, scheduledDate, hasUnreviewedWorkers, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children }: PostCardProps) {
-  const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
+const fmtDate = (s: string) =>
+  new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
+
+export default function PostCard({
+  post, hasAcceptedWorker, scheduledDate, onComplete, onViewReview, onPause, onCancel, onEdit,
+}: PostCardProps) {
+  const status = STATUS_MAP[post.status] ?? { label: post.status, cls: 'pd-badge--completed', Icon: CircleDot }
+  const StatusIcon = status.Icon
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
+  const tradeName = post.categories[0]?.name ?? ''
+  const meta = getCategoryMeta(tradeName)
+  const TradeIcon = meta.Icon
+
+  const closed = post.status === 'Cancelled' || post.status === 'Completed'
+
   return (
-    <div className="info-card overflow-hidden">
-      {/* Emergency banner */}
+    <aside className="post-card">
       {post.isEmergency && (
-        <div className="flex items-center gap-2 bg-red-500 px-4 py-2.5 text-white text-sm font-bold -mx-[var(--card-p,1.5rem)] -mt-[var(--card-p,1.5rem)] mb-4">
-          <AlertTriangle size={16} />
-          <span>Publicacion de Emergencia</span>
-          {timeLeft && (
-            <span className="ml-auto text-red-100 text-xs font-medium">{timeLeft}</span>
+        <div className="post-emergency">
+          <AlertTriangle size={15} />
+          <span>Publicación de emergencia</span>
+          {timeLeft && <span className="ml-auto">{timeLeft}</span>}
+        </div>
+      )}
+
+      {/* Trade-colored header band — tint + icon tile from categoryMeta. */}
+      <div className={`pc-header-band ${meta.bg}`}>
+        <span className={`pc-trade ${meta.text}`}>
+          <span className={`pc-trade-ic ${meta.strip}`}><TradeIcon size={16} /></span>
+          <span className="pc-trade-label">{tradeName || 'General'}</span>
+        </span>
+        <span className={`pd-badge ${status.cls}`}><StatusIcon size={12} />{status.label}</span>
+      </div>
+
+      <div className="post-card-body">
+        <h2 className="pc-title">{post.title}</h2>
+        <p className="pc-desc">{post.description}</p>
+
+        {post.images && post.images.length > 0 && (
+          <div className="pc-photos">
+            {post.images.map((img, i) => (
+              <a key={i} href={img.url} target="_blank" rel="noreferrer">
+                <img src={img.url} alt={`Foto ${i + 1}`} />
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="pc-facts">
+          <div className="pc-fact">
+            <span className="pc-fact-ic"><CalendarRange size={17} /></span>
+            <div className="pc-fact-txt">
+              <div className="pc-fact-label">Fechas del trabajo</div>
+              <div className="pc-fact-val">{fmtDate(post.startDate)} – {fmtDate(post.endDate)}</div>
+            </div>
+          </div>
+          <div className="pc-fact">
+            <span className="pc-fact-ic"><MapPin size={17} /></span>
+            <div className="pc-fact-txt">
+              <div className="pc-fact-label">Dirección</div>
+              <div className="pc-fact-val" title={post.address}>{post.address}</div>
+            </div>
+          </div>
+          <div className="pc-fact">
+            <span className="pc-fact-ic"><Clock3 size={17} /></span>
+            <div className="pc-fact-txt">
+              <div className="pc-fact-label">Publicado</div>
+              <div className="pc-fact-val">{fmtDate(post.createdAt)}</div>
+            </div>
+          </div>
+          {scheduledDate && (
+            <div className="pc-fact">
+              <span className="pc-fact-ic"><CalendarCheck size={17} /></span>
+              <div className="pc-fact-txt">
+                <div className="pc-fact-label">Visita pactada</div>
+                <div className="pc-fact-val" style={{ color: '#065F46', fontWeight: 600 }}>
+                  {new Date(scheduledDate).toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
           )}
         </div>
-      )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
-        <h2 className="!mb-0">{post.title}</h2>
-        <Badge variant={status.variant}>{status.label}</Badge>
-        {post.status === 'Completed' && hasUnreviewedWorkers && (
-          <Badge variant="warning">Falta Calificar</Badge>
+        {post.status === 'Completed' && (
+          <div className="pc-manage">
+            <button className="pd-btn pd-btn--outline pd-btn--block" onClick={onViewReview}>Ver reseña</button>
+          </div>
         )}
-      </div>
 
-      <div className="categories">
-        {post.categories.map((c) => (
-          <Badge key={c.id}>{c.name}</Badge>
-        ))}
-      </div>
-
-      <p className="desc">{post.description}</p>
-
-      {post.images && post.images.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', margin: '0 0 0.75rem', paddingBottom: '4px' }}>
-          {post.images.map((img, i) => (
-            <a key={i} href={img.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0 }}>
-              <img
-                src={img.url}
-                alt={`Foto ${i + 1}`}
-                style={{ width: '96px', height: '72px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
-              />
-            </a>
-          ))}
-        </div>
-      )}
-
-      <div className="info-row">
-        <strong>Fechas:</strong>{' '}
-        {parseLocalDate(post.startDate).toLocaleDateString()} — {parseLocalDate(post.endDate).toLocaleDateString()}
-      </div>
-      <div className="info-row">
-        <strong>Publicado:</strong> {new Date(post.createdAt).toLocaleDateString()}
-      </div>
-      {scheduledDate && (
-        <div className="info-row" style={{ color: '#065F46', fontWeight: 600 }}>
-          <strong>Visita pactada:</strong>{' '}
-          {parseLocalDate(scheduledDate).toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
-        </div>
-      )}
-
-      <div className="info-row" style={{ marginBottom: 0 }}>
-        <strong>Direccion:</strong>{' '}
-        <span
-          title={post.address}
-          style={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
-        >
-          {post.address}
-        </span>
-      </div>
-
-      {children}
-
-      <div className="post-actions" style={{ marginTop: '0.75rem' }}>
-        {post.status !== 'Cancelled' && post.status !== 'Completed' && hasAcceptedWorker && (
-          <>
-            {post.status === 'Active' && onMarkInProgress ? (
-              <button className="btn-primary" onClick={onMarkInProgress}>Marcar en progreso</button>
-            ) : (
-              <button className="btn-finished" onClick={onComplete}>Trabajo finalizado</button>
-            )}
-            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar publicación</button>
-          </>
-        )}
-        {post.status !== 'Cancelled' && post.status !== 'Completed' && !hasAcceptedWorker && (
-          <>
-            <button className="btn-outline" onClick={() => onEdit?.(post.id)}>Editar</button>
-            <button className={`btn-pause${post.status === 'Paused' ? ' activating' : ''}`} onClick={() => onPause?.(post.id)}>
-              {post.status === 'Paused' ? 'Activar' : 'Pausar'}
+        {!closed && hasAcceptedWorker && (
+          <div className="pc-manage">
+            <button className="pd-btn pd-btn--accent pd-btn--block" onClick={onComplete}>
+              <Flag size={16} />Marcar trabajo finalizado
             </button>
-            <button className="btn-cancel" onClick={() => onCancel?.(post.id)}>Cancelar</button>
-          </>
+            <button className="pd-btn pd-btn--danger pd-btn--block" onClick={() => onCancel?.(post.id)}>
+              <Trash2 size={16} />Cancelar contratación
+            </button>
+          </div>
+        )}
+
+        {!closed && !hasAcceptedWorker && (
+          <div className="pc-manage">
+            <button className="pd-btn pd-btn--outline" style={{ flex: 1 }} onClick={() => onEdit?.(post.id)}>
+              <Pencil size={16} />Editar
+            </button>
+            <button className="pd-btn pd-btn--warning" style={{ flex: 1 }} onClick={() => onPause?.(post.id)}>
+              {post.status === 'Paused' ? <><Play size={16} />Activar</> : <><Pause size={16} />Pausar</>}
+            </button>
+            <button className="pd-btn pd-btn--danger" style={{ flex: 1 }} onClick={() => onCancel?.(post.id)}>
+              <Trash2 size={16} />Cancelar
+            </button>
+          </div>
         )}
       </div>
-    </div>
+    </aside>
   )
 }

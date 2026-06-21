@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import StarRating from '../ui/StarRating'
+import {
+  Star, BadgeCheck, Briefcase, Clock, Banknote, Check, User,
+  MessageCircle, UserX, UserCheck, CalendarCheck,
+} from 'lucide-react'
 import ConfirmModal from '../ui/ConfirmModal'
 import { acceptApplication, dismissWorker } from '../../services/applications'
 import { formatWhatsAppNumber } from '../../services/formatWhatsApp'
@@ -23,6 +26,8 @@ interface Applicant {
   phone: string | null
   scheduledDate?: string | null
   hasReview: boolean
+  /** Optional — KYC-verified worker. Falls back to false until the API exposes it. */
+  verified?: boolean
 }
 
 interface ApplicantCardProps {
@@ -31,6 +36,8 @@ interface ApplicantCardProps {
   applicationStatus: string
   postStatus: string
   postTitle: string
+  /** Disables the hire button once someone else is already hired. */
+  hireLocked?: boolean
   onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
@@ -48,6 +55,17 @@ function formatYMD(ymd: string): string {
   const date = new Date(y, m - 1, d)
   const dayName = DAY_NAMES[date.getDay()]
   return `${dayName} ${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}`
+}
+
+function Stars({ rating }: { rating: number }) {
+  const full = Math.round(rating)
+  return (
+    <span className="a-stars">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} className={i <= full ? undefined : 'off'} />
+      ))}
+    </span>
+  )
 }
 
 function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, timeTo, onConfirm, onCancel, loading }: {
@@ -148,26 +166,28 @@ function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, ti
   )
 }
 
-export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onDismiss, onReview }: ApplicantCardProps) {
+export default function ApplicantCard({
+  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, onHire, onDismiss, onReview,
+}: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [dismissModalOpen, setDismissModalOpen] = useState(false)
   const [dismissing, setDismissing] = useState(false)
 
-  const initials = applicant.name.split(' ').map((n) => n[0]).join('')
+  const initials = applicant.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
-  const isoDays = applicant.availableDays.filter(isISODate)
-  const legacyDays = applicant.availableDays.filter((d) => !isISODate(d))
-
-  const canHire = postStatus === 'Active' && applicationStatus === 'Pending'
+  const isHired = applicationStatus === 'Accepted'
+  const isOut = applicationStatus === 'Dismissed'
+  const canHire = postStatus === 'Active' && applicationStatus === 'Pending' && !hireLocked
+  const canReview = (postStatus === 'Completed' || postStatus === 'Cancelled') && isHired && onReview && !applicant.hasReview
 
   const handleConfirmHire = async (scheduledDate: string) => {
     setLoading(true)
     try {
       await Promise.all([
         acceptApplication(applicationId, scheduledDate || undefined),
-        new Promise<void>(resolve => setTimeout(resolve, 2000)),
+        new Promise<void>((resolve) => setTimeout(resolve, 2000)),
       ])
       setHireModalOpen(false)
       onHire?.()
@@ -187,156 +207,113 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
     }
   }
 
-  const renderAction = () => {
-    if (applicationStatus === 'Accepted' || applicationStatus === 'Completed') {
-      const canReview = (postStatus === 'Completed' || postStatus === 'Cancelled') && onReview && !applicant.hasReview
-      return (
-        <>
-          <span className="text-green-700 bg-green-100 px-3 py-1 rounded text-sm font-medium">Contratado</span>
-          {applicant.phone && (
-            <button
-              onClick={() => window.open(
-                `https://api.whatsapp.com/send?phone=${formatWhatsAppNumber(applicant.phone!)}&text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
-                '_blank'
-              )}
-              className="btn-outline"
-            >
-              Chatear
-            </button>
-          )}
-          {canReview && (
-            <button
-              onClick={onReview}
-              className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
-            >
-              Calificar
-            </button>
-          )}
-          {postStatus !== 'Completed' && postStatus !== 'Cancelled' && (
-            <>
-              <button
-                onClick={() => setDismissModalOpen(true)}
-                className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors"
-              >
-                Despedir
-              </button>
-              <ConfirmModal
-                open={dismissModalOpen}
-                title="Despedir trabajador"
-                message={`¿Seguro que querés dar de baja a ${applicant.name} de "${postTitle}"? La publicación vuelve a estar activa y vas a poder contratar a otro trabajador.`}
-                onConfirm={handleDismiss}
-                onCancel={() => setDismissModalOpen(false)}
-                loading={dismissing}
-                danger
-              />
-            </>
-          )}
-        </>
-      )
-    }
-    if (applicationStatus === 'Rejected') return null
-    if ((postStatus === 'Completed' || postStatus === 'Cancelled') && applicationStatus === 'Pending') return null
-    if (applicationStatus === 'Dismissed') {
-      return <span className="text-red-700 bg-red-100 px-3 py-1 rounded text-sm font-medium">Despedido</span>
-    }
-
-    return (
-      <>
-        <button
-          onClick={() => setHireModalOpen(true)}
-          disabled={!canHire}
-          className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${canHire ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
-        >
-          Contratar
-        </button>
-        <HireModal
-          open={hireModalOpen}
-          applicantName={applicant.name}
-          postTitle={postTitle}
-          availableDays={applicant.availableDays}
-          timeFrom={applicant.availableTimeFrom}
-          timeTo={applicant.availableTimeTo}
-          onConfirm={handleConfirmHire}
-          onCancel={() => setHireModalOpen(false)}
-          loading={loading}
-        />
-      </>
-    )
-  }
-
   return (
-    <div className="applicant-card">
-      <div className="avatar">
-        {applicant.photo ? (
-          <img src={applicant.photo} alt={applicant.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
-        ) : (
-          initials
-        )}
-      </div>
-      <div className="info">
-        <Link to={`/profile/worker/${applicant.id}`} className="font-medium hover:text-blue-600 transition-colors">
-          {applicant.name}
-        </Link>
-        <div className="meta">{applicant.category} — {applicant.address}</div>
-        <div className="stats">
-          <StarRating rating={applicant.rating} count={applicant.reviewCount} />
-          {' · '}{applicant.jobCount} trabajos
+    <div className={`acard${isHired ? ' is-hired' : ''}${isOut ? ' is-out' : ''}`}>
+      <div className="acard-top">
+        <div className="avatar">
+          {applicant.photo ? <img src={applicant.photo} alt={applicant.name} /> : initials}
         </div>
-        {applicant.message && (
-          <p style={{ fontSize: 13, color: '#475569', marginTop: 6, fontStyle: 'italic' }}>
-            "{applicant.message}"
-          </p>
-        )}
-
-        {isoDays.length > 0 && (
-          <div style={{ marginTop: 6 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 4 }}>Días disponibles:</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {isoDays.map((ymd) => (
-                <span key={ymd} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#D1FAE5', color: '#065F46' }}>
-                  {formatYMD(ymd)}
-                </span>
-              ))}
-              {applicant.availableTimeFrom && applicant.availableTimeTo && (
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
-                  {applicant.availableTimeFrom} – {applicant.availableTimeTo}
-                </span>
-              )}
-            </div>
+        <div className="a-id">
+          <div className="a-name-row">
+            <Link to={`/profile/worker/${applicant.id}`} className="a-name">{applicant.name}</Link>
+            {applicant.verified && <span className="a-verified"><BadgeCheck size={14} />Verificado</span>}
+            {isHired && <span className="a-tag a-tag--hired"><Check size={12} />Contratado</span>}
+            {isOut && <span className="a-tag a-tag--out"><UserX size={12} />Despedido</span>}
           </div>
-        )}
-
-        {legacyDays.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-            {legacyDays.map((day) => (
-              <span key={day} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#D1FAE5', color: '#065F46' }}>
-                {day}
-              </span>
-            ))}
-            {applicant.availableTimeFrom && applicant.availableTimeTo && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
-                {applicant.availableTimeFrom} – {applicant.availableTimeTo}
-              </span>
-            )}
+          <div className="a-trade">
+            <span>{applicant.category}</span><span className="dot" /><span>{applicant.address}</span>
           </div>
-        )}
-
-        {applicant.scheduledDate && (applicationStatus === 'Accepted' || applicationStatus === 'Completed') && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 8, padding: '4px 10px' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>
-              Visita pactada: {formatYMD(applicant.scheduledDate)}
+          <div className="a-rep">
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Stars rating={applicant.rating} />
+              <span className="a-rep-num">{applicant.rating.toFixed(1)}</span>
+              <span className="a-rep-sub">({applicant.reviewCount})</span>
             </span>
+            <span className="a-rep-chip"><Briefcase size={14} />{applicant.jobCount} trabajos</span>
           </div>
-        )}
-        <p style={{ fontSize: 12, color: applicant.chargesVisit ? '#92400E' : '#6B7280', marginTop: 4 }}>
-          {applicant.chargesVisit
-            ? `Cobra visita: $${applicant.visitCost?.toLocaleString('es-AR') ?? '-'}`
-            : 'No cobra visita'}
-        </p>
+        </div>
       </div>
-      <div className="actions">
-        <button className="btn-outline" onClick={() => navigate(`/profile/worker/${applicant.id}`)}>Ver perfil</button>
-        {renderAction()}
+
+      {applicant.message && (
+        <div className="a-msg">"{applicant.message}"</div>
+      )}
+
+      <div className="a-chips">
+        {applicant.availableDays.map((day) => (
+          <span key={day} className="a-chip-day">{isISODate(day) ? formatYMD(day) : day}</span>
+        ))}
+        {applicant.availableTimeFrom && applicant.availableTimeTo && (
+          <span className="a-chip-time"><Clock size={12} />{applicant.availableTimeFrom}–{applicant.availableTimeTo}</span>
+        )}
+        <span className={`a-chip-visit ${applicant.chargesVisit ? 'yes' : 'no'}`}>
+          {applicant.chargesVisit ? <Banknote size={12} /> : <Check size={12} />}
+          {applicant.chargesVisit
+            ? `Visita $${applicant.visitCost?.toLocaleString('es-AR') ?? '-'}`
+            : 'No cobra visita'}
+        </span>
+        {applicant.scheduledDate && isHired && (
+          <span className="a-chip-scheduled"><CalendarCheck size={12} />Visita: {formatYMD(applicant.scheduledDate)}</span>
+        )}
+      </div>
+
+      <div className="a-actions">
+        <button className="pd-btn pd-btn--outline pd-btn--grow" onClick={() => navigate(`/profile/worker/${applicant.id}`)}>
+          <User size={16} />Ver perfil
+        </button>
+
+        {isHired ? (
+          <>
+            {applicant.phone && (
+              <button
+                className="pd-btn pd-btn--whatsapp pd-btn--grow"
+                onClick={() => window.open(
+                  `https://wa.me/${formatWhatsAppNumber(applicant.phone!)}?text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
+                  '_blank',
+                )}
+              >
+                <MessageCircle size={16} />Chatear
+              </button>
+            )}
+            {canReview && (
+              <button className="pd-btn pd-btn--accent" onClick={onReview}>
+                <Star size={16} />Calificar
+              </button>
+            )}
+            {postStatus !== 'Completed' && postStatus !== 'Cancelled' && (
+              <>
+                <button className="pd-btn pd-btn--danger" onClick={() => setDismissModalOpen(true)}>
+                  <UserX size={16} />Despedir
+                </button>
+                <ConfirmModal
+                  open={dismissModalOpen}
+                  title="Despedir trabajador"
+                  message={`¿Seguro que querés dar de baja a ${applicant.name} de "${postTitle}"? La publicación vuelve a estar activa y vas a poder contratar a otro trabajador.`}
+                  onConfirm={handleDismiss}
+                  onCancel={() => setDismissModalOpen(false)}
+                  loading={dismissing}
+                  danger
+                />
+              </>
+            )}
+          </>
+        ) : isOut ? null : (
+          <>
+            <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire} onClick={() => setHireModalOpen(true)}>
+              <UserCheck size={16} />Contratar
+            </button>
+            <HireModal
+              open={hireModalOpen}
+              applicantName={applicant.name}
+              postTitle={postTitle}
+              availableDays={applicant.availableDays}
+              timeFrom={applicant.availableTimeFrom}
+              timeTo={applicant.availableTimeTo}
+              onConfirm={handleConfirmHire}
+              onCancel={() => setHireModalOpen(false)}
+              loading={loading}
+            />
+          </>
+        )}
       </div>
     </div>
   )
