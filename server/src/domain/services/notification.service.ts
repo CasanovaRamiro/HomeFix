@@ -76,8 +76,8 @@ export const broadcastEmergency = async (
     select: { id: true, telegramChatId: true },
   })
 
-  const postUrl = `${env.FRONTEND_URL}/posts/${postId}`
-  const isHttps = env.FRONTEND_URL.startsWith('https://')
+  const postUrl = `${env.CORS_ORIGIN!}/posts/${postId}`
+  const isHttps = env.CORS_ORIGIN!.startsWith('https://')
 
   const message: NotificationMessage = {
     text: `📢 <b>Nueva publicación urgente</b>\n"${postTitle}" — ¡Aplicá ahora!\n\n${postDescription}\n\n🔗 ${postUrl}`,

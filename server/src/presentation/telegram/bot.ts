@@ -2,6 +2,7 @@ import { getBot } from '../../infrastructure/providers/telegram.provider.js'
 import type { Context } from 'telegraf'
 import prisma from '../../lib/prisma.js'
 import { UserRole } from '../../domain/types/userRole.js'
+import { env } from '../../lib/envConfig.js'
 
 let _botUsername: string | null = null
 
@@ -70,7 +71,7 @@ export const handleTextMessage = async (ctx: Context): Promise<void> => {
     await ctx.reply(
       '👋 ¡Hola! No tengo tu cuenta vinculada todavía.\n\n'
       + 'Para recibir notificaciones de HomeFix:\n'
-      + '1. Iniciá sesión en homefix.vercel.app\n'
+      + `1. Iniciá sesión en ${env.CORS_ORIGIN}\n`
       + '2. Andá a tu perfil → "Vincular Telegram"\n'
       + '3. Generá un código y enviá /link <código>',
     )
