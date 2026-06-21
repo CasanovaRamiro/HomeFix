@@ -139,7 +139,7 @@ export const loginUser = async (input: LoginInput) => {
   const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
 
-  if (process.env.NODE_ENV === 'production' && profile.email_verified !== true) {
+  if (profile.email_verified !== true) {
     throw createHttpError(403, 'Debes verificar tu correo electrónico antes de iniciar sesión. Revisá tu bandeja de entrada.')
   }
 
