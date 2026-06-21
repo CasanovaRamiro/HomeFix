@@ -29,17 +29,24 @@ interface Application {
   clientPhone: string | null
 }
 
-const TABS = ['Todas', 'Rechazadas', 'Completadas'] as const
+const TABS = ['Todas', 'Pendientes', 'Aceptadas', 'Completadas', 'Rechazadas'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_TO_STATUS: Record<Tab, string> = {
   Todas:       '',
-  Rechazadas:  ApplicationStatus.Rejected,
+  Pendientes:  ApplicationStatus.Pending,
+  Aceptadas:   ApplicationStatus.Accepted,
   Completadas: ApplicationStatus.Completed,
+  Rechazadas:  ApplicationStatus.Rejected,
 }
 
-// Solo mostrar postulaciones finalizadas (historial)
-const HISTORY_STATUSES = new Set([ApplicationStatus.Rejected, ApplicationStatus.Completed])
+// Postulaciones a mostrar en el tablero
+const HISTORY_STATUSES = new Set([
+  ApplicationStatus.Pending,
+  ApplicationStatus.Accepted,
+  ApplicationStatus.Completed,
+  ApplicationStatus.Rejected,
+])
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -607,6 +614,8 @@ export default function WorkerApplications() {
 
   const metrics = useMemo(() => ({
     total:     applications.length,
+    pending:   applications.filter((a) => a.status === ApplicationStatus.Pending).length,
+    accepted:  applications.filter((a) => a.status === ApplicationStatus.Accepted).length,
     rejected:  applications.filter((a) => a.status === ApplicationStatus.Rejected).length,
     completed: applications.filter((a) => a.status === ApplicationStatus.Completed).length,
   }), [applications])
@@ -674,6 +683,8 @@ export default function WorkerApplications() {
       <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div className="wa-metrics-grid">
           <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A" />
+          <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#D97706" />
+          <MetricCard value={metrics.accepted}  label="Aceptadas"   valueColor="#059669" />
           <MetricCard value={metrics.completed} label="Completadas" valueColor="#2563EB" />
           <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#DC2626" />
         </div>
