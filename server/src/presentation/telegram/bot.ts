@@ -48,6 +48,11 @@ export const processLink = async (ctx: Context, code: string) => {
     data: { used: true },
   })
 
+  await prisma.user.updateMany({
+    where: { telegramChatId: String(ctx.chat?.id), id: { not: linkCode.userId } },
+    data: { telegramChatId: null, telegramLinkedAt: null },
+  })
+
   await prisma.user.update({
     where: { id: linkCode.userId },
     data: {
@@ -144,6 +149,9 @@ export const startBot = () => {
 
     bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
+    bot.catch((err) => {
+      console.error('Telegram bot error:', err instanceof Error ? err.message : err)
+    })
     bot.launch().catch((err) => {
       console.error('Telegram bot launch error:', err instanceof Error ? err.message : err)
     })
