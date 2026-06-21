@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import type { TrabajoView } from '../../types/post'
 
 export interface ApplicationFormData {
   message: string
@@ -11,7 +10,7 @@ export interface ApplicationFormData {
 }
 
 interface Props {
-  selected: TrabajoView
+  selected: { id: string; titulo: string; startDate?: string; endDate?: string }
   onEnviar: (data: ApplicationFormData) => void
   onClose: () => void
   enviando: boolean
