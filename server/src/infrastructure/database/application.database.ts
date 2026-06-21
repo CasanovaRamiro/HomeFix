@@ -39,6 +39,15 @@ export const updateApplicationStatus = (id: string, status: string) =>
     data: { status },
   })
 
+export const acceptApplicationWithDate = (id: string, scheduledDate?: string) =>
+  prisma.application.update({
+    where: { id },
+    data: {
+      status: ApplicationStatus.Accepted,
+      scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+    },
+  })
+
 export const createApplication = (workerId: string, input: CreateApplicationInput) =>
   prisma.application.create({
     data: {

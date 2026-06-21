@@ -21,6 +21,7 @@ interface Applicant {
   chargesVisit: boolean
   visitCost: number | null
   phone: string | null
+  scheduledDate?: string | null
 }
 
 interface ApplicantCardProps {
@@ -33,22 +34,137 @@ interface ApplicantCardProps {
   onDismiss?: () => void
 }
 
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+function isISODate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s)
+}
+
+function formatYMD(ymd: string): string {
+  const datePart = ymd.split('T')[0]
+  const [y, m, d] = datePart.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const dayName = DAY_NAMES[date.getDay()]
+  return `${dayName} ${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}`
+}
+
+function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, timeTo, onConfirm, onCancel, loading }: {
+  open: boolean
+  applicantName: string
+  postTitle: string
+  availableDays: string[]
+  timeFrom: string | null
+  timeTo: string | null
+  onConfirm: (scheduledDate: string) => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [error, setError] = useState('')
+
+  if (!open) return null
+
+  const isoDays = availableDays.filter(isISODate)
+
+  const handleConfirm = () => {
+    if (isoDays.length > 0 && !selectedDate) {
+      setError('Tenés que elegir un día para confirmar la contratación.')
+      return
+    }
+    setError('')
+    onConfirm(selectedDate ?? '')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold mb-1">Confirmar contratación</h3>
+        <p className="text-slate-500 text-sm mb-4">
+          ¿Querés contratar a <strong>{applicantName}</strong> para "{postTitle}"?
+        </p>
+
+        {isoDays.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
+              Elegí el día de la visita:
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {isoDays.map((ymd) => {
+                const active = selectedDate === ymd
+                return (
+                  <button
+                    key={ymd}
+                    type="button"
+                    onClick={() => { setSelectedDate(active ? null : ymd); setError('') }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 20,
+                      border: '1.5px solid',
+                      borderColor: active ? '#10B981' : '#CBD5E1',
+                      background: active ? '#D1FAE5' : '#fff',
+                      color: active ? '#065F46' : '#475569',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {formatYMD(ymd)}
+                  </button>
+                )
+              })}
+            </div>
+            {timeFrom && timeTo && (
+              <p style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
+                Horario disponible: {timeFrom} – {timeTo}
+              </p>
+            )}
+            {error && (
+              <p style={{ fontSize: 12, color: '#EF4444', marginTop: 6 }}>{error}</p>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 mt-2">
+          <button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {loading ? 'Contratando...' : 'Confirmar'}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onDismiss }: ApplicantCardProps) {
   const navigate = useNavigate()
-  const [modalOpen, setModalOpen] = useState(false)
+  const [hireModalOpen, setHireModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [dismissModalOpen, setDismissModalOpen] = useState(false)
   const [dismissing, setDismissing] = useState(false)
 
   const initials = applicant.name.split(' ').map((n) => n[0]).join('')
 
+  const isoDays = applicant.availableDays.filter(isISODate)
+  const legacyDays = applicant.availableDays.filter((d) => !isISODate(d))
+
   const canHire = postStatus === 'Active' && applicationStatus === 'Pending'
 
-  const handleConfirm = async () => {
+  const handleConfirmHire = async (scheduledDate: string) => {
     setLoading(true)
     try {
-      await acceptApplication(applicationId)
-      setModalOpen(false)
+      await acceptApplication(applicationId, scheduledDate || undefined)
+      setHireModalOpen(false)
       onHire?.()
     } catch {
       setLoading(false)
@@ -74,7 +190,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
           {applicant.phone && (
             <button
               onClick={() => window.open(
-                `https://wa.me/${formatWhatsAppNumber(applicant.phone!)}?text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
+                `https://api.whatsapp.com/send?phone=${formatWhatsAppNumber(applicant.phone!)}&text=${encodeURIComponent('Hola, te contraté en la publicación: ' + postTitle)}`,
                 '_blank'
               )}
               className="btn-outline"
@@ -82,10 +198,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
               Chatear
             </button>
           )}
-          <button
-            onClick={() => setDismissModalOpen(true)}
-            className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors"
-          >
+          <button onClick={() => setDismissModalOpen(true)} className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">
             Despedir
           </button>
           <ConfirmModal
@@ -108,22 +221,21 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
     return (
       <>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => setHireModalOpen(true)}
           disabled={!canHire}
-          className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${
-            canHire
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-gray-400 cursor-not-allowed'
-          }`}
+          className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${canHire ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
         >
           Contratar
         </button>
-        <ConfirmModal
-          open={modalOpen}
-          title="Confirmar contratación"
-          message={`¿Estás seguro de que querés contratar a ${applicant.name} para "${postTitle}"?`}
-          onConfirm={handleConfirm}
-          onCancel={() => setModalOpen(false)}
+        <HireModal
+          open={hireModalOpen}
+          applicantName={applicant.name}
+          postTitle={postTitle}
+          availableDays={applicant.availableDays}
+          timeFrom={applicant.availableTimeFrom}
+          timeTo={applicant.availableTimeTo}
+          onConfirm={handleConfirmHire}
+          onCancel={() => setHireModalOpen(false)}
           loading={loading}
         />
       </>
@@ -153,18 +265,45 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
             "{applicant.message}"
           </p>
         )}
-        {applicant.availableDays.length > 0 && (
+
+        {isoDays.length > 0 && (
+          <div style={{ marginTop: 6 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 4 }}>Días disponibles:</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {isoDays.map((ymd) => (
+                <span key={ymd} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#D1FAE5', color: '#065F46' }}>
+                  {formatYMD(ymd)}
+                </span>
+              ))}
+              {applicant.availableTimeFrom && applicant.availableTimeTo && (
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
+                  {applicant.availableTimeFrom} – {applicant.availableTimeTo}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {legacyDays.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-            {applicant.availableDays.map((day) => (
+            {legacyDays.map((day) => (
               <span key={day} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: '#D1FAE5', color: '#065F46' }}>
                 {day}
               </span>
             ))}
             {applicant.availableTimeFrom && applicant.availableTimeTo && (
-              <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#F1F5F9', color: '#475569' }}>
                 {applicant.availableTimeFrom} – {applicant.availableTimeTo}
               </span>
             )}
+          </div>
+        )}
+
+        {applicant.scheduledDate && applicationStatus === 'Accepted' && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>
+              Visita pactada: {formatYMD(applicant.scheduledDate)}
+            </span>
           </div>
         )}
         <p style={{ fontSize: 12, color: applicant.chargesVisit ? '#92400E' : '#6B7280', marginTop: 4 }}>

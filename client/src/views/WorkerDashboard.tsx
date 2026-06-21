@@ -602,6 +602,8 @@ interface Application {
   serviceDate: string
   status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
   clientPhone: string | null
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
 }
 
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
@@ -1073,88 +1075,176 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
 
 // ─── Próximas Citas ───────────────────────────────────────────────────────────
 
-function formatCitaDate(iso: string): { date: string; time: string } {
-  if (!iso) return { date: '—', time: '—' }
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return { date: iso.substring(0, 10), time: '—' }
-  const date = d.toISOString().slice(0, 10)
-  const time = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
-  return { date, time }
+const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const DAY_NAMES_FULL  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+function toYMDLocal(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function parseYMD(iso: string): Date {
+  const [y, m, d] = iso.split('T')[0].split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function getWeekDays(today: Date): Date[] {
+  const dow = today.getDay()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
 }
 
 function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
-  const citas = [...apps]
-    .filter((a) => a.status === 'Accepted' && a.serviceDate)
-    .sort((a, b) => new Date(a.serviceDate).getTime() - new Date(b.serviceDate).getTime())
-    .slice(0, 3)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayYMD = toYMDLocal(today)
+  const weekDays = getWeekDays(today)
+
+  const citas = apps.filter((a) => a.status === 'Accepted' && a.serviceDate)
+
+  const appsForDay = (ymd: string) => citas.filter((a) => a.serviceDate.split('T')[0] === ymd)
+
+  const [selectedYMD, setSelectedYMD] = useState(todayYMD)
+  const selectedApps = appsForDay(selectedYMD)
+  const selectedDate = parseYMD(selectedYMD)
+
+  const weekStart = weekDays[0]
+  const weekEnd   = weekDays[6]
+  const weekLabel = `${weekStart.getDate()} – ${weekEnd.getDate()} de ${weekEnd.toLocaleDateString('es-AR', { month: 'long' })}`
 
   return (
     <div style={{ marginTop: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-          Proximas Citas
-        </h2>
-        <Link
-          to="/worker/my-applications"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            fontSize: 13, fontWeight: 600, color: '#64748B', textDecoration: 'none',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#64748B' }}
-        >
-          Ver todas <ChevronRight size={15} />
-        </Link>
-      </div>
+      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '24px 24px 20px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>Mi Agenda</h2>
+          <span style={{ fontSize: 13, color: '#64748B' }}>{weekLabel}</span>
+        </div>
+        <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 20px' }}>Tus trabajos de esta semana</p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {loading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando citas...</p>}
-        {!loading && citas.length === 0 && (
-          <div style={{
-            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
-            padding: '28px 20px', textAlign: 'center',
-          }}>
-            <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
-              No tenés citas confirmadas próximas.
-            </p>
-          </div>
-        )}
-        {!loading && citas.map((app) => {
-          const { date, time } = formatCitaDate(app.serviceDate)
-          return (
-            <div key={app.id} style={{
-              background: '#fff', border: '1px solid #E2E8F0',
-              borderRadius: 16, padding: '18px 20px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-              transition: 'box-shadow 0.2s',
-            }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
-            >
-              {/* Left: info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 6px' }}>
-                  {app.title}
-                </h3>
-                <p style={{ fontSize: 12, color: '#10B981', fontWeight: 500, margin: '0 0 4px' }}>
-                  Cliente: {app.client}
+        {/* Week strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 20 }}>
+          {weekDays.map((day) => {
+            const ymd     = toYMDLocal(day)
+            const count   = appsForDay(ymd).length
+            const isToday = ymd === todayYMD
+            const isSel   = ymd === selectedYMD
+
+            return (
+              <button
+                key={ymd}
+                onClick={() => setSelectedYMD(ymd)}
+                style={{
+                  border: 'none', borderRadius: 14, padding: '12px 6px',
+                  cursor: 'pointer', textAlign: 'center',
+                  background: isSel ? '#0F172A' : isToday ? '#F0FDF4' : '#F8FAFC',
+                  boxShadow: isToday && !isSel ? '0 0 0 1.5px #10B981' : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <p style={{ fontSize: 11, fontWeight: 600, color: isSel ? '#94A3B8' : '#94A3B8', margin: '0 0 4px', textTransform: 'uppercase' }}>
+                  {DAY_NAMES_SHORT[day.getDay()]}
                 </p>
-                {app.location && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8' }}>
-                    <MapPin size={11} />
-                    {app.location}
-                  </div>
+                <p style={{ fontSize: 18, fontWeight: 700, color: isSel ? '#fff' : '#0F172A', margin: '0 0 6px' }}>
+                  {day.getDate()}
+                </p>
+                {count > 0 ? (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700,
+                    color: isSel ? '#0F172A' : '#059669',
+                    background: isSel ? '#fff' : '#ECFDF5',
+                    borderRadius: 20, padding: '2px 8px', display: 'inline-block',
+                  }}>
+                    {count} {count === 1 ? 'trabajo' : 'trab.'}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, color: isSel ? '#64748B' : '#CBD5E1' }}>Libre</span>
                 )}
-              </div>
+                {isToday && (
+                  <p style={{ fontSize: 10, fontWeight: 700, color: isSel ? '#10B981' : '#10B981', margin: '4px 0 0' }}>HOY</p>
+                )}
+              </button>
+            )
+          })}
+        </div>
 
-              {/* Right: date + time */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 2px' }}>{date}</p>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#10B981', margin: 0 }}>{time}</p>
+        {/* Selected day jobs */}
+        {loading ? (
+          <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '16px 0' }}>Cargando...</p>
+        ) : (
+          <>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 12px' }}>
+              {DAY_NAMES_FULL[selectedDate.getDay()]} {selectedDate.getDate()}
+              {selectedApps.length > 0 && (
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#64748B', marginLeft: 8 }}>
+                  {selectedApps.length} {selectedApps.length === 1 ? 'trabajo' : 'trabajos'}
+                </span>
+              )}
+            </p>
+
+            {selectedApps.length === 0 ? (
+              <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                Sin trabajos este día
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {selectedApps.map((app) => (
+                  <div key={app.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 16px',
+                  }}>
+                    {app.availableTimeFrom && (
+                      <div style={{ flexShrink: 0, minWidth: 44, textAlign: 'center' }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0 }}>{app.availableTimeFrom}</p>
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {app.title}
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#64748B' }}>
+                        <span>{app.client}</span>
+                        {app.location && (
+                          <>
+                            <span style={{ color: '#CBD5E1' }}>·</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <MapPin size={11} />
+                              {app.location}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <Link
+                      to={`/worker/posts/${app.postId}`}
+                      style={{
+                        flexShrink: 0, fontSize: 12, fontWeight: 600,
+                        color: '#059669', background: '#ECFDF5',
+                        border: '1px solid #A7F3D0', borderRadius: 8,
+                        padding: '5px 14px', textDecoration: 'none',
+                      }}
+                    >
+                      Ver
+                    </Link>
+                  </div>
+                ))}
               </div>
+            )}
+
+            <div style={{ textAlign: 'center', marginTop: 18 }}>
+              <Link
+                to="/worker/calendar"
+                style={{ fontSize: 13, fontWeight: 600, color: '#64748B', textDecoration: 'none' }}
+              >
+                Ver toda mi agenda
+              </Link>
             </div>
-          )
-        })}
+          </>
+        )}
       </div>
     </div>
   )

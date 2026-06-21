@@ -23,6 +23,8 @@ interface MyApplication {
   visitCost: number | null
   message: string | null
   clientPhone: string | null
+  scheduledDate: string | null
+  serviceDate: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,9 +119,13 @@ function ApplicationCard({ app }: { app: MyApplication }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: app.message ? 14 : 0 }}>
         <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '12px 14px' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Días disponibles</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', margin: 0 }}>
-            {app.availableDays.length > 0 ? app.availableDays.join(', ') : '—'}
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
+            {app.status === ApplicationStatus.Accepted ? 'Fecha visita' : 'Días disponibles'}
+          </p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: app.status === ApplicationStatus.Accepted ? '#059669' : '#0F172A', margin: 0 }}>
+            {app.status === ApplicationStatus.Accepted
+              ? (() => { const [y,m,d] = app.serviceDate!.split('T')[0].split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' }) })()
+              : app.availableDays.length > 0 ? app.availableDays.map(day => { const [y,m,d] = day.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' }) }).join(', ') : '—'}
           </p>
         </div>
         <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '12px 14px' }}>

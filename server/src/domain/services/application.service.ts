@@ -4,6 +4,7 @@ import {
   createApplication,
   findApplicationById,
   updateApplicationStatus,
+  acceptApplicationWithDate,
   deleteApplication,
   findApplicationsByPost,
 } from '../../infrastructure/database/application.database.js'
@@ -89,14 +90,14 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   return { id: created.id, status: created.status, message: 'Postulación a subcontrato exitosa' }
 }
 
-export const acceptApplication = async (clientId: string, applicationId: string) => {
+export const acceptApplication = async (clientId: string, applicationId: string, scheduledDate?: string) => {
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
   if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
 
-  const accepted = await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
+  const accepted = await acceptApplicationWithDate(applicationId, scheduledDate)
   await updatePostStatus(application.postId, PostStatus.InProgress)
 
   notifyUser(getProvider(), application.workerId, 'application_accepted', {

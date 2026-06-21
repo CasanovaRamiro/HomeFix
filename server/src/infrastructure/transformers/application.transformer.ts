@@ -15,7 +15,7 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   clientPhone: a.post.user.phone,
   location: a.post.address,
   appliedAt: a.createdAt,
-  serviceDate: a.post.startDate,
+  serviceDate: a.scheduledDate ?? a.post.startDate,
   endDate: a.post.endDate,
   status: a.status,
   category: a.post.categories[0]?.category.name ?? null,
@@ -52,5 +52,6 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     chargesVisit: a.chargesVisit,
     visitCost: a.visitCost,
     phone: a.worker.phone,
+    scheduledDate: a.scheduledDate ?? null,
   }
 }

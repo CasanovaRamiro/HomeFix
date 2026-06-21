@@ -149,6 +149,7 @@ export interface TrabajoView {
   fechaServicio: string
   createdAt: string
   startDate: string
+  endDate: string
   photo: string
   images: { url: string }[]
   clientName: string

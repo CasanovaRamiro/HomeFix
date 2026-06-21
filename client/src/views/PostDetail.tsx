@@ -189,6 +189,7 @@ export default function PostDetail() {
           <PostCard
             post={post}
             hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
+            scheduledDate={accepted?.scheduledDate}
             onComplete={handleComplete}
             onViewReview={() => navigate('/review')}
             onPause={handlePause}
@@ -221,6 +222,7 @@ export default function PostDetail() {
                 chargesVisit: a.chargesVisit,
                 visitCost: a.visitCost,
                 phone: a.phone,
+                scheduledDate: a.scheduledDate,
               }}
               applicationId={a.applicationId}
               applicationStatus={a.status}

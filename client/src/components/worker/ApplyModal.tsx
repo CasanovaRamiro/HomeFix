@@ -1,6 +1,5 @@
-import { useState } from 'react'
-
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+import { useState, useMemo } from 'react'
+import type { TrabajoView } from '../../types/post'
 
 export interface ApplicationFormData {
   message: string
@@ -12,10 +11,40 @@ export interface ApplicationFormData {
 }
 
 interface Props {
-  selected: { id: string; titulo: string }
+  selected: TrabajoView
   onEnviar: (data: ApplicationFormData) => void
   onClose: () => void
   enviando: boolean
+}
+
+function getDatesInRange(startDate: string, endDate: string): Date[] {
+  const dates: Date[] = []
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  const cur = new Date(start)
+  while (cur <= end) {
+    dates.push(new Date(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return dates
+}
+
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+function formatDateLabel(date: Date): string {
+  const day = DAY_NAMES[date.getDay()]
+  const d = date.getDate().toString().padStart(2, '0')
+  const m = (date.getMonth() + 1).toString().padStart(2, '0')
+  return `${day} ${d}/${m}`
+}
+
+function toYMD(date: Date): string {
+  const y = date.getFullYear()
+  const m = (date.getMonth() + 1).toString().padStart(2, '0')
+  const d = date.getDate().toString().padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Props) {
@@ -27,9 +56,14 @@ export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Pr
   const [visitCost, setVisitCost] = useState('')
   const [formError, setFormError] = useState('')
 
-  const toggleDay = (day: string) => {
+  const datesInRange = useMemo(
+    () => getDatesInRange(selected.startDate ?? '', selected.endDate ?? ''),
+    [selected.startDate, selected.endDate]
+  )
+
+  const toggleDay = (ymd: string) => {
     setAvailableDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+      prev.includes(ymd) ? prev.filter((d) => d !== ymd) : [...prev, ymd]
     )
   }
 
@@ -69,30 +103,38 @@ export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Pr
         <h2 id="modal-title">Postularte a este trabajo</h2>
         <p className="trabajos-muted">{selected.titulo}</p>
 
-        <label className="modal-label">Días disponibles</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {DAYS.map((day) => (
-            <button
-              key={day}
-              type="button"
-              onClick={() => toggleDay(day)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 20,
-                border: '1.5px solid',
-                borderColor: availableDays.includes(day) ? '#10B981' : '#CBD5E1',
-                background: availableDays.includes(day) ? '#D1FAE5' : '#fff',
-                color: availableDays.includes(day) ? '#065F46' : '#475569',
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
+        <label className="modal-label">¿Qué días podés ir?</label>
+        {datesInRange.length === 0 ? (
+          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 16 }}>No hay rango de fechas disponible.</p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {datesInRange.map((date) => {
+              const ymd = toYMD(date)
+              const isSelected = availableDays.includes(ymd)
+              return (
+                <button
+                  key={ymd}
+                  type="button"
+                  onClick={() => toggleDay(ymd)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    border: '1.5px solid',
+                    borderColor: isSelected ? '#10B981' : '#CBD5E1',
+                    background: isSelected ? '#D1FAE5' : '#fff',
+                    color: isSelected ? '#065F46' : '#475569',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {formatDateLabel(date)}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <label className="modal-label" style={{ flex: 1 }}>

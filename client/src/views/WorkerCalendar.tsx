@@ -18,6 +18,8 @@ interface CalendarApplication {
   endDate: string      // fecha límite del post
   status: ApplicationStatus
   category: string | null
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -105,7 +107,9 @@ function JobCard({ app }: { app: CalendarApplication }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Clock size={13} color="#9CA3AF" />
           <span style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>
-            Visita: {formatShort(app.serviceDate)}
+            {app.availableTimeFrom && app.availableTimeTo
+              ? `${app.availableTimeFrom} – ${app.availableTimeTo}`
+              : 'Horario a confirmar'}
           </span>
         </div>
         {isCompleted ? (
@@ -299,9 +303,16 @@ function CalendarGrid({
                 {day}
               </span>
 
-              {/* Single dot or checkmark */}
+              {/* Dot, count, or checkmark */}
               {isCompleted ? (
                 <span style={{ fontSize: 10, color: isSelected ? '#94A3B8' : '#9CA3AF' }}>✓</span>
+              ) : dayApps.length > 1 ? (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, lineHeight: 1,
+                  color: isSelected ? '#fff' : dotColor ?? '#374151',
+                }}>
+                  {dayApps.length}
+                </span>
               ) : dotColor ? (
                 <CalendarDot color={isSelected ? '#fff' : dotColor} />
               ) : null}

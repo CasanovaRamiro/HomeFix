@@ -19,6 +19,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   fechaServicio: formatPostDate(post.startDate),
   createdAt: post.createdAt,
   startDate: post.startDate,
+  endDate: post.endDate,
   photo: post.images[0]?.url ?? '',
   images: post.images ?? [],
   clientName: post.user?.name ?? 'Cliente',
