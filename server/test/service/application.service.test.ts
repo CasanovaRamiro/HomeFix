@@ -12,6 +12,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   createApplication: vi.fn(),
   findApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn(),
+  acceptApplicationWithDate: vi.fn(),
   deleteApplication: vi.fn(),
   findApplicationsByPost: vi.fn(),
 }))
@@ -63,13 +64,13 @@ const mockApplication = {
 describe("acceptApplication", () => {
   it("returns accepted application when valid", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
-    vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...mockApplication, status: "Accepted" })
+    vi.mocked(applicationData.acceptApplicationWithDate).mockResolvedValue({ ...mockApplication, status: "Accepted", scheduledDate: null })
     vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
 
     const result = await acceptApplication("client-1", "app-1")
 
     expect(result.status).toBe("Accepted")
-    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Accepted")
+    expect(applicationData.acceptApplicationWithDate).toHaveBeenCalledWith("app-1", undefined)
     expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "In progress")
   })
 
@@ -239,7 +240,7 @@ describe("applyToSubcontract", () => {
 
   it("crea la postulaciÃ³n y retorna id, status y mensaje de Ã©xito", async () => {
     const result = await applyToSubcontract("worker-1", validInput)
-    expect(result).toEqual({ id: "app-new", status: "Pending", message: "PostulaciÃ³n a subcontrato exitosa" })
+    expect(result).toEqual({ id: "app-new", status: "Pending", message: "Postulación a subcontrato exitosa" })
     expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", validInput)
   })
 
@@ -440,7 +441,7 @@ describe("cancelApplication", () => {
     const result = await cancelApplication("worker-1", "app-1")
 
     expect(applicationData.deleteApplication).toHaveBeenCalledWith("worker-1", "app-1")
-    expect(result.message).toBe("PostulaciÃ³n cancelada")
+    expect(result.message).toBe("Postulación cancelada")
   })
 
   it("throws 404 when application is not found or not cancelable", async () => {

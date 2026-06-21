@@ -138,7 +138,7 @@ router.patch('/:applicationId/accept', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-    const { scheduledDate } = req.body as { scheduledDate?: string }
+    const { scheduledDate } = (req.body ?? {}) as { scheduledDate?: string }
     const result = await acceptApplication(user.id, req.params.applicationId, scheduledDate)
     res.json(result)
   } catch (err) {
