@@ -10,10 +10,10 @@ vi.mock('../../src/lib/prisma.js', () => ({
   },
 }))
 
-let mockFrontendUrl = 'http://localhost:5173'
+let mockCorsOrigin = 'http://localhost:5173'
 vi.mock('../../src/lib/envConfig.js', () => ({
   env: {
-    get FRONTEND_URL() { return mockFrontendUrl },
+    get CORS_ORIGIN() { return mockCorsOrigin },
   },
 }))
 
@@ -165,7 +165,7 @@ describe('notifyUser', () => {
 describe('broadcastEmergency', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFrontendUrl = 'http://localhost:5173'
+    mockCorsOrigin = 'http://localhost:5173'
   })
 
   it('envía a workers con emergenciesEnabled y categoría coincidente', async () => {
@@ -204,13 +204,13 @@ describe('broadcastEmergency', () => {
     })
   })
 
-  it('incluye enlace como texto cuando FRONTEND_URL es HTTP', async () => {
+  it('incluye enlace como texto cuando CORS_ORIGIN es HTTP', async () => {
     const prisma = (await import('../../src/lib/prisma.js')).default
     vi.mocked(prisma.user.findMany).mockResolvedValue([
       { id: 'worker-1', telegramChatId: '111' },
     ] as never)
     mockSend.mockResolvedValue(true)
-    mockFrontendUrl = 'http://localhost:5173'
+    mockCorsOrigin = 'http://localhost:5173'
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
 
@@ -222,13 +222,13 @@ describe('broadcastEmergency', () => {
     expect(sent.buttons).toBeUndefined()
   })
 
-  it('incluye botón cuando FRONTEND_URL es HTTPS', async () => {
+  it('incluye botón cuando CORS_ORIGIN es HTTPS', async () => {
     const prisma = (await import('../../src/lib/prisma.js')).default
     vi.mocked(prisma.user.findMany).mockResolvedValue([
       { id: 'worker-1', telegramChatId: '111' },
     ] as never)
     mockSend.mockResolvedValue(true)
-    mockFrontendUrl = 'https://homefix.vercel.app'
+    mockCorsOrigin = 'https://homefix.vercel.app'
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
 import { MapPin, TriangleAlert } from 'lucide-react'
@@ -44,6 +45,12 @@ function shortAddress(addr: string): string {
     return `${city} - ${filtered[provIdx]}`
   }
   return filtered.slice(-2).join(' - ')
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
 }
 
 export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost, onClick, onKeyDown }: Props) {
@@ -113,14 +120,21 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
       </div>
       <div className="trabajo-card-footer">
         <div className="trabajo-client">
-          <div className="trabajo-client-avatar">
-            {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
-          </div>
-          <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+          <Link
+            to={`/profile/client/${trabajo.userId}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: 'inherit' }}
+          >
+            <div className="trabajo-client-avatar">
+              {trabajo.clientName?.charAt(0).toUpperCase() ?? 'C'}
+            </div>
+            <span className="trabajo-client-name">{trabajo.clientName} {trabajo.clientSurname}</span>
+          </Link>
           <StarRating rating={trabajo.clientRating} />
         </div>
         <div className="trabajo-card-actions">
-          <span className="trabajo-date">{trabajo.fechaServicio}</span>
+          <span className="trabajo-date trabajo-date-full">{trabajo.fechaServicio}</span>
+          <span className="trabajo-date trabajo-date-short">{formatShortDate(trabajo.startDate)}</span>
           <button type="button" className="btn-ver-detalle" onClick={(e) => { e.stopPropagation(); onClick() }}>
             Ver detalle
           </button>

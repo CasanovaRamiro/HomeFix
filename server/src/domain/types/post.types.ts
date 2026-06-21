@@ -5,6 +5,7 @@ export interface DomainPost {
   userId: string
   type?: PostType
   parentPostId?: string
+  subcontractGroupId?: string
   title: string
   description: string
   startDate: Date
@@ -17,7 +18,8 @@ export interface DomainPost {
   longitude: number | null
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
-  categories: ({ id: string; name: string } & {
+  allowsSubcontracting?: boolean
+  categories: ({ id: string; categoryId?: string; name: string } & {
     quantity?: number
     filledCount?: number
     roleDescription?: string | null
@@ -27,6 +29,7 @@ export interface DomainPost {
   workerRating?: number
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }
 
 export interface DomainUserPost {
@@ -59,6 +62,7 @@ export interface CreatePostInput {
   images?: { url: string }[]
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+  allowsSubcontracting?: boolean
 }
 
 export interface UpdatePostInput {

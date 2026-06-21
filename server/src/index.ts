@@ -23,6 +23,7 @@ import kycRoutes, { confirmRouter, webhookRouter } from './presentation/routes/k
 import uploadRoutes from './presentation/routes/upload.routes.js'
 import telegramRoutes from './presentation/routes/telegram.routes.js'
 import clientRoutes from './presentation/routes/client.routes.js'
+import clientProfileRoutes from './presentation/routes/clientProfile.routes.js'
 import { startBot } from './presentation/telegram/bot.js'
 
 export const app = express()
@@ -62,6 +63,7 @@ app.use('/kyc', webhookRouter)
 app.use('/upload', jwtCheck, uploadRoutes)
 app.use('/telegram', telegramRoutes)
 app.use('/client', jwtCheck, clientRoutes)
+app.use('/client-profiles', jwtCheck, clientProfileRoutes)
 app.use('/kyc', confirmRouter)
 app.use('/kyc', jwtCheck, kycRoutes)
 app.use(errorHandler)

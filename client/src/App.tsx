@@ -18,12 +18,15 @@ import Navbar from './components/Navbar'
 import Landing from './views/Landing'
 import ClientDashboard from './views/ClientDashboard'
 import ClientHistory from './views/ClientHistory'
+import ClientProfile from './views/ClientProfile'
+import PublicClientProfile from './views/PublicClientProfile'
 
 import WorkerLanding from './views/WorkerLanding'
 
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
 import SubcontractDetail from './views/SubcontractDetail'
+import WorkerSubcontracts from './views/WorkerSubcontracts'
 import CreateSubcontract from './views/CreateSubcontract'
 import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
@@ -99,6 +102,8 @@ export default function App(): ReactNode {
         <Route path="/manual-post" element={<ClientRoute><CreatePost /></ClientRoute>} />
         <Route path="/post-options" element={<ClientRoute><PostOptions /></ClientRoute>} />
         <Route path="/profile/worker/:id" element={<PublicWorkerProfile />} />
+        <Route path="/profile/client/:clientId" element={<PublicClientProfile />} />
+        <Route path="/client/:id" element={<ClientRoute><ClientProfile /></ClientRoute>} />
         <Route path="/posts/:id" element={<ClientRoute><PostDetail /></ClientRoute>} />
         <Route path="/create-subcontract" element={<WorkerRoute><CreateSubcontract /></WorkerRoute>} />
         <Route path="/worker" element={<WorkerRoute><WorkerDashboard /></WorkerRoute>} />
@@ -106,6 +111,8 @@ export default function App(): ReactNode {
         <Route path="/worker/posts/:id" element={<WorkerRoute><WorkerPostDetail /></WorkerRoute>} />
         <Route path="/worker/my-applications" element={<WorkerRoute><WorkerApplications /></WorkerRoute>} />
         <Route path="/worker/available-subcontracts" element={<WorkerRoute><AvailableSubcontracts /></WorkerRoute>} />
+        <Route path="/worker/subcontracts" element={<WorkerRoute><WorkerSubcontracts /></WorkerRoute>} />
+        <Route path="/worker/subcontracts/group/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/worker/available-jobs" element={<WorkerRoute><AvailableJobs /></WorkerRoute>} />
         <Route path="/worker/:id" element={<WorkerRoute><WorkerProfile /></WorkerRoute>} />

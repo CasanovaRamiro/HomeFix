@@ -12,6 +12,7 @@ import SubcontractCard from '../components/worker/SubcontractCard'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
 import StarRating from '../components/ui/StarRating'
+import CustomSelect from '../components/ui/CustomSelect'
 import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
 
@@ -54,7 +55,8 @@ export default function AvailableSubcontracts() {
   const [selected, setSelected] = useState<AvailableSubcontractDTO | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showApplyModal, setShowApplyModal] = useState(false)
-  const [postulacionesIds, setPostulacionesIds] = useState<string[]>([])
+  const [postulacionesIds, setPostulacionesIds] = useState<Set<string>>(new Set())
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [notificacion, setNotificacion] = useState<{ tipo: 'error' | 'exito'; mensaje: string } | null>(null)
   const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -82,10 +84,10 @@ export default function AvailableSubcontracts() {
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
     try {
-      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
-      setPostulacionesIds(res.data.map((a) => a.postId))
+      const res = await api.get<{ postId: string; categoryId: string | null }[]>('/applications/my-applications')
+      setPostulacionesIds(new Set(res.data.map((a) => a.categoryId ? `${a.postId}:${a.categoryId}` : a.postId)))
     } catch {
-      setPostulacionesIds([])
+      setPostulacionesIds(new Set())
     }
   }, [])
 
@@ -130,7 +132,8 @@ export default function AvailableSubcontracts() {
     }
   }, [loadPostulaciones, fetchSubcontratos])
 
-  const yaPostulado = (id: string): boolean => postulacionesIds.includes(id)
+  const yaPostulado = (id: string, categoryId?: string): boolean =>
+    categoryId ? postulacionesIds.has(`${id}:${categoryId}`) : postulacionesIds.has(id)
 
   const mostrarNotificacion = (tipo: 'error' | 'exito', mensaje: string) => {
     if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current)
@@ -139,11 +142,12 @@ export default function AvailableSubcontracts() {
   }
 
   const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
-    if (!selected) return
+    if (!selected || !selectedCategoryId) return
     setEnviando(true)
     try {
       await applyToSubcontract({
         postId: selected.id,
+        categoryId: selectedCategoryId,
         message: formData.message || undefined,
         availableDays: formData.availableDays,
         availableTimeFrom: formData.availableTimeFrom,
@@ -151,12 +155,14 @@ export default function AvailableSubcontracts() {
         chargesVisit: formData.chargesVisit,
         visitCost: formData.visitCost,
       })
-      setPostulacionesIds((prev) => [...prev, selected.id])
+      setPostulacionesIds((prev) => new Set(prev).add(`${selected.id}:${selectedCategoryId}`))
       setShowApplyModal(false)
+      setSelectedCategoryId(null)
       mostrarNotificacion('exito', 'Te postulaste correctamente')
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setShowApplyModal(false)
+      setSelectedCategoryId(null)
       setEnviando(false)
       mostrarNotificacion('error', axiosErr.response?.data?.error ?? 'Error al postularte')
     }
@@ -358,17 +364,16 @@ export default function AvailableSubcontracts() {
         <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
           <div className="trabajos-filters-row">
             <div className="filter-group filter-category">
-              <label htmlFor="sc-category">Rubro</label>
-              <select
+              <CustomSelect
                 id="sc-category"
+                label="Rubro"
+                options={[
+                  { value: '', label: 'Todos los rubros' },
+                  ...workerCategories.map(cat => ({ value: cat, label: cat }))
+                ]}
                 value={category}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-              >
-                <option value="">Todos los rubros</option>
-                {workerCategories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={handleCategoryChange}
+              />
             </div>
 
             <div className="filter-group filter-search">
@@ -383,15 +388,16 @@ export default function AvailableSubcontracts() {
             </div>
 
             <div className="filter-group filter-sort">
-              <label htmlFor="sc-sort">Orden</label>
-              <select
+              <CustomSelect
                 id="sc-sort"
+                label="Orden"
+                options={[
+                  { value: 'reciente', label: 'Mas recientes' },
+                  { value: 'antiguo', label: 'Mas antiguos' }
+                ]}
                 value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as 'reciente' | 'antiguo')}
-              >
-                <option value="reciente">Mas recientes</option>
-                <option value="antiguo">Mas antiguos</option>
-              </select>
+                onChange={(val) => handleSortChange(val as 'reciente' | 'antiguo')}
+              />
             </div>
 
             <div className="filter-group filter-location">
@@ -471,6 +477,42 @@ export default function AvailableSubcontracts() {
           </div>
         )}
 
+        {!loading && totalPages > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 6, marginBottom: 12,
+          }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                opacity: page === 1 ? 0.4 : 1,
+              }}
+            >
+              <ChevronLeft size={16} color="#475569" />
+            </button>
+            <span style={{ fontSize: 13, color: '#475569', fontWeight: 600, padding: '0 8px' }}>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8,
+                border: '1.5px solid #E2E8F0', background: '#fff',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                opacity: page === totalPages ? 0.4 : 1,
+              }}
+            >
+              <ChevronRight size={16} color="#475569" />
+            </button>
+          </div>
+        )}
         {!loading && paginated.length > 0 && (
           <>
             <div className="sc-grid" style={{ marginBottom: totalPages > 1 ? 24 : 0 }}>
@@ -506,25 +548,26 @@ export default function AvailableSubcontracts() {
                   <ChevronLeft size={16} color="#475569" />
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    style={{
-                      width: 36, height: 36, borderRadius: 8,
-                      border: p === page ? '1.5px solid #3B82F6' : '1.5px solid #E2E8F0',
-                      background: p === page ? '#3B82F6' : '#fff',
-                      color: p === page ? '#fff' : '#475569',
-                      fontSize: 13, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
-                    onMouseLeave={(e) => { if (p !== page) { (e.currentTarget as HTMLElement).style.background = '#fff'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
-                  >
-                    {p}
-                  </button>
-                ))}
-
+                <div className="page-numbers-wrapper" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      style={{
+                        width: 36, height: 36, borderRadius: 8,
+                        border: p === page ? '1.5px solid #3B82F6' : '1.5px solid #E2E8F0',
+                        background: p === page ? '#3B82F6' : '#fff',
+                        color: p === page ? '#fff' : '#475569',
+                        fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={(e) => { if (p !== page) (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#0F172A' }}
+                      onMouseLeave={(e) => { if (p !== page) { (e.currentTarget as HTMLElement).style.background = '#fff'; (e.currentTarget as HTMLElement).style.color = '#475569' } }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
@@ -649,6 +692,7 @@ export default function AvailableSubcontracts() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selected.categories.map((cat, i) => {
                     const needed = cat.quantity - cat.filledCount
+                    const applied = yaPostulado(selected.id, cat.id)
                     return (
                       <div key={i} style={{
                         padding: '10px 12px', borderRadius: 8,
@@ -672,11 +716,30 @@ export default function AvailableSubcontracts() {
                         <p style={{ margin: 0, fontSize: 11, color: '#94A3B8' }}>
                           {cat.filledCount} de {cat.quantity} cubierto{cat.filledCount !== 1 ? 's' : ''}
                         </p>
+                        {needed > 0 && !applied && (
+                          <button
+                            type="button"
+                            className="btn-accent"
+                            onClick={() => { setSelectedCategoryId(cat.id); setShowDetailModal(false); setShowApplyModal(true) }}
+                            style={{ width: '100%', marginTop: 8, fontSize: 13, padding: '6px 12px' }}
+                          >
+                            Postularme para {cat.name}
+                          </button>
+                        )}
+                        {applied && (
+                          <p style={{
+                            background: '#E8F5E9', color: '#2D6A4F',
+                            padding: '6px 12px', borderRadius: 6, fontSize: 12, textAlign: 'center', margin: '8px 0 0',
+                          }}>
+                            Ya te postulaste a este rubro
+                          </p>
+                        )}
                       </div>
                     )
                   })}
                 </div>
               </div>
+
 
               {/* Postular button */}
               <div style={{ paddingTop: 4 }}>
@@ -702,6 +765,7 @@ export default function AvailableSubcontracts() {
                   </button>
                 )}
               </div>
+
             </div>
           </div>
         </div>
@@ -712,7 +776,7 @@ export default function AvailableSubcontracts() {
         <ApplyModal
           selected={{ id: selected.id, titulo: selected.title }}
           onEnviar={(data) => { void handlePostular(data) }}
-          onClose={() => setShowApplyModal(false)}
+          onClose={() => { setShowApplyModal(false); setSelectedCategoryId(null) }}
           enviando={enviando}
         />
       )}

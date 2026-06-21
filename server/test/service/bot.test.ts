@@ -11,6 +11,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
     user: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }))
@@ -113,6 +114,10 @@ describe('processLink', () => {
       where: { id: 'link-1' },
       data: { used: true },
     })
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { telegramChatId: '12345', id: { not: 'user-1' } },
+      data: { telegramChatId: null, telegramLinkedAt: null },
+    })
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: {
@@ -168,6 +173,10 @@ describe('processLink', () => {
     const ctx = makeCtx({ chat: { id: 99999 } })
     await processLink(ctx as never, 'ABC12345')
 
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { telegramChatId: '99999', id: { not: 'user-1' } },
+      data: { telegramChatId: null, telegramLinkedAt: null },
+    })
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: {
@@ -183,6 +192,10 @@ describe('processLink', () => {
     const ctx = makeCtx({ chat: null })
     await processLink(ctx as never, 'ABC12345')
 
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { telegramChatId: 'undefined', id: { not: 'user-1' } },
+      data: { telegramChatId: null, telegramLinkedAt: null },
+    })
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: {

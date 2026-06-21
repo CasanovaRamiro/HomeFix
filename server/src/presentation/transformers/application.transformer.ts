@@ -12,6 +12,7 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   endDate: app.endDate.toISOString().split('T')[0],
   status: app.status,
   category: app.category,
+  categoryId: app.categoryId,
   hasReview: app.hasReview,
   clientPhone: app.clientPhone,
   clientRating: app.clientRating,

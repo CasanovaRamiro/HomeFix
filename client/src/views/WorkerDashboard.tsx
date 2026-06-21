@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
   CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
-  ChevronRight, Shield, MessageSquare, FileText,
+  ChevronRight, Shield, MessageSquare, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
 import api from '../services/api'
@@ -306,7 +306,7 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
       </div>
 
       {/* Title */}
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {title}
       </h3>
 
@@ -317,10 +317,13 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
 
       {/* Client + location */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569' }}>
+        <Link
+          to={`/profile/client/${post.userId}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', textDecoration: 'none' }}
+        >
           <User size={12} color="#94A3B8" />
           {clientName} {clientSurname}
-        </span>
+        </Link>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12 }}>
           {Array.from({ length: 5 }, (_, i) => (
             <span key={i}>{i < Math.round(clientRating) ? '★' : '☆'}</span>
@@ -761,6 +764,7 @@ const QUICK_LINKS = [
   { label: 'Mi Perfil',         icon: User,           href: '' },
   { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
   { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
+  { label: 'Gestor Subcontratos', icon: GitBranch,    href: '/worker/subcontracts' },
   { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
 ]
 
@@ -1041,7 +1045,7 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                   {app.title}
                 </h3>
                 <AppStatusBadge status={app.status} />
@@ -1414,7 +1418,7 @@ export default function WorkerDashboard() {
       {/* Central section: main content + sidebar */}
       <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
-        <div>
+        <div className="wd-content">
           <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} userId={data.profile.id} />
           <MisPostulacionesSection apps={applications} loading={appsLoading} />
           <ProximasCitasSection apps={applications} loading={appsLoading} />
@@ -1435,6 +1439,8 @@ export default function WorkerDashboard() {
         .wd-header-container,
         .wd-section,
         .wd-main-grid { box-sizing: border-box; }
+        .wd-content { min-width: 0; }
+        .wd-content h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 1024px) { .wd-main-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
           .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); }

@@ -26,6 +26,7 @@ export interface PostDTO {
   longitude: number | null
   isEmergency: boolean
   emergencyExpiresAt: string | null
+  allowsSubcontracting: boolean
   categories: PostCategoryDTO[]
   user: {
     id: string
@@ -137,6 +138,7 @@ export interface SubcontractDetailDTO {
   clientRating: number
   workerRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }
 
 export interface TrabajoView {
@@ -158,4 +160,5 @@ export interface TrabajoView {
   address: string
   isEmergency: boolean
   emergencyExpiresAt: string | null
+  allowsSubcontracting: boolean
 }

@@ -22,6 +22,7 @@ interface Applicant {
   visitCost: number | null
   phone: string | null
   scheduledDate?: string | null
+  hasReview: boolean
 }
 
 interface ApplicantCardProps {
@@ -32,6 +33,7 @@ interface ApplicantCardProps {
   postTitle: string
   onHire?: () => void
   onDismiss?: () => void
+  onReview?: () => void
 }
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -146,7 +148,7 @@ function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, ti
   )
 }
 
-export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onDismiss }: ApplicantCardProps) {
+export default function ApplicantCard({ applicant, applicationId, applicationStatus, postStatus, postTitle, onHire, onDismiss, onReview }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -183,7 +185,8 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
   }
 
   const renderAction = () => {
-    if (applicationStatus === 'Accepted') {
+    if (applicationStatus === 'Accepted' || applicationStatus === 'Completed') {
+      const canReview = (postStatus === 'Completed' || postStatus === 'Cancelled') && onReview && !applicant.hasReview
       return (
         <>
           <span className="text-green-700 bg-green-100 px-3 py-1 rounded text-sm font-medium">Contratado</span>
@@ -198,22 +201,38 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
               Chatear
             </button>
           )}
-          <button onClick={() => setDismissModalOpen(true)} className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">
-            Despedir
-          </button>
-          <ConfirmModal
-            open={dismissModalOpen}
-            title="Despedir trabajador"
-            message={`¿Seguro que querés dar de baja a ${applicant.name} de "${postTitle}"? La publicación vuelve a estar activa y vas a poder contratar a otro trabajador.`}
-            onConfirm={handleDismiss}
-            onCancel={() => setDismissModalOpen(false)}
-            loading={dismissing}
-            danger
-          />
+          {canReview && (
+            <button
+              onClick={onReview}
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
+            >
+              Calificar
+            </button>
+          )}
+          {postStatus !== 'Completed' && postStatus !== 'Cancelled' && (
+            <>
+              <button
+                onClick={() => setDismissModalOpen(true)}
+                className="px-4 py-2 rounded-lg text-white text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Despedir
+              </button>
+              <ConfirmModal
+                open={dismissModalOpen}
+                title="Despedir trabajador"
+                message={`¿Seguro que querés dar de baja a ${applicant.name} de "${postTitle}"? La publicación vuelve a estar activa y vas a poder contratar a otro trabajador.`}
+                onConfirm={handleDismiss}
+                onCancel={() => setDismissModalOpen(false)}
+                loading={dismissing}
+                danger
+              />
+            </>
+          )}
         </>
       )
     }
     if (applicationStatus === 'Rejected') return null
+    if ((postStatus === 'Completed' || postStatus === 'Cancelled') && applicationStatus === 'Pending') return null
     if (applicationStatus === 'Dismissed') {
       return <span className="text-red-700 bg-red-100 px-3 py-1 rounded text-sm font-medium">Despedido</span>
     }
@@ -299,7 +318,7 @@ export default function ApplicantCard({ applicant, applicationId, applicationSta
           </div>
         )}
 
-        {applicant.scheduledDate && applicationStatus === 'Accepted' && (
+        {applicant.scheduledDate && (applicationStatus === 'Accepted' || applicationStatus === 'Completed') && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, background: '#F0FDF4', border: '1px solid #A7F3D0', borderRadius: 8, padding: '4px 10px' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>
               Visita pactada: {formatYMD(applicant.scheduledDate)}

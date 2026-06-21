@@ -6,7 +6,7 @@ import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
 import { ApplicationStatus } from '../types/application'
 
 const PAGE_SIZE = 8
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -29,17 +29,24 @@ interface Application {
   clientPhone: string | null
 }
 
-const TABS = ['Todas', 'Rechazadas', 'Completadas'] as const
+const TABS = ['Todas', 'Pendientes', 'Aceptadas', 'Completadas', 'Rechazadas'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_TO_STATUS: Record<Tab, string> = {
   Todas:       '',
-  Rechazadas:  ApplicationStatus.Rejected,
+  Pendientes:  ApplicationStatus.Pending,
+  Aceptadas:   ApplicationStatus.Accepted,
   Completadas: ApplicationStatus.Completed,
+  Rechazadas:  ApplicationStatus.Rejected,
 }
 
-// Solo mostrar postulaciones finalizadas (historial)
-const HISTORY_STATUSES = new Set([ApplicationStatus.Rejected, ApplicationStatus.Completed])
+// Postulaciones a mostrar en el tablero
+const HISTORY_STATUSES = new Set([
+  ApplicationStatus.Pending,
+  ApplicationStatus.Accepted,
+  ApplicationStatus.Completed,
+  ApplicationStatus.Rejected,
+])
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -377,8 +384,17 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
 
           {/* Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <ClientAvatar name={app.client} />
-            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+            {app.clientId ? (
+              <Link to={`/profile/client/${app.clientId}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', color: 'inherit' }}>
+                <ClientAvatar name={app.client} />
+                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+              </Link>
+            ) : (
+              <>
+                <ClientAvatar name={app.client} />
+                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{app.client}</span>
+              </>
+            )}
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#F59E0B', fontSize: 12, marginLeft: 4 }}>
               {Array.from({ length: 5 }, (_, i) => (
                 <span key={i}>{i < Math.round(app.clientRating) ? '★' : '☆'}</span>
@@ -607,6 +623,8 @@ export default function WorkerApplications() {
 
   const metrics = useMemo(() => ({
     total:     applications.length,
+    pending:   applications.filter((a) => a.status === ApplicationStatus.Pending).length,
+    accepted:  applications.filter((a) => a.status === ApplicationStatus.Accepted).length,
     rejected:  applications.filter((a) => a.status === ApplicationStatus.Rejected).length,
     completed: applications.filter((a) => a.status === ApplicationStatus.Completed).length,
   }), [applications])
@@ -674,6 +692,8 @@ export default function WorkerApplications() {
       <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div className="wa-metrics-grid">
           <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A" />
+          <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#D97706" />
+          <MetricCard value={metrics.accepted}  label="Aceptadas"   valueColor="#059669" />
           <MetricCard value={metrics.completed} label="Completadas" valueColor="#2563EB" />
           <MetricCard value={metrics.rejected}  label="Rechazadas"  valueColor="#DC2626" />
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
 
@@ -59,7 +60,7 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
         </div>
       )}
       <div className="trabajos-detail-body">
-        <div className="trabajo-detail-client">
+        <Link to={`/profile/client/${selected.userId}`} className="trabajo-detail-client" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="trabajo-detail-client-avatar">
             {selected.clientName?.charAt(0).toUpperCase() ?? 'C'}
           </div>
@@ -68,7 +69,7 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
             <span className="trabajo-detail-client-label">Cliente</span>
             <StarRating rating={selected.clientRating} />
           </div>
-        </div>
+        </Link>
         <h3>{selected.titulo}</h3>
         <p className="trabajo-meta">Publicado: {selected.fechaPublicacion}</p>
         <p className="trabajo-detail-desc">{selected.descripcion}</p>
@@ -84,6 +85,12 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
           <div>
             <dt>Fecha servicio</dt>
             <dd>{selected.fechaServicio}</dd>
+          </div>
+          <div>
+            <dt>Subcontratación</dt>
+            <dd style={{ color: selected.allowsSubcontracting ? '#059669' : '#DC2626', fontWeight: 600 }}>
+              {selected.allowsSubcontracting ? 'Permitida' : 'No permitida'}
+            </dd>
           </div>
         </dl>
         {esPropio ? (

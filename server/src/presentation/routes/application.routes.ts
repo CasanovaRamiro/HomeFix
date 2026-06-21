@@ -96,10 +96,14 @@ router.post('/subcontract', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-    const { postId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
+    const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
 
     if (!postId || typeof postId !== 'string') {
       res.status(400).json({ error: 'postId is required' })
+      return
+    }
+    if (!categoryId || typeof categoryId !== 'string') {
+      res.status(400).json({ error: 'categoryId is required' })
       return
     }
     if (!Array.isArray(availableDays) || availableDays.length === 0) {
@@ -121,6 +125,7 @@ router.post('/subcontract', async (req, res, next) => {
 
     const result = await applyToSubcontract(user.id, {
       postId,
+      categoryId,
       message: typeof message === 'string' ? message : undefined,
       availableDays,
       availableTimeFrom,

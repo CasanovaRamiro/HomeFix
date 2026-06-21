@@ -2,6 +2,7 @@ import { getBot } from '../../infrastructure/providers/telegram.provider.js'
 import type { Context } from 'telegraf'
 import prisma from '../../lib/prisma.js'
 import { UserRole } from '../../domain/types/userRole.js'
+import { env } from '../../lib/envConfig.js'
 
 let _botUsername: string | null = null
 
@@ -47,6 +48,11 @@ export const processLink = async (ctx: Context, code: string) => {
     data: { used: true },
   })
 
+  await prisma.user.updateMany({
+    where: { telegramChatId: String(ctx.chat?.id), id: { not: linkCode.userId } },
+    data: { telegramChatId: null, telegramLinkedAt: null },
+  })
+
   await prisma.user.update({
     where: { id: linkCode.userId },
     data: {
@@ -70,7 +76,7 @@ export const handleTextMessage = async (ctx: Context): Promise<void> => {
     await ctx.reply(
       '👋 ¡Hola! No tengo tu cuenta vinculada todavía.\n\n'
       + 'Para recibir notificaciones de HomeFix:\n'
-      + '1. Iniciá sesión en homefix.vercel.app\n'
+      + `1. Iniciá sesión en ${env.CORS_ORIGIN}\n`
       + '2. Andá a tu perfil → "Vincular Telegram"\n'
       + '3. Generá un código y enviá /link <código>',
     )
@@ -143,6 +149,9 @@ export const startBot = () => {
 
     bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
+    bot.catch((err) => {
+      console.error('Telegram bot error:', err instanceof Error ? err.message : err)
+    })
     bot.launch().catch((err) => {
       console.error('Telegram bot launch error:', err instanceof Error ? err.message : err)
     })

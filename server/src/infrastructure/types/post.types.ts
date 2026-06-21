@@ -5,6 +5,7 @@ export interface PrismaPostFull {
   userId: string
   type: PostType
   parentPostId?: string
+  subcontractGroupId?: string
   title: string
   description: string
   startDate: Date
@@ -17,7 +18,10 @@ export interface PrismaPostFull {
   longitude: number | null
   isEmergency: boolean
   emergencyExpiresAt: Date | null
+  allowsSubcontracting: boolean
   categories: {
+    id: string
+    categoryId: string
     category: { id: string; name: string }
     quantity: number
     filledCount: number

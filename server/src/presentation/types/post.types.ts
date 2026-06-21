@@ -57,6 +57,7 @@ export interface PostDTO {
   longitude: number | null
   isEmergency: boolean
   emergencyExpiresAt: string | null
+  allowsSubcontracting: boolean
   categories: PostCategoryDTO[]
   user: {
     id: string
@@ -67,4 +68,5 @@ export interface PostDTO {
   workerRating?: number
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
+  postIds?: string[]
 }

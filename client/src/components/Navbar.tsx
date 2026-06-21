@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
 import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch } from 'lucide-react'
@@ -18,6 +18,7 @@ const WORKER_LINKS: NavLinkDef[] = [
   { href: '/worker/available-jobs',           label: 'Trabajos Disponibles', icon: Briefcase },
   { href: '/worker/calendar',                 label: 'Mi Agenda',            icon: CalendarDays },
   { href: '/worker/available-subcontracts',   label: 'Subcontratos',         icon: GitBranch },
+  { href: '/worker/subcontracts',             label: 'Gestor Subcontratos',  icon: GitBranch },
   { href: '/worker/my-applications',          label: 'Mis Postulaciones',    icon: ClipboardList },
   { href: '/create-subcontract',              label: 'Subcontratar',         icon: Users },
 ]
@@ -39,6 +40,18 @@ export default function Navbar(): React.ReactElement | null {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [userBtnHover, setUserBtnHover] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [userMenuOpen])
 
   if (AUTH_ROUTES.includes(pathname)) return null
 
@@ -54,6 +67,11 @@ export default function Navbar(): React.ReactElement | null {
     user?.role === UserRole.Worker ? '/worker' :
     user?.role === UserRole.Client ? '/dashboard' :
     '/'
+
+  const profileRoute =
+    user?.role === UserRole.Worker && user?.id ? `/worker/${user.id}` :
+    user?.role === UserRole.Client && user?.id ? `/client/${user.id}` :
+    homeRoute
 
   const displayName    = user?.name ?? 'Mi cuenta'
   const displayInitial = displayName.charAt(0).toUpperCase()
@@ -84,7 +102,7 @@ export default function Navbar(): React.ReactElement | null {
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {isLanding && (
               <>
                 <button
@@ -205,7 +223,7 @@ export default function Navbar(): React.ReactElement | null {
           </div>
 
           {/* Desktop right side */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {!isLoggedIn ? (
               <>
                 <Link to="/login"
@@ -224,7 +242,7 @@ export default function Navbar(): React.ReactElement | null {
                 </Link>
               </>
             ) : (
-              <div style={{ position: 'relative' }}>
+              <div ref={userMenuRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => { setUserMenuOpen(!userMenuOpen) }}
                   onMouseEnter={() => { setUserBtnHover(true) }}
@@ -258,7 +276,7 @@ export default function Navbar(): React.ReactElement | null {
                 {userMenuOpen && (
                   <div style={{ position: 'absolute', right: 0, marginTop: '8px', width: '208px', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '4px 0', zIndex: 50 }}>
                     <Link
-                      to={homeRoute}
+                      to={profileRoute}
                       onClick={() => { setUserMenuOpen(false) }}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', fontSize: '14px', color: theme.primaryDark, textDecoration: 'none' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
@@ -288,7 +306,7 @@ export default function Navbar(): React.ReactElement | null {
           <button
             onClick={() => { setMobileOpen(!mobileOpen) }}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: theme.muted, alignSelf: 'center' }}
-            className="md:hidden"
+            className="lg:hidden"
           >
             {mobileOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
           </button>
@@ -296,7 +314,7 @@ export default function Navbar(): React.ReactElement | null {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div style={{ borderTop: `1px solid ${theme.border}`, padding: '16px 0' }} className="md:hidden">
+          <div style={{ borderTop: `1px solid ${theme.border}`, padding: '16px 0' }} className="lg:hidden">
             <div className="space-y-1">
               {navLinks.map((link) => (
                 <Link
@@ -353,7 +371,7 @@ export default function Navbar(): React.ReactElement | null {
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
                 <>
-                  <Link to={homeRoute} onClick={() => { setMobileOpen(false) }}
+                  <Link to={profileRoute} onClick={() => { setMobileOpen(false) }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: theme.primaryDark, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '10px 16px', textDecoration: 'none' }}>
                     <User style={{ width: '16px', height: '16px' }} /> Mi Perfil
                   </Link>

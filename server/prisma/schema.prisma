@@ -57,6 +57,7 @@ model Post {
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            String           @default("client")
   parentPostId    String?
+  subcontractGroupId String?
   parentPost      Post?            @relation("SubPosts", fields: [parentPostId], references: [id])
   subPosts        Post[]           @relation("SubPosts")
   startDate       DateTime
@@ -69,6 +70,7 @@ model Post {
   longitude       Float?
   isEmergency     Boolean          @default(false)
   emergencyExpiresAt DateTime?
+  allowsSubcontracting Boolean    @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   categories      PostCategory[]
@@ -85,14 +87,15 @@ model Category {
 }
 
 model PostCategory {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   postId          String
   categoryId      String
-  quantity        Int      @default(1)
-  filledCount     Int      @default(0)
+  quantity        Int           @default(1)
+  filledCount     Int           @default(0)
   roleDescription String?
-  post            Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  applications    Application[]
 
   @@unique([postId, categoryId])
 }
@@ -135,6 +138,8 @@ model Application {
   id                 String         @id @default(uuid())
   workerId           String
   postId             String
+  categoryId         String?
+  subcontractGroupId String?
   status             String         @default("Pending")
   message            String?        @db.Text
   availableDays      String?        @db.Text
@@ -147,10 +152,12 @@ model Application {
   updatedAt          DateTime       @updatedAt
   post               Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
   worker             User           @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  category           PostCategory?  @relation(fields: [categoryId], references: [id])
   review             WorkerReview?
   clientReview       ClientReview?
 
-  @@unique([workerId, postId])
+  // Uniqueness on (workerId, postId, COALESCE(categoryId,'__none__')) is enforced by a functional
+  // unique index in migration 20260619000001 — Prisma can't express it, so it isn't declared here.
 }
 
 model ClientReview {

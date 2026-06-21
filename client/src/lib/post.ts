@@ -28,6 +28,7 @@ export const postToTrabajo = (post: Post): TrabajoView & { lat?: number | null; 
   address: post.address,
   isEmergency: post.isEmergency,
   emergencyExpiresAt: post.emergencyExpiresAt,
+  allowsSubcontracting: post.allowsSubcontracting,
   lat: post.latitude,
   lng: post.longitude,
 })

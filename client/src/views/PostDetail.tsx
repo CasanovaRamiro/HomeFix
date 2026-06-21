@@ -190,8 +190,8 @@ export default function PostDetail() {
             post={post}
             hasAcceptedWorker={applicants.some(a => a.status === ApplicationStatus.Accepted)}
             scheduledDate={accepted?.scheduledDate}
+            hasUnreviewedWorkers={applicants.some(a => (a.status === 'Accepted' || a.status === 'Completed') && !a.hasReview)}
             onComplete={handleComplete}
-            onViewReview={() => navigate('/review')}
             onPause={handlePause}
             onCancel={() => setShowCancelModal(true)}
             onEdit={openEditModal}
@@ -223,6 +223,7 @@ export default function PostDetail() {
                 visitCost: a.visitCost,
                 phone: a.phone,
                 scheduledDate: a.scheduledDate,
+                hasReview: a.hasReview,
               }}
               applicationId={a.applicationId}
               applicationStatus={a.status}
