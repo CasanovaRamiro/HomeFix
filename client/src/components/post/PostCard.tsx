@@ -5,6 +5,7 @@ import type { Post } from '../../types/post'
 interface PostCardProps {
   post: Post
   hasAcceptedWorker?: boolean
+  scheduledDate?: string | null
   hasUnreviewedWorkers?: boolean
   onComplete?: () => void
   onMarkInProgress?: () => void
@@ -22,6 +23,11 @@ const STATUS_MAP: Record<string, { label: string; variant: 'accent' | 'warning' 
   Completed: { label: 'Completada', variant: 'primary' },
 }
 
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('T')[0].split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   if (!expiresAt) return null
   const diff = new Date(expiresAt).getTime() - Date.now()
@@ -32,7 +38,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, hasUnreviewedWorkers, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, scheduledDate, hasUnreviewedWorkers, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
@@ -81,11 +87,17 @@ export default function PostCard({ post, hasAcceptedWorker, hasUnreviewedWorkers
 
       <div className="info-row">
         <strong>Fechas:</strong>{' '}
-        {new Date(post.startDate).toLocaleDateString()} — {new Date(post.endDate).toLocaleDateString()}
+        {parseLocalDate(post.startDate).toLocaleDateString()} — {parseLocalDate(post.endDate).toLocaleDateString()}
       </div>
       <div className="info-row">
         <strong>Publicado:</strong> {new Date(post.createdAt).toLocaleDateString()}
       </div>
+      {scheduledDate && (
+        <div className="info-row" style={{ color: '#065F46', fontWeight: 600 }}>
+          <strong>Visita pactada:</strong>{' '}
+          {parseLocalDate(scheduledDate).toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
+        </div>
+      )}
 
       <div className="info-row" style={{ marginBottom: 0 }}>
         <strong>Direccion:</strong>{' '}

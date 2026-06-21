@@ -11,6 +11,7 @@ export interface PrismaApplicationWithPost {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  scheduledDate: Date | null
   post: {
     title: string
     address: string
@@ -35,6 +36,7 @@ export interface PrismaApplicationWithWorker {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  scheduledDate: Date | null
   worker: {
     id: string
     name: string

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { findPostById } from '../../src/infrastructure/database/post.database.js'
 import { findAcceptedApplications, findApplicationById } from '../../src/infrastructure/database/application.database.js'
 import { createReview as createReviewData, createClientReview as createClientReviewData, findClientReviewByApplicationId, findWorkerReviewByApplicationId } from '../../src/infrastructure/database/review.database.js'
@@ -66,7 +66,8 @@ const mockAcceptedApp = {
   availableTimeTo: null,
   chargesVisit: false,
   visitCost: null,
-}
+      scheduledDate: null,
+    }
 
 const mockReview: DomainWorkerReview = {
   id: 'review-uuid-1',
@@ -206,7 +207,7 @@ describe('createWorkerReview (dismissed worker by applicationId)', () => {
     updatedAt: new Date(),
     post: { userId, title: 'Test Post', status: 'Active' },
   }
-  const dismissInput: CreateReviewInput = { postId, applicationId, rating: 1, description: 'No se presentó' }
+  const dismissInput: CreateReviewInput = { postId, applicationId, rating: 1, description: 'No se presentÃ³' }
 
   it('creates a review for a dismissed worker', async () => {
     vi.mocked(findApplicationById).mockResolvedValue(dismissedApplication as never)
@@ -221,7 +222,7 @@ describe('createWorkerReview (dismissed worker by applicationId)', () => {
       reviewerId: userId,
       workerId,
       rating: 1,
-      description: 'No se presentó',
+      description: 'No se presentÃ³',
       mediaUrls: undefined,
     })
     expect(result).toEqual(mockReview)
@@ -375,3 +376,5 @@ describe('createClientReview', () => {
     expect(result.rating).toBe(5)
   })
 })
+
+

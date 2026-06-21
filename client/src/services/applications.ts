@@ -36,6 +36,7 @@ export interface PostApplicant {
   phone: string | null
   chargesVisit: boolean
   visitCost: number | null
+  scheduledDate: string | null
   hasReview: boolean
 }
 
@@ -48,8 +49,8 @@ export const applyToSubcontract = (input: ApplyToPostInput) =>
 export const getPostApplicants = (postId: string) =>
   api.get<PostApplicant[]>(`/applications/post/${postId}`)
 
-export const acceptApplication = (applicationId: string): Promise<ApplicationResponse> =>
-  api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`).then(r => r.data)
+export const acceptApplication = (applicationId: string, scheduledDate?: string): Promise<ApplicationResponse> =>
+  api.patch<ApplicationResponse>(`/applications/${applicationId}/accept`, { scheduledDate }).then(r => r.data)
 
 export const dismissWorker = (applicationId: string): Promise<ApplicationResponse> =>
   api.patch<ApplicationResponse>(`/applications/${applicationId}/dismiss`).then(r => r.data)

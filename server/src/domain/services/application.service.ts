@@ -100,7 +100,7 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   return { id: created.id, status: created.status, message: 'Postulación a subcontrato exitosa' }
 }
 
-export const acceptApplication = async (clientId: string, applicationId: string) => {
+export const acceptApplication = async (clientId: string, applicationId: string, scheduledDate?: string) => {
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
@@ -117,7 +117,10 @@ export const acceptApplication = async (clientId: string, applicationId: string)
     await prisma.$transaction(async (tx) => {
       const updated = await tx.application.updateMany({
         where: { id: applicationId, status: ApplicationStatus.Pending },
-        data: { status: ApplicationStatus.Accepted },
+        data: {
+          status: ApplicationStatus.Accepted,
+          scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        },
       })
       if (updated.count === 0) {
         throw Object.assign(new Error('Application is not pending'), { status: 400 })

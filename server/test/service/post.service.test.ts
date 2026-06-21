@@ -55,7 +55,7 @@ describe("post.service - createPost", () => {
   const inputData: CreatePostInput = {
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
-    description: "El tubo bajo el lavaplatos está roto",
+    description: "El tubo bajo el lavaplatos estÃ¡ roto",
     startDate: new Date("2026-06-01T00:00:00.000Z"),
     endDate: new Date("2026-06-15T00:00:00.000Z"),
     address: "Calle Principal 123, Apt 4B",
@@ -65,7 +65,7 @@ describe("post.service - createPost", () => {
     id: 'uuid-post-1',
     userId: 'uuid-user-1',
     title: "Tubo roto en cocina",
-    description: "El tubo bajo el lavaplatos está roto",
+    description: "El tubo bajo el lavaplatos estÃ¡ roto",
     startDate: new Date("2026-06-01"),
     endDate: new Date("2026-06-15"),
     address: "Calle Principal 123, Apt 4B",
@@ -172,7 +172,7 @@ describe("post.service - listAvailablePosts", () => {
   const mockPost: DomainPost = {
     id: "uuid-1",
     userId: "uuid-user-1",
-    title: "Reparación de caño",
+    title: "ReparaciÃ³n de caÃ±o",
     description: "Test",
     address: "Calle 123",
     startDate: new Date("2026-06-01"),
@@ -381,7 +381,7 @@ describe('post.service - pausePost', () => {
   const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -427,19 +427,19 @@ describe('post.service - pausePost', () => {
     await expect(postService.pausePost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
-  it('lanza 400 si el post está en estado In progress', async () => {
+  it('lanza 400 si el post estÃ¡ en estado In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'In progress' })
 
     await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 
-  it('lanza 400 si el post está en estado Completed', async () => {
+  it('lanza 400 si el post estÃ¡ en estado Completed', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Completed' })
 
     await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 
-  it('lanza 400 si el post está en estado Cancelled', async () => {
+  it('lanza 400 si el post estÃ¡ en estado Cancelled', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Cancelled' })
 
     await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
@@ -512,7 +512,7 @@ describe('post.service - cancelPost', () => {
   const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -574,13 +574,13 @@ describe('post.service - cancelPost', () => {
     await expect(postService.cancelPost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
-  it('lanza 400 si el post está en estado Completed', async () => {
+  it('lanza 400 si el post estÃ¡ en estado Completed', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Completed' })
 
     await expect(postService.cancelPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 
-  it('lanza 400 si el post está en estado Cancelled', async () => {
+  it('lanza 400 si el post estÃ¡ en estado Cancelled', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Cancelled' })
 
     await expect(postService.cancelPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
@@ -646,7 +646,7 @@ describe('post.service - finalizePost', () => {
   const mockPost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -660,7 +660,7 @@ describe('post.service - finalizePost', () => {
     user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
   }
 
-  it('finaliza el post cuando está pausado y pertenece al usuario', async () => {
+  it('finaliza el post cuando estÃ¡ pausado y pertenece al usuario', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost)
 
     vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed', updatedAt: new Date() } as never)
@@ -749,7 +749,7 @@ describe('post.service - completePost', () => {
     status: 'In progress',
   }
 
-  it('completa el post cuando está In progress', async () => {
+  it('completa el post cuando estÃ¡ In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockPost as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Completed' } as never)
 
@@ -833,7 +833,7 @@ describe('post.service - reopenPost', () => {
     status: 'In progress',
   }
 
-  it('reabre el post y resetea la aplicación aceptada a Pending', async () => {
+  it('reabre el post y resetea la aplicaciÃ³n aceptada a Pending', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
     vi.mocked(findAcceptedApplications).mockResolvedValue([{
       id: 'app-1',
@@ -850,6 +850,7 @@ describe('post.service - reopenPost', () => {
       availableTimeTo: null,
       chargesVisit: false,
       visitCost: null,
+      scheduledDate: null,
     } as never])
     vi.mocked(updateApplicationStatus).mockResolvedValue({
       id: 'app-1',
@@ -866,6 +867,7 @@ describe('post.service - reopenPost', () => {
       availableTimeTo: null,
       chargesVisit: false,
       visitCost: null,
+      scheduledDate: null,
     } as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 
@@ -875,7 +877,7 @@ describe('post.service - reopenPost', () => {
     expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
   })
 
-  it('funciona aunque no haya aplicación aceptada', async () => {
+  it('funciona aunque no haya aplicaciÃ³n aceptada', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
     vi.mocked(findAcceptedApplications).mockResolvedValue([])
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
@@ -896,7 +898,7 @@ describe('post.service - reopenPost', () => {
     await expect(postService.reopenPost('uuid-1', 'otro-usuario')).rejects.toMatchObject({ status: 403 })
   })
 
-  it('lanza 400 si el post no está In progress', async () => {
+  it('lanza 400 si el post no estÃ¡ In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockInProgress, status: 'Active' } as never)
     await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
@@ -949,7 +951,7 @@ describe('post.service - updatePost', () => {
   const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -964,31 +966,31 @@ describe('post.service - updatePost', () => {
   }
 
   const updateInput = {
-    title: 'Título editado',
-    description: 'Descripción editada',
+    title: 'TÃ­tulo editado',
+    description: 'DescripciÃ³n editada',
     startDate: new Date('2026-06-01'),
     endDate: new Date('2026-06-20'),
-    address: 'Nueva dirección 456',
+    address: 'Nueva direcciÃ³n 456',
     categoryId: 'uuid-category-1',
   }
 
   it('edita un post activo', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
-    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, title: 'Título editado' })
+    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, title: 'TÃ­tulo editado' })
 
     const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
 
     expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput, emergencyExpiresAt: null })
-    expect(result.title).toBe('Título editado')
+    expect(result.title).toBe('TÃ­tulo editado')
   })
 
   it('edita un post pausado', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...activePost, status: 'Paused' })
-    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, status: 'Paused', title: 'Título editado' })
+    vi.mocked(updatePostData).mockResolvedValue({ ...activePost, status: 'Paused', title: 'TÃ­tulo editado' })
 
     const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
 
-    expect(result.title).toBe('Título editado')
+    expect(result.title).toBe('TÃ­tulo editado')
   })
 
   it('lanza 404 si el post no existe', async () => {
@@ -1002,13 +1004,13 @@ describe('post.service - updatePost', () => {
   })
 
   for (const status of ['In progress', 'Completed', 'Cancelled']) {
-    it(`lanza 400 si el post está ${status}`, async () => {
+    it(`lanza 400 si el post estÃ¡ ${status}`, async () => {
       vi.mocked(findPostById).mockResolvedValue({ ...activePost, status })
       await expect(postService.updatePost('uuid-1', 'user-uuid-1', updateInput)).rejects.toMatchObject({ status: 400 })
     })
   }
 
-  it('lanza error si el título está vacío', async () => {
+  it('lanza error si el tÃ­tulo estÃ¡ vacÃ­o', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
     await expect(postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, title: '' })).rejects.toThrow('title is required')
   })
@@ -1024,8 +1026,8 @@ describe('post.service - createSubContract', () => {
     userId: 'mmo-user-id',
     parentPostId: 'parent-post-id',
     positions: [
-      { categoryId: 'cat-1', quantity: 2, roleDescription: 'Albañilería general' },
-      { categoryId: 'cat-2', quantity: 1, roleDescription: 'Instalación eléctrica' },
+      { categoryId: 'cat-1', quantity: 2, roleDescription: 'AlbaÃ±ilerÃ­a general' },
+      { categoryId: 'cat-2', quantity: 1, roleDescription: 'InstalaciÃ³n elÃ©ctrica' },
     ],
   }
 
@@ -1049,7 +1051,7 @@ describe('post.service - createSubContract', () => {
   const createMockSubPost = (overrides: Partial<DomainPost> = {}): DomainPost => ({
     id: `sub-post-${Math.random().toString(36).slice(2, 8)}`,
     userId: 'mmo-user-id',
-    title: 'Subcontratación: Arreglo de cocina',
+    title: 'SubcontrataciÃ³n: Arreglo de cocina',
     description: '',
     startDate: new Date('2026-07-01'),
     endDate: new Date('2026-07-15'),
@@ -1073,8 +1075,8 @@ describe('post.service - createSubContract', () => {
       status: 'Accepted',
     } as never)
     vi.mocked(createSubPost)
-      .mockResolvedValueOnce(createMockSubPost({ title: 'Subcontratación: Arreglo de cocina - Albañilería general' }))
-      .mockResolvedValueOnce(createMockSubPost({ title: 'Subcontratación: Arreglo de cocina - Instalación eléctrica' }))
+      .mockResolvedValueOnce(createMockSubPost({ title: 'SubcontrataciÃ³n: Arreglo de cocina - AlbaÃ±ilerÃ­a general' }))
+      .mockResolvedValueOnce(createMockSubPost({ title: 'SubcontrataciÃ³n: Arreglo de cocina - InstalaciÃ³n elÃ©ctrica' }))
 
     const results = await postService.createSubContract(validInput)
 
@@ -1082,13 +1084,13 @@ describe('post.service - createSubContract', () => {
     expect(findAcceptedApplication).toHaveBeenCalledWith('parent-post-id')
     expect(createSubPost).toHaveBeenCalledTimes(2)
     expect(results).toHaveLength(2)
-    expect(results[0].title).toBe('Subcontratación: Arreglo de cocina - Albañilería general')
-    expect(results[1].title).toBe('Subcontratación: Arreglo de cocina - Instalación eléctrica')
+    expect(results[0].title).toBe('SubcontrataciÃ³n: Arreglo de cocina - AlbaÃ±ilerÃ­a general')
+    expect(results[1].title).toBe('SubcontrataciÃ³n: Arreglo de cocina - InstalaciÃ³n elÃ©ctrica')
     expect(createSubPost).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      positions: [{ categoryId: 'cat-1', quantity: 2, roleDescription: 'Albañilería general' }],
+      positions: [{ categoryId: 'cat-1', quantity: 2, roleDescription: 'AlbaÃ±ilerÃ­a general' }],
     }))
     expect(createSubPost).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      positions: [{ categoryId: 'cat-2', quantity: 1, roleDescription: 'Instalación eléctrica' }],
+      positions: [{ categoryId: 'cat-2', quantity: 1, roleDescription: 'InstalaciÃ³n elÃ©ctrica' }],
     }))
   })
 
@@ -1114,7 +1116,7 @@ describe('post.service - createSubContract', () => {
       positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
     }
     vi.mocked(createSubPost).mockResolvedValue(
-      createMockSubPost({ parentPostId: undefined, title: 'Subcontratación - Pintura' })
+      createMockSubPost({ parentPostId: undefined, title: 'SubcontrataciÃ³n - Pintura' })
     )
 
     const results = await postService.createSubContract(noParentInput)
@@ -1122,7 +1124,7 @@ describe('post.service - createSubContract', () => {
     expect(createSubPost).toHaveBeenCalledTimes(1)
     expect(results).toHaveLength(1)
     expect(results[0].parentPostId).toBeUndefined()
-    expect(results[0].title).toBe('Subcontratación - Pintura')
+    expect(results[0].title).toBe('SubcontrataciÃ³n - Pintura')
     expect(createSubPost).toHaveBeenCalledWith(expect.objectContaining({
       positions: [{ categoryId: 'cat-1', quantity: 1, roleDescription: 'Pintura' }],
       parentPostId: undefined,
@@ -1190,8 +1192,8 @@ describe('post.service - markInProgress', () => {
 describe('post.service - createPost emergency', () => {
   const emergencyInput: CreatePostInput = {
     userId: 'uuid-user-1',
-    title: 'Caño roto urgente',
-    description: 'Se inundó el baño',
+    title: 'CaÃ±o roto urgente',
+    description: 'Se inundÃ³ el baÃ±o',
     address: 'Calle 123',
     categoryId: 'uuid-category-1',
     isEmergency: true,
@@ -1200,8 +1202,8 @@ describe('post.service - createPost emergency', () => {
   const createdEmergencyPost: DomainPost = {
     id: 'uuid-emergency-1',
     userId: 'uuid-user-1',
-    title: 'Caño roto urgente',
-    description: 'Se inundó el baño',
+    title: 'CaÃ±o roto urgente',
+    description: 'Se inundÃ³ el baÃ±o',
     address: 'Calle 123',
     startDate: new Date(),
     endDate: new Date(),
@@ -1274,7 +1276,7 @@ describe('post.service - listEmergencyPosts', () => {
   const mockEmergencyPost: DomainPost = {
     id: 'emg-1',
     userId: 'user-1',
-    title: 'Caño roto',
+    title: 'CaÃ±o roto',
     description: 'Urgente',
     address: 'Calle 1',
     startDate: new Date(),
@@ -1301,9 +1303,9 @@ describe('post.service - listEmergencyPosts', () => {
   it('filters by category when provided', async () => {
     vi.mocked(findEmergencyPosts).mockResolvedValue([])
 
-    await postService.listEmergencyPosts('Plomería')
+    await postService.listEmergencyPosts('PlomerÃ­a')
 
-    expect(findEmergencyPosts).toHaveBeenCalledWith('Plomería')
+    expect(findEmergencyPosts).toHaveBeenCalledWith('PlomerÃ­a')
   })
 })
 
@@ -1311,7 +1313,7 @@ describe('post.service - cancelPost with accepted application', () => {
   const activePost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -1338,7 +1340,7 @@ describe('post.service - cancelPost with accepted application', () => {
       expect.anything(),
       'worker-1',
       'post_cancelled',
-      { postTitle: 'Reparación de caño' },
+      { postTitle: 'ReparaciÃ³n de caÃ±o' },
     )
   })
 })
@@ -1347,7 +1349,7 @@ describe('post.service - finalizePost with accepted application', () => {
   const pausedPost: DomainPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     description: 'Test',
     address: 'Calle 123',
     startDate: new Date('2026-06-01'),
@@ -1376,7 +1378,7 @@ describe('post.service - finalizePost with accepted application', () => {
       expect.anything(),
       'worker-1',
       'post_completed',
-      { postTitle: 'Reparación de caño' },
+      { postTitle: 'ReparaciÃ³n de caÃ±o' },
     )
   })
 })
@@ -1385,7 +1387,7 @@ describe('post.service - completePost with accepted application', () => {
   const inProgressPost = {
     id: 'uuid-1',
     userId: 'user-uuid-1',
-    title: 'Reparación de caño',
+    title: 'ReparaciÃ³n de caÃ±o',
     status: 'In progress',
   }
 
@@ -1404,7 +1406,9 @@ describe('post.service - completePost with accepted application', () => {
       expect.anything(),
       'worker-1',
       'post_completed',
-      { postTitle: 'Reparación de caño' },
+      { postTitle: 'ReparaciÃ³n de caÃ±o' },
     )
   })
 })
+
+

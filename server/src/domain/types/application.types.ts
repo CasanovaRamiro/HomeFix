@@ -52,5 +52,6 @@ export interface DomainPostApplication {
   chargesVisit: boolean
   visitCost: number | null
   phone: string | null
+  scheduledDate: Date | null
   hasReview: boolean
 }
