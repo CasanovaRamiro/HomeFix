@@ -38,7 +38,7 @@ function getEmergencyTimeLeft(expiresAt: string | null): string | null {
   return `${mins}m restantes`
 }
 
-export default function PostCard({ post, hasAcceptedWorker, scheduledDate, hasUnreviewedWorkers, onComplete, onMarkInProgress, onViewReview, onPause, onCancel, onEdit, children }: PostCardProps) {
+export default function PostCard({ post, hasAcceptedWorker, scheduledDate, hasUnreviewedWorkers, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, variant: 'outline' as const }
   const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
