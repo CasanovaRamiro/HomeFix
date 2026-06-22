@@ -284,20 +284,20 @@ function CalendarGrid({
                 padding: '8px 4px', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', gap: 4, minHeight: 58,
-                background: isSelected ? '#0F172A' : isToday ? '#F0FDF4' : '#fff',
+                background: isSelected ? '#0F172A' : dayApps.length > 0 ? '#10B981' : isToday ? '#F0FDF4' : '#fff',
                 boxShadow: isSelected
                   ? '0 4px 12px rgba(15,23,42,0.18)'
-                  : isToday
+                  : isToday || dayApps.length > 0
                   ? '0 0 0 1.5px #10B981'
                   : '0 0 0 1px #E2E8F0',
                 transition: 'background 0.12s, box-shadow 0.12s',
               }}
               onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-              onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = isToday ? '#F0FDF4' : '#fff' }}
+              onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = dayApps.length > 0 ? '#10B981' : isToday ? '#F0FDF4' : '#fff' }}
             >
               <span style={{
                 fontSize: 14, fontWeight: isSelected || isToday ? 700 : 500,
-                color: isSelected ? '#fff' : isPast && !isToday ? '#CBD5E1' : '#0F172A',
+                color: isSelected ? '#fff' : dayApps.length > 0 ? '#fff' : isPast && !isToday ? '#CBD5E1' : '#0F172A',
                 lineHeight: 1,
               }}>
                 {day}
@@ -305,16 +305,16 @@ function CalendarGrid({
 
               {/* Dot, count, or checkmark */}
               {isCompleted ? (
-                <span style={{ fontSize: 10, color: isSelected ? '#94A3B8' : '#9CA3AF' }}>✓</span>
+                <span style={{ fontSize: 10, color: isSelected ? '#94A3B8' : '#fff' }}>✓</span>
               ) : dayApps.length > 1 ? (
                 <span style={{
                   fontSize: 10, fontWeight: 700, lineHeight: 1,
-                  color: isSelected ? '#fff' : dotColor ?? '#374151',
+                  color: '#fff',
                 }}>
                   {dayApps.length}
                 </span>
               ) : dotColor ? (
-                <CalendarDot color={isSelected ? '#fff' : dotColor} />
+                <CalendarDot color="#fff" />
               ) : null}
             </button>
           )

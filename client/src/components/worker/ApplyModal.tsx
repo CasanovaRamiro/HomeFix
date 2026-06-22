@@ -20,10 +20,10 @@ interface Props {
 
 function getDatesInRange(startDate: string, endDate: string): Date[] {
   const dates: Date[] = []
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  start.setHours(0, 0, 0, 0)
-  end.setHours(0, 0, 0, 0)
+  const [sy, sm, sd] = startDate.split('T')[0].split('-').map(Number)
+  const [ey, em, ed] = endDate.split('T')[0].split('-').map(Number)
+  const start = new Date(sy, sm - 1, sd)
+  const end = new Date(ey, em - 1, ed)
   const cur = new Date(start)
   while (cur <= end) {
     dates.push(new Date(cur))

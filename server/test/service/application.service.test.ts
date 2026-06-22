@@ -147,7 +147,7 @@ describe("acceptApplication", () => {
 describe("applyToPost", () => {
   const validInput = {
     postId: "post-1",
-    availableDays: ["Lunes", "Martes"],
+    availableDays: ["2026-06-01", "2026-06-15"],
     availableTimeFrom: "09:00",
     availableTimeTo: "18:00",
     chargesVisit: false,
@@ -155,7 +155,9 @@ describe("applyToPost", () => {
 
   const mockPost = {
     id: "post-1", userId: "client-1", title: "Test post", status: "Active",
-    description: "", address: "", startDate: new Date(), endDate: new Date(),
+    description: "", address: "",
+    startDate: new Date("2026-06-01T00:00:00.000Z"),
+    endDate: new Date("2026-06-30T00:00:00.000Z"),
     createdAt: new Date(), images: [], latitude: null, longitude: null,
     categories: [], user: { id: "client-1", name: "Client", surname: "Test" },
   }
@@ -223,6 +225,39 @@ describe("applyToPost", () => {
 
   it("acepta la postulaciÃ³n sin visitCost cuando chargesVisit es false", async () => {
     const result = await applyToPost("worker-1", validInput)
+    expect(result.status).toBe("Pending")
+  })
+
+  it("lanza 400 si availableDays contiene una fecha anterior al startDate", async () => {
+    const input = { ...validInput, availableDays: ["2026-05-31"] }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si availableDays contiene una fecha posterior al endDate", async () => {
+    const input = { ...validInput, availableDays: ["2026-07-01"] }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si hay fechas dentro y fuera del rango", async () => {
+    const input = { ...validInput, availableDays: ["2026-06-15", "2026-07-01"] }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("acepta availableDays que estÃ©n exactamente en los lÃ­mites del rango", async () => {
+    const input = { ...validInput, availableDays: ["2026-06-01", "2026-06-30"] }
+    const result = await applyToPost("worker-1", input)
+    expect(result.status).toBe("Pending")
+  })
+
+  it("acepta postulaciÃ³n sin availableDays si no se envÃ­an", async () => {
+    const { availableDays: _, ...input } = validInput
+    const result = await applyToPost("worker-1", input)
+    expect(result.status).toBe("Pending")
+  })
+
+  it("acepta postulaciÃ³n con availableDays vacÃ­o", async () => {
+    const input = { ...validInput, availableDays: [] }
+    const result = await applyToPost("worker-1", input)
     expect(result.status).toBe("Pending")
   })
 })

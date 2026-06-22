@@ -46,6 +46,18 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
   if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propio trabajo'), { status: 400 })
 
+  if (input.availableDays && input.availableDays.length > 0) {
+    const minDate = post.startDate.toISOString().split('T')[0]
+    const maxDate = post.endDate.toISOString().split('T')[0]
+    const outOfRange = input.availableDays.some((day) => day < minDate || day > maxDate)
+    if (outOfRange) {
+      throw Object.assign(
+        new Error('Las fechas seleccionadas deben estar dentro del rango de la publicación'),
+        { status: 400 }
+      )
+    }
+  }
+
   const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
 
