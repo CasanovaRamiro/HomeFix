@@ -1145,22 +1145,22 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
                 style={{
                   border: 'none', borderRadius: 14, padding: '12px 6px',
                   cursor: 'pointer', textAlign: 'center',
-                  background: isSel ? '#0F172A' : isToday ? '#F0FDF4' : '#F8FAFC',
+                  background: isSel ? '#0F172A' : count > 0 ? '#10B981' : isToday ? '#F0FDF4' : '#F8FAFC',
                   boxShadow: isToday && !isSel ? '0 0 0 1.5px #10B981' : 'none',
                   transition: 'all 0.15s',
                 }}
               >
-                <p style={{ fontSize: 11, fontWeight: 600, color: isSel ? '#94A3B8' : '#94A3B8', margin: '0 0 4px', textTransform: 'uppercase' }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: isSel ? '#94A3B8' : count > 0 ? '#fff' : '#94A3B8', margin: '0 0 4px', textTransform: 'uppercase' }}>
                   {DAY_NAMES_SHORT[day.getDay()]}
                 </p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: isSel ? '#fff' : '#0F172A', margin: '0 0 6px' }}>
+                <p style={{ fontSize: 18, fontWeight: 700, color: isSel ? '#fff' : count > 0 ? '#fff' : '#0F172A', margin: '0 0 6px' }}>
                   {day.getDate()}
                 </p>
                 {count > 0 ? (
                   <span style={{
                     fontSize: 11, fontWeight: 700,
-                    color: isSel ? '#0F172A' : '#059669',
-                    background: isSel ? '#fff' : '#ECFDF5',
+                    color: isSel ? '#0F172A' : '#fff',
+                    background: isSel ? '#fff' : '#10B981',
                     borderRadius: 20, padding: '2px 8px', display: 'inline-block',
                   }}>
                     {count} {count === 1 ? 'trabajo' : 'trab.'}
@@ -1169,7 +1169,7 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
                   <span style={{ fontSize: 11, color: isSel ? '#64748B' : '#CBD5E1' }}>Libre</span>
                 )}
                 {isToday && (
-                  <p style={{ fontSize: 10, fontWeight: 700, color: isSel ? '#10B981' : '#10B981', margin: '4px 0 0' }}>HOY</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: isSel ? '#10B981' : count > 0 ? '#fff' : '#10B981', margin: '4px 0 0' }}>HOY</p>
                 )}
               </button>
             )
