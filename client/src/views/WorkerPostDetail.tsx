@@ -318,6 +318,24 @@ export default function WorkerPostDetail() {
                   Chatear por WhatsApp
                 </button>
               )}
+              {application?.status === ApplicationStatus.Accepted && post.allowsSubcontracting && (
+                <button
+                  onClick={() => navigate('/create-subcontract', {
+                    state: { parentPostId: post.id },
+                  })}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#0F172A', border: 'none', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  Subcontratar
+                </button>
+              )}
             </div>
 
             {/* Job info */}
