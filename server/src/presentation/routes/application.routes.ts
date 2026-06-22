@@ -96,7 +96,8 @@ router.post('/subcontract', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-    const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
+    const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, visitCost } = req.body
+    const chargesVisit = typeof req.body.chargesVisit === 'boolean' ? req.body.chargesVisit : false
 
     if (!postId || typeof postId !== 'string') {
       res.status(400).json({ error: 'postId is required' })
@@ -104,10 +105,6 @@ router.post('/subcontract', async (req, res, next) => {
     }
     if (!categoryId || typeof categoryId !== 'string') {
       res.status(400).json({ error: 'categoryId is required' })
-      return
-    }
-    if (typeof chargesVisit !== 'boolean') {
-      res.status(400).json({ error: 'chargesVisit is required and must be a boolean' })
       return
     }
 

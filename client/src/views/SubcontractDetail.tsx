@@ -26,8 +26,6 @@ export default function SubcontractDetail() {
   const [showModal, setShowModal] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
   const [modalCategoryId, setModalCategoryId] = useState<string>('')
-  const [modalChargesVisit, setModalChargesVisit] = useState(false)
-  const [modalVisitCost, setModalVisitCost] = useState('')
   const [modalError, setModalError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const { user } = useAuth()
@@ -380,7 +378,7 @@ export default function SubcontractDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => !enviando && setShowModal(false)}>
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <h2 className="text-lg font-bold text-slate-800 mb-0">Postularte</h2>
+              <h2 className="text-lg font-bold text-slate-800 mb-0">Postularte a subcontrato</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="bg-transparent border-none cursor-pointer p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-all"
@@ -392,6 +390,24 @@ export default function SubcontractDetail() {
               <p className="mb-5 text-sm text-slate-400">
                 Postularte a: <span className="font-semibold text-slate-800">{subcontract.title}</span>
               </p>
+
+              {/* Creator info */}
+              {subcontract.user && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
+                  <span className="text-sm text-slate-800">
+                    <strong>{subcontract.user.name} {subcontract.user.surname}</strong>
+                    <span className="text-slate-400 ml-1.5 text-xs">contratista</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => navigate(`/profile/worker/${subcontract.user.id}`)}
+                    style={{ padding: '4px 12px', fontSize: 12 }}
+                  >
+                    Ver perfil
+                  </button>
+                </div>
+              )}
 
               {/* Fixed dates */}
               <div className="p-3 rounded-lg bg-green-50 border border-green-200 mb-4">
@@ -423,40 +439,12 @@ export default function SubcontractDetail() {
                 })}
               </select>
 
-              {/* Charges visit */}
-              <div className="flex items-center gap-2.5 mb-4">
-                <input
-                  id="modalChargesVisit"
-                  type="checkbox"
-                  checked={modalChargesVisit}
-                  onChange={(e) => setModalChargesVisit(e.target.checked)}
-                  className="w-4 h-4 cursor-pointer accent-emerald-500"
-                />
-                <label htmlFor="modalChargesVisit" className="text-sm font-medium text-slate-700 cursor-pointer">
-                  ¿Cobrás la visita?
-                </label>
-              </div>
-
-              {modalChargesVisit && (
-                <label className="text-sm font-medium text-slate-800 block mb-4">
-                  Monto de la visita ($)
-                  <input
-                    type="number"
-                    min={1}
-                    value={modalVisitCost}
-                    onChange={(e) => setModalVisitCost(e.target.value)}
-                    placeholder="Ej: 2500"
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-800 mt-1"
-                  />
-                </label>
-              )}
-
               <label className="text-sm font-medium text-slate-800 block mb-2">Mensaje para el contratista (opcional)</label>
               <textarea
                 rows={4}
                 value={modalMessage}
                 onChange={(e) => setModalMessage(e.target.value)}
-                placeholder="Presentate brevemente..."
+                placeholder="Contá tu experiencia y por qué te sumás a este equipo..."
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-800 resize-none box-border transition-all"
               />
 
@@ -466,7 +454,7 @@ export default function SubcontractDetail() {
 
               <div className="flex justify-end gap-3 mt-6">
                 <button
-                  onClick={() => { setShowModal(false); setModalError(''); setModalCategoryId(''); setModalMessage(''); setModalChargesVisit(false); setModalVisitCost('') }}
+                  onClick={() => { setShowModal(false); setModalError(''); setModalCategoryId(''); setModalMessage('') }}
                   disabled={enviando}
                   className="px-5 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer bg-slate-100 text-slate-800 transition-all"
                 >
@@ -478,10 +466,6 @@ export default function SubcontractDetail() {
                       setModalError('Seleccioná un rubro.')
                       return
                     }
-                    if (modalChargesVisit && (!modalVisitCost || Number(modalVisitCost) <= 0)) {
-                      setModalError('Ingresá el monto de la visita.')
-                      return
-                    }
                     setModalError('')
                     setEnviando(true)
                     try {
@@ -489,14 +473,10 @@ export default function SubcontractDetail() {
                         postId: subcontract.id,
                         categoryId: modalCategoryId,
                         message: modalMessage || undefined,
-                        chargesVisit: modalChargesVisit,
-                        visitCost: modalChargesVisit ? Number(modalVisitCost) : undefined,
                       })
                       setShowModal(false)
                       setModalCategoryId('')
                       setModalMessage('')
-                      setModalChargesVisit(false)
-                      setModalVisitCost('')
                     } catch (err) {
                       const axiosErr = err as { response?: { data?: { error?: string } } }
                       setModalError(axiosErr.response?.data?.error ?? 'Error al postularte')
@@ -507,7 +487,7 @@ export default function SubcontractDetail() {
                   disabled={enviando}
                   className="px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer bg-blue-500 text-white transition-all"
                 >
-                  {enviando ? 'Enviando...' : 'Enviar postulación'}
+                  {enviando ? 'Enviando...' : 'Enviar postulación a subcontrato'}
                 </button>
               </div>
             </div>
