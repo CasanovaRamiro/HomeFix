@@ -149,9 +149,6 @@ export default function AvailableSubcontracts() {
         postId: selected.id,
         categoryId: selectedCategoryId,
         message: formData.message || undefined,
-        availableDays: formData.availableDays,
-        availableTimeFrom: formData.availableTimeFrom,
-        availableTimeTo: formData.availableTimeTo,
         chargesVisit: formData.chargesVisit,
         visitCost: formData.visitCost,
       })
@@ -774,7 +771,8 @@ export default function AvailableSubcontracts() {
       {/* ── Apply modal ── */}
       {showApplyModal && selected !== null && (
         <ApplyModal
-          selected={{ id: selected.id, titulo: selected.title }}
+          selected={{ id: selected.id, titulo: selected.title, startDate: selected.startDate, endDate: selected.endDate }}
+          readOnlyDates
           onEnviar={(data) => { void handlePostular(data) }}
           onClose={() => { setShowApplyModal(false); setSelectedCategoryId(null) }}
           enviando={enviando}

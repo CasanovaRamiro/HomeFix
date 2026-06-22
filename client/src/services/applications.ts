@@ -43,7 +43,18 @@ export interface PostApplicant {
 export const applyToPost = (input: ApplyToPostInput) =>
   api.post<ApplicationResponse>('/applications', input)
 
-export const applyToSubcontract = (input: ApplyToPostInput) =>
+export interface ApplyToSubcontractInput {
+  postId: string
+  categoryId?: string
+  message?: string
+  availableDays?: string[]
+  availableTimeFrom?: string
+  availableTimeTo?: string
+  chargesVisit: boolean
+  visitCost?: number
+}
+
+export const applyToSubcontract = (input: ApplyToSubcontractInput) =>
   api.post<ApplicationResponse>('/applications/subcontract', input)
 
 export const getPostApplicants = (postId: string) =>

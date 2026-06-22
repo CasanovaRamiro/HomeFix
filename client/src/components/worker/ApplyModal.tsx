@@ -11,6 +11,7 @@ export interface ApplicationFormData {
 
 interface Props {
   selected: { id: string; titulo: string; startDate?: string; endDate?: string }
+  readOnlyDates?: boolean
   onEnviar: (data: ApplicationFormData) => void
   onClose: () => void
   enviando: boolean
@@ -46,7 +47,14 @@ function toYMD(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Props) {
+function formatDateRange(start: string, end: string): string {
+  const s = new Date(start)
+  const e = new Date(end)
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
+  return `${s.toLocaleDateString('es-AR', opts)} — ${e.toLocaleDateString('es-AR', opts)}`
+}
+
+export default function ApplyModal({ selected, readOnlyDates, onEnviar, onClose, enviando }: Props) {
   const [message, setMessage] = useState('')
   const [availableDays, setAvailableDays] = useState<string[]>([])
   const [availableTimeFrom, setAvailableTimeFrom] = useState('')
@@ -67,13 +75,15 @@ export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Pr
   }
 
   const handleSubmit = () => {
-    if (availableDays.length === 0) {
-      setFormError('Seleccioná al menos un día disponible.')
-      return
-    }
-    if (!availableTimeFrom || !availableTimeTo) {
-      setFormError('Ingresá el horario de disponibilidad.')
-      return
+    if (!readOnlyDates) {
+      if (availableDays.length === 0) {
+        setFormError('Seleccioná al menos un día disponible.')
+        return
+      }
+      if (!availableTimeFrom || !availableTimeTo) {
+        setFormError('Ingresá el horario de disponibilidad.')
+        return
+      }
     }
     if (chargesVisit && (!visitCost || Number(visitCost) <= 0)) {
       setFormError('Ingresá el monto de la visita.')
@@ -102,59 +112,76 @@ export default function ApplyModal({ selected, onEnviar, onClose, enviando }: Pr
         <h2 id="modal-title">Postularte a este trabajo</h2>
         <p className="trabajos-muted">{selected.titulo}</p>
 
-        <label className="modal-label">¿Qué días podés ir?</label>
-        {datesInRange.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 16 }}>No hay rango de fechas disponible.</p>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {datesInRange.map((date) => {
-              const ymd = toYMD(date)
-              const isSelected = availableDays.includes(ymd)
-              return (
-                <button
-                  key={ymd}
-                  type="button"
-                  onClick={() => toggleDay(ymd)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 20,
-                    border: '1.5px solid',
-                    borderColor: isSelected ? '#10B981' : '#CBD5E1',
-                    background: isSelected ? '#D1FAE5' : '#fff',
-                    color: isSelected ? '#065F46' : '#475569',
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {formatDateLabel(date)}
-                </button>
-              )
-            })}
+        {readOnlyDates && selected.startDate && selected.endDate ? (
+          <div style={{
+            padding: '10px 14px', borderRadius: 8,
+            background: '#F0FDF4', border: '1px solid #BBF7D0',
+            marginBottom: 16,
+          }}>
+            <label className="modal-label" style={{ margin: 0, color: '#166534' }}>
+              Fecha del servicio (ya pactada)
+            </label>
+            <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 600, color: '#166534' }}>
+              {formatDateRange(selected.startDate, selected.endDate)}
+            </p>
           </div>
-        )}
+        ) : (
+          <>
+            <label className="modal-label">¿Qué días podés ir?</label>
+            {datesInRange.length === 0 ? (
+              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 16 }}>No hay rango de fechas disponible.</p>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                {datesInRange.map((date) => {
+                  const ymd = toYMD(date)
+                  const isSelected = availableDays.includes(ymd)
+                  return (
+                    <button
+                      key={ymd}
+                      type="button"
+                      onClick={() => toggleDay(ymd)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        border: '1.5px solid',
+                        borderColor: isSelected ? '#10B981' : '#CBD5E1',
+                        background: isSelected ? '#D1FAE5' : '#fff',
+                        color: isSelected ? '#065F46' : '#475569',
+                        fontWeight: 600,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {formatDateLabel(date)}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-          <label className="modal-label" style={{ flex: 1 }}>
-            Desde
-            <input
-              type="time"
-              value={availableTimeFrom}
-              onChange={(e) => setAvailableTimeFrom(e.target.value)}
-              style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
-            />
-          </label>
-          <label className="modal-label" style={{ flex: 1 }}>
-            Hasta
-            <input
-              type="time"
-              value={availableTimeTo}
-              onChange={(e) => setAvailableTimeTo(e.target.value)}
-              style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
-            />
-          </label>
-        </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <label className="modal-label" style={{ flex: 1 }}>
+                Desde
+                <input
+                  type="time"
+                  value={availableTimeFrom}
+                  onChange={(e) => setAvailableTimeFrom(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
+                />
+              </label>
+              <label className="modal-label" style={{ flex: 1 }}>
+                Hasta
+                <input
+                  type="time"
+                  value={availableTimeTo}
+                  onChange={(e) => setAvailableTimeTo(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
+                />
+              </label>
+            </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <input

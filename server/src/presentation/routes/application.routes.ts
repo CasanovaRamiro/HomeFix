@@ -106,18 +106,6 @@ router.post('/subcontract', async (req, res, next) => {
       res.status(400).json({ error: 'categoryId is required' })
       return
     }
-    if (!Array.isArray(availableDays) || availableDays.length === 0) {
-      res.status(400).json({ error: 'availableDays is required and must be a non-empty array' })
-      return
-    }
-    if (!availableTimeFrom || typeof availableTimeFrom !== 'string') {
-      res.status(400).json({ error: 'availableTimeFrom is required' })
-      return
-    }
-    if (!availableTimeTo || typeof availableTimeTo !== 'string') {
-      res.status(400).json({ error: 'availableTimeTo is required' })
-      return
-    }
     if (typeof chargesVisit !== 'boolean') {
       res.status(400).json({ error: 'chargesVisit is required and must be a boolean' })
       return
@@ -127,9 +115,9 @@ router.post('/subcontract', async (req, res, next) => {
       postId,
       categoryId,
       message: typeof message === 'string' ? message : undefined,
-      availableDays,
-      availableTimeFrom,
-      availableTimeTo,
+      availableDays: Array.isArray(availableDays) ? availableDays : undefined,
+      availableTimeFrom: typeof availableTimeFrom === 'string' ? availableTimeFrom : undefined,
+      availableTimeTo: typeof availableTimeTo === 'string' ? availableTimeTo : undefined,
       chargesVisit,
       visitCost: typeof visitCost === 'number' ? visitCost : undefined,
     })
