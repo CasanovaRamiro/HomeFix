@@ -3,9 +3,9 @@ export interface CreateApplicationInput {
   categoryId?: string
   subcontractGroupId?: string
   message?: string
-  availableDays: string[]
-  availableTimeFrom: string
-  availableTimeTo: string
+  availableDays?: string[]
+  availableTimeFrom?: string
+  availableTimeTo?: string
   chargesVisit: boolean
   visitCost?: number
 }

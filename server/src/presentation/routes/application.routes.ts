@@ -96,7 +96,8 @@ router.post('/subcontract', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-    const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
+    const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, visitCost } = req.body
+    const chargesVisit = typeof req.body.chargesVisit === 'boolean' ? req.body.chargesVisit : false
 
     if (!postId || typeof postId !== 'string') {
       res.status(400).json({ error: 'postId is required' })
@@ -106,30 +107,14 @@ router.post('/subcontract', async (req, res, next) => {
       res.status(400).json({ error: 'categoryId is required' })
       return
     }
-    if (!Array.isArray(availableDays) || availableDays.length === 0) {
-      res.status(400).json({ error: 'availableDays is required and must be a non-empty array' })
-      return
-    }
-    if (!availableTimeFrom || typeof availableTimeFrom !== 'string') {
-      res.status(400).json({ error: 'availableTimeFrom is required' })
-      return
-    }
-    if (!availableTimeTo || typeof availableTimeTo !== 'string') {
-      res.status(400).json({ error: 'availableTimeTo is required' })
-      return
-    }
-    if (typeof chargesVisit !== 'boolean') {
-      res.status(400).json({ error: 'chargesVisit is required and must be a boolean' })
-      return
-    }
 
     const result = await applyToSubcontract(user.id, {
       postId,
       categoryId,
       message: typeof message === 'string' ? message : undefined,
-      availableDays,
-      availableTimeFrom,
-      availableTimeTo,
+      availableDays: Array.isArray(availableDays) ? availableDays : undefined,
+      availableTimeFrom: typeof availableTimeFrom === 'string' ? availableTimeFrom : undefined,
+      availableTimeTo: typeof availableTimeTo === 'string' ? availableTimeTo : undefined,
       chargesVisit,
       visitCost: typeof visitCost === 'number' ? visitCost : undefined,
     })

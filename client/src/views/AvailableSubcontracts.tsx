@@ -149,11 +149,6 @@ export default function AvailableSubcontracts() {
         postId: selected.id,
         categoryId: selectedCategoryId,
         message: formData.message || undefined,
-        availableDays: formData.availableDays,
-        availableTimeFrom: formData.availableTimeFrom,
-        availableTimeTo: formData.availableTimeTo,
-        chargesVisit: formData.chargesVisit,
-        visitCost: formData.visitCost,
       })
       setPostulacionesIds((prev) => new Set(prev).add(`${selected.id}:${selectedCategoryId}`))
       setShowApplyModal(false)
@@ -774,7 +769,8 @@ export default function AvailableSubcontracts() {
       {/* ── Apply modal ── */}
       {showApplyModal && selected !== null && (
         <ApplyModal
-          selected={{ id: selected.id, titulo: selected.title }}
+          selected={{ id: selected.id, titulo: selected.title, startDate: selected.startDate, endDate: selected.endDate, creatorName: selected.user?.name, creatorSurname: selected.user?.surname, creatorId: selected.user?.id }}
+          subcontractMode
           onEnviar={(data) => { void handlePostular(data) }}
           onClose={() => { setShowApplyModal(false); setSelectedCategoryId(null) }}
           enviando={enviando}
