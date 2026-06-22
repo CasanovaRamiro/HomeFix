@@ -250,8 +250,7 @@ describe("applyToPost", () => {
   })
 
   it("acepta postulaciÃ³n sin availableDays si no se envÃ­an", async () => {
-    const input = { ...validInput }
-    delete (input as any).availableDays
+    const { availableDays: _, ...input } = validInput
     const result = await applyToPost("worker-1", input)
     expect(result.status).toBe("Pending")
   })
