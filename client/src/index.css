@@ -381,22 +381,32 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
    ============================================================ */
 
 /* ---------- header band ---------- */
-.pd-hero { background: var(--color-primary-dark); width: 100%; padding: 30px 0 38px; }
+.pd-hero {
+  background: linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%);
+  width: 100%; padding: 24px 0 32px;
+}
 .pd-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 .pd-hero-back {
   display: inline-flex; align-items: center; gap: 6px;
   background: none; border: none; padding: 0; cursor: pointer;
-  color: #94A3B8; font: inherit; font-size: 13px; font-weight: 600;
-  margin-bottom: 16px; transition: color .15s;
+  color: #475569; font: inherit; font-size: 13px; font-weight: 600;
+  margin-bottom: 14px; transition: opacity .15s;
 }
-.pd-hero-back:hover { color: #fff; }
+.pd-hero-back:hover { opacity: .7; }
+.pd-hero-card {
+  background: #fff; border: 1px solid var(--color-border);
+  border-radius: 16px; box-shadow: 0 4px 20px rgba(15,23,42,.10);
+  padding: 22px 24px; margin-top: 14px;
+  transition: box-shadow .18s;
+}
+.pd-hero-card:hover { box-shadow: 0 8px 28px rgba(15,23,42,.14); }
 .pd-hero-kicker {
   font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
   color: var(--color-accent); margin-bottom: 8px;
 }
-.pd-hero-title { font-size: 27px; font-weight: 800; color: #fff; letter-spacing: -.02em; line-height: 1.2; text-wrap: balance; }
+.pd-hero-title { font-size: 27px; font-weight: 800; color: var(--color-primary-dark); letter-spacing: -.02em; line-height: 1.2; text-wrap: balance; }
 .pd-hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 13px; }
-.pd-hero-meta span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #CBD5E1; }
+.pd-hero-meta span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #475569; }
 .pd-hero-meta svg { color: #94A3B8; }
 
 /* ---------- page layout ---------- */

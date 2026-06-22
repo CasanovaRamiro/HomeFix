@@ -171,12 +171,14 @@ export default function PostDetail() {
       <div className="pd-hero">
         <div className="pd-wrap">
           <button className="pd-hero-back" onClick={() => navigate('/dashboard')}><ArrowLeft size={15} />Volver al panel</button>
-          <div className="pd-hero-kicker">Tu publicación</div>
-          <h1 className="pd-hero-title">{post.title}</h1>
-          <div className="pd-hero-meta">
-            <span><Calendar size={15} />{fmtDate(post.startDate)} – {fmtDate(post.endDate)}</span>
-            <span><MapPin size={15} />{post.address}</span>
-            <span><Users size={15} />{applicants.length} postulantes</span>
+          <div className="pd-hero-card">
+            <div className="pd-hero-kicker">Tu publicación</div>
+            <h1 className="pd-hero-title">{post.title}</h1>
+            <div className="pd-hero-meta">
+              <span><Calendar size={15} />{fmtDate(post.startDate)} – {fmtDate(post.endDate)}</span>
+              <span><MapPin size={15} />{post.address}</span>
+              <span><Users size={15} />{applicants.length} postulantes</span>
+            </div>
           </div>
         </div>
       </div>
