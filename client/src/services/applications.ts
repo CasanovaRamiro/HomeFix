@@ -50,7 +50,7 @@ export interface ApplyToSubcontractInput {
   availableDays?: string[]
   availableTimeFrom?: string
   availableTimeTo?: string
-  chargesVisit: boolean
+  chargesVisit?: boolean
   visitCost?: number
 }
 
