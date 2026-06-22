@@ -72,7 +72,7 @@ const createPendingApplication = (postId: string) =>
 
 const validApplicationBody = (postId: string) => ({
   postId,
-  availableDays: ['Lunes', 'Martes'],
+  availableDays: ['2026-06-01', '2026-06-05'],
   availableTimeFrom: '09:00',
   availableTimeTo: '18:00',
   chargesVisit: false,
@@ -107,7 +107,7 @@ describe('POST /applications', () => {
     expect(res.status).toBe(201)
     const saved = await prisma.application.findUnique({ where: { id: res.body.id } })
     expect(saved?.message).toBe('Puedo ir mañana a las 10')
-    expect(saved?.availableDays).toBe(JSON.stringify(['Lunes', 'Martes']))
+    expect(saved?.availableDays).toBe(JSON.stringify(['2026-06-01', '2026-06-05']))
     expect(saved?.availableTimeFrom).toBe('09:00')
     expect(saved?.availableTimeTo).toBe('18:00')
     expect(saved?.chargesVisit).toBe(true)
