@@ -314,6 +314,8 @@ export default function SubcontractDetail() {
                       chargesVisit: a.chargesVisit,
                       visitCost: a.visitCost,
                       phone: a.phone,
+                      scheduledDate: a.scheduledDate,
+                      hasReview: a.hasReview,
                     }}
                     applicationId={a.applicationId}
                     applicationStatus={a.status}
