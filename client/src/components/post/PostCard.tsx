@@ -23,7 +23,7 @@ interface PostCardProps {
 
 const STATUS_MAP: Record<string, { label: string; cls: string; Icon: typeof CircleDot }> = {
   Active:        { label: 'Activa',        cls: 'pd-badge--active',    Icon: CircleDot },
-  'In progress': { label: 'En desarrollo', cls: 'pd-badge--progress',  Icon: Loader },
+  'In progress': { label: 'En curso', cls: 'pd-badge--progress',  Icon: Loader },
   Paused:        { label: 'Pausada',       cls: 'pd-badge--paused',    Icon: Pause },
   Cancelled:     { label: 'Cancelada',     cls: 'pd-badge--cancelled', Icon: X },
   Completed:     { label: 'Completada',    cls: 'pd-badge--completed', Icon: Check },

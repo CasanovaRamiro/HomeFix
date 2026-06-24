@@ -13,17 +13,37 @@ interface NavLinkDef {
   icon: ElementType
 }
 
-const WORKER_LINKS: NavLinkDef[] = [
-  { href: '/worker',                          label: 'Inicio',               icon: Home },
-  { href: '/worker/available-jobs',           label: 'Trabajos Disponibles', icon: Briefcase },
-  { href: '/worker/calendar',                 label: 'Mi Agenda',            icon: CalendarDays },
-  { href: '/worker/available-subcontracts',   label: 'Subcontratos',         icon: GitBranch },
-  { href: '/worker/subcontracts',             label: 'Gestor Subcontratos',  icon: GitBranch },
-  { href: '/worker/my-applications',          label: 'Mis Postulaciones',    icon: ClipboardList },
-  { href: '/create-subcontract',              label: 'Subcontratar',         icon: Users },
+interface NavGroupDef {
+  label: string
+  icon: ElementType
+  children: NavLinkDef[]
+}
+
+type NavItemDef = NavLinkDef | NavGroupDef
+
+function isNavGroup(item: NavItemDef): item is NavGroupDef {
+  return 'children' in item
+}
+
+const SUBCONTRACT_GROUP: NavGroupDef = {
+  label: 'Subcontratos',
+  icon: GitBranch,
+  children: [
+    { href: '/worker/available-subcontracts', label: 'Disponibles',   icon: GitBranch },
+    { href: '/worker/subcontracts',            label: 'Gestionar',    icon: GitBranch },
+    { href: '/create-subcontract',             label: 'Subcontratar', icon: Users },
+  ],
+}
+
+const WORKER_LINKS: NavItemDef[] = [
+  { href: '/worker',                  label: 'Inicio',               icon: Home },
+  { href: '/worker/available-jobs',   label: 'Trabajos Disponibles', icon: Briefcase },
+  { href: '/worker/calendar',         label: 'Mi Agenda',            icon: CalendarDays },
+  SUBCONTRACT_GROUP,
+  { href: '/worker/my-applications',  label: 'Historial',            icon: ClipboardList },
 ]
 
-const CLIENT_LINKS: NavLinkDef[] = [
+const CLIENT_LINKS: NavItemDef[] = [
   { href: '/dashboard',        label: 'Inicio',               icon: Home },
   { href: '/post-options', label: 'Nueva Solicitud',      icon: FileText },
   { href: '/client/history', label: 'Historial', icon: ClipboardList },
@@ -40,7 +60,9 @@ export default function Navbar(): React.ReactElement | null {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [userBtnHover, setUserBtnHover] = useState(false)
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const groupMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!userMenuOpen) return
@@ -52,6 +74,17 @@ export default function Navbar(): React.ReactElement | null {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [userMenuOpen])
+
+  useEffect(() => {
+    if (!openGroup) return
+    const handleClick = (e: MouseEvent) => {
+      if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
+        setOpenGroup(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [openGroup])
 
   if (AUTH_ROUTES.includes(pathname)) return null
 
@@ -193,6 +226,56 @@ export default function Navbar(): React.ReactElement | null {
               </>
             )}
             {navLinks.map((link) => {
+              if (isNavGroup(link)) {
+                const active = link.children.some((c) => pathname === c.href)
+                const hovered = hoveredLink === link.label
+                const open = openGroup === link.label
+                return (
+                  <div key={link.label} ref={open ? groupMenuRef : undefined} style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => { setOpenGroup(open ? null : link.label) }}
+                      onMouseEnter={() => { setHoveredLink(link.label) }}
+                      onMouseLeave={() => { setHoveredLink(null) }}
+                      style={{
+                        display:         'flex',
+                        alignItems:      'center',
+                        gap:             '6px',
+                        padding:         '8px 12px',
+                        borderRadius:    '8px',
+                        fontSize:        '14px',
+                        fontWeight:      '500',
+                        border:          'none',
+                        cursor:          'pointer',
+                        fontFamily:      'inherit',
+                        transition:      'background 0.15s, color 0.15s',
+                        backgroundColor: active || open ? theme.activeBg : hovered ? theme.hover : 'transparent',
+                        color:           active || hovered || open ? theme.primaryDark : theme.muted,
+                      }}
+                    >
+                      <link.icon style={{ width: '16px', height: '16px' }} />
+                      {link.label}
+                      <ChevronDown style={{ width: '14px', height: '14px', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+                    </button>
+                    {open && (
+                      <div style={{ position: 'absolute', left: 0, marginTop: '8px', width: '200px', background: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', padding: '4px 0', zIndex: 50 }}>
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.label}
+                            to={child.href}
+                            onClick={() => { setOpenGroup(null) }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', fontSize: '14px', color: pathname === child.href ? theme.primaryDark : theme.muted, textDecoration: 'none' }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = theme.hover }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                          >
+                            <child.icon style={{ width: '16px', height: '16px', color: theme.muted }} />
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
               const active  = pathname === link.href
               const hovered = hoveredLink === link.label
               return (
@@ -316,17 +399,39 @@ export default function Navbar(): React.ReactElement | null {
         {mobileOpen && (
           <div style={{ borderTop: `1px solid ${theme.border}`, padding: '16px 0' }} className="lg:hidden">
             <div className="space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  onClick={() => { setMobileOpen(false) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, backgroundColor: pathname === link.href ? theme.activeBg : 'transparent' }}
-                >
-                  <link.icon style={{ width: '16px', height: '16px' }} />
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                if (isNavGroup(link)) {
+                  return (
+                    <div key={link.label}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px 4px', fontSize: '13px', fontWeight: '700', color: theme.muted }}>
+                        <link.icon style={{ width: '16px', height: '16px' }} />
+                        {link.label}
+                      </div>
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.label}
+                          to={child.href}
+                          onClick={() => { setMobileOpen(false) }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px 10px 32px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, backgroundColor: pathname === child.href ? theme.activeBg : 'transparent' }}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )
+                }
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    onClick={() => { setMobileOpen(false) }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textDecoration: 'none', color: theme.primaryDark, backgroundColor: pathname === link.href ? theme.activeBg : 'transparent' }}
+                  >
+                    <link.icon style={{ width: '16px', height: '16px' }} />
+                    {link.label}
+                  </Link>
+                )
+              })}
               {isLanding && (
                 <>
                   <button onClick={() => { document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}

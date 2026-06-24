@@ -26,10 +26,10 @@ export default function ClientDashboard() {
   const completados = posts.filter(p => p.status === PostStatus.Completed).length
   const emergencyCount = posts.filter(p => p.isEmergency && p.status !== PostStatus.Completed && p.status !== PostStatus.Cancelled).length
 
-  // Identidad Cliente = azul. Cada métrica conserva su color semántico.
+  // Identidad Cliente = verde. Cada métrica conserva su color semántico.
   const stats = [
-    { label: 'Publicaciones activas', value: activos,     icon: CalendarDays,  iconColor: '#2563EB' },
-    { label: 'Completadas',           value: completados, icon: CheckCircle2,  iconColor: '#3B82F6' },
+    { label: 'Publicaciones activas', value: activos,     icon: CalendarDays,  iconColor: '#10B981' },
+    { label: 'Completadas',           value: completados, icon: CheckCircle2,  iconColor: '#059669' },
     { label: 'Mensajes',              value: 0,           icon: MessageSquare, iconColor: '#8B5CF6' },
     { label: 'Sin leer',              value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
   ]
@@ -51,23 +51,23 @@ export default function ClientDashboard() {
   return (
     <div className="min-h-screen bg-slate-100">
 
-      {/* Hero claro — identidad Cliente (azul) */}
-      <div className="bg-[linear-gradient(135deg,#EEF4FF_0%,#DBE7FF_100%)] px-6 pt-8 pb-28 md:px-12">
+      {/* Hero claro — identidad Cliente (verde) */}
+      <div className="bg-accent-hover px-6 pt-8 pb-12 md:px-12">
         <div className="mx-auto max-w-7xl">
           {/* Badge de rol */}
-          <span className="inline-flex items-center gap-2 rounded-full border border-blue-600/20 bg-blue-600/10 px-3 py-1.5 text-xs font-bold tracking-wide text-blue-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-bold tracking-wide text-white">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
             Modo Cliente
           </span>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-slate-900">Mi Tablero</h1>
-              <p className="mt-1.5 text-sm text-slate-600">Gestiona tus publicaciones y conversaciones</p>
+              <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-white">Mi Tablero</h1>
+              <p className="mt-1.5 text-sm text-white/80">Gestiona tus publicaciones y conversaciones</p>
             </div>
             {user?.id && (
               <button
                 onClick={() => navigate(`/client/${user.id}`)}
-                className="mt-3.5 inline-flex items-center gap-2 rounded-lg border border-blue-600/20 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50"
+                className="mt-3.5 inline-flex items-center gap-2 rounded-lg border border-primary-dark/20 bg-primary-dark px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondary-dark"
               >
                 <User size={16} />
                 Mi Perfil
@@ -82,7 +82,7 @@ export default function ClientDashboard() {
         <div className="mx-auto max-w-7xl">
 
           {/* Stats — superpuestas sobre el hero */}
-          <div className="relative -mt-16 mb-10 grid grid-cols-2 gap-5 lg:grid-cols-4">
+          <div className="relative -mt-7 mb-10 grid grid-cols-2 auto-rows-fr gap-5 lg:grid-cols-4">
             {stats.map((s) => (
               <StatCard key={s.label} label={s.label} value={s.value} icon={s.icon} iconColor={s.iconColor} />
             ))}
@@ -123,14 +123,14 @@ export default function ClientDashboard() {
                 </div>
               ) : displayedPosts.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                    <FileText size={28} className="text-blue-500" />
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
+                    <FileText size={28} className="text-emerald-500" />
                   </div>
                   <h3 className="mb-2 text-base font-semibold text-slate-700">Todavía no tenés publicaciones</h3>
                   <p className="mb-6 text-sm text-slate-400">Creá tu primera publicación y encontrá al profesional ideal.</p>
                   <button
                     onClick={() => navigate('/post-options')}
-                    className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary-dark px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondary-dark"
                   >
                     <Plus size={16} />
                     Crear publicación

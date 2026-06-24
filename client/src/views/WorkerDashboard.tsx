@@ -60,7 +60,7 @@ function getInitials(name: string, surname?: string): string {
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
-function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: DashboardStats }) {
+function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfile; stats: DashboardStats; isVerified: boolean }) {
   const navigate = useNavigate()
   const firstName = profile.name.split(' ')[0]
   const categoryText = profile.categories.length > 0
@@ -105,14 +105,16 @@ function ProfileHeader({ profile, stats }: { profile: DashboardProfile; stats: D
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
                 {/* Verified badge */}
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  background: 'rgba(16, 185, 129, 0.15)', color: '#10B981',
-                  fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                }}>
-                  <CheckCircle2 size={13} />
-                  Verificado
-                </span>
+                {isVerified && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: 'rgba(16, 185, 129, 0.15)', color: '#10B981',
+                    fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+                  }}>
+                    <CheckCircle2 size={13} />
+                    Verificado
+                  </span>
+                )}
                 {/* Rating */}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#F59E0B', fontSize: 13, fontWeight: 600 }}>
                   <Star size={14} fill="#F59E0B" stroke="#F59E0B" />
@@ -877,9 +879,6 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
             <Shield size={18} color="#64748B" />
             <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Mis Validaciones</span>
           </div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#10B981' }}>
-            {VALIDATIONS.length}/{VALIDATIONS.length}
-          </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {VALIDATIONS.map((v) => {
@@ -1411,7 +1410,7 @@ export default function WorkerDashboard() {
       fontFamily: "'Montserrat', system-ui, sans-serif",
       overflowX: 'hidden', width: '100%', maxWidth: '100%',
     }}>
-      <ProfileHeader profile={data.profile} stats={data.stats} />
+      <ProfileHeader profile={data.profile} stats={data.stats} isVerified={kycStatus === 'APPROVED'} />
       <MetricsStrip stats={data.stats} />
       <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
 

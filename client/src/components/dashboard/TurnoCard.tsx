@@ -5,7 +5,7 @@ import { PostStatus } from '../../types/post'
 
 const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
   [PostStatus.Active]:     { label: 'Activa',       className: 'bg-green-100 text-green-700' },
-  [PostStatus.InProgress]: { label: 'En desarrollo', className: 'bg-blue-100 text-blue-700' },
+  [PostStatus.InProgress]: { label: 'En curso', className: 'bg-blue-100 text-blue-700' },
   [PostStatus.Paused]:     { label: 'Pausada',       className: 'bg-amber-100 text-amber-700' },
   [PostStatus.Completed]:  { label: 'Completado',    className: 'bg-slate-100 text-slate-500' },
   [PostStatus.Cancelled]:  { label: 'Cancelado',     className: 'bg-red-100 text-red-600' },
@@ -116,7 +116,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
           className={`flex items-center gap-2 text-sm font-semibold rounded-lg px-4 py-2 transition-colors ${
             needsReview
               ? 'bg-amber-500 text-white hover:bg-amber-600!'
-              : 'bg-blue-600 text-white hover:bg-blue-700!'
+              : 'bg-primary-dark text-white hover:bg-secondary-dark!'
           }`}
         >
           {needsReview ? <><Star size={16} /> Calificar</> : <><Eye size={16} /> Ver detalle</>}
