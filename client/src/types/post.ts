@@ -14,6 +14,8 @@ export interface PostCategoryDTO {
 export interface PostDTO {
   id: string
   userId: string
+  type?: string
+  parentPostId?: string
   title: string
   description: string
   startDate: string
