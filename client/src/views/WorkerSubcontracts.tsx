@@ -86,7 +86,7 @@ type FilterTab = 'Todas' | 'Active' | 'InProgress' | 'Paused' | 'Completed' | 'C
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'Todas', label: 'Todas' },
   { key: 'Active', label: 'Activas' },
-  { key: 'InProgress', label: 'En desarrollo' },
+  { key: 'InProgress', label: 'En curso' },
   { key: 'Paused', label: 'Pausadas' },
   { key: 'Completed', label: 'Completadas' },
   { key: 'Cancelled', label: 'Canceladas' },
@@ -110,7 +110,7 @@ const statusBg: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   Active: 'Activa',
-  'In progress': 'En desarrollo',
+  'In progress': 'En curso',
   Paused: 'Pausada',
   Completed: 'Completada',
   Cancelled: 'Cancelada',
@@ -191,7 +191,7 @@ export default function WorkerSubcontracts() {
           <>
             <div className="wd-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
               <MetricCard icon={PlayCircle} iconColor="#2563EB" iconBg="rgba(37, 99, 235, 0.1)" value={data.stats.active} label="Activas" />
-              <MetricCard icon={Activity} iconColor="#8B5CF6" iconBg="rgba(139, 92, 246, 0.1)" value={data.stats.inProgress} label="En desarrollo" />
+              <MetricCard icon={Activity} iconColor="#8B5CF6" iconBg="rgba(139, 92, 246, 0.1)" value={data.stats.inProgress} label="En curso" />
               <MetricCard icon={PauseCircle} iconColor="#F59E0B" iconBg="rgba(245, 158, 11, 0.1)" value={data.stats.paused} label="Pausadas" />
               <MetricCard icon={CheckCircle} iconColor="#10B981" iconBg="rgba(16, 185, 129, 0.1)" value={data.stats.completed} label="Completadas" />
               <RatingCard averageRating={data.stats.averageRating} reviewCount={data.stats.reviewCount} />
