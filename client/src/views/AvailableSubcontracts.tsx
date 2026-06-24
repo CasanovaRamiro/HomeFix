@@ -176,6 +176,8 @@ export default function AvailableSubcontracts() {
   const filtrados = useMemo(() => {
     let resultado = [...subcontratos]
 
+    resultado = resultado.filter((s) => s.userId !== user?.id)
+
     const categoryFilter = category || workerCategories
     resultado = resultado.filter((s) =>
       s.categories.some((c) => categoryFilter.includes(c.name)),
@@ -206,7 +208,7 @@ export default function AvailableSubcontracts() {
     })
 
     return resultado
-  }, [subcontratos, searchQuery, sortBy, category, workerCategories, locationFilter])
+  }, [subcontratos, searchQuery, sortBy, category, workerCategories, locationFilter, user])
 
   useEffect(() => { setPage(1) }, [sortBy, category, locationFilter])
 
@@ -726,39 +728,13 @@ export default function AvailableSubcontracts() {
                             background: '#E8F5E9', color: '#2D6A4F',
                             padding: '6px 12px', borderRadius: 6, fontSize: 12, textAlign: 'center', margin: '8px 0 0',
                           }}>
-                            Ya te postulaste a este rubro
+                            Ya te postulaste a esta subcontratación
                           </p>
                         )}
                       </div>
                     )
                   })}
                 </div>
-              </div>
-
-
-              {/* Postular button */}
-              <div style={{ paddingTop: 4 }}>
-                {selected.userId === user?.id ? (
-                  <p style={{ color: '#64748B', fontSize: 14, textAlign: 'center', padding: 12 }}>
-                    Es tu publicación
-                  </p>
-                ) : yaPostulado(selected.id) ? (
-                  <p style={{
-                    background: '#E8F5E9', color: '#2D6A4F',
-                    padding: 12, borderRadius: 6, fontSize: 14, textAlign: 'center',
-                  }}>
-                    Ya te postulaste a esta subcontratación.
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-accent"
-                    onClick={() => { setShowDetailModal(false); setShowApplyModal(true) }}
-                    style={{ width: '100%' }}
-                  >
-                    Postularme
-                  </button>
-                )}
               </div>
 
             </div>

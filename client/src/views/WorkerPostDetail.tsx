@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, MapPin, Calendar, Clock, Tag, User,
-  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle,
+  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star,
 } from 'lucide-react'
 import api from '../services/api'
 import type { PostDTO } from '../types/post'
 import { ApplicationStatus } from '../types/application'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
+import { fetchMySubcontractManager } from '../services/posts'
+import ReviewStarRating from '../components/review/ReviewStarRating'
+import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +28,7 @@ interface MyApplication {
   clientPhone: string | null
   scheduledDate: string | null
   serviceDate: string | null
+  hasReview: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -156,6 +160,153 @@ function ApplicationCard({ app }: { app: MyApplication }) {
   )
 }
 
+// ─── Review Modal ─────────────────────────────────────────────────────────────
+
+function ReviewModal({
+  applicationId,
+  clientName,
+  onClose,
+  onSuccess,
+}: {
+  applicationId: string
+  clientName: string
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const { submitting, submitted, error, submit } = useLeaveClientReview()
+  const [rating, setRating] = useState(0)
+  const [description, setDescription] = useState('')
+
+  const handleSubmit = async () => {
+    if (rating === 0) return
+    await submit({ applicationId, rating, description: description || undefined })
+  }
+
+  if (submitted) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }} onClick={onClose}>
+        <div style={{
+          background: '#fff', borderRadius: 20,
+          padding: '32px 28px', maxWidth: 420, width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center',
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: '#ECFDF5', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+          }}>
+            <Star size={26} color="#10B981" fill="#10B981" />
+          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 10px' }}>
+            ¡Reseña enviada!
+          </h2>
+          <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 28px', lineHeight: 1.6 }}>
+            Tu reseña sobre <strong>{clientName}</strong> se ha publicado correctamente.
+          </p>
+          <button
+            onClick={() => { onSuccess(); onClose() }}
+            style={{
+              width: '100%', padding: '12px 0', borderRadius: 10,
+              border: 'none', background: '#0F172A', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#fff', borderRadius: 20,
+        padding: '32px 28px', maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+      }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', textAlign: 'center' }}>
+          Calificar a {clientName}
+        </h2>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 24px', textAlign: 'center' }}>
+          ¿Cómo fue tu experiencia trabajando con este cliente?
+        </p>
+
+        <div style={{ marginBottom: 24 }}>
+          <ReviewStarRating value={rating} onChange={setRating} />
+        </div>
+
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Contanos cómo fue tu experiencia (opcional)"
+          maxLength={500}
+          rows={4}
+          style={{
+            width: '100%', padding: '12px 14px', borderRadius: 10,
+            border: '1.5px solid #E2E8F0', fontSize: 13, color: '#0F172A',
+            fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box',
+            outline: 'none', lineHeight: 1.5,
+          }}
+        />
+        <div style={{ fontSize: 11, color: '#94A3B8', textAlign: 'right', marginTop: 4 }}>
+          {description.length}/500
+        </div>
+
+        {error && (
+          <p style={{ fontSize: 13, color: '#DC2626', margin: '12px 0 0', textAlign: 'center' }}>
+            {error}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 10,
+              border: '1.5px solid #E2E8F0', background: '#fff',
+              color: '#475569', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || rating === 0}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 10,
+              border: 'none',
+              background: submitting || rating === 0 ? '#93C5FD' : '#2563EB',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+              cursor: submitting || rating === 0 ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#1D4ED8' }}
+            onMouseLeave={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#2563EB' }}
+          >
+            {submitting ? 'Enviando...' : 'Enviar reseña'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main view ────────────────────────────────────────────────────────────────
 
 export default function WorkerPostDetail() {
@@ -166,25 +317,44 @@ export default function WorkerPostDetail() {
   const [application, setApplication] = useState<MyApplication | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [linkedSubcontractId, setLinkedSubcontractId] = useState<string | null>(null)
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   useEffect(() => {
     if (!id) return
+    let cancelled = false
     const load = async () => {
       try {
         const [postRes, appsRes] = await Promise.all([
           api.get<PostDTO>(`/posts/${id}`),
           api.get<MyApplication[]>('/applications/my-applications'),
         ])
+        if (cancelled) return
         setPost(postRes.data)
         const myApp = appsRes.data.find((a) => a.postId === id) ?? null
         setApplication(myApp)
+
+        // Determinar si hay un subcontrato vinculado
+        let linkedId: string | null = null
+        if (postRes.data.type === 'subcontract') {
+          linkedId = postRes.data.id
+        }
+        try {
+          const subsRes = await fetchMySubcontractManager()
+          const found = subsRes.data.subcontracts.find((s) => s.parentPostId === id)
+          if (found) linkedId = found.id
+        } catch (err) {
+          console.error('Error al buscar subcontratos vinculados', err)
+        }
+        setLinkedSubcontractId(linkedId)
       } catch {
         setError('No se pudo cargar el detalle de la publicación.')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     void load()
+    return () => { cancelled = true }
   }, [id])
 
   if (loading) {
@@ -336,6 +506,39 @@ export default function WorkerPostDetail() {
                   Subcontratar
                 </button>
               )}
+              {application?.status === ApplicationStatus.Completed && !application.hasReview && (
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#2563EB', border: 'none', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  <Star size={16} />
+                  Calificar cliente
+                </button>
+              )}
+              {linkedSubcontractId && (
+                <button
+                  onClick={() => navigate(`/worker/subcontracts/group/${linkedSubcontractId}`)}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#0F172A', border: 'none', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  Ver subcontrato
+                </button>
+              )}
             </div>
 
             {/* Job info */}
@@ -359,6 +562,15 @@ export default function WorkerPostDetail() {
           </div>
         </div>
       </div>
+
+      {showReviewModal && application && (
+        <ReviewModal
+          applicationId={application.id}
+          clientName={`${post.user.name} ${post.user.surname}`}
+          onClose={() => setShowReviewModal(false)}
+          onSuccess={() => setApplication({ ...application, hasReview: true })}
+        />
+      )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
