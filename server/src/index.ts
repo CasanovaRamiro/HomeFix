@@ -79,7 +79,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
     .swagger-ui .opblock-tag:hover { color: #10B981; }
   `,
   customSiteTitle: 'HomeFix API Documentation',
-  customfavIcon: undefined,
   swaggerOptions: {
     docExpansion: 'list',
     defaultModelsExpandDepth: -1,
