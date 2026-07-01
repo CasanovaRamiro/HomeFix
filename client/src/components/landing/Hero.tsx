@@ -31,6 +31,12 @@ export default function Hero() {
               Buscar profesional
               <ArrowRight className="h-5 w-5" />
             </button>
+            <button
+              onClick={() => document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex h-14 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-8 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              ¿Cómo funciona?
+            </button>
           </div>
 
           <div className="mt-10 flex flex-wrap items-center gap-6">
