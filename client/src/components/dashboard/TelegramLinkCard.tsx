@@ -54,15 +54,11 @@ export default function TelegramLinkCard(): JSX.Element {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-md">
-      <div className="mb-3 flex items-center gap-2">
-        <Send size={18} className="text-blue-500" />
-        <h3 className="text-sm font-bold text-slate-800">Telegram</h3>
-        {status === 'linked' && (
-          <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-green-600">
-            <CheckCircle size={14} /> Vinculado
-          </span>
-        )}
-      </div>
+      {status === 'linked' && (
+        <div className="mb-3 flex items-center gap-1 text-xs font-semibold text-green-600">
+          <CheckCircle size={14} /> Vinculado
+        </div>
+      )}
 
       {status === 'loading' && code ? (
         <div className="space-y-3">

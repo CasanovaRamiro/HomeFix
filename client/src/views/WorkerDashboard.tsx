@@ -867,7 +867,13 @@ function Sidebar({ workerId, kycStatus }: { workerId: string; kycStatus: KycStat
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Telegram */}
-        <TelegramLinkCard />
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Send size={20} color="#3B82F6" />
+            Telegram
+          </h2>
+          <TelegramLinkCard />
+        </div>
 
         {/* Mis Validaciones */}
       <div style={{
