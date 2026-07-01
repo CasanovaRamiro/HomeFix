@@ -17,7 +17,7 @@ import {
 import logo from '../assets/homefix-logo.png'
 import logoNeg from '../assets/homefix-logo-negative.png'
 import heroBg from '../assets/hero-workers-wide.jpg'
-import heroPortrait from '../assets/hero-workers.jpg'
+import heroPortrait from '../assets/worker-verified.jpg'
 
 // icon lookups keep the data files free of JSX imports
 const benefitIcons: LucideIcon[] = [TrendingUp, CalendarClock, Star]
@@ -134,7 +134,7 @@ export default function WorkerLanding() {
               ))}
             </div>
             <div className="lp-mt">
-              <button className="lp-btn lp-btn-lg lp-btn-outline-navy" onClick={() => navigate('/register/worker')}>Verificar mi perfil <ArrowRight size={16} /></button>
+              <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Verificar mi perfil <ArrowRight size={16} /></button>
             </div>
           </div>
           <div className="lp-split-media">

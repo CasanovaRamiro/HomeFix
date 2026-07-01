@@ -138,38 +138,6 @@ export default function Navbar(): React.ReactElement | null {
           <div className="hidden lg:flex items-center gap-1">
             {isLanding && (
               <>
-                <button
-                  onClick={() => document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¿Cómo funciona HomeFix?
-                </button>
-                <button
-                  onClick={() => document.getElementById('que-ofrecemos-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¿Qué te ofrecemos?
-                </button>
-                <button
-                  onClick={() => document.getElementById('confia-en-nosotros')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¡Confiá en nosotros!
-                </button>
-                <button
-                  onClick={() => document.getElementById('redes-sociales-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  Nuestras redes sociales
-                </button>
                 <Link
                   to="/workerLanding"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: '700', textDecoration: 'none', color: theme.primaryDark, transition: 'background 0.15s' }}
@@ -182,38 +150,6 @@ export default function Navbar(): React.ReactElement | null {
             )}
             {isWorkerLanding && (
               <>
-                <button
-                  onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¿Cómo funciona HomeFix?
-                </button>
-                <button
-                  onClick={() => document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¿Qué te ofrecemos?
-                </button>
-                <button
-                  onClick={() => document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  ¿Cómo me valido?
-                </button>
-                <button
-                  onClick={() => document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, transition: 'background 0.15s, color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = theme.primaryDark; (e.currentTarget as HTMLElement).style.background = theme.hover }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = theme.muted; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  Nuestras redes sociales
-                </button>
                 <Link
                   to="/"
                   onClick={() => window.scrollTo(0, 0)}
@@ -432,46 +368,6 @@ export default function Navbar(): React.ReactElement | null {
                   </Link>
                 )
               })}
-              {isLanding && (
-                <>
-                  <button onClick={() => { document.getElementById('como-funciona-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¿Cómo funciona HomeFix?
-                  </button>
-                  <button onClick={() => { document.getElementById('que-ofrecemos-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¿Qué te ofrecemos?
-                  </button>
-                  <button onClick={() => { document.getElementById('confia-en-nosotros')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¡Confiá en nosotros!
-                  </button>
-                  <button onClick={() => { document.getElementById('redes-sociales-cliente')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    Nuestras redes sociales
-                  </button>
-                </>
-              )}
-              {isWorkerLanding && (
-                <>
-                  <button onClick={() => { document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¿Cómo funciona HomeFix Profesional?
-                  </button>
-                  <button onClick={() => { document.getElementById('que-ofrecemos')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¿Qué te ofrecemos?
-                  </button>
-                  <button onClick={() => { document.getElementById('como-validarme')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    ¿Cómo me valido?
-                  </button>
-                  <button onClick={() => { document.getElementById('redes-sociales')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setMobileOpen(false) }}
-                    style={{ display: 'flex', width: '100%', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', background: 'transparent', border: 'none', cursor: 'pointer', color: theme.primaryDark, textAlign: 'left' }}>
-                    Nuestras redes sociales
-                  </button>
-                </>
-              )}
             </div>
             <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px' }}>
               {isLoggedIn ? (
