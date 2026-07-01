@@ -3,36 +3,24 @@
 // Companion to Landing.tsx. All styles come from landing.css + worker-landing.css
 // (both scoped under .lp-root) so the app's global button/a/input/body rules
 // in index.css cannot interfere. Uses lucide-react + react-router only.
-import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, Check, CheckCircle2, TrendingUp, CalendarClock, Star,
-  MapPin, MessageSquare, BadgeCheck, Wallet, ShieldCheck, type LucideIcon,
+  ArrowRight, CheckCircle2, TrendingUp, CalendarClock, Star,
+  Wallet, ShieldCheck, type LucideIcon,
 } from 'lucide-react'
 import '../components/landing/landing.css'
 import '../components/landing/worker-landing.css'
 import {
-  workerStats, benefits, workerSteps, workerFeatures, requirements, workerTestimonials,
+  workerStats, benefits, workerTestimonials,
 } from '../data/workerLandingData'
-import logo from '../assets/homefix-logo.png'
 import logoNeg from '../assets/homefix-logo-negative.png'
 import heroBg from '../assets/hero-workers-wide.jpg'
-import heroPortrait from '../assets/hero-workers.jpg'
 
 // icon lookups keep the data files free of JSX imports
 const benefitIcons: LucideIcon[] = [TrendingUp, CalendarClock, Star]
-const featureIcons: LucideIcon[] = [MapPin, CalendarClock, MessageSquare, Star, BadgeCheck]
-
-const footerCols: { title: string; links: string[] }[] = [
-  { title: 'Para Profesionales', links: ['Registrarme', 'Cómo funciona', 'Verificación de perfil', 'Centro de ayuda'] },
-  { title: 'Empresa', links: ['Sobre Nosotros', 'Buscar Profesionales', 'Seguridad', 'Contacto'] },
-  { title: 'Legal', links: ['Términos de Servicio', 'Privacidad', 'Cookies'] },
-]
 
 export default function WorkerLanding() {
   const navigate = useNavigate()
-  const howItWorksRef = useRef<HTMLElement>(null)
-
   return (
     <main className="lp-root">
 
@@ -47,7 +35,6 @@ export default function WorkerLanding() {
             <p className="lp-hero-sub">Sumate a HomeFix y recibí solicitudes de trabajo de hogares cerca tuyo. Vos elegís qué aceptar, cuándo y cómo.</p>
             <div className="lp-hero-cta">
               <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Registrarme como profesional <ArrowRight className="lp-btn-ico" /></button>
-              <button className="lp-btn lp-btn-lg lp-btn-glass" onClick={() => howItWorksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>¿Cómo funciona?</button>
             </div>
             <div className="lp-hero-trust">
               <span><CheckCircle2 size={18} /> Registro gratis</span>
@@ -89,85 +76,6 @@ export default function WorkerLanding() {
           </div>
           <div className="lp-center lp-mt">
             <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Crear mi perfil gratis <ArrowRight className="lp-btn-ico" /></button>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="como-funciona" ref={howItWorksRef} className="lp-section lp-navy-band">
-        <div className="lp-container">
-          <div className="lp-head">
-            <p className="lp-eyebrow">Cómo Funciona</p>
-            <h2 className="lp-h2 on-dark">Empezá en 4 pasos</h2>
-            <p className="lp-lead on-dark">Del registro a tu primer trabajo, sin vueltas.</p>
-          </div>
-          <div className="lp-steps lp-steps-4">
-            {workerSteps.map((s) => (
-              <div key={s.n} className="lp-step">
-                <div className="lp-step-line">
-                  <div className={`lp-step-num${s.accent ? ' accent' : ''}`}>{s.n}</div>
-                </div>
-                <h3>{s.title}</h3>
-                <p>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-          <div className="lp-center lp-mt">
-            <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Comenzar mi registro <ArrowRight className="lp-btn-ico" /></button>
-          </div>
-        </div>
-      </section>
-
-      {/* VERIFY = MORE WORK (split media) */}
-      <section id="como-validarme" className="lp-section">
-        <div className="lp-container lp-split">
-          <div>
-            <p className="lp-eyebrow">Perfil verificado</p>
-            <h2 className="lp-h2">Un perfil verificado trabaja más</h2>
-            <p className="lp-lead" style={{ marginTop: 14 }}>Los clientes eligen con confianza. Cuando validás tu identidad y sumás tu matrícula, tu perfil aparece destacado y recibís más solicitudes.</p>
-            <div className="lp-req">
-              {requirements.map((r) => (
-                <div key={r.text} className="lp-req-item">
-                  <span className="lp-req-check"><Check /></span>
-                  <span>{r.text}{r.optional && <span className="lp-req-opt">opcional</span>}</span>
-                </div>
-              ))}
-            </div>
-            <div className="lp-mt">
-              <button className="lp-btn lp-btn-lg lp-btn-outline-navy" onClick={() => navigate('/register/worker')}>Verificar mi perfil <ArrowRight size={16} /></button>
-            </div>
-          </div>
-          <div className="lp-split-media">
-            <img src={heroPortrait} alt="Profesional de HomeFix" />
-            <span className="lp-split-badge"><BadgeCheck size={16} /> Identidad verificada</span>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="que-ofrecemos" className="lp-feat-band">
-        <div className="lp-container lp-feat-grid">
-          <div className="lp-feat-logo">
-            <div className="lp-feat-glow" />
-            <img src={logo} alt="HomeFix" />
-          </div>
-          <div>
-            <p className="lp-eyebrow">Tus herramientas</p>
-            <h2 className="lp-h2">Todo para gestionar tu trabajo</h2>
-            <div className="lp-feat-list">
-              {workerFeatures.map((f, i) => {
-                const Icon = featureIcons[i]
-                return (
-                  <div key={f.title} className="lp-feat-item">
-                    <div className="lp-feat-icon"><Icon size={24} /></div>
-                    <div><h3>{f.title}</h3><p>{f.desc}</p></div>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="lp-mt">
-              <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Quiero recibir trabajos <ArrowRight className="lp-btn-ico" /></button>
-            </div>
           </div>
         </div>
       </section>
@@ -216,32 +124,6 @@ export default function WorkerLanding() {
           </div>
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer id="redes-sociales" className="lp-footer">
-        <div className="lp-container">
-          <div className="lp-footer-grid">
-            <div className="lp-footer-brand">
-              <img className="lp-footer-mark" src={logoNeg} alt="HomeFix" />
-              <p>La plataforma que conecta a profesionales verificados con los hogares que los necesitan. Más trabajo, menos vueltas, tu reputación siempre con vos.</p>
-              <div className="lp-footer-badges">
-                <span className="lp-fbadge accent"><CheckCircle2 size={14} /> Registro gratis</span>
-                <span className="lp-fbadge"><ShieldCheck size={14} /> Pagos protegidos</span>
-              </div>
-            </div>
-            {footerCols.map((col) => (
-              <div key={col.title} className="lp-footer-col">
-                <h4>{col.title}</h4>
-                <ul>{col.links.map((l) => <li key={l}><button onClick={() => navigate('/register/worker')}>{l}</button></li>)}</ul>
-              </div>
-            ))}
-          </div>
-          <div className="lp-footer-bottom">
-            <p>© 2026 HomeFix. Todos los derechos reservados.</p>
-            <div className="lp-footer-social"><a href="#">LinkedIn</a><a href="#">Twitter</a><a href="#">Instagram</a></div>
-          </div>
-        </div>
-      </footer>
     </main>
   )
 }
