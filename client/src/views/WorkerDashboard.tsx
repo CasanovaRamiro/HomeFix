@@ -97,24 +97,44 @@ function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfi
 
             {/* Name & details */}
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
-                Hola, {firstName}
-              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+                  Hola, {firstName}
+                </h1>
+                {isVerified ? (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: 'rgba(16, 185, 129, 0.2)', color: '#34D399',
+                    fontSize: 13, fontWeight: 700, padding: '4px 14px', borderRadius: 20,
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                  }}>
+                    <CheckCircle2 size={15} />
+                    Verificado
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/kyc')}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 7,
+                      background: '#10B981', color: '#fff',
+                      fontSize: 13, fontWeight: 700, padding: '8px 20px', borderRadius: 10,
+                      cursor: 'pointer', border: 'none',
+                      boxShadow: '0 4px 12px rgba(16,185,129,0.35)',
+                      transition: 'background 0.15s, transform 0.05s',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                  >
+                    <Shield size={14} />
+                    Verificar identidad
+                  </button>
+                )}
+              </div>
               <p style={{ fontSize: 14, color: '#94A3B8', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {categoryText}{locationText ? ` · ${locationText}` : ''}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-                {/* Verified badge */}
-                {isVerified && (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    background: 'rgba(16, 185, 129, 0.15)', color: '#10B981',
-                    fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                  }}>
-                    <CheckCircle2 size={13} />
-                    Verificado
-                  </span>
-                )}
                 {/* Rating */}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#F59E0B', fontSize: 13, fontWeight: 600 }}>
                   <Star size={14} fill="#F59E0B" stroke="#F59E0B" />
