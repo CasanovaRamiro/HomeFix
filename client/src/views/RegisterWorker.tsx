@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
@@ -101,16 +101,6 @@ export default function RegisterWorker() {
 
   const handleNext = () => {
     if (validateStep1()) setStep(2)
-  }
-
-  const handleSubmitStep2 = (ev: FormEvent<HTMLFormElement>) => {
-    ev.preventDefault()
-    if (selected.length === 0) {
-      setErrors({ categorias: 'Debes seleccionar al menos una categoría' })
-      return
-    }
-    setErrors({})
-    setStep(3)
   }
 
   const handleFinalSubmit = async () => {
