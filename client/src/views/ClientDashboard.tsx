@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
+import EmergencyCard from '../components/dashboard/EmergencyCard'
+import EmergencyModal from '../components/dashboard/EmergencyModal'
 import { PostStatus } from '../types/post'
 
 export default function ClientDashboard() {
@@ -14,6 +16,7 @@ export default function ClientDashboard() {
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
   const [showEmergencies, setShowEmergencies] = useState(false)
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false)
 
   useEffect(() => {
     getUserPosts()
@@ -91,84 +94,104 @@ export default function ClientDashboard() {
           {/* Mis publicaciones + Mensajes */}
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_340px]">
 
-            {/* Mis publicaciones */}
-            <section>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
-                {emergencyCount > 0 && (
-                  <button
-                    onClick={() => setShowEmergencies(!showEmergencies)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
-                      showEmergencies
-                        ? 'bg-red-500 text-white'
-                        : 'bg-red-100 text-red-700 hover:bg-red-200'
-                    }`}
-                  >
-                    <AlertTriangle size={14} />
-                    Urgentes ({emergencyCount})
-                    {showEmergencies && <X size={14} />}
-                  </button>
-                )}
-              </div>
+            {/* Columna izquierda — Mis publicaciones + Mensajes */}
+            <div className="flex flex-col gap-8">
 
-              {showEmergencies && (
-                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-                  Mostrando solo publicaciones de emergencia
+              {/* Mis publicaciones */}
+              <section>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-xl font-bold text-slate-900">Mis publicaciones</h2>
+                  {emergencyCount > 0 && (
+                    <button
+                      onClick={() => setShowEmergencies(!showEmergencies)}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                        showEmergencies
+                          ? 'bg-red-500 text-white'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      }`}
+                    >
+                      <AlertTriangle size={14} />
+                      Urgentes ({emergencyCount})
+                      {showEmergencies && <X size={14} />}
+                    </button>
+                  )}
                 </div>
-              )}
 
-              {loading ? (
-                <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
-                  <div className="spinner mx-auto" />
-                </div>
-              ) : displayedPosts.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
-                    <FileText size={28} className="text-emerald-500" />
+                {showEmergencies && (
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                    Mostrando solo publicaciones de emergencia
                   </div>
-                  <h3 className="mb-2 text-base font-semibold text-slate-700">Todavía no tenés publicaciones</h3>
-                  <p className="mb-6 text-sm text-slate-400">Creá tu primera publicación y encontrá al profesional ideal.</p>
-                  <button
-                    onClick={() => navigate('/post-options')}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary-dark px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondary-dark"
-                  >
-                    <Plus size={16} />
-                    Crear publicación
-                  </button>
-                  <p className="text-sm text-slate-400">
-                    {showEmergencies
-                      ? 'No tenes publicaciones de emergencia activas.'
-                      : 'Todavia no tenes publicaciones.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {displayedPosts.map((post) => <TurnoCard key={post.id} post={post} />)}
-                </div>
-              )}
-            </section>
+                )}
 
-            {/* Telegram */}
-            <section>
-              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
-                <Send size={20} className="text-blue-500" />
-                Telegram
-              </h2>
-              <TelegramLinkCard />
-            </section>
+                {loading ? (
+                  <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
+                    <div className="spinner mx-auto" />
+                  </div>
+                ) : displayedPosts.length === 0 ? (
+                  <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
+                      <FileText size={28} className="text-emerald-500" />
+                    </div>
+                    <h3 className="mb-2 text-base font-semibold text-slate-700">Todavía no tenés publicaciones</h3>
+                    <p className="mb-6 text-sm text-slate-400">Creá tu primera publicación y encontrá al profesional ideal.</p>
+                    <button
+                      onClick={() => navigate('/post-options')}
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary-dark px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondary-dark"
+                    >
+                      <Plus size={16} />
+                      Crear publicación
+                    </button>
+                    <p className="text-sm text-slate-400">
+                      {showEmergencies
+                        ? 'No tenes publicaciones de emergencia activas.'
+                        : 'Todavia no tenes publicaciones.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {displayedPosts.map((post) => <TurnoCard key={post.id} post={post} />)}
+                  </div>
+                )}
+              </section>
 
-            {/* Mensajes */}
-            <section>
-              <h2 className="mb-4 text-xl font-bold text-slate-900">Mensajes</h2>
-              <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-md">
-                <MessageSquare size={28} className="mx-auto text-slate-300" />
-                <p className="mt-3 text-sm text-slate-400">Próximamente disponible.</p>
-              </div>
-            </section>
+              {/* Mensajes */}
+              <section>
+                <h2 className="mb-4 text-xl font-bold text-slate-900">Mensajes</h2>
+                <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-md">
+                  <MessageSquare size={28} className="mx-auto text-slate-300" />
+                  <p className="mt-3 text-sm text-slate-400">Próximamente disponible.</p>
+                </div>
+              </section>
+
+            </div>
+
+            {/* Columna derecha — Emergencia + Telegram */}
+            <div className="flex flex-col gap-4">
+              <EmergencyCard onOpen={() => setShowEmergencyModal(true)} />
+              <section>
+                <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <Send size={20} className="text-blue-500" />
+                  Telegram
+                </h2>
+                <TelegramLinkCard />
+              </section>
+            </div>
 
           </div>
         </div>
       </div>
+
+      {/* Modal emergencia */}
+      {showEmergencyModal && user?.id && (
+        <EmergencyModal
+          userId={user.id}
+          onClose={() => setShowEmergencyModal(false)}
+          onSuccess={() => {
+            setShowEmergencyModal(false)
+            getUserPosts().then(setPosts).catch(() => setPosts([]))
+          }}
+        />
+      )}
 
       {/* Botón emergencias — sticky */}
       {emergencyCount > 0 && (
