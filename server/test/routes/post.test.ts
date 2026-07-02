@@ -1175,7 +1175,6 @@ describe('POST /posts/create-subcontract', () => {
 })
 
 describe('POST /posts/emergency/create', () => {
-  let clientUserId: string
   let catId: string
 
   const validEmergencyBody = () => ({
@@ -1186,8 +1185,7 @@ describe('POST /posts/emergency/create', () => {
   })
 
   beforeEach(async () => {
-    const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
-    clientUserId = client.id
+    await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
 
     const cat = await createCategory('Emergency Category')
     catId = cat.id
@@ -1243,7 +1241,7 @@ describe('POST /posts/emergency/create', () => {
   })
 
   it('returns 400 when address is missing', async () => {
-    const { address, ...rest } = validEmergencyBody()
+    const { address: _address, ...rest } = validEmergencyBody()
 
     const res = await request(app)
       .post('/posts/emergency/create')
@@ -1254,7 +1252,7 @@ describe('POST /posts/emergency/create', () => {
   })
 
   it('returns 400 when categoryId is missing', async () => {
-    const { categoryId, ...rest } = validEmergencyBody()
+    const { categoryId: _categoryId, ...rest } = validEmergencyBody()
 
     const res = await request(app)
       .post('/posts/emergency/create')
