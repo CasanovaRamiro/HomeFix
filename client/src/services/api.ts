@@ -89,6 +89,7 @@ export interface ClientProfile {
   // Only present when the requester is the owner.
   email?: string
   phone?: string | null
+  address?: { street: string; number: string; city: string; state: string } | null
 }
 
 export interface ClientProfileUpdateData {
@@ -163,6 +164,15 @@ export interface UpdatePostData {
 
 export const updatePost = (id: string, data: UpdatePostData) =>
   api.patch(`/posts/${id}`, data)
+
+export const createEmergencyPost = (data: {
+  title: string
+  description: string
+  categoryId: string
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+}) => api.post('/posts/emergency/create', data)
 
 export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
   api.patch(`/users/${id}/emergencies`, { enabled })

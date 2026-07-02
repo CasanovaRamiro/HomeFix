@@ -70,6 +70,22 @@ export const validatePostInput = (input: CreatePostInput) => {
   }
 }
 
+export const createEmergencyPost = async (input: {
+  userId: string
+  title: string
+  description: string
+  categoryId: string
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+}): Promise<DomainPost> => {
+  return createPost({
+    ...input,
+    isEmergency: true,
+    allowsSubcontracting: false,
+  })
+}
+
 export const createPost = async (input: CreatePostInput): Promise<DomainPost> => {
   validatePostInput(input)
   const now = new Date()
