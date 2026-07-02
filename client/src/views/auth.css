@@ -203,7 +203,7 @@
 }
 .au-secure-badge svg { width: 17px; height: 17px; color: var(--au-emerald); }
 
-.au-visual-mid { max-width: 420px; }
+.au-visual-mid { max-width: 420px; margin-top: 100px; }
 .au-visual-mid h2 {
   font-size: clamp(2rem, 1.3rem + 2vw, 2.9rem);
   font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; color: #fff;
