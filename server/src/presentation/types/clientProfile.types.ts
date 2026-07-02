@@ -12,6 +12,7 @@ export interface ClientProfileDTO {
   // Owner-only contact fields — omitted entirely for other viewers.
   email?: string
   phone?: string | null
+  address?: { street: string; number: string; city: string; state: string } | null
 }
 
 export interface UpdateClientProfileRequest {

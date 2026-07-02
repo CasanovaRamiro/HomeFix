@@ -16,4 +16,5 @@ export const toDomainClientProfileBase = (c: ClientProfileResult): DomainClientP
   role: c.role,
   photo: c.photo,
   createdAt: c.createdAt,
+  address: c.address ?? null,
 })

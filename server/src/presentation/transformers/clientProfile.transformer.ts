@@ -21,5 +21,6 @@ export const toClientProfileDTO = (
     dto.email = profile.email
     dto.phone = profile.phone
   }
+  dto.address = profile.address
   return dto
 }
