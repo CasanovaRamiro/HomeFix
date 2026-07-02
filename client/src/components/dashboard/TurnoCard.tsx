@@ -116,7 +116,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
           className={`flex items-center gap-2 text-sm font-semibold rounded-lg px-4 py-2 transition-colors ${
             needsReview
               ? 'bg-amber-500 text-white hover:bg-amber-600!'
-              : 'bg-primary-dark text-white hover:bg-secondary-dark!'
+              : 'bg-[#10B981] text-white hover:bg-[#059669]!'
           }`}
         >
           {needsReview ? <><Star size={16} /> Calificar</> : <><Eye size={16} /> Ver detalle</>}
