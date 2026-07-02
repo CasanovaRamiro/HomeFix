@@ -1173,3 +1173,94 @@ describe('POST /posts/create-subcontract', () => {
     expect(res.status).toBe(403)
   })
 })
+
+describe('POST /posts/emergency/create', () => {
+  let clientUserId: string
+  let catId: string
+
+  const validEmergencyBody = () => ({
+    title: 'Caño roto urgente',
+    description: 'Se inundó el baño',
+    address: 'Calle 123',
+    categoryId: catId,
+  })
+
+  beforeEach(async () => {
+    const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    clientUserId = client.id
+
+    const cat = await createCategory('Emergency Category')
+    catId = cat.id
+
+    setMockPayload({ sub: 'auth0|client', email: 'client@test.com' })
+  })
+
+  afterEach(() => {
+    resetMockPayload()
+  })
+
+  it('creates an emergency post when user is a client', async () => {
+    const body = validEmergencyBody()
+
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .set('Authorization', 'Bearer test-token')
+      .send(body)
+
+    expect(res.status).toBe(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body.title).toBe(body.title)
+    expect(res.body.type).toBe('emergency')
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .send(validEmergencyBody())
+
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 403 when user is not a client', async () => {
+    await createUser('worker@test.com', 'Worker', 'hashed', { role: UserRole.Worker })
+    setMockPayload({ sub: 'auth0|worker', email: 'worker@test.com' })
+
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .set('Authorization', 'Bearer test-token')
+      .send(validEmergencyBody())
+
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 400 when title is empty', async () => {
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .set('Authorization', 'Bearer test-token')
+      .send({ ...validEmergencyBody(), title: '' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when address is missing', async () => {
+    const { address, ...rest } = validEmergencyBody()
+
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .set('Authorization', 'Bearer test-token')
+      .send(rest)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when categoryId is missing', async () => {
+    const { categoryId, ...rest } = validEmergencyBody()
+
+    const res = await request(app)
+      .post('/posts/emergency/create')
+      .set('Authorization', 'Bearer test-token')
+      .send(rest)
+
+    expect(res.status).toBe(400)
+  })
+})

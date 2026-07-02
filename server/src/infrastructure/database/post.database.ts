@@ -118,7 +118,9 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     latitude: data.latitude ?? null,
     longitude: data.longitude ?? null,
     isEmergency: data.isEmergency ?? false,
-    emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    emergencyExpiresAt: data.isEmergency
+      ? new Date(Date.now() + EMERGENCY_DURATION_MS)
+      : (data.emergencyExpiresAt ?? null),
     allowsSubcontracting: data.allowsSubcontracting ?? true,
     images: data.images,
     categories: [{ categoryId: data.categoryId }],
@@ -353,7 +355,9 @@ export const updatePost = async (id: string, data: UpdatePostInput): Promise<Dom
         endDate,
         address: data.address,
         isEmergency: data.isEmergency ?? undefined,
-        emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    emergencyExpiresAt: data.isEmergency
+      ? new Date(Date.now() + EMERGENCY_DURATION_MS)
+      : (data.emergencyExpiresAt ?? null),
       },
       select: postFields,
     })
