@@ -3,10 +3,40 @@ import { useNavigate } from 'react-router-dom'
 import { Shield, CheckCircle2 } from 'lucide-react'
 import logoNeg from '../../assets/homefix-logo-negative.png'
 
-const columns: { title: string; links: string[] }[] = [
-  { title: 'Plataforma', links: ['Buscar Profesionales', 'Diagnóstico Asistido', 'Mi Cuenta', 'Para Profesionales'] },
-  { title: 'Empresa', links: ['Sobre Nosotros', 'Cómo Funciona', 'Seguridad', 'Contacto'] },
-  { title: 'Legal', links: ['Términos de Servicio', 'Privacidad', 'Cookies'] },
+type FooterLink = {
+  label: string
+  to?: string
+  href?: string
+  disabled?: boolean
+}
+
+const columns: { title: string; links: FooterLink[] }[] = [
+  {
+    title: 'Plataforma',
+    links: [
+      { label: 'Buscar Profesionales', to: '/login' },
+      { label: 'Diagnóstico Asistido', to: '/diagnosis' },
+      { label: 'Mi Cuenta', to: '/login' },
+      { label: 'Para Profesionales', to: '/workerlanding' },
+    ],
+  },
+  {
+    title: 'Empresa',
+    links: [
+      { label: 'Sobre Nosotros', href: '/#confia-en-nosotros' },
+      { label: 'Cómo Funciona', href: '/#como-funciona-cliente' },
+      { label: 'Seguridad', href: '/#confia-en-nosotros' },
+      { label: 'Contacto', disabled: true },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'Términos de Servicio', disabled: true },
+      { label: 'Privacidad', disabled: true },
+      { label: 'Cookies', disabled: true },
+    ],
+  },
 ]
 
 export default function LandingFooter() {
@@ -38,13 +68,17 @@ export default function LandingFooter() {
               <h4 className="text-sm font-bold text-white">{col.title}</h4>
               <ul className="space-y-3">
                 {col.links.map((link) => (
-                  <li key={link}>
-                    <button
-                      onClick={() => navigate('/login')}
-                      className="border-0 bg-transparent p-0 text-sm text-white/70 transition-colors hover:text-accent"
-                    >
-                      {link}
-                    </button>
+                  <li key={link.label}>
+                    {link.disabled ? (
+                      <span className="cursor-default text-sm text-white/30">{link.label}</span>
+                    ) : (
+                      <button
+                        onClick={() => link.href ? (window.location.href = link.href) : navigate(link.to!)}
+                        className="border-0 bg-transparent p-0 text-sm text-white/70 transition-colors hover:text-accent"
+                      >
+                        {link.label}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
