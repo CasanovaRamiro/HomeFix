@@ -34,10 +34,11 @@
   border: 1px solid rgba(255,255,255,.16); border-radius: var(--lp-radius-xl);
   overflow: hidden;
 }
-.lp-root .lp-wstat { background: rgba(19,36,59,.55); padding: 20px 22px; backdrop-filter: blur(4px); }
-.lp-root .lp-wstat-val { font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
+.lp-root .lp-wstat { background: rgba(19,36,59,.55); padding: 20px 22px; backdrop-filter: blur(4px); transition: background 0.2s, transform 0.2s; }
+.lp-root .lp-wstat:hover { background: rgba(16,185,129,.18); transform: translateY(-2px); }
+.lp-root .lp-wstat-val { font-size: 28px; font-weight: 700; color: var(--lp-emerald); line-height: 1; }
 .lp-root .lp-wstat-val .lp-accent { color: var(--lp-emerald); }
-.lp-root .lp-wstat-lbl { margin-top: 8px; font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.72); }
+.lp-root .lp-wstat-lbl { margin-top: 8px; font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.85); }
 
 /* ---------- 4-up steps (worker onboarding) ---------- */
 .lp-root .lp-steps-4 { grid-template-columns: repeat(4, 1fr); }
