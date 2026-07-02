@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText, User } from 'lucide-react'
+import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText, User, Send } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import StatCard from '../components/dashboard/StatCard'
@@ -149,7 +149,13 @@ export default function ClientDashboard() {
             </section>
 
             {/* Telegram */}
-            <TelegramLinkCard />
+            <section>
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
+                <Send size={20} className="text-blue-500" />
+                Telegram
+              </h2>
+              <TelegramLinkCard />
+            </section>
 
             {/* Mensajes */}
             <section>
