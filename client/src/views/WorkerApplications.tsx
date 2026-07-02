@@ -307,13 +307,13 @@ function ReviewModal({
             style={{
               flex: 1, padding: '12px 0', borderRadius: 10,
               border: 'none',
-              background: submitting || rating === 0 ? '#93C5FD' : '#2563EB',
+              background: submitting || rating === 0 ? '#6EE7B7' : '#10B981',
               color: '#fff', fontSize: 13, fontWeight: 600,
               cursor: submitting || rating === 0 ? 'not-allowed' : 'pointer',
               transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#1D4ED8' }}
-            onMouseLeave={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#2563EB' }}
+            onMouseEnter={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#059669' }}
+            onMouseLeave={(e) => { if (!submitting && rating !== 0) (e.currentTarget as HTMLElement).style.background = '#10B981' }}
           >
             {submitting ? 'Enviando...' : 'Enviar reseña'}
           </button>
@@ -520,15 +520,15 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
           {app.status === ApplicationStatus.Completed && (
             app.hasReview ? (
               <button style={{
-                width: '100%', background: '#EFF6FF',
-                border: '1.5px solid #BFDBFE',
-                borderRadius: 10, color: '#2563EB',
+                width: '100%', background: '#ECFDF5',
+                border: '1.5px solid #A7F3D0',
+                borderRadius: 10, color: '#059669',
                 fontSize: 13, fontWeight: 600, padding: '11px 0',
                 cursor: 'pointer', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', gap: 8, transition: 'background 0.15s',
               }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#DBEAFE' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#EFF6FF' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#D1FAE5' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#ECFDF5' }}
               >
                 Ver reseña
               </button>
@@ -536,14 +536,14 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
               <button
                 onClick={() => onReviewClick(app)}
                 style={{
-                  width: '100%', background: '#2563EB', border: 'none',
+                  width: '100%', background: '#10B981', border: 'none',
                   borderRadius: 10, color: '#fff',
                   fontSize: 13, fontWeight: 600, padding: '11px 0',
                   cursor: 'pointer', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', gap: 8, transition: 'background 0.15s',
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1D4ED8' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#2563EB' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
               >
                 Calificar cliente
               </button>

@@ -99,7 +99,7 @@ export default function LeaveReview() {
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="mt-8 h-12 w-full rounded-xl bg-primary-dark px-4 font-semibold text-white transition hover:bg-primary-dark hover:brightness-125 active:scale-[.99]"
+            className="mt-8 h-12 w-full rounded-xl bg-accent px-4 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(16,185,129,0.6)] transition hover:bg-accent-hover active:scale-[.99]"
           >
             Volver al inicio
           </button>
