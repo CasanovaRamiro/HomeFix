@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { TriangleAlert, User, MapPin } from 'lucide-react'
 
 export interface ApplicationFormData {
   message: string
@@ -11,7 +12,22 @@ export interface ApplicationFormData {
 }
 
 interface Props {
-  selected: { id: string; titulo: string; startDate?: string; endDate?: string; creatorName?: string; creatorSurname?: string; creatorId?: string }
+  selected: {
+    id: string
+    titulo: string
+    startDate?: string
+    endDate?: string
+    creatorName?: string
+    creatorSurname?: string
+    creatorId?: string
+    isEmergency?: boolean
+    emergencyExpiresAt?: string | null
+    descripcion?: string
+    clientName?: string
+    clientSurname?: string
+    address?: string
+    clientRating?: number
+  }
   subcontractMode?: boolean
   onEnviar: (data: ApplicationFormData) => void
   onClose: () => void
@@ -55,6 +71,16 @@ function formatDateRange(start: string, end: string): string {
   return `${s.toLocaleDateString('es-AR', opts)} — ${e.toLocaleDateString('es-AR', opts)}`
 }
 
+function calcTimeLeft(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return 'Vencido'
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  if (h > 0) return `${h}h ${m}m ${s}s restantes`
+  return `${m}m ${s}s restantes`
+}
+
 export default function ApplyModal({ selected, subcontractMode, onEnviar, onClose, enviando }: Props) {
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
@@ -64,6 +90,25 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
   const [chargesVisit, setChargesVisit] = useState(false)
   const [visitCost, setVisitCost] = useState('')
   const [formError, setFormError] = useState('')
+
+  const isEmergency = selected.isEmergency === true
+  const [timeLeft, setTimeLeft] = useState(() =>
+    isEmergency && selected.emergencyExpiresAt ? calcTimeLeft(selected.emergencyExpiresAt) : ''
+  )
+  const [expired, setExpired] = useState(false)
+
+  useEffect(() => {
+    if (!isEmergency || !selected.emergencyExpiresAt) return
+    const expiresAt = selected.emergencyExpiresAt
+    const tick = () => {
+      const t = calcTimeLeft(expiresAt)
+      setTimeLeft(t)
+      if (t === 'Vencido') setExpired(true)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [isEmergency, selected.emergencyExpiresAt])
 
   const datesInRange = useMemo(
     () => getDatesInRange(selected.startDate ?? '', selected.endDate ?? ''),
@@ -77,6 +122,26 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
   }
 
   const handleSubmit = () => {
+    if (selected.isEmergency) {
+      if (chargesVisit && (!visitCost || Number(visitCost) <= 0)) {
+        setFormError('Ingresá el monto de la visita.')
+        return
+      }
+      if (expired) {
+        setFormError('Esta urgencia ya venció.')
+        return
+      }
+      setFormError('')
+      onEnviar({
+        message: '',
+        availableDays: [new Date().toISOString().split('T')[0]],
+        availableTimeFrom: '00:00',
+        availableTimeTo: '23:59',
+        chargesVisit,
+        visitCost: chargesVisit ? Number(visitCost) : undefined,
+      })
+      return
+    }
     if (!subcontractMode) {
       if (availableDays.length === 0) {
         setFormError('Seleccioná al menos un día disponible.')
@@ -111,7 +176,7 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
         onClick={(e) => e.stopPropagation()}
         style={{ maxHeight: '90vh', overflowY: 'auto', minWidth: 440 }}
       >
-        <h2 id="modal-title">{subcontractMode ? 'Postularte a subcontrato' : 'Postularte a este trabajo'}</h2>
+        <h2 id="modal-title">{subcontractMode ? 'Postularte a subcontrato' : selected.isEmergency ? 'Postularte a esta urgencia' : 'Postularte a este trabajo'}</h2>
         <p className="trabajos-muted">{selected.titulo}</p>
 
         {subcontractMode ? (
@@ -166,6 +231,69 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
                 placeholder="Contá tu experiencia y por qué te sumás a este equipo..."
               />
             </label>
+          </>
+        ) : selected.isEmergency ? (
+          <>
+            {selected.emergencyExpiresAt && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: '#EF4444', padding: '8px 14px', borderRadius: 8,
+                color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 16,
+              }}>
+                <TriangleAlert size={16} />
+                <span>Urgente</span>
+                <span style={{ marginLeft: 'auto', color: '#FECACA', fontSize: 11, fontWeight: 500 }}>
+                  {timeLeft}
+                </span>
+              </div>
+            )}
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 8px' }}>
+              {selected.titulo}
+            </h3>
+            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 12px', lineHeight: 1.5 }}>
+              {selected.descripcion}
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569' }}>
+                <User size={12} color="#94A3B8" />
+                {selected.clientName} {selected.clientSurname}
+              </span>
+              {selected.address && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8' }}>
+                  <MapPin size={12} />
+                  {selected.address}
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <input
+                id="chargesVisit"
+                type="checkbox"
+                checked={chargesVisit}
+                onChange={(e) => setChargesVisit(e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#10B981' }}
+              />
+              <label htmlFor="chargesVisit" style={{ fontSize: 14, fontWeight: 500, color: '#374151', cursor: 'pointer' }}>
+                ¿Cobrás la visita?
+              </label>
+            </div>
+
+            {chargesVisit && (
+              <label className="modal-label">
+                Monto de la visita ($)
+                <input
+                  type="number"
+                  min={1}
+                  value={visitCost}
+                  onChange={(e) => setVisitCost(e.target.value)}
+                  placeholder="Ej: 2500"
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
+                />
+              </label>
+            )}
           </>
         ) : (
           <>
@@ -270,8 +398,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
           <button type="button" className="btn-outline" onClick={onClose} disabled={enviando}>
             Cancelar
           </button>
-          <button type="button" className="btn-accent" onClick={handleSubmit} disabled={enviando}>
-            {enviando ? 'Enviando...' : subcontractMode ? 'Enviar postulación a subcontrato' : 'Enviar postulacion'}
+          <button type="button" className="btn-accent" onClick={handleSubmit} disabled={enviando} style={selected.isEmergency ? { background: '#EF4444' } : undefined}>
+            {enviando ? 'Enviando...' : subcontractMode ? 'Enviar postulación a subcontrato' : selected.isEmergency ? 'Postularse' : 'Enviar postulacion'}
           </button>
         </div>
       </div>
