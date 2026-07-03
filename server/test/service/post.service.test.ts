@@ -1245,6 +1245,81 @@ describe('post.service - createPost emergency', () => {
   })
 })
 
+describe('post.service - createEmergencyPost', () => {
+  const emergencyInput: CreatePostInput = {
+    userId: 'uuid-user-1',
+    title: 'Caño roto urgente',
+    description: 'Se inundó el baño',
+    address: 'Calle 123',
+    categoryId: 'uuid-category-1',
+    isEmergency: true,
+  }
+
+  const createdEmergencyPost: DomainPost = {
+    id: 'uuid-emergency-1',
+    userId: 'uuid-user-1',
+    title: 'Caño roto urgente',
+    description: 'Se inundó el baño',
+    address: 'Calle 123',
+    startDate: new Date(),
+    endDate: new Date(),
+    status: 'Active',
+    createdAt: new Date(),
+    images: [],
+    latitude: null,
+    longitude: null,
+    categories: [],
+    user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
+  }
+
+  it('creates emergency post with isEmergency: true and allowsSubcontracting: false', async () => {
+    vi.mocked(createPost).mockResolvedValue(createdEmergencyPost)
+    vi.mocked(broadcastEmergency).mockResolvedValue(undefined)
+
+    const result = await postService.createEmergencyPost(emergencyInput)
+
+    expect(createPost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isEmergency: true,
+        allowsSubcontracting: false,
+        emergencyExpiresAt: expect.any(Date),
+      })
+    )
+    expect(broadcastEmergency).toHaveBeenCalled()
+    expect(result.id).toBe('uuid-emergency-1')
+  })
+
+  it('broadcasts emergency to workers', async () => {
+    vi.mocked(createPost).mockResolvedValue(createdEmergencyPost)
+    vi.mocked(broadcastEmergency).mockResolvedValue(undefined)
+
+    await postService.createEmergencyPost(emergencyInput)
+
+    expect(broadcastEmergency).toHaveBeenCalledWith(
+      expect.anything(),
+      createdEmergencyPost.id,
+      emergencyInput.title,
+      emergencyInput.description,
+      emergencyInput.categoryId,
+    )
+  })
+
+  it('does not fail when broadcastEmergency throws', async () => {
+    vi.mocked(createPost).mockResolvedValue(createdEmergencyPost)
+    vi.mocked(broadcastEmergency).mockRejectedValue(new Error('Telegram down'))
+
+    const result = await postService.createEmergencyPost(emergencyInput)
+
+    expect(result.id).toBe('uuid-emergency-1')
+  })
+
+  it('throws validation error when title is empty', async () => {
+    await expect(
+      postService.createEmergencyPost({ ...emergencyInput, title: '' })
+    ).rejects.toThrow('title is required')
+  })
+})
+
 describe('post.service - validatePostInput', () => {
   it('skips date validation when isEmergency is true', () => {
     expect(() =>

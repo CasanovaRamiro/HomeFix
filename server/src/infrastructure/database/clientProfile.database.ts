@@ -15,6 +15,9 @@ const clientProfileFields = {
   role: true,
   photo: true,
   createdAt: true,
+  address: {
+    select: { street: true, number: true, city: true, state: true },
+  },
 } satisfies Prisma.UserSelect
 
 export type ClientProfileResult = Prisma.UserGetPayload<{ select: typeof clientProfileFields }>

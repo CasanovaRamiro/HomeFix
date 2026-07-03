@@ -103,6 +103,24 @@ describe("createPost", () => {
     const post = await createPost(createValidPost());
     expect(post.status).toBe("Active");
   });
+
+  it("should create an emergency post with type 'emergency' when isEmergency is true", async () => {
+    const post = await createPost({ ...createValidPost(), isEmergency: true });
+    expect(post.type).toBe("emergency");
+    expect(post.isEmergency).toBe(true);
+  });
+
+  it("should set emergencyExpiresAt for emergency posts", async () => {
+    const post = await createPost({ ...createValidPost(), isEmergency: true });
+    expect(post.emergencyExpiresAt).toBeInstanceOf(Date);
+    expect(post.emergencyExpiresAt!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("should not create emergency post when isEmergency is false", async () => {
+    const post = await createPost(createValidPost());
+    expect(post.type).toBe("post");
+    expect(post.isEmergency).not.toBe(true);
+  });
 });
 
 describe("findAvailablePosts", () => {
@@ -360,8 +378,7 @@ describe("findEmergencyPosts", () => {
         startDate: new Date("2026-06-01"),
         endDate: new Date("2026-06-15"),
         status: "Active",
-        type: "post",
-        isEmergency: true,
+        type: "emergency",
         emergencyExpiresAt: futureExpiry,
         categories: { create: { categoryId } },
       },
@@ -369,7 +386,7 @@ describe("findEmergencyPosts", () => {
 
     const posts = await findEmergencyPosts();
     expect(posts.length).toBeGreaterThanOrEqual(1);
-    expect(posts.every((p) => p.isEmergency)).toBe(true);
+    expect(posts.every((p) => p.type === "emergency")).toBe(true);
   });
 
   it("should return empty array when no emergency posts exist", async () => {
@@ -388,8 +405,7 @@ describe("findEmergencyPosts", () => {
         startDate: new Date("2026-06-01"),
         endDate: new Date("2026-06-15"),
         status: "Active",
-        type: "post",
-        isEmergency: true,
+        type: "emergency",
         emergencyExpiresAt: futureExpiry,
         categories: { create: { categoryId } },
       },
@@ -403,8 +419,7 @@ describe("findEmergencyPosts", () => {
         startDate: new Date("2026-06-01"),
         endDate: new Date("2026-06-15"),
         status: "Active",
-        type: "post",
-        isEmergency: true,
+        type: "emergency",
         emergencyExpiresAt: futureExpiry,
         categories: { create: { categoryId: otherCat.id } },
       },
@@ -412,6 +427,27 @@ describe("findEmergencyPosts", () => {
 
     const posts = await findEmergencyPosts("Test Category");
     expect(posts.every((p) => p.categories.some((c) => c.name === "Test Category"))).toBe(true);
+  });
+
+  it("should not return posts with type 'post' even if isEmergency is true", async () => {
+    await prisma.post.create({
+      data: {
+        userId,
+        title: "Legacy Emergency",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "post",
+        isEmergency: true,
+        emergencyExpiresAt: futureExpiry,
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const posts = await findEmergencyPosts();
+    expect(posts).toEqual([]);
   });
 
   it("should not return non-emergency posts", async () => {

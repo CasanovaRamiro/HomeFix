@@ -1,3 +1,10 @@
+export interface Address {
+  street: string
+  number: string
+  city: string
+  state: string
+}
+
 export interface DomainClientProfile {
   id: string
   name: string
@@ -11,6 +18,7 @@ export interface DomainClientProfile {
   averageRating: number
   reviewCount: number
   completedJobs: number
+  address: Address | null
 }
 
 export interface UpdateClientProfileInput {

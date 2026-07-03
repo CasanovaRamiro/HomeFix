@@ -107,7 +107,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
   const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
   return _createPostRecord({
     userId: data.userId,
-    type: PostType.Post,
+    type: data.isEmergency ? PostType.Emergency : PostType.Post,
     parentPostId: null,
     subcontractGroupId: null,
     title: data.title,
@@ -118,7 +118,9 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     latitude: data.latitude ?? null,
     longitude: data.longitude ?? null,
     isEmergency: data.isEmergency ?? false,
-    emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    emergencyExpiresAt: data.isEmergency
+      ? new Date(Date.now() + EMERGENCY_DURATION_MS)
+      : (data.emergencyExpiresAt ?? null),
     allowsSubcontracting: data.allowsSubcontracting ?? true,
     images: data.images,
     categories: [{ categoryId: data.categoryId }],
@@ -162,7 +164,7 @@ export const createSubPost = async (data: {
 
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
-  type: PostType.Post,
+  type: { in: [PostType.Post, PostType.Emergency] },
   ...(category?.trim()
     ? {
         categories: {
@@ -248,9 +250,20 @@ export const findEmergencyPosts = async (category?: string): Promise<DomainPost[
   await deleteExpiredEmergencyPosts()
   const raw = await prisma.post.findMany({
     where: {
-      ...availablePostWhere(category),
-      isEmergency: true,
+      status: 'Active',
+      type: PostType.Emergency,
       emergencyExpiresAt: { gt: new Date() },
+      ...(category?.trim()
+        ? {
+            categories: {
+              some: {
+                category: {
+                  name: category.trim(),
+                },
+              },
+            },
+          }
+        : {}),
     },
     orderBy: { createdAt: 'desc' },
     select: postFields,
@@ -342,7 +355,9 @@ export const updatePost = async (id: string, data: UpdatePostInput): Promise<Dom
         endDate,
         address: data.address,
         isEmergency: data.isEmergency ?? undefined,
-        emergencyExpiresAt: data.emergencyExpiresAt ?? null,
+    emergencyExpiresAt: data.isEmergency
+      ? new Date(Date.now() + EMERGENCY_DURATION_MS)
+      : (data.emergencyExpiresAt ?? null),
       },
       select: postFields,
     })
@@ -376,7 +391,7 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
-      AND p.type = 'Post'
+      AND (p.type = 'Post' OR p.type = 'Emergency')
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}

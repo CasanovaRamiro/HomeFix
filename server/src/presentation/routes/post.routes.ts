@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   createPost,
+  createEmergencyPost,
   createSubContract,
   getUserPosts,
   getPostById,
@@ -87,6 +88,43 @@ router.get('/emergency', async (req, res, next) => {
     const category = typeof req.query.category === 'string' ? req.query.category : undefined
     const result = await listEmergencyPosts(category)
     res.json(result.map(toPostDTO))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.post('/emergency/create', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string } | undefined
+    if (!claims?.sub) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+    const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Client) {
+      res.status(403).json({ error: 'Client access required' })
+      return
+    }
+
+    const { title, description, categoryId, address, latitude, longitude } = req.body
+    if (!title || !description || !categoryId || !address) {
+      res.status(400).json({ error: 'Todos los campos son obligatorios' })
+      return
+    }
+
+    const result = await createEmergencyPost({
+      userId: user.id,
+      title,
+      description,
+      categoryId,
+      address,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+    })
+
+    res.status(201).json(toPostDTO(result))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
