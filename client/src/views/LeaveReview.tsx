@@ -36,7 +36,7 @@ export default function LeaveReview() {
   const { trabajador } = target
   const { submitting, submitted, error, submit } = useLeaveReview()
 
-  const [workerData, setWorkerData] = useState<{ name: string; category: string } | null>(null)
+  const [workerData, setWorkerData] = useState<{ name: string; category: string; photo: string | null } | null>(null)
 
   useEffect(() => {
     if (!trabajador.id) return
@@ -45,6 +45,7 @@ export default function LeaveReview() {
         setWorkerData({
           name: w.name,
           category: (w.categories[0] as { name?: string } | undefined)?.name ?? '',
+          photo: w.photo,
         })
       })
       .catch(() => {})
@@ -52,6 +53,7 @@ export default function LeaveReview() {
 
   const workerNombre = workerData?.name ?? trabajador.nombre
   const workerCategoria = workerData?.category ?? trabajador.categoria
+  const workerPhoto = workerData?.photo ?? trabajador.imagen ?? null
 
   const [rating, setRating] = useState(0)
   const [comentario, setComentario] = useState('')
@@ -133,9 +135,9 @@ export default function LeaveReview() {
           {/* Resumen del trabajador */}
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-4">
-              {trabajador.imagen && !imgError ? (
+              {workerPhoto && !imgError ? (
                 <img
-                  src={trabajador.imagen}
+                  src={workerPhoto}
                   alt={workerNombre}
                   onError={() => setImgError(true)}
                   className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover object-top ring-1 ring-black/5"
