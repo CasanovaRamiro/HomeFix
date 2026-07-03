@@ -164,7 +164,7 @@ export const createSubPost = async (data: {
 
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
-  type: PostType.Post,
+  type: { in: [PostType.Post, PostType.Emergency] },
   ...(category?.trim()
     ? {
         categories: {
@@ -391,7 +391,7 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
-      AND p.type = 'Post'
+      AND (p.type = 'Post' OR p.type = 'Emergency')
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}
