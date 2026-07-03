@@ -612,3 +612,149 @@ describe('PATCH /applications/:applicationId/dismiss', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('POST /applications/:applicationId/start-token', () => {
+  const createAcceptedTokenApp = () =>
+    createActivePost().then((post) =>
+      prisma.application.create({
+        data: { workerId, postId: post.id, status: 'Accepted', requiresStartToken: true },
+      }),
+    )
+
+  it('el worker genera un token de 4 dígitos y lo persiste', async () => {
+    const application = await createAcceptedTokenApp()
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/start-token`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.token).toMatch(/^\d{4}$/)
+    expect(typeof res.body.expiresAt).toBe('string')
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.startToken).toBe(res.body.token)
+    expect(saved?.startTokenExpiresAt).not.toBeNull()
+  })
+
+  it('retorna 403 si no es el worker asignado', async () => {
+    const application = await createAcceptedTokenApp()
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/start-token`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si la contratación no requiere token', async () => {
+    const post = await createActivePost()
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Accepted', requiresStartToken: false },
+    })
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/start-token`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 404 si la aplicación no existe', async () => {
+    const res = await request(app)
+      .post('/applications/id-inexistente/start-token')
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 401 si no se envía token de auth', async () => {
+    const application = await createAcceptedTokenApp()
+
+    const res = await request(app).post(`/applications/${application.id}/start-token`)
+
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /applications/:applicationId/validate-start-token', () => {
+  const createAppWithToken = (token = '1234', overrides: Record<string, unknown> = {}) =>
+    createActivePost().then((post) =>
+      prisma.application.create({
+        data: {
+          workerId,
+          postId: post.id,
+          status: 'Accepted',
+          requiresStartToken: true,
+          startToken: token,
+          startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+          ...overrides,
+        },
+      }),
+    )
+
+  it('el cliente confirma el inicio con el código correcto y limpia el token', async () => {
+    const application = await createAppWithToken('1234')
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/validate-start-token`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ token: '1234' })
+
+    expect(res.status).toBe(200)
+    expect(typeof res.body.validatedAt).toBe('string')
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.tokenValidatedAt).not.toBeNull()
+    expect(saved?.startToken).toBeNull()
+  })
+
+  it('retorna 400 y attemptsLeft con un código incorrecto e incrementa los intentos', async () => {
+    const application = await createAppWithToken('1234')
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/validate-start-token`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ token: '9999' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.attemptsLeft).toBe(4)
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.startTokenAttempts).toBe(1)
+    expect(saved?.tokenValidatedAt).toBeNull()
+  })
+
+  it('retorna 400 si el código no tiene 4 dígitos', async () => {
+    const application = await createAppWithToken('1234')
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/validate-start-token`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ token: '12' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 403 si no es el dueño del post', async () => {
+    const application = await createAppWithToken('1234')
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/validate-start-token`)
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ token: '1234' })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si el token expiró', async () => {
+    const application = await createAppWithToken('1234', { startTokenExpiresAt: new Date(Date.now() - 1000) })
+
+    const res = await request(app)
+      .post(`/applications/${application.id}/validate-start-token`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ token: '1234' })
+
+    expect(res.status).toBe(400)
+  })
+})

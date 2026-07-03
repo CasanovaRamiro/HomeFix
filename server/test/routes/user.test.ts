@@ -167,3 +167,44 @@ describe('GET /users/:id/rating', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('PATCH /users/:id/start-token-setting', () => {
+  it('actualiza la preferencia del propio usuario y la persiste', async () => {
+    const res = await request(app)
+      .patch(`/users/${clientId}/start-token-setting`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ enabled: true })
+
+    expect(res.status).toBe(200)
+    expect(res.body.requiresStartToken).toBe(true)
+
+    const saved = await prisma.user.findUnique({ where: { id: clientId } })
+    expect(saved?.requiresStartToken).toBe(true)
+  })
+
+  it('retorna 403 si se intenta modificar la preferencia de otro usuario', async () => {
+    const res = await request(app)
+      .patch(`/users/${workerId}/start-token-setting`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ enabled: true })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 400 si enabled no es booleano', async () => {
+    const res = await request(app)
+      .patch(`/users/${clientId}/start-token-setting`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ enabled: 'yes' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 401 sin token', async () => {
+    const res = await request(app)
+      .patch(`/users/${clientId}/start-token-setting`)
+      .send({ enabled: true })
+
+    expect(res.status).toBe(401)
+  })
+})

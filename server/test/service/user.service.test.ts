@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications } from '../../src/infrastructure/database/user.database.js'
-import { listUsers, getUserReviews, getUserRating, getClientRating, getWorkerRating, setEmergencyNotifications } from '../../src/domain/services/user.service.js'
+import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications, updateRequiresStartToken } from '../../src/infrastructure/database/user.database.js'
+import { listUsers, getUserReviews, getUserRating, getClientRating, getWorkerRating, setEmergencyNotifications, setRequiresStartToken } from '../../src/domain/services/user.service.js'
 import type { DomainClientReview } from '../../src/domain/types/review.types.js'
 import type { DomainWorkerReview } from '../../src/domain/types/worker.types.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
@@ -12,6 +12,7 @@ vi.mock('../../src/infrastructure/database/user.database.js', () => ({
   getWorkerReviewAggregate: vi.fn(),
   getClientReviewAggregate: vi.fn(),
   updateEmergencyNotifications: vi.fn(),
+  updateRequiresStartToken: vi.fn(),
 }))
 
 beforeEach(() => vi.clearAllMocks())
@@ -175,5 +176,15 @@ describe('setEmergencyNotifications', () => {
     await setEmergencyNotifications(userId, true)
 
     expect(updateEmergencyNotifications).toHaveBeenCalledWith(userId, true)
+  })
+})
+
+describe('setRequiresStartToken', () => {
+  it('delegates to updateRequiresStartToken', async () => {
+    vi.mocked(updateRequiresStartToken).mockResolvedValue(undefined as never)
+
+    await setRequiresStartToken(userId, true)
+
+    expect(updateRequiresStartToken).toHaveBeenCalledWith(userId, true)
   })
 })
