@@ -263,6 +263,7 @@ export default function PostDetail() {
                     postStatus={post.status}
                     postTitle={post.title}
                     hireLocked={anyHired}
+                    isEmergency={post.isEmergency}
                     onHire={refresh}
                     onTokenValidated={refresh}
                     onDismiss={() => navigate('/review', {

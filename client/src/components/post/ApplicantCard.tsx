@@ -40,6 +40,7 @@ interface ApplicantCardProps {
   postTitle: string
   /** Disables the hire button once someone else is already hired. */
   hireLocked?: boolean
+  isEmergency?: boolean
   onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
@@ -236,7 +237,7 @@ function StartTokenValidateBox({ applicationId, onValidated }: { applicationId: 
 }
 
 export default function ApplicantCard({
-  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, onHire, onDismiss, onReview, onTokenValidated,
+  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, isEmergency, onHire, onDismiss, onReview, onTokenValidated,
 }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
@@ -262,6 +263,16 @@ export default function ApplicantCard({
         new Promise<void>((resolve) => setTimeout(resolve, 2000)),
       ])
       setHireModalOpen(false)
+      onHire?.()
+    } catch {
+      setLoading(false)
+    }
+  }
+
+  const handleEmergencyHire = async () => {
+    setLoading(true)
+    try {
+      await acceptApplication(applicationId, undefined)
       onHire?.()
     } catch {
       setLoading(false)
@@ -370,20 +381,22 @@ export default function ApplicantCard({
           </>
         ) : isOut ? null : (
           <>
-            <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire} onClick={() => setHireModalOpen(true)}>
-              <UserCheck size={16} />Contratar
+            <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire || loading} onClick={isEmergency ? handleEmergencyHire : () => setHireModalOpen(true)}>
+              {loading ? 'Contratando...' : <><UserCheck size={16} />Contratar</>}
             </button>
-            <HireModal
-              open={hireModalOpen}
-              applicantName={applicant.name}
-              postTitle={postTitle}
-              availableDays={applicant.availableDays}
-              timeFrom={applicant.availableTimeFrom}
-              timeTo={applicant.availableTimeTo}
-              onConfirm={handleConfirmHire}
-              onCancel={() => setHireModalOpen(false)}
-              loading={loading}
-            />
+            {!isEmergency && (
+              <HireModal
+                open={hireModalOpen}
+                applicantName={applicant.name}
+                postTitle={postTitle}
+                availableDays={applicant.availableDays}
+                timeFrom={applicant.availableTimeFrom}
+                timeTo={applicant.availableTimeTo}
+                onConfirm={handleConfirmHire}
+                onCancel={() => setHireModalOpen(false)}
+                loading={loading}
+              />
+            )}
           </>
         )}
       </div>
