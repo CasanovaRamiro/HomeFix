@@ -42,7 +42,7 @@ importers:
         specifier: ~4.8.3
         version: 4.8.3
       swagger-ui-express:
-        specifier: ^5.0.1
+        specifier: ~5.0.1
         version: 5.0.1(express@5.2.1)
       telegraf:
         specifier: ~4.16.3
@@ -70,7 +70,7 @@ importers:
         specifier: ~6.0.2
         version: 6.0.3
       '@types/swagger-ui-express':
-        specifier: ^4.1.8
+        specifier: ~4.1.8
         version: 4.1.8
       '@vitest/coverage-v8':
         specifier: ~4.1.4
