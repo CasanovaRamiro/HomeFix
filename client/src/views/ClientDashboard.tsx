@@ -167,7 +167,13 @@ export default function ClientDashboard() {
 
             {/* Columna derecha — Emergencia + Telegram */}
             <div className="flex flex-col gap-4">
-              <EmergencyCard onOpen={() => setShowEmergencyModal(true)} />
+              <section>
+                <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <AlertTriangle size={20} className="text-red-500" />
+                  Emergencia
+                </h2>
+                <EmergencyCard onOpen={() => setShowEmergencyModal(true)} />
+              </section>
               <section>
                 <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-slate-900">
                   <Send size={20} className="text-blue-500" />
