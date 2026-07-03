@@ -101,6 +101,18 @@ export default function EmergencyModal({ userId, onClose, onSuccess }: Props): J
         )}
 
         <div style={{ marginBottom: '20px' }}>
+          <label style={labelStyle}>Título</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+            placeholder="Ej: Se inundó el baño"
+            required
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>Categoría</label>
           <select
             value={form.categoryId}
@@ -116,18 +128,6 @@ export default function EmergencyModal({ userId, onClose, onSuccess }: Props): J
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label style={labelStyle}>Título</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-            placeholder="Ej: Se inundó el baño"
-            required
-            style={inputStyle}
-          />
         </div>
 
         <div style={{ marginBottom: '20px' }}>
