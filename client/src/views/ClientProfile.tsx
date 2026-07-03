@@ -6,6 +6,7 @@ import {
 } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
+import StartTokenToggle from '../components/client/StartTokenToggle'
 import {
   ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
   Briefcase, Star, CheckCircle, Edit3,
@@ -381,6 +382,11 @@ export default function ClientProfile() {
 
           {/* Right column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Start-token setting */}
+            {!isEditing && (
+              <StartTokenToggle clientId={client.id} initialEnabled={client.requiresStartToken ?? false} />
+            )}
+
             {/* Stats card */}
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Estadísticas</h3>

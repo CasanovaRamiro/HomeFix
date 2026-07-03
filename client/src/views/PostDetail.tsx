@@ -256,6 +256,7 @@ export default function PostDetail() {
                       availableDays: a.availableDays, availableTimeFrom: a.availableTimeFrom, availableTimeTo: a.availableTimeTo,
                       chargesVisit: a.chargesVisit, visitCost: a.visitCost, phone: a.phone,
                       scheduledDate: a.scheduledDate, hasReview: a.hasReview,
+                      requiresStartToken: a.requiresStartToken, tokenValidatedAt: a.tokenValidatedAt,
                     }}
                     applicationId={a.applicationId}
                     applicationStatus={a.status}
@@ -263,6 +264,7 @@ export default function PostDetail() {
                     postTitle={post.title}
                     hireLocked={anyHired}
                     onHire={refresh}
+                    onTokenValidated={refresh}
                     onDismiss={() => navigate('/review', {
                       state: {
                         postId: post.id, applicationId: a.applicationId, titulo: post.title, fecha: post.endDate, ubicacion: post.address,

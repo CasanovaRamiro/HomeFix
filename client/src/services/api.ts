@@ -90,6 +90,7 @@ export interface ClientProfile {
   email?: string
   phone?: string | null
   address?: { street: string; number: string; city: string; state: string } | null
+  requiresStartToken?: boolean
 }
 
 export interface ClientProfileUpdateData {
@@ -176,6 +177,9 @@ export const createEmergencyPost = (data: {
 
 export const updateUserEmergencyNotifications = (id: string, enabled: boolean) =>
   api.patch(`/users/${id}/emergencies`, { enabled })
+
+export const updateUserRequiresStartToken = (id: string, enabled: boolean) =>
+  api.patch(`/users/${id}/start-token-setting`, { enabled })
 
 export const telegramLink = (): Promise<{ code: string; deepLink: string; message: string }> =>
   api.post('/telegram/link').then((r) => r.data)

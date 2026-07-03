@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Star, BadgeCheck, Briefcase, Clock, Banknote, Check, User,
-  MessageCircle, UserX, UserCheck, CalendarCheck,
+  MessageCircle, UserX, UserCheck, CalendarCheck, KeyRound, CheckCircle,
 } from 'lucide-react'
 import ConfirmModal from '../ui/ConfirmModal'
-import { acceptApplication, dismissWorker } from '../../services/applications'
+import { acceptApplication, dismissWorker, validateStartToken } from '../../services/applications'
 import { formatWhatsAppNumber } from '../../services/formatWhatsApp'
 
 interface Applicant {
@@ -28,6 +28,8 @@ interface Applicant {
   hasReview: boolean
   /** Optional — KYC-verified worker. Falls back to false until the API exposes it. */
   verified?: boolean
+  requiresStartToken?: boolean
+  tokenValidatedAt?: string | null
 }
 
 interface ApplicantCardProps {
@@ -41,6 +43,7 @@ interface ApplicantCardProps {
   onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
+  onTokenValidated?: () => void | Promise<void>
 }
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -166,8 +169,74 @@ function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, ti
   )
 }
 
+function StartTokenValidateBox({ applicationId, onValidated }: { applicationId: string; onValidated?: () => void | Promise<void> }) {
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleValidate = async () => {
+    if (loading || !/^\d{4}$/.test(code)) {
+      setError('Ingresá el código de 4 dígitos.')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      await validateStartToken(applicationId, code)
+      await onValidated?.()
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string; attemptsLeft?: number } } }
+      const data = axiosErr.response?.data
+      const left = data?.attemptsLeft
+      setError(
+        left === 0
+          ? 'Demasiados intentos. Pedile al trabajador que genere un nuevo código.'
+          : `${data?.error ?? 'No se pudo validar el código.'}${typeof left === 'number' ? ` (${left} intentos restantes)` : ''}`,
+      )
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '14px 16px', marginTop: 12, width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <KeyRound size={16} color="#0F172A" />
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Confirmar inicio del trabajo</span>
+      </div>
+      <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 10px', lineHeight: 1.5 }}>
+        Pedile al trabajador el código de 4 dígitos y validalo para confirmar que el trabajo comenzó.
+      </p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          value={code}
+          onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setError('') }}
+          inputMode="numeric"
+          placeholder="0000"
+          style={{
+            flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid #CBD5E1',
+            fontSize: 18, fontWeight: 700, letterSpacing: '0.25em', textAlign: 'center',
+            color: '#0F172A', outline: 'none', boxSizing: 'border-box', fontVariantNumeric: 'tabular-nums',
+          }}
+        />
+        <button
+          onClick={handleValidate}
+          disabled={loading}
+          style={{
+            padding: '10px 18px', borderRadius: 10, border: 'none', background: '#10B981',
+            color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {loading ? 'Validando...' : 'Validar'}
+        </button>
+      </div>
+      {error && <p style={{ fontSize: 12, color: '#DC2626', margin: '8px 0 0' }}>{error}</p>}
+    </div>
+  )
+}
+
 export default function ApplicantCard({
-  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, onHire, onDismiss, onReview,
+  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, onHire, onDismiss, onReview, onTokenValidated,
 }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
@@ -181,6 +250,9 @@ export default function ApplicantCard({
   const isOut = applicationStatus === 'Dismissed'
   const canHire = postStatus === 'Active' && applicationStatus === 'Pending' && !hireLocked
   const canReview = (postStatus === 'Completed' || postStatus === 'Cancelled') && isHired && onReview && !applicant.hasReview
+  const tokenActive = postStatus !== 'Completed' && postStatus !== 'Cancelled'
+  const showTokenValidate = isHired && !!applicant.requiresStartToken && !applicant.tokenValidatedAt && tokenActive
+  const tokenConfirmed = isHired && !!applicant.requiresStartToken && !!applicant.tokenValidatedAt
 
   const handleConfirmHire = async (scheduledDate: string) => {
     setLoading(true)
@@ -315,6 +387,16 @@ export default function ApplicantCard({
           </>
         )}
       </div>
+
+      {showTokenValidate && (
+        <StartTokenValidateBox applicationId={applicationId} onValidated={onTokenValidated} />
+      )}
+      {tokenConfirmed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, color: '#059669', fontSize: 13, fontWeight: 700 }}>
+          <CheckCircle size={16} />
+          Inicio confirmado el {new Date(applicant.tokenValidatedAt!).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
     </div>
   )
 }

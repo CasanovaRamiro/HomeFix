@@ -10,6 +10,7 @@ import { ApplicationStatus } from '../types/application'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
 import { fetchMySubcontractManager } from '../services/posts'
 import ReviewStarRating from '../components/review/ReviewStarRating'
+import StartTokenWorkerCard from '../components/post/StartTokenWorkerCard'
 import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,6 +30,10 @@ interface MyApplication {
   scheduledDate: string | null
   serviceDate: string | null
   hasReview: boolean
+  requiresStartToken: boolean
+  startToken: string | null
+  startTokenExpiresAt: string | null
+  tokenValidatedAt: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -434,6 +439,18 @@ export default function WorkerPostDetail() {
 
             {/* Postulación */}
             {application && <ApplicationCard app={application} />}
+
+            {/* Código de inicio (solo contratos normales que lo requieren) */}
+            {application?.status === ApplicationStatus.Accepted &&
+              application.requiresStartToken &&
+              post.type === 'post' && (
+                <StartTokenWorkerCard
+                  applicationId={application.id}
+                  initialToken={application.startToken}
+                  initialExpiresAt={application.startTokenExpiresAt}
+                  validatedAt={application.tokenValidatedAt}
+                />
+              )}
             {!application && (
               <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 22px' }}>
                 <p style={{ fontSize: 14, color: '#64748B', margin: 0, fontWeight: 500 }}>No tenés una postulación activa en esta publicación.</p>
