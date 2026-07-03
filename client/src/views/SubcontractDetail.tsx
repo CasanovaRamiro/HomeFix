@@ -295,6 +295,7 @@ export default function SubcontractDetail() {
                     id: a.workerId,
                     nombre: a.name,
                     categoria: a.category ?? '',
+                    imagen: a.photo ?? undefined,
                     verificado: false,
                   },
                 }

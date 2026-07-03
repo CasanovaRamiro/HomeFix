@@ -92,7 +92,7 @@ export default function PostDetail() {
       navigate('/review', {
         state: {
           postId: post?.id, titulo: post?.title, fecha: post?.endDate, ubicacion: post?.address,
-          trabajador: { id: accepted?.workerId ?? '', nombre: accepted?.name ?? '', categoria: accepted?.category ?? '', verificado: false },
+          trabajador: { id: accepted?.workerId ?? '', nombre: accepted?.name ?? '', categoria: accepted?.category ?? '', imagen: accepted?.photo ?? undefined, verificado: false },
         },
       })
     } catch { /* error handling */ }
@@ -115,7 +115,7 @@ export default function PostDetail() {
         navigate('/review', {
           state: {
             postId: post.id, titulo: post.title, fecha: post.endDate, ubicacion: post.address,
-            trabajador: { id: accepted.workerId ?? '', nombre: accepted.name ?? '', categoria: accepted.category ?? '', verificado: false },
+            trabajador: { id: accepted.workerId ?? '', nombre: accepted.name ?? '', categoria: accepted.category ?? '', imagen: accepted.photo ?? undefined, verificado: false },
           },
         })
         return
