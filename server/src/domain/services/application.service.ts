@@ -20,7 +20,7 @@ import { notifyUser } from './notification.service.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { PostType } from '../types/postType.js'
-import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../types/application.types.js'
+import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication, DomainStartToken, DomainStartTokenValidation } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
 let _provider: NotificationProvider
@@ -236,7 +236,7 @@ const assertTokenEligible = (application: NonNullable<Awaited<ReturnType<typeof 
     throw Object.assign(new Error('El inicio del trabajo ya fue confirmado'), { status: 400 })
 }
 
-export const generateStartToken = async (workerId: string, applicationId: string) => {
+export const generateStartToken = async (workerId: string, applicationId: string): Promise<DomainStartToken> => {
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.workerId !== workerId) throw Object.assign(new Error('Forbidden'), { status: 403 })
@@ -246,10 +246,14 @@ export const generateStartToken = async (workerId: string, applicationId: string
   const expiresAt = new Date(Date.now() + START_TOKEN_TTL_MS)
   await setStartToken(applicationId, token, expiresAt)
 
-  return { token, expiresAt: expiresAt.toISOString() }
+  return { token, expiresAt }
 }
 
-export const validateStartToken = async (clientId: string, applicationId: string, token: string) => {
+export const validateStartToken = async (
+  clientId: string,
+  applicationId: string,
+  token: string,
+): Promise<DomainStartTokenValidation> => {
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
@@ -267,7 +271,7 @@ export const validateStartToken = async (clientId: string, applicationId: string
     const { startTokenAttempts } = await incrementStartTokenAttempts(applicationId)
     const attemptsLeft = Math.max(0, START_TOKEN_MAX_ATTEMPTS - startTokenAttempts)
     if (attemptsLeft === 0) await clearStartToken(applicationId)
-    return { valid: false as const, attemptsLeft }
+    return { valid: false, attemptsLeft }
   }
 
   const validatedAt = new Date()
@@ -277,7 +281,7 @@ export const validateStartToken = async (clientId: string, applicationId: string
     postTitle: application.post.title,
   })
 
-  return { valid: true as const, validatedAt: validatedAt.toISOString() }
+  return { valid: true, validatedAt }
 }
 
 export const getPostApplications = (clientId: string, postId: string): Promise<DomainPostApplication[]> =>

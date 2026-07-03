@@ -13,7 +13,7 @@ import {
   generateStartToken,
   validateStartToken,
 } from '../../domain/services/application.service.js'
-import { toMyApplicationDTO } from '../transformers/application.transformer.js'
+import { toMyApplicationDTO, toStartTokenDTO, toStartTokenValidatedDTO } from '../transformers/application.transformer.js'
 
 const router = Router()
 
@@ -166,7 +166,7 @@ router.post('/:applicationId/start-token', async (req, res, next) => {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
     const result = await generateStartToken(user.id, req.params.applicationId)
-    res.json(result)
+    res.json(toStartTokenDTO(result))
   } catch (err) {
     next(err)
   }
@@ -187,7 +187,7 @@ router.post('/:applicationId/validate-start-token', async (req, res, next) => {
       res.status(400).json({ error: 'Código incorrecto', attemptsLeft: result.attemptsLeft })
       return
     }
-    res.json({ validatedAt: result.validatedAt })
+    res.json(toStartTokenValidatedDTO(result.validatedAt))
   } catch (err) {
     next(err)
   }

@@ -61,3 +61,12 @@ export interface DomainPostApplication {
   requiresStartToken: boolean
   tokenValidatedAt: Date | null
 }
+
+export interface DomainStartToken {
+  token: string
+  expiresAt: Date
+}
+
+export type DomainStartTokenValidation =
+  | { valid: true; validatedAt: Date }
+  | { valid: false; attemptsLeft: number }

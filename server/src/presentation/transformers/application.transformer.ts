@@ -1,4 +1,5 @@
-import type { DomainMyApplication } from '../../domain/types/application.types.js'
+import type { DomainMyApplication, DomainStartToken } from '../../domain/types/application.types.js'
+import type { StartTokenDTO, StartTokenValidatedDTO } from '../types/application.types.js'
 
 export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   id: app.id,
@@ -26,4 +27,13 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   startToken: app.startToken,
   startTokenExpiresAt: app.startTokenExpiresAt ? app.startTokenExpiresAt.toISOString() : null,
   tokenValidatedAt: app.tokenValidatedAt ? app.tokenValidatedAt.toISOString() : null,
+})
+
+export const toStartTokenDTO = (t: DomainStartToken): StartTokenDTO => ({
+  token: t.token,
+  expiresAt: t.expiresAt.toISOString(),
+})
+
+export const toStartTokenValidatedDTO = (validatedAt: Date): StartTokenValidatedDTO => ({
+  validatedAt: validatedAt.toISOString(),
 })
