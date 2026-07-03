@@ -12,6 +12,10 @@ export interface PrismaApplicationWithPost {
   chargesVisit: boolean
   visitCost: number | null
   scheduledDate: Date | null
+  requiresStartToken: boolean
+  startToken: string | null
+  startTokenExpiresAt: Date | null
+  tokenValidatedAt: Date | null
   post: {
     title: string
     address: string
@@ -37,6 +41,8 @@ export interface PrismaApplicationWithWorker {
   chargesVisit: boolean
   visitCost: number | null
   scheduledDate: Date | null
+  requiresStartToken: boolean
+  tokenValidatedAt: Date | null
   worker: {
     id: string
     name: string

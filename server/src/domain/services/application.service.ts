@@ -6,10 +6,14 @@ import {
   updateApplicationStatus,
   deleteApplication,
   findApplicationsByPost,
+  setStartToken,
+  incrementStartTokenAttempts,
+  clearStartToken,
+  setTokenValidated,
 } from '../../infrastructure/database/application.database.js'
 import prisma from '../../lib/prisma.js'
 import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
-import { findUserById } from '../../infrastructure/database/user.database.js'
+import { findUserById, getRequiresStartToken } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser } from './notification.service.js'
@@ -125,6 +129,11 @@ export const acceptApplication = async (clientId: string, applicationId: string,
     }
   }
 
+  // Start-token handshake is only for normal contracts, and snapshots the client's
+  // current setting so a later toggle change never affects an in-flight job.
+  const requiresStartToken =
+    application.post.type !== PostType.SubContract && (await getRequiresStartToken(clientId))
+
   try {
     await prisma.$transaction(async (tx) => {
       const updated = await tx.application.updateMany({
@@ -132,6 +141,7 @@ export const acceptApplication = async (clientId: string, applicationId: string,
         data: {
           status: ApplicationStatus.Accepted,
           scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+          requiresStartToken,
         },
       })
       if (updated.count === 0) {
@@ -208,6 +218,66 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
   })
 
   return { id: dismissed.id, status: dismissed.status }
+}
+
+const START_TOKEN_TTL_MS = 5 * 60 * 1000
+const START_TOKEN_MAX_ATTEMPTS = 5
+
+const generateFourDigitCode = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+
+const assertTokenEligible = (application: NonNullable<Awaited<ReturnType<typeof findApplicationById>>>) => {
+  if (application.status !== ApplicationStatus.Accepted)
+    throw Object.assign(new Error('La contratación no está activa'), { status: 400 })
+  if (application.post.type === PostType.SubContract)
+    throw Object.assign(new Error('El token de inicio no aplica a subcontrataciones'), { status: 400 })
+  if (!application.requiresStartToken)
+    throw Object.assign(new Error('Esta contratación no requiere token de inicio'), { status: 400 })
+  if (application.tokenValidatedAt)
+    throw Object.assign(new Error('El inicio del trabajo ya fue confirmado'), { status: 400 })
+}
+
+export const generateStartToken = async (workerId: string, applicationId: string) => {
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
+  if (application.workerId !== workerId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  assertTokenEligible(application)
+
+  const token = generateFourDigitCode()
+  const expiresAt = new Date(Date.now() + START_TOKEN_TTL_MS)
+  await setStartToken(applicationId, token, expiresAt)
+
+  return { token, expiresAt: expiresAt.toISOString() }
+}
+
+export const validateStartToken = async (clientId: string, applicationId: string, token: string) => {
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
+  if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  assertTokenEligible(application)
+
+  if (!application.startToken || !application.startTokenExpiresAt || application.startTokenExpiresAt < new Date())
+    throw Object.assign(new Error('El código expiró. Pedile al trabajador que genere uno nuevo.'), { status: 400 })
+
+  if (application.startTokenAttempts >= START_TOKEN_MAX_ATTEMPTS) {
+    await clearStartToken(applicationId)
+    throw Object.assign(new Error('Demasiados intentos. Pedile al trabajador que genere un nuevo código.'), { status: 400 })
+  }
+
+  if (application.startToken !== token) {
+    const { startTokenAttempts } = await incrementStartTokenAttempts(applicationId)
+    const attemptsLeft = Math.max(0, START_TOKEN_MAX_ATTEMPTS - startTokenAttempts)
+    if (attemptsLeft === 0) await clearStartToken(applicationId)
+    return { valid: false as const, attemptsLeft }
+  }
+
+  const validatedAt = new Date()
+  await setTokenValidated(applicationId, validatedAt)
+
+  notifyUser(getProvider(), application.workerId, 'start_confirmed', {
+    postTitle: application.post.title,
+  })
+
+  return { valid: true as const, validatedAt: validatedAt.toISOString() }
 }
 
 export const getPostApplications = (clientId: string, postId: string): Promise<DomainPostApplication[]> =>

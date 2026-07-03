@@ -28,6 +28,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
 
 vi.mock("../../src/infrastructure/database/user.database.js", () => ({
   findUserById: vi.fn(),
+  getRequiresStartToken: vi.fn(() => false),
 }))
 
 vi.mock("../../src/infrastructure/providers/telegram.provider.js", () => ({
@@ -74,6 +75,11 @@ const mockApplication = {
   chargesVisit: false,
   visitCost: null,
   scheduledDate: null,
+  requiresStartToken: false,
+  startToken: null,
+  startTokenExpiresAt: null,
+  startTokenAttempts: 0,
+  tokenValidatedAt: null,
   post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null },
   category: null,
 }
@@ -89,7 +95,7 @@ describe("acceptApplication", () => {
     expect(result.status).toBe("Accepted")
     expect(mockPrisma.application.updateMany).toHaveBeenCalledWith({
       where: { id: "app-1", status: "Pending" },
-      data: { status: "Accepted", scheduledDate: null },
+      data: { status: "Accepted", scheduledDate: null, requiresStartToken: false },
     })
     expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "In progress")
   })
@@ -165,6 +171,7 @@ describe("applyToPost", () => {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
     categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
   beforeEach(() => {
@@ -195,6 +202,7 @@ describe("applyToPost", () => {
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
       categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
@@ -299,6 +307,7 @@ describe("applyToSubcontract", () => {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
     categoryId: "cat-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
   beforeEach(() => {
@@ -351,6 +360,7 @@ describe("applyToSubcontract", () => {
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
       categoryId: "pc-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })

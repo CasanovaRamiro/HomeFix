@@ -22,4 +22,8 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   availableTimeTo: app.availableTimeTo,
   chargesVisit: app.chargesVisit,
   visitCost: app.visitCost,
+  requiresStartToken: app.requiresStartToken,
+  startToken: app.startToken,
+  startTokenExpiresAt: app.startTokenExpiresAt ? app.startTokenExpiresAt.toISOString() : null,
+  tokenValidatedAt: app.tokenValidatedAt ? app.tokenValidatedAt.toISOString() : null,
 })

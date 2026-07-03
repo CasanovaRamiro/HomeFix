@@ -141,6 +141,18 @@ export const updateEmergencyNotifications = (userId: string, enabled: boolean) =
     select: { id: true, emergenciesEnabled: true },
   })
 
+export const updateRequiresStartToken = (userId: string, enabled: boolean) =>
+  prisma.user.update({
+    where: { id: userId },
+    data: { requiresStartToken: enabled },
+    select: { id: true, requiresStartToken: true },
+  })
+
+export const getRequiresStartToken = async (userId: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { requiresStartToken: true } })
+  return user?.requiresStartToken ?? false
+}
+
 export const updateUserByEmail = (
   email: string,
   data: Partial<{ email: string; name: string; role: string }>,

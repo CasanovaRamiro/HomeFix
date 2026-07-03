@@ -67,6 +67,11 @@ const mockAcceptedApp = {
   chargesVisit: false,
   visitCost: null,
       scheduledDate: null,
+  requiresStartToken: false,
+  startToken: null,
+  startTokenExpiresAt: null,
+  startTokenAttempts: 0,
+  tokenValidatedAt: null,
     }
 
 const mockReview: DomainWorkerReview = {

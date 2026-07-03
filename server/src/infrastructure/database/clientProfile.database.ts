@@ -18,6 +18,7 @@ const clientProfileFields = {
   address: {
     select: { street: true, number: true, city: true, state: true },
   },
+  requiresStartToken: true,
 } satisfies Prisma.UserSelect
 
 export type ClientProfileResult = Prisma.UserGetPayload<{ select: typeof clientProfileFields }>

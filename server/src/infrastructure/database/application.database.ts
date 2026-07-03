@@ -43,6 +43,31 @@ export const updateApplicationStatus = (id: string, status: string) =>
     data: { status },
   })
 
+export const setStartToken = (id: string, token: string, expiresAt: Date) =>
+  prisma.application.update({
+    where: { id },
+    data: { startToken: token, startTokenExpiresAt: expiresAt, startTokenAttempts: 0 },
+  })
+
+export const incrementStartTokenAttempts = (id: string) =>
+  prisma.application.update({
+    where: { id },
+    data: { startTokenAttempts: { increment: 1 } },
+    select: { startTokenAttempts: true },
+  })
+
+export const clearStartToken = (id: string) =>
+  prisma.application.update({
+    where: { id },
+    data: { startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0 },
+  })
+
+export const setTokenValidated = (id: string, validatedAt: Date) =>
+  prisma.application.update({
+    where: { id },
+    data: { tokenValidatedAt: validatedAt, startToken: null, startTokenExpiresAt: null },
+  })
+
 export const rejectPendingApplications = (postId: string) =>
   prisma.application.updateMany({
     where: { postId, status: ApplicationStatus.Pending },

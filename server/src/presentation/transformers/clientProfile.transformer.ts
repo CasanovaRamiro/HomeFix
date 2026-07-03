@@ -20,6 +20,7 @@ export const toClientProfileDTO = (
   if (options.includeContact) {
     dto.email = profile.email
     dto.phone = profile.phone
+    dto.requiresStartToken = profile.requiresStartToken
   }
   dto.address = profile.address
   return dto
