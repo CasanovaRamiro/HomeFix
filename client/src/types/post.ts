@@ -4,6 +4,7 @@ export enum PostStatus {
   Paused = 'Paused',
   Completed = 'Completed',
   Cancelled = 'Cancelled',
+  Evaluating = 'Evaluating',
 }
 
 export interface PostCategoryDTO {
@@ -36,6 +37,11 @@ export interface PostDTO {
     surname: string
   }
   clientRating: number
+  materialResponsibility?: string
+  budgetMin?: number
+  budgetMax?: number
+  bidWeights?: string
+  isBidding?: boolean
 }
 
 export type Post = PostDTO

@@ -26,6 +26,10 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   originalClientRating: post.originalClientRating,
   parentUser: post.parentUser,
   postIds: post.postIds,
+  isBidding: post.isBidding,
+  bidWeights: post.bidWeights,
+  materialResponsibility: post.materialResponsibility,
+  budgetMax: post.budgetMax,
 })
 
 export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({
@@ -43,4 +47,5 @@ export const toUserPostDTO = (post: DomainUserPost): UserPostDTO => ({
   hasReview: post.hasReview,
   isEmergency: post.isEmergency ?? false,
   emergencyExpiresAt: post.emergencyExpiresAt?.toISOString() ?? null,
+  isBidding: post.isBidding ?? false,
 })

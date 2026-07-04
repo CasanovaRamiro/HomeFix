@@ -106,6 +106,44 @@ export const findAcceptedApplications = (postId: string) =>
     where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
   })
 
+export const findBiddingApplications = async (biddingId: string) => {
+  const raw = await prisma.application.findMany({
+    where: { postId: biddingId },
+    include: {
+      worker: {
+        select: {
+          id: true,
+          name: true,
+          surname: true,
+          photo: true,
+          phone: true,
+          reviewsReceived: { select: { rating: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+  return raw.map((a) => {
+    const ratings = a.worker.reviewsReceived.map((r) => r.rating)
+    const avgRating = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
+    return {
+      id: a.id,
+      workerId: a.workerId,
+      workerName: `${a.worker.name} ${a.worker.surname}`,
+      workerPhoto: a.worker.photo,
+      workerPhone: a.worker.phone,
+      workerRating: avgRating,
+      workerReviewCount: ratings.length,
+      status: a.status,
+      message: a.message,
+      offeredCost: a.visitCost,
+      offeredDuration: null as number | null,
+      offeredStartDate: a.scheduledDate?.toISOString() ?? null,
+      createdAt: a.createdAt.toISOString(),
+    }
+  })
+}
+
 export const findApplicationsByPost = async (postId: string): Promise<DomainPostApplication[]> => {
   const raw = await prisma.application.findMany({
     where: { postId },

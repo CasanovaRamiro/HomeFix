@@ -21,6 +21,7 @@ export interface UserPostDTO {
   hasReview: boolean
   isEmergency: boolean
   emergencyExpiresAt: string | null
+  isBidding: boolean
 }
 
 export interface CreateSubcontractRequest {
@@ -69,4 +70,24 @@ export interface PostDTO {
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
   postIds?: string[]
+  isBidding?: boolean
+  bidWeights?: string
+  materialResponsibility?: string
+  budgetMax?: number
+}
+
+export interface BiddingApplicationDTO {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhoto: string | null
+  workerPhone: string | null
+  workerRating: number
+  workerReviewCount: number
+  status: string
+  message: string | null
+  offeredCost: number | null
+  offeredDuration: number | null
+  offeredStartDate: string | null
+  createdAt: string
 }

@@ -27,5 +27,9 @@ export interface PrismaPostFull {
     filledCount: number
     roleDescription: string | null
   }[]
+  isBidding: boolean
+  bidWeights: string | null
+  materialResponsibility: string | null
+  budgetMax: number | null
   user: { id: string; name: string; surname: string }
 }

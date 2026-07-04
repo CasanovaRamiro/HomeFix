@@ -12,7 +12,9 @@ import {
   getPostApplications,
   generateStartToken,
   validateStartToken,
+  applyToBidding,
 } from '../../domain/services/application.service.js'
+import { findBiddingApplications } from '../../infrastructure/database/application.database.js'
 import { toMyApplicationDTO, toStartTokenDTO, toStartTokenValidatedDTO } from '../transformers/application.transformer.js'
 
 const router = Router()
@@ -188,6 +190,33 @@ router.post('/:applicationId/validate-start-token', async (req, res, next) => {
       return
     }
     res.json(toStartTokenValidatedDTO(result.validatedAt))
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/bidding/:biddingId', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    await syncAuth0User(claims)
+    const applications = await findBiddingApplications(req.params.biddingId)
+    res.json(applications)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/bidding', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const { postId, offeredCost, offeredDuration, offeredStartDate, message } = req.body
+    if (!postId || offeredCost == null) {
+      res.status(400).json({ error: 'postId y offeredCost son requeridos' })
+      return
+    }
+    await applyToBidding(user.id, { postId, offeredCost, offeredDuration, offeredStartDate, message })
+    res.status(201).json({ success: true })
   } catch (err) {
     next(err)
   }
