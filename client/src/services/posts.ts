@@ -64,3 +64,51 @@ export const fetchMySubcontractManager = () =>
 
 export const fetchSubcontractGroupDetail = (id: string) =>
   api.get<SubcontractDetailDTO>(`/posts/subcontracts/group/${id}`)
+
+// --- Bidding types & services ---
+
+export interface ApplicationDTO {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhoto: string | null
+  workerPhone: string | null
+  workerRating: number
+  workerReviewCount: number
+  status: string
+  message: string | null
+  offeredCost: number | null
+  offeredDuration: number | null
+  offeredStartDate: string | null
+  createdAt: string
+}
+
+export interface CreateBiddingInput {
+  title: string
+  description: string
+  categoryIds: string[]
+  endDate: string
+  budgetMin?: number
+  budgetMax?: number
+  address: string
+  latitude: number | null
+  longitude: number | null
+  materialResponsibility: string
+  imageUrls: string[]
+  bidWeights: string
+}
+
+export const createBidding = (data: CreateBiddingInput) =>
+  api.post<Post>('/posts/create-bidding', data)
+
+export const fetchClientBiddings = () =>
+  api.get<{ stats: { active: number; evaluating: number; completed: number }; biddings: Post[] }>('/client/biddings')
+
+export const fetchBiddingById = (id: string) =>
+  api.get<Post>(`/posts/biddings/${id}`)
+
+export const fetchBiddingApplications = (biddingId: string) =>
+  api.get<ApplicationDTO[]>(`/applications/bidding/${biddingId}`)
+
+export const selectBiddingWinner = (biddingId: string, applicationId: string) =>
+  api.post(`/posts/biddings/${biddingId}/select-winner`, { applicationId })

@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma.js'
-import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
+import type { CreatePostInput, CreateBiddingInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import { PostType } from '../../domain/types/postType.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
@@ -22,6 +22,10 @@ type _CreatePostRecordInput = {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   allowsSubcontracting?: boolean
+  isBidding?: boolean
+  bidWeights?: string
+  materialResponsibility?: string
+  budgetMax?: number | null
   images?: { url: string }[]
   categories: {
     categoryId: string
@@ -48,6 +52,10 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
       allowsSubcontracting: data.allowsSubcontracting ?? true,
+      isBidding: data.isBidding ?? false,
+      bidWeights: data.bidWeights ?? null,
+      materialResponsibility: data.materialResponsibility ?? null,
+      budgetMax: data.budgetMax ?? null,
       images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
       categories: { create: data.categories },
     },
@@ -77,6 +85,10 @@ const postFields = {
   isEmergency: true,
   emergencyExpiresAt: true,
   allowsSubcontracting: true,
+  isBidding: true,
+  bidWeights: true,
+  materialResponsibility: true,
+  budgetMax: true,
   categories: {
     select: {
       id: true,
@@ -126,6 +138,30 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     categories: [{ categoryId: data.categoryId }],
   })
 }
+
+export const createBiddingPost = async (data: CreateBiddingInput): Promise<DomainPost> =>
+  _createPostRecord({
+    userId: data.userId,
+    type: PostType.Post,
+    parentPostId: null,
+    subcontractGroupId: null,
+    title: data.title,
+    description: data.description,
+    startDate: new Date(),
+    endDate: data.endDate,
+    address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    isEmergency: false,
+    emergencyExpiresAt: null,
+    allowsSubcontracting: true,
+    isBidding: true,
+    bidWeights: data.bidWeights,
+    materialResponsibility: data.materialResponsibility,
+    budgetMax: data.budgetMax ?? null,
+    images: data.imageUrls.map(url => ({ url })),
+    categories: data.categoryIds.map(cid => ({ categoryId: cid })),
+  })
 
 export const createSubPost = async (data: {
   userId: string
@@ -222,6 +258,15 @@ export const findAvailablePosts = async (
 export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
     where: { type: PostType.SubContract, status: 'Active' } as never,
+    orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
+export const findBiddingPostsByUser = async (userId: string): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: { userId, isBidding: true } as never,
     orderBy: { createdAt: 'desc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
@@ -326,6 +371,7 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     hasReview: post.applications.some((a) => a.review !== null),
     isEmergency: post.isEmergency,
     emergencyExpiresAt: post.emergencyExpiresAt,
+    isBidding: post.isBidding,
   }))
 }
 

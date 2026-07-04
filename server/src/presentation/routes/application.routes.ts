@@ -11,6 +11,7 @@ import {
   cancelApplication,
   getPostApplications,
 } from '../../domain/services/application.service.js'
+import { findBiddingApplications } from '../../infrastructure/database/application.database.js'
 import { toMyApplicationDTO } from '../transformers/application.transformer.js'
 
 const router = Router()
@@ -153,6 +154,17 @@ router.patch('/:applicationId/dismiss', async (req, res, next) => {
     const user = await syncAuth0User(claims)
     const result = await dismissWorker(user.id, req.params.applicationId)
     res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/bidding/:biddingId', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    await syncAuth0User(claims)
+    const applications = await findBiddingApplications(req.params.biddingId)
+    res.json(applications)
   } catch (err) {
     next(err)
   }

@@ -133,6 +133,7 @@ export interface UserPost {
   hasReview: boolean
   isEmergency: boolean
   emergencyExpiresAt: string | null
+  isBidding: boolean
 }
 
 export const createReview = (data: ReviewInput) =>

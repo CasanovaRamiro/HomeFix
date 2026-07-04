@@ -5,7 +5,8 @@ import { PostStatus } from '../../types/post'
 
 const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
   [PostStatus.Active]:     { label: 'Activa',       className: 'bg-green-100 text-green-700' },
-  [PostStatus.InProgress]: { label: 'En curso', className: 'bg-blue-100 text-blue-700' },
+  [PostStatus.Evaluating]: { label: 'Evaluando',    className: 'bg-purple-100 text-purple-700' },
+  [PostStatus.InProgress]: { label: 'En curso',      className: 'bg-blue-100 text-blue-700' },
   [PostStatus.Paused]:     { label: 'Pausada',       className: 'bg-amber-100 text-amber-700' },
   [PostStatus.Completed]:  { label: 'Completado',    className: 'bg-slate-100 text-slate-500' },
   [PostStatus.Cancelled]:  { label: 'Cancelado',     className: 'bg-red-100 text-red-600' },
@@ -49,6 +50,8 @@ export default function TurnoCard({ post }: { post: UserPost }) {
           },
         },
       })
+    } else if (post.isBidding) {
+      navigate(`/client/biddings/${post.id}`)
     } else {
       navigate(`/posts/${post.id}`)
     }
