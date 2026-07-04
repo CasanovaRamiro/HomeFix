@@ -15,7 +15,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
         },
       },
       category: { include: { category: { select: { name: true } } } },
-      clientReview: { select: { id: true } },
+      clientReview: { select: { id: true, rating: true, description: true, createdAt: true } },
     },
     orderBy: { createdAt: 'desc' },
   })

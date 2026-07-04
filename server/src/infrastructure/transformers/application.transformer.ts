@@ -21,6 +21,7 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   category: a.category?.category.name ?? a.post.categories[0]?.category.name ?? null,
   categoryId: a.categoryId,
   hasReview: a.clientReview !== null,
+  clientReview: a.clientReview ? { id: a.clientReview.id, rating: a.clientReview.rating, description: a.clientReview.description, createdAt: a.clientReview.createdAt } : null,
   clientRating: 0,
   message: a.message,
   availableDays: parseAvailableDays(a.availableDays),
