@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, MapPin, Users, CheckCircle2, SlidersHorizontal, BadgeCheck, CircleCheck, Star, FilterX, X } from 'lucide-react'
 import api, { pausePost, cancelPost, updatePost } from '../services/api'
-import type { UpdatePostData } from '../services/api'
+import type { UpdatePostData, WorkerReview } from '../services/api'
 import { getPostApplicants } from '../services/applications'
 import type { PostApplicant } from '../services/applications'
 import { ApplicationStatus } from '../types/application'
@@ -10,6 +10,7 @@ import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import ViewReviewModal from '../components/review/ViewReviewModal'
 import { useCategories } from '../hooks/useCategories'
 import { useTheme } from '../hooks/useTheme'
 import type { Post } from '../types/post'
@@ -35,6 +36,9 @@ export default function PostDetail() {
   const [editForm, setEditForm] = useState<UpdatePostData>({ title: '', categoryId: '', description: '', startDate: '', endDate: '', address: '' })
   const [editError, setEditError] = useState('')
   const [editSubmitting, setEditSubmitting] = useState(false)
+  const [reviewToView, setReviewToView] = useState<WorkerReview | null>(null)
+  const [viewReviewWorkerName, setViewReviewWorkerName] = useState('')
+  const [viewReviewLoading, setViewReviewLoading] = useState(false)
   const { categories } = useCategories()
   const theme = useTheme()
 
@@ -149,6 +153,20 @@ export default function PostDetail() {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       setEditError(axiosErr.response?.data?.error ?? 'Error al guardar los cambios')
     } finally { setEditSubmitting(false) }
+  }
+
+  const handleViewReview = async (applicationId: string, workerName: string) => {
+    setViewReviewWorkerName(workerName)
+    setViewReviewLoading(true)
+    setReviewToView(null)
+    try {
+      const res = await api.get<WorkerReview>(`/reviews/application/${applicationId}`)
+      setReviewToView(res.data)
+    } catch {
+      setReviewToView(null)
+    } finally {
+      setViewReviewLoading(false)
+    }
   }
 
   if (loading) return <LoadingSpinner />
@@ -272,6 +290,7 @@ export default function PostDetail() {
                         trabajador: { id: a.workerId, nombre: a.name, categoria: a.category ?? '', verificado: false },
                       },
                     })}
+                    onViewReview={() => handleViewReview(a.applicationId, a.name)}
                   />
                 ))}
               </div>
@@ -290,6 +309,14 @@ export default function PostDetail() {
         onConfirm={handleCancel}
         onCancel={() => setShowCancelModal(false)}
         danger
+      />
+
+      <ViewReviewModal
+        open={reviewToView !== null || viewReviewLoading}
+        review={reviewToView}
+        workerName={viewReviewWorkerName}
+        loading={viewReviewLoading}
+        onClose={() => { setReviewToView(null); setViewReviewWorkerName('') }}
       />
 
       {showEditModal && (

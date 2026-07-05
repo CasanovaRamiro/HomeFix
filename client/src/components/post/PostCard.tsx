@@ -14,7 +14,6 @@ interface PostCardProps {
   hasUnreviewedWorkers?: boolean
   onComplete?: () => void
   onMarkInProgress?: () => void
-  onViewReview?: () => void
   onPause?: (id: string) => void
   onCancel?: (id: string) => void
   onEdit?: (id: string) => void
@@ -43,7 +42,7 @@ const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
 
 export default function PostCard({
-  post, hasAcceptedWorker, scheduledDate, onComplete, onViewReview, onPause, onCancel, onEdit,
+  post, hasAcceptedWorker, scheduledDate, onComplete, onPause, onCancel, onEdit,
 }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, cls: 'pd-badge--completed', Icon: CircleDot }
   const StatusIcon = status.Icon
@@ -134,12 +133,6 @@ export default function PostCard({
             </div>
           )}
         </div>
-
-        {post.status === 'Completed' && (
-          <div className="pc-manage">
-            <button className="pd-btn pd-btn--outline pd-btn--block" onClick={onViewReview}>Ver reseña</button>
-          </div>
-        )}
 
         {!closed && hasAcceptedWorker && (
           <div className="pc-manage">
