@@ -23,6 +23,8 @@ import {
   getBiddingDetail,
   closeBidding,
   selectWinner,
+  listAvailableBiddings,
+  getWorkerBiddings,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import type { Auth0Claims } from '../../domain/services/auth.service.js'
@@ -302,6 +304,28 @@ router.post('/create-bidding', async (req, res, next) => {
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/available-biddings', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await listAvailableBiddings(user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/worker-biddings', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await getWorkerBiddings(user.id)
+    res.json(result)
+  } catch (err) {
     next(err)
   }
 })

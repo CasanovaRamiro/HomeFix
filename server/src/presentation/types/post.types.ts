@@ -76,6 +76,42 @@ export interface PostDTO {
   budgetMax?: number
 }
 
+export interface AvailableBiddingDTO {
+  id: string
+  title: string
+  description: string
+  address: string
+  budgetMax: number | null
+  materialResponsibility: string | null
+  images: { id: string; url: string }[]
+  latitude: number | null
+  longitude: number | null
+  categories: { id: string; name: string }[]
+  client: { id: string; name: string; surname: string; rating: number; reviewCount: number }
+  hasApplied: boolean
+  createdAt: string
+}
+
+export interface WorkerBiddingDTO {
+  applicationId: string
+  status: string
+  offeredCost: number | null
+  offeredDuration: number | null
+  offeredStartDate: string | null
+  message: string | null
+  createdAt: string
+  bidding: {
+    id: string
+    title: string
+    description: string
+    budgetMax: number | null
+    materialResponsibility: string | null
+    status: string
+    categories: { id: string; name: string }[]
+    client: { id: string; name: string; surname: string }
+  }
+}
+
 export interface BiddingApplicationDTO {
   id: string
   workerId: string

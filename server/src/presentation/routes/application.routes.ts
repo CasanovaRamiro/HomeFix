@@ -5,6 +5,7 @@ import {
   getMyApplications,
   applyToPost,
   applyToSubcontract,
+  applyToBidding,
   acceptApplication,
   rejectApplication,
   dismissWorker,
@@ -86,6 +87,38 @@ router.post('/', async (req, res, next) => {
       availableTimeTo,
       chargesVisit,
       visitCost: typeof visitCost === 'number' ? visitCost : undefined,
+    })
+    res.status(201).json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/bidding', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const { postId, offeredCost, offeredDuration, offeredStartDate, message } = req.body
+
+    if (!postId || typeof postId !== 'string') {
+      res.status(400).json({ error: 'postId is required' })
+      return
+    }
+    if (typeof offeredCost !== 'number' || offeredCost <= 0) {
+      res.status(400).json({ error: 'offeredCost is required and must be a positive number' })
+      return
+    }
+    if (typeof offeredDuration !== 'number' || offeredDuration <= 0) {
+      res.status(400).json({ error: 'offeredDuration is required and must be a positive number' })
+      return
+    }
+
+    const result = await applyToBidding(user.id, {
+      postId,
+      visitCost: offeredCost,
+      offeredDuration,
+      scheduledDate: typeof offeredStartDate === 'string' ? offeredStartDate : undefined,
+      message: typeof message === 'string' ? message : undefined,
     })
     res.status(201).json(result)
   } catch (err) {

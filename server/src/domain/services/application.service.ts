@@ -75,6 +75,38 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   return { id: created.id, status: created.status, message: 'Application successful' }
 }
 
+export const applyToBidding = async (workerId: string, input: CreateApplicationInput) => {
+  const post = await findPostById(input.postId)
+  if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
+  if (!post.isBidding) throw Object.assign(new Error('Esta publicación no es una licitación'), { status: 400 })
+  if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta licitación ya no está disponible'), { status: 400 })
+  if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propia licitación'), { status: 400 })
+
+  if (input.visitCost == null || input.visitCost <= 0)
+    throw Object.assign(new Error('offeredCost es requerido y debe ser un número positivo'), { status: 400 })
+  if (input.offeredDuration == null || input.offeredDuration <= 0)
+    throw Object.assign(new Error('offeredDuration es requerido y debe ser un número positivo'), { status: 400 })
+
+  const existing = await findApplication(workerId, input.postId)
+  if (existing) throw Object.assign(new Error('Ya te postulaste a esta licitación'), { status: 409 })
+
+  const created = await createApplication(workerId, {
+    postId: input.postId,
+    visitCost: input.visitCost,
+    offeredDuration: input.offeredDuration,
+    scheduledDate: input.scheduledDate,
+    message: input.message,
+  })
+
+  const worker = await findUserById(workerId)
+  notifyUser(getProvider(), post.userId, 'application_new', {
+    workerName: worker ? worker.name : 'Alguien',
+    postTitle: post.title,
+  })
+
+  return { id: created.id, status: created.status, message: 'Oferta enviada exitosamente' }
+}
+
 export const applyToSubcontract = async (workerId: string, input: CreateApplicationInput) => {
   const post = await findPostById(input.postId)
   if (!post) throw Object.assign(new Error('Subcontratación no encontrada'), { status: 404 })

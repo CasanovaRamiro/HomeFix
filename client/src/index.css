@@ -301,6 +301,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .badge-warning { background: #f59e0b; color: #fff; }
 .badge-info { background: #2563eb; color: #fff; }
 .badge-subcontract { background: #DBEAFE; color: #1E40AF; }
+.badge-bidding { background: #E0F2FE; color: #0369A1; }
 .badge-emergency { background: #FEE2E2; color: #DC2626; }
 .badge-applied { background: #E8F5E9; color: #2D6A4F; }
 .badge-own { background: #F1F5F9; color: #64748B; }

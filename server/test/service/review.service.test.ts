@@ -66,8 +66,9 @@ const mockAcceptedApp = {
   availableTimeTo: null,
   chargesVisit: false,
   visitCost: null,
-      scheduledDate: null,
-    }
+  offeredDuration: null,
+  scheduledDate: null,
+}
 
 const mockReview: DomainWorkerReview = {
   id: 'review-uuid-1',

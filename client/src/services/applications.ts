@@ -68,3 +68,14 @@ export const dismissWorker = (applicationId: string): Promise<ApplicationRespons
 
 export const createClientReview = (data: ClientReviewInput) =>
   api.post('/reviews/client', data)
+
+export interface ApplyToBiddingInput {
+  postId: string
+  offeredCost: number
+  offeredDuration: number
+  offeredStartDate?: string
+  message?: string
+}
+
+export const applyToBidding = (input: ApplyToBiddingInput) =>
+  api.post<ApplicationResponse>('/applications/bidding', input)

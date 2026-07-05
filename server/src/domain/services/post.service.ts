@@ -15,6 +15,8 @@ import {
   findPostsByGroupId,
   findPostCategories,
   findBiddingPostsByUser,
+  findAvailableBiddingPosts,
+  findWorkerAppBiddings,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
@@ -142,8 +144,44 @@ export const getClientBiddings = async (userId: string): Promise<{
 export const getBiddingDetail = async (biddingId: string, userId: string): Promise<DomainPost> => {
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
-  if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  // Owner always has access; worker can only view if bidding is active
+  if (post.userId !== userId && !(post.isBidding && post.status === PostStatus.Active)) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
   return enrichWithClientRating(post)
+}
+
+export const listAvailableBiddings = async (userId: string) => {
+  const posts = await findAvailableBiddingPosts(userId)
+  return Promise.all(posts.map(async (p) => {
+    const rating = await getUserRating(p.userId)
+    return {
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      address: p.address,
+      budgetMax: p.budgetMax,
+      materialResponsibility: p.materialResponsibility,
+      images: p.images.map((i) => ({ id: (i as unknown as { id: string }).id, url: i.url })),
+      latitude: p.latitude,
+      longitude: p.longitude,
+      categories: p.categories.map((c) => ({ id: c.id ?? c.categoryId ?? '', name: c.name })),
+      client: { id: p.userId, name: p.user.name, surname: p.user.surname, rating: rating.averageRating, reviewCount: rating.reviewCount },
+      hasApplied: 'hasApplied' in p ? (p as DomainPost & { hasApplied: boolean }).hasApplied : false,
+      createdAt: p.createdAt.toISOString(),
+    }
+  }))
+}
+
+export const getWorkerBiddings = async (workerId: string) => {
+  const apps = await findWorkerAppBiddings(workerId)
+  return Promise.all(apps.map(async (app) => {
+    const rating = await getClientRating(app.bidding.client.id)
+    return {
+      ...app,
+      bidding: { ...app.bidding, client: { ...app.bidding.client, rating: rating.averageRating, reviewCount: rating.reviewCount } },
+    }
+  }))
 }
 
 export const closeBidding = async (biddingId: string, userId: string) => {
