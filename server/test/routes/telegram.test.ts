@@ -23,11 +23,13 @@ vi.mock('../../src/presentation/middleware/auth0.middleware.js', () => ({
   },
 }))
 
-vi.mock('../../src/presentation/telegram/bot.js', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('../../src/presentation/telegram/bot.js')>()
+vi.mock('../../src/infrastructure/providers/telegram.provider.js', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../src/infrastructure/providers/telegram.provider.js')>()
   return {
     ...mod,
-    getBotUsername: vi.fn().mockResolvedValue('HomeFixTestBot'),
+    buildStartLink: vi.fn().mockResolvedValue(
+      'https://web.telegram.org/k/#?tgaddr=tg%3A%2F%2Fresolve%3Fdomain%3DHomeFixTestBot%26start%3DTESTCODE',
+    ),
   }
 })
 

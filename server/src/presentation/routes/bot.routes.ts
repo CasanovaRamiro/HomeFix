@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User, type Auth0Claims } from '../../domain/services/auth.service.js'
-import { createLinkCode, getBotUsername } from '../telegram/bot.js'
-import prisma from '../../lib/prisma.js'
+import { createLink, getStatus, unlink } from '../../domain/services/bot.service.js'
+import { toBotLinkDTO, toBotStatusDTO } from '../transformers/bot.transformer.js'
 
 const router = Router()
 
@@ -12,10 +12,8 @@ router.post('/link', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
-    const code = await createLinkCode(user.id)
-    const username = await getBotUsername()
-    const deepLink = `https://web.telegram.org/k/#?tgaddr=tg%3A%2F%2Fresolve%3Fdomain%3D${username}%26start%3D${code}`
-    res.json({ code, deepLink, message: `Enviá /link ${code} al bot de HomeFix en Telegram` })
+    const info = await createLink(user.id)
+    res.json(toBotLinkDTO(info))
   } catch (err) {
     next(err)
   }
@@ -25,16 +23,8 @@ router.get('/status', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { telegramChatId: true, telegramLinkedAt: true },
-    })
-
-    res.json({
-      linked: !!dbUser?.telegramChatId,
-      linkedAt: dbUser?.telegramLinkedAt ?? null,
-    })
+    const status = await getStatus(user.id)
+    res.json(toBotStatusDTO(status ?? { linked: false, linkedAt: null }))
   } catch (err) {
     next(err)
   }
@@ -44,13 +34,8 @@ router.delete('/unlink', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { telegramChatId: null, telegramLinkedAt: null },
-    })
-
-    res.json({ message: 'Telegram desvinculado' })
+    await unlink(user.id)
+    res.json({ message: 'Cuenta de mensajería desvinculada' })
   } catch (err) {
     next(err)
   }
