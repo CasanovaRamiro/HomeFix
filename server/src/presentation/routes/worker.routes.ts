@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { listWorkers, getWorker, getWorkerReviews, updateWorkerProfile } from '../../domain/services/worker.service.js'
+import { listWorkers, getWorker, getWorkerReviews, getWorkerStats, updateWorkerProfile } from '../../domain/services/worker.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 
 const router = Router()
@@ -8,6 +8,15 @@ router.get('/', async (_req, res, next) => {
   try {
     const workers = await listWorkers()
     res.json(workers)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/:id/stats', async (req, res, next) => {
+  try {
+    const stats = await getWorkerStats(req.params.id)
+    res.json(stats)
   } catch (err) {
     next(err)
   }

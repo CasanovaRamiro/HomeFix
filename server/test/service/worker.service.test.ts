@@ -10,14 +10,25 @@ vi.mock('../../src/infrastructure/database/review.database.js', () => ({
   findReviewsByWorkerId: vi.fn(),
 }))
 
+vi.mock('../../src/infrastructure/database/workerDashboard.database.js', () => ({
+  countCompletedJobs: vi.fn(),
+  countDismissedJobs: vi.fn(),
+}))
+
+vi.mock('../../src/domain/services/user.service.js', () => ({
+  getUserRating: vi.fn(),
+}))
+
 vi.mock('../../src/infrastructure/providers/cloudinary.provider.js', () => ({
   deleteImage: vi.fn(),
 }))
 
 import * as workerData from '../../src/infrastructure/database/worker.database.js'
 import * as reviewData from '../../src/infrastructure/database/review.database.js'
+import * as userService from '../../src/domain/services/user.service.js'
+import * as workerDashboardData from '../../src/infrastructure/database/workerDashboard.database.js'
 import * as cloudinary from '../../src/infrastructure/providers/cloudinary.provider.js'
-import { listWorkers, getWorker, updateWorkerProfile, getWorkerReviews } from '../../src/domain/services/worker.service.js'
+import { listWorkers, getWorker, getWorkerStats, updateWorkerProfile, getWorkerReviews } from '../../src/domain/services/worker.service.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
 
 const mockWorker = {
@@ -147,5 +158,52 @@ describe('worker.service - getWorkerReviews', () => {
 
     await expect(getWorkerReviews('non-existent-id')).rejects.toThrow('Worker not found')
     expect(reviewData.findReviewsByWorkerId).not.toHaveBeenCalled()
+  })
+})
+
+describe('worker.service - getWorkerStats', () => {
+  it('returns stats for an existing worker', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue(mockWorker)
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 10, averageRating: 4.5 })
+    vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(5)
+    vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(2)
+
+    const result = await getWorkerStats('uuid-worker-1')
+
+    expect(result.totalJobs).toBe(5)
+    expect(result.cancelledJobs).toBe(2)
+    expect(result.reports).toBe(0)
+    expect(result.avgRating).toBe(4.5)
+    expect(result.reviewCount).toBe(10)
+  })
+
+  it('throws 404 when worker does not exist', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue(null)
+
+    await expect(getWorkerStats('non-existent-id')).rejects.toThrow('Worker not found')
+  })
+
+  it('returns 0 for cancelledJobs when worker has no dismissed applications', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue(mockWorker)
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
+    vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
+    vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(0)
+
+    const result = await getWorkerStats('uuid-worker-1')
+
+    expect(result.cancelledJobs).toBe(0)
+    expect(result.totalJobs).toBe(0)
+    expect(result.reports).toBe(0)
+  })
+
+  it('passes worker id to countDismissedJobs', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue(mockWorker)
+    vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
+    vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
+    vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(0)
+
+    await getWorkerStats('uuid-worker-1')
+
+    expect(workerDashboardData.countDismissedJobs).toHaveBeenCalledWith('uuid-worker-1')
   })
 })
