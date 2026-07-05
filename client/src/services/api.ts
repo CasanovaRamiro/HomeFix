@@ -27,6 +27,17 @@ export const getWorker = (id: string): Promise<Worker> =>
 export const getWorkerReviews = (id: string): Promise<WorkerReview[]> =>
   api.get<WorkerReview[]>(`/workers/${id}/reviews`).then((r) => r.data)
 
+export interface WorkerStats {
+  cancelledJobs: number
+  reports: number
+  totalJobs: number
+  avgRating: number
+  reviewCount: number
+}
+
+export const getWorkerStats = (id: string): Promise<WorkerStats> =>
+  api.get<WorkerStats>(`/workers/${id}/stats`).then((r) => r.data)
+
 export interface WorkerCategory {
   id: string
   name: string
