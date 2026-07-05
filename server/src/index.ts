@@ -29,7 +29,7 @@ import botRoutes from './presentation/routes/bot.routes.js'
 import clientRoutes from './presentation/routes/client.routes.js'
 import clientProfileRoutes from './presentation/routes/clientProfile.routes.js'
 import { launchBot } from './infrastructure/providers/telegram.provider.js'
-import { registerTelegramHandlers } from './presentation/telegram-bot.js'
+import { registerTelegramHandlers } from './presentation/bot.js'
 
 export const app = express()
 const PORT = env.PORT

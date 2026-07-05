@@ -12,7 +12,7 @@ vi.mock('../../src/domain/services/bot.service.js', () => ({
 }))
 
 import * as service from '../../src/domain/services/bot.service.js'
-import { registerTelegramHandlers } from '../../src/presentation/telegram-bot.js'
+import { registerTelegramHandlers } from '../../src/presentation/bot.js'
 
 type Handler = (ctx: unknown) => unknown
 
