@@ -132,7 +132,9 @@ export const acceptApplication = async (clientId: string, applicationId: string,
   // Start-token handshake is only for normal contracts, and snapshots the client's
   // current setting so a later toggle change never affects an in-flight job.
   const requiresStartToken =
-    application.post.type !== PostType.SubContract && (await getRequiresStartToken(clientId))
+    application.post.type !== PostType.SubContract &&
+    application.post.type !== PostType.Emergency &&
+    (await getRequiresStartToken(clientId))
 
   try {
     await prisma.$transaction(async (tx) => {
