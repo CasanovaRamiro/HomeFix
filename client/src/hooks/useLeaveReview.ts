@@ -16,7 +16,7 @@ export function useLeaveReview() {
         const urls = await uploadImages(data.photos)
         mediaUrls = JSON.stringify(urls)
       }
-      const { photos, ...payload } = data
+      const { photos: _, ...payload } = data
       await api.post('/reviews', { ...payload, mediaUrls })
       setSubmitted(true)
     } catch (err) {
