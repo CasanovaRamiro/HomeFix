@@ -10,8 +10,10 @@ import {
   dismissWorker,
   cancelApplication,
   getPostApplications,
+  generateStartToken,
+  validateStartToken,
 } from '../../domain/services/application.service.js'
-import { toMyApplicationDTO } from '../transformers/application.transformer.js'
+import { toMyApplicationDTO, toStartTokenDTO, toStartTokenValidatedDTO } from '../transformers/application.transformer.js'
 
 const router = Router()
 
@@ -153,6 +155,39 @@ router.patch('/:applicationId/dismiss', async (req, res, next) => {
     const user = await syncAuth0User(claims)
     const result = await dismissWorker(user.id, req.params.applicationId)
     res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Worker generates a 4-digit start token to recite in person.
+router.post('/:applicationId/start-token', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await generateStartToken(user.id, req.params.applicationId)
+    res.json(toStartTokenDTO(result))
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Client validates the token the worker gave them in person.
+router.post('/:applicationId/validate-start-token', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const { token } = (req.body ?? {}) as { token?: string }
+    if (typeof token !== 'string' || !/^\d{4}$/.test(token)) {
+      res.status(400).json({ error: 'El código debe tener 4 dígitos' })
+      return
+    }
+    const result = await validateStartToken(user.id, req.params.applicationId, token)
+    if (!result.valid) {
+      res.status(400).json({ error: 'Código incorrecto', attemptsLeft: result.attemptsLeft })
+      return
+    }
+    res.json(toStartTokenValidatedDTO(result.validatedAt))
   } catch (err) {
     next(err)
   }

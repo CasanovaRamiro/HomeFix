@@ -28,6 +28,10 @@ export const toDomainMyApplication = (a: PrismaApplicationWithPost): DomainMyApp
   availableTimeTo: a.availableTimeTo,
   chargesVisit: a.chargesVisit,
   visitCost: a.visitCost,
+  requiresStartToken: a.requiresStartToken,
+  startToken: a.startToken,
+  startTokenExpiresAt: a.startTokenExpiresAt,
+  tokenValidatedAt: a.tokenValidatedAt,
 })
 
 export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainPostApplication => {
@@ -55,5 +59,7 @@ export const toDomainPostApplication = (a: PrismaApplicationWithWorker): DomainP
     phone: a.worker.phone,
     scheduledDate: a.scheduledDate ?? null,
     hasReview: a.review !== null,
+    requiresStartToken: a.requiresStartToken,
+    tokenValidatedAt: a.tokenValidatedAt,
   }
 }

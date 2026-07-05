@@ -4,7 +4,8 @@ import * as postData from "../../src/infrastructure/database/post.database.js"
 import * as userDatabase from "../../src/infrastructure/database/user.database.js"
 import * as userService from "../../src/domain/services/user.service.js"
 import { PostType } from "../../src/domain/types/postType.js"
-import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract, getMyApplications, cancelApplication, getPostApplications } from "../../src/domain/services/application.service.js"
+import * as notificationService from "../../src/domain/services/notification.service.js"
+import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract, getMyApplications, cancelApplication, getPostApplications, generateStartToken, validateStartToken } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -15,6 +16,10 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   acceptApplicationWithDate: vi.fn(),
   deleteApplication: vi.fn(),
   findApplicationsByPost: vi.fn(),
+  setStartToken: vi.fn(),
+  incrementStartTokenAttempts: vi.fn(),
+  clearStartToken: vi.fn(),
+  setTokenValidated: vi.fn(),
 }))
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
@@ -24,10 +29,14 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findPostsByUser: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
+  incrementPostFilledCount: vi.fn(),
+  decrementPostFilledCount: vi.fn(),
+  findPostCategories: vi.fn(),
 }))
 
 vi.mock("../../src/infrastructure/database/user.database.js", () => ({
   findUserById: vi.fn(),
+  getRequiresStartToken: vi.fn(() => false),
 }))
 
 vi.mock("../../src/infrastructure/providers/telegram.provider.js", () => ({
@@ -74,6 +83,11 @@ const mockApplication = {
   chargesVisit: false,
   visitCost: null,
   scheduledDate: null,
+  requiresStartToken: false,
+  startToken: null,
+  startTokenExpiresAt: null,
+  startTokenAttempts: 0,
+  tokenValidatedAt: null,
   post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null },
   category: null,
 }
@@ -89,9 +103,41 @@ describe("acceptApplication", () => {
     expect(result.status).toBe("Accepted")
     expect(mockPrisma.application.updateMany).toHaveBeenCalledWith({
       where: { id: "app-1", status: "Pending" },
-      data: { status: "Accepted", scheduledDate: null },
+      data: { status: "Accepted", scheduledDate: null, requiresStartToken: false },
     })
     expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "In progress")
+  })
+
+  it("snapshots requiresStartToken=true when the client has the setting enabled", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+    vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(true)
+    vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+
+    await acceptApplication("client-1", "app-1")
+
+    expect(userDatabase.getRequiresStartToken).toHaveBeenCalledWith("client-1")
+    expect(mockPrisma.application.updateMany).toHaveBeenCalledWith({
+      where: { id: "app-1", status: "Pending" },
+      data: { status: "Accepted", scheduledDate: null, requiresStartToken: true },
+    })
+  })
+
+  it("forces requiresStartToken=false for subcontracts even when the client enabled it", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1" },
+      category: { id: "cat-1", filledCount: 0, quantity: 3 },
+    } as never)
+    vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(true)
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+
+    await acceptApplication("client-1", "app-1")
+
+    expect(mockPrisma.application.updateMany).toHaveBeenCalledWith({
+      where: { id: "app-1", status: "Pending" },
+      data: { status: "Accepted", scheduledDate: null, requiresStartToken: false },
+    })
   })
 
   it("throws 404 if application does not exist", async () => {
@@ -165,6 +211,7 @@ describe("applyToPost", () => {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
     categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
   beforeEach(() => {
@@ -195,6 +242,7 @@ describe("applyToPost", () => {
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
       categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
@@ -299,6 +347,7 @@ describe("applyToSubcontract", () => {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
     categoryId: "cat-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
     chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
   beforeEach(() => {
@@ -351,6 +400,7 @@ describe("applyToSubcontract", () => {
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
       categoryId: "pc-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
@@ -615,3 +665,148 @@ describe("getPostApplications", () => {
 
 
 
+
+const eligibleApp = {
+  ...mockApplication,
+  status: "Accepted",
+  requiresStartToken: true,
+  startToken: "1234",
+  startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  startTokenAttempts: 0,
+  tokenValidatedAt: null,
+  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null },
+}
+
+describe("generateStartToken", () => {
+  it("generates a 4-digit token with a future expiry and persists it", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(eligibleApp)
+
+    const result = await generateStartToken("worker-1", "app-1")
+
+    expect(result.token).toMatch(/^\d{4}$/)
+    expect(result.expiresAt).toBeInstanceOf(Date)
+    expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now())
+    expect(applicationData.setStartToken).toHaveBeenCalledWith("app-1", result.token, result.expiresAt)
+  })
+
+  it("throws 404 if application does not exist", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(null)
+
+    await expect(generateStartToken("worker-1", "app-1")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("throws 403 if requester is not the assigned worker", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(eligibleApp)
+
+    await expect(generateStartToken("other-worker", "app-1")).rejects.toMatchObject({ status: 403 })
+    expect(applicationData.setStartToken).not.toHaveBeenCalled()
+  })
+
+  it("throws 400 if the application is not Accepted", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, status: "Pending" })
+
+    await expect(generateStartToken("worker-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("throws 400 for subcontracts", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...eligibleApp,
+      post: { ...eligibleApp.post, type: PostType.SubContract },
+    } as never)
+
+    await expect(generateStartToken("worker-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("throws 400 if the contract does not require a start token", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, requiresStartToken: false })
+
+    await expect(generateStartToken("worker-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("throws 400 if the start was already confirmed", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, tokenValidatedAt: new Date() })
+
+    await expect(generateStartToken("worker-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe("validateStartToken", () => {
+  it("confirms the start, clears the token and notifies the worker on a correct code", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(eligibleApp)
+
+    const result = await validateStartToken("client-1", "app-1", "1234")
+
+    expect(result).toEqual({ valid: true, validatedAt: expect.any(Date) })
+    expect(applicationData.setTokenValidated).toHaveBeenCalledWith("app-1", expect.any(Date))
+    expect(notificationService.notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      "worker-1",
+      "start_confirmed",
+      { postTitle: "Test post" },
+    )
+  })
+
+  it("throws 404 if application does not exist", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(null)
+
+    await expect(validateStartToken("client-1", "app-1", "1234")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("throws 403 if requester is not the post owner", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(eligibleApp)
+
+    await expect(validateStartToken("other-client", "app-1", "1234")).rejects.toMatchObject({ status: 403 })
+    expect(applicationData.setTokenValidated).not.toHaveBeenCalled()
+  })
+
+  it("throws 400 if there is no active token", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, startToken: null })
+
+    await expect(validateStartToken("client-1", "app-1", "1234")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("throws 400 if the token expired", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...eligibleApp,
+      startTokenExpiresAt: new Date(Date.now() - 1000),
+    })
+
+    await expect(validateStartToken("client-1", "app-1", "1234")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("clears the token and throws 400 once max attempts is reached", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, startTokenAttempts: 5 })
+
+    await expect(validateStartToken("client-1", "app-1", "1234")).rejects.toMatchObject({ status: 400 })
+    expect(applicationData.clearStartToken).toHaveBeenCalledWith("app-1")
+    expect(applicationData.setTokenValidated).not.toHaveBeenCalled()
+  })
+
+  it("returns valid=false with remaining attempts on a wrong code", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, startTokenAttempts: 1 })
+    vi.mocked(applicationData.incrementStartTokenAttempts).mockResolvedValue({ startTokenAttempts: 2 } as never)
+
+    const result = await validateStartToken("client-1", "app-1", "9999")
+
+    expect(result).toEqual({ valid: false, attemptsLeft: 3 })
+    expect(applicationData.incrementStartTokenAttempts).toHaveBeenCalledWith("app-1")
+    expect(applicationData.clearStartToken).not.toHaveBeenCalled()
+    expect(notificationService.notifyUser).not.toHaveBeenCalled()
+  })
+
+  it("clears the token when a wrong code exhausts the last attempt", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, startTokenAttempts: 4 })
+    vi.mocked(applicationData.incrementStartTokenAttempts).mockResolvedValue({ startTokenAttempts: 5 } as never)
+
+    const result = await validateStartToken("client-1", "app-1", "9999")
+
+    expect(result).toEqual({ valid: false, attemptsLeft: 0 })
+    expect(applicationData.clearStartToken).toHaveBeenCalledWith("app-1")
+  })
+
+  it("throws 400 if the start was already confirmed", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...eligibleApp, tokenValidatedAt: new Date() })
+
+    await expect(validateStartToken("client-1", "app-1", "1234")).rejects.toMatchObject({ status: 400 })
+  })
+})

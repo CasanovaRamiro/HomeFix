@@ -9,10 +9,11 @@ export interface ClientProfileDTO {
   averageRating: number
   reviewCount: number
   completedJobs: number
-  // Owner-only contact fields — omitted entirely for other viewers.
+  // Owner-only fields — omitted entirely for other viewers.
   email?: string
   phone?: string | null
   address?: { street: string; number: string; city: string; state: string } | null
+  requiresStartToken?: boolean
 }
 
 export interface UpdateClientProfileRequest {

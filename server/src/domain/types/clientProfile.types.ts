@@ -15,6 +15,7 @@ export interface DomainClientProfile {
   role: string
   photo: string | null
   createdAt: Date
+  requiresStartToken: boolean
   averageRating: number
   reviewCount: number
   completedJobs: number

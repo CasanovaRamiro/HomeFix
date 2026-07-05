@@ -38,6 +38,8 @@ export interface PostApplicant {
   visitCost: number | null
   scheduledDate: string | null
   hasReview: boolean
+  requiresStartToken: boolean
+  tokenValidatedAt: string | null
 }
 
 export const applyToPost = (input: ApplyToPostInput) =>
@@ -65,6 +67,17 @@ export const acceptApplication = (applicationId: string, scheduledDate?: string)
 
 export const dismissWorker = (applicationId: string): Promise<ApplicationResponse> =>
   api.patch<ApplicationResponse>(`/applications/${applicationId}/dismiss`).then(r => r.data)
+
+export interface StartTokenResponse {
+  token: string
+  expiresAt: string
+}
+
+export const generateStartToken = (applicationId: string): Promise<StartTokenResponse> =>
+  api.post<StartTokenResponse>(`/applications/${applicationId}/start-token`).then(r => r.data)
+
+export const validateStartToken = (applicationId: string, token: string): Promise<{ validatedAt: string }> =>
+  api.post<{ validatedAt: string }>(`/applications/${applicationId}/validate-start-token`, { token }).then(r => r.data)
 
 export const createClientReview = (data: ClientReviewInput) =>
   api.post('/reviews/client', data)

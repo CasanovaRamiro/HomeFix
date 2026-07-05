@@ -1,4 +1,4 @@
-import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications } from '../../infrastructure/database/user.database.js'
+import { findAll, findClientReviewsByUserId, findWorkerReviewsByUserId, getWorkerReviewAggregate, getClientReviewAggregate, updateEmergencyNotifications, updateRequiresStartToken } from '../../infrastructure/database/user.database.js'
 import type { DomainClientReview } from '../types/review.types.js'
 import type { DomainWorkerReview } from '../types/worker.types.js'
 import type { DomainUserRating, ReviewTarget } from '../types/user.types.js'
@@ -43,3 +43,6 @@ export const getUserRating = async (userId: string): Promise<DomainUserRating> =
 
 export const setEmergencyNotifications = (userId: string, enabled: boolean) =>
   updateEmergencyNotifications(userId, enabled)
+
+export const setRequiresStartToken = (userId: string, enabled: boolean) =>
+  updateRequiresStartToken(userId, enabled)

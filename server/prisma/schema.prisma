@@ -24,6 +24,7 @@ model User {
   active          Boolean          @default(true)
   deleted         Boolean          @default(false)
   emergenciesEnabled Boolean         @default(false)
+  requiresStartToken Boolean         @default(false)
   photo           String?
   availability    String?          @db.Text
   telegramChatId  String?          @unique
@@ -148,6 +149,11 @@ model Application {
   chargesVisit       Boolean        @default(false)
   visitCost          Float?
   scheduledDate      DateTime?
+  requiresStartToken  Boolean       @default(false)
+  startToken          String?
+  startTokenExpiresAt DateTime?
+  startTokenAttempts  Int           @default(0)
+  tokenValidatedAt    DateTime?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   post               Post           @relation(fields: [postId], references: [id], onDelete: Cascade)

@@ -82,8 +82,10 @@ describe('findHistoryPostsByUser', () => {
   })
 
   it('aplica skip y take correctamente', async () => {
+    // Explicit, minute-spaced createdAt so the createdAt-desc ordering is
+    // deterministic — a tight loop can collide on the same millisecond.
     for (let i = 0; i < 5; i++) {
-      await makePost({ status: 'Completed', title: `Post ${i}` })
+      await makePost({ status: 'Completed', title: `Post ${i}`, createdAt: new Date(Date.UTC(2026, 5, 1, 0, i)) })
     }
 
     const page1 = await findHistoryPostsByUser(userId, 0, 2)

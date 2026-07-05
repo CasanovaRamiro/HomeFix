@@ -41,6 +41,7 @@ const mockUser = {
   active: true,
   deleted: false,
   emergenciesEnabled: false,
+  requiresStartToken: false,
   photo: null as string | null,
   availability: null as string | null,
   telegramChatId: null as string | null,

@@ -11,6 +11,7 @@ type EventType =
   | 'post_completed'
   | 'post_cancelled'
   | 'emergency_new'
+  | 'start_confirmed'
 
 const templates: Record<EventType, (data: Record<string, string>) => NotificationMessage> = {
   application_new: (d) => ({
@@ -39,6 +40,10 @@ const templates: Record<EventType, (data: Record<string, string>) => Notificatio
   }),
   emergency_new: (d) => ({
     text: `📢 <b>Nueva publicación urgente</b>\n"${d.postTitle}" — ¡Aplicá ahora!\n\n${d.postDescription}`,
+    parseMode: 'HTML',
+  }),
+  start_confirmed: (d) => ({
+    text: `🚀 <b>Inicio confirmado</b>\nEl cliente confirmó el inicio del trabajo "${d.postTitle}"`,
     parseMode: 'HTML',
   }),
 }

@@ -32,6 +32,10 @@ export interface DomainMyApplication {
   availableTimeTo: string | null
   chargesVisit: boolean
   visitCost: number | null
+  requiresStartToken: boolean
+  startToken: string | null
+  startTokenExpiresAt: Date | null
+  tokenValidatedAt: Date | null
 }
 
 export interface DomainPostApplication {
@@ -54,4 +58,15 @@ export interface DomainPostApplication {
   phone: string | null
   scheduledDate: Date | null
   hasReview: boolean
+  requiresStartToken: boolean
+  tokenValidatedAt: Date | null
 }
+
+export interface DomainStartToken {
+  token: string
+  expiresAt: Date
+}
+
+export type DomainStartTokenValidation =
+  | { valid: true; validatedAt: Date }
+  | { valid: false; attemptsLeft: number }

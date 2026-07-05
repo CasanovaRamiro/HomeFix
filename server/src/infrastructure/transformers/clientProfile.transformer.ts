@@ -17,4 +17,5 @@ export const toDomainClientProfileBase = (c: ClientProfileResult): DomainClientP
   photo: c.photo,
   createdAt: c.createdAt,
   address: c.address ?? null,
+  requiresStartToken: c.requiresStartToken,
 })
