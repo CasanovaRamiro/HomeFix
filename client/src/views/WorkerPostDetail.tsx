@@ -452,10 +452,10 @@ export default function WorkerPostDetail() {
             {/* Postulación */}
             {application && <ApplicationCard app={application} />}
 
-            {/* Código de inicio (solo contratos normales que lo requieren) */}
+            {/* Código de inicio (solo contratos normales y emergencias que lo requieren) */}
             {application?.status === ApplicationStatus.Accepted &&
               application.requiresStartToken &&
-              post.type === 'post' && (
+              (post.type === 'post' || post.type === 'emergency') && (
                 <StartTokenWorkerCard
                   applicationId={application.id}
                   initialToken={application.startToken}
