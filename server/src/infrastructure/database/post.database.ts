@@ -490,3 +490,60 @@ export const findPostCategories = (postId: string) =>
   prisma.postCategory.findMany({
     where: { postId },
   })
+
+export const findAvailableBiddingPosts = async (workerId?: string) => {
+  const raw = await prisma.post.findMany({
+    where: { isBidding: true, status: 'Active' } as never,
+    orderBy: { createdAt: 'desc' },
+    select: {
+      ...postFields,
+      applications: workerId
+        ? { where: { workerId }, select: { id: true }, take: 1 }
+        : false,
+    },
+  }) as unknown as (PrismaPostFull & { applications?: { id: string }[] })[]
+  return raw.map((p) => ({
+    ...toDomainPost(p),
+    hasApplied: workerId ? (p.applications?.length ?? 0) > 0 : false,
+  }))
+}
+
+export const findWorkerAppBiddings = async (workerId: string) => {
+  const raw = await prisma.application.findMany({
+    where: { workerId, post: { isBidding: true } } as never,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      post: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          budgetMax: true,
+          materialResponsibility: true,
+          user: { select: { id: true, name: true, surname: true } },
+          categories: { include: { category: { select: { id: true, name: true } } } },
+        },
+      },
+    },
+  })
+  return raw.map((a) => ({
+    applicationId: a.id,
+    status: a.status,
+    offeredCost: a.visitCost,
+    offeredDuration: a.offeredDuration,
+    offeredStartDate: a.scheduledDate?.toISOString() ?? null,
+    message: a.message,
+    createdAt: a.createdAt.toISOString(),
+    bidding: {
+      id: a.post.id,
+      title: a.post.title,
+      description: a.post.description,
+      budgetMax: a.post.budgetMax,
+      materialResponsibility: a.post.materialResponsibility,
+      status: a.post.status,
+      categories: a.post.categories.map((pc) => ({ id: pc.category.id, name: pc.category.name })),
+      client: { id: a.post.user.id, name: a.post.user.name, surname: a.post.user.surname },
+    },
+  }))
+}

@@ -35,11 +35,22 @@ const SUBCONTRACT_GROUP: NavGroupDef = {
   ],
 }
 
+const WORKER_BIDDING_GROUP: NavGroupDef = {
+  label: 'Licitaciones',
+  icon: Gavel,
+  children: [
+    { href: '/worker/available-biddings', label: 'Disponibles',  icon: GitBranch },
+    { href: '/worker/my-biddings',        label: 'Gestor',       icon: GitBranch },
+    { href: '/worker/bidding-history',    label: 'Historial',    icon: ClipboardList },
+  ],
+}
+
 const WORKER_LINKS: NavItemDef[] = [
   { href: '/worker',                  label: 'Inicio',               icon: Home },
   { href: '/worker/available-jobs',   label: 'Trabajos Disponibles', icon: Briefcase },
   { href: '/worker/calendar',         label: 'Mi Agenda',            icon: CalendarDays },
   SUBCONTRACT_GROUP,
+  WORKER_BIDDING_GROUP,
   { href: '/worker/my-applications',  label: 'Historial',            icon: ClipboardList },
 ]
 

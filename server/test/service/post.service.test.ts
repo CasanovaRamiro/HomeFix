@@ -851,6 +851,7 @@ describe('post.service - reopenPost', () => {
       chargesVisit: false,
       visitCost: null,
       scheduledDate: null,
+      offeredDuration: null,
     } as never])
     vi.mocked(updateApplicationStatus).mockResolvedValue({
       id: 'app-1',
@@ -868,6 +869,7 @@ describe('post.service - reopenPost', () => {
       chargesVisit: false,
       visitCost: null,
       scheduledDate: null,
+      offeredDuration: null,
     } as never)
     vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
 

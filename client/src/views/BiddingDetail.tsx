@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Gavel, ArrowLeft, Calendar, MapPin, Clock, DollarSign, Trophy, User, Loader, Package, Image, Phone } from 'lucide-react'
+import { Gavel, ArrowLeft, Calendar, MapPin, Clock, DollarSign, Trophy, User, Loader, Package, Image, MessageCircle, PauseCircle, Play, CheckCircle, XCircle } from 'lucide-react'
 import { fetchBiddingById, fetchBiddingApplications, selectBiddingWinner } from '../services/posts'
+import { pausePost, cancelPost, closeBidding } from '../services/api'
 import type { Post } from '../types/post'
 import type { ApplicationDTO } from '../services/posts'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
@@ -107,7 +108,7 @@ export default function BiddingDetail() {
     )
   }
 
-  const canSelectWinner = bidding && (bidding.status === 'Evaluating') && !selectedWinner
+  const canSelectWinner = bidding && (bidding.status === 'Active' || bidding.status === 'Evaluating') && !selectedWinner
 
   const handleSelectWinner = async (applicationId: string) => {
     if (!id) return
@@ -115,10 +116,41 @@ export default function BiddingDetail() {
     try {
       await selectBiddingWinner(id, applicationId)
       setSelectedWinner(applicationId)
+      setBidding((prev) => prev ? { ...prev, status: 'In progress' } : prev)
     } catch {
       setError('Error al seleccionar el ganador')
     } finally {
       setSelecting(null)
+    }
+  }
+
+  const handlePause = async () => {
+    if (!id) return
+    try {
+      await pausePost(id)
+      window.location.reload()
+    } catch {
+      setError('Error al pausar la licitación')
+    }
+  }
+
+  const handleClose = async () => {
+    if (!id) return
+    try {
+      await closeBidding(id)
+      window.location.reload()
+    } catch {
+      setError('Error al cerrar la licitación')
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!id) return
+    try {
+      await cancelPost(id)
+      window.location.reload()
+    } catch {
+      setError('Error al cancelar la licitación')
     }
   }
 
@@ -231,6 +263,34 @@ export default function BiddingDetail() {
               Prioridad: {weights.map(w => weightLabels[w] || w).join(' > ')}
             </div>
           )}
+
+          {bidding.status === 'Active' && (
+            <div className="pc-manage">
+              <button className="pd-btn pd-btn--warning" onClick={handlePause}>
+                <PauseCircle size={16} /> Pausar licitación
+              </button>
+              <button className="pd-btn pd-btn--accent" onClick={handleClose}>
+                <CheckCircle size={16} /> Poner en Evaluating
+              </button>
+              <button className="pd-btn pd-btn--danger" onClick={handleCancel}>
+                <XCircle size={16} /> Cancelar
+              </button>
+            </div>
+          )}
+
+          {bidding.status === 'Paused' && (
+            <div className="pc-manage">
+              <button className="pd-btn pd-btn--warning" onClick={handlePause}>
+                <Play size={16} /> Reanudar licitación
+              </button>
+              <button className="pd-btn pd-btn--accent" onClick={handleClose}>
+                <CheckCircle size={16} /> Poner en Evaluating
+              </button>
+              <button className="pd-btn pd-btn--danger" onClick={handleCancel}>
+                <XCircle size={16} /> Cancelar
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Offers section */}
@@ -278,87 +338,78 @@ export default function BiddingDetail() {
                     </div>
                   )}
 
-                  {/* Row 1: Avatar + Name + Stars */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    {app.workerPhoto ? (
-                      <img src={app.workerPhoto} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                    ) : (
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <User size={18} style={{ color: '#94A3B8' }} />
-                      </div>
-                    )}
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0 }}>{app.workerName}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                        <Stars rating={app.workerRating} />
-                        <span style={{ color: '#94A3B8' }}>({app.workerReviewCount} reseñas)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Row 2: Price + Duration + Start date */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 13, color: '#475569', marginBottom: 12 }}>
-                    {app.offeredCost !== null && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <DollarSign size={14} style={{ color: '#10B981' }} />
-                        <strong>${app.offeredCost.toLocaleString('es-AR')}</strong>
-                      </span>
-                    )}
-                    {app.offeredDuration !== null && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={14} style={{ color: '#64748B' }} />
-                        {app.offeredDuration} días
-                      </span>
-                    )}
-                    {app.offeredStartDate && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Calendar size={14} style={{ color: '#64748B' }} />
-                        Inicio: {new Date(app.offeredStartDate).toLocaleDateString('es-AR')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Row 3: Message */}
-                  {app.message && (
-                    <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 12px', fontStyle: 'italic', background: '#F8FAFC', padding: '8px 12px', borderRadius: 8, border: '1px solid #F1F5F9' }}>
-                      "{app.message}"
-                    </p>
-                  )}
-
-                  {/* Row 4: Contactar + Contratar */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                    {app.workerPhone && (
-                      <button
-                        onClick={() => window.open(
-                          `https://wa.me/${formatWhatsAppNumber(app.workerPhone!)}?text=${encodeURIComponent('Hola, vi tu oferta en la licitación: ' + bidding?.title)}`,
-                          '_blank'
+                  {/* Flex row: left content + right buttons */}
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                    {/* Left: Avatar + Name + Stars + Details + Message */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        {app.workerPhoto ? (
+                          <img src={app.workerPhoto} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <User size={18} style={{ color: '#94A3B8' }} />
+                          </div>
                         )}
-                        style={{
-                          padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                          border: '1px solid #25D366', cursor: 'pointer',
-                          background: '#fff', color: '#25D366',
-                          display: 'inline-flex', alignItems: 'center', gap: 6,
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        <Phone size={14} /> Contactar
-                      </button>
-                    )}
-                    {canSelectWinner && !selectedWinner && (
-                      <button
-                        onClick={() => handleSelectWinner(app.id)}
-                        disabled={selecting === app.id}
-                        style={{
-                          padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                          border: 'none', cursor: 'pointer',
-                          background: index === 0 ? '#10B981' : '#E2E8F0',
-                          color: index === 0 ? '#fff' : '#64748B',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {selecting === app.id ? 'Contratando...' : 'Contratar'}
-                      </button>
-                    )}
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0 }}>{app.workerName}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                            <Stars rating={app.workerRating} />
+                            <span style={{ color: '#94A3B8' }}>({app.workerReviewCount} reseñas)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12, fontSize: 13 }}>
+                        {app.offeredCost !== null && (
+                          <div style={{ color: '#475569' }}>
+                            <span style={{ color: '#64748B' }}>Presupuesto:</span>{' '}
+                            <strong>${app.offeredCost.toLocaleString('es-AR')}</strong>
+                          </div>
+                        )}
+                        {app.offeredDuration !== null && (
+                          <div style={{ color: '#475569' }}>
+                            <span style={{ color: '#64748B' }}>Días estimados de ejecución:</span>{' '}
+                            <strong>{app.offeredDuration} días</strong>
+                          </div>
+                        )}
+                        {app.offeredStartDate && (
+                          <div style={{ color: '#475569' }}>
+                            <span style={{ color: '#64748B' }}>Inicio de obra:</span>{' '}
+                            <strong>{new Date(app.offeredStartDate).toLocaleDateString('es-AR')}</strong>
+                          </div>
+                        )}
+                      </div>
+
+                      {app.message && (
+                        <p style={{ fontSize: 13, color: '#475569', margin: 0, fontStyle: 'italic' }}>
+                          "{app.message}"
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Right: Buttons apilados */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+                      {app.workerPhone && (
+                        <button
+                          className="pd-btn pd-btn--whatsapp"
+                          onClick={() => window.open(
+                            `https://wa.me/${formatWhatsAppNumber(app.workerPhone!)}?text=${encodeURIComponent('Hola, vi tu oferta en la licitación: ' + bidding?.title)}`,
+                            '_blank'
+                          )}
+                        >
+                          <MessageCircle size={16} /> Contactar
+                        </button>
+                      )}
+                      {canSelectWinner && !selectedWinner && (
+                        <button
+                          className="pd-btn pd-btn--accent"
+                          onClick={() => handleSelectWinner(app.id)}
+                          disabled={selecting === app.id}
+                        >
+                          {selecting === app.id ? 'Contratando...' : 'Contratar'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

@@ -300,6 +300,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .badge-danger { background: var(--danger); color: #fff; }
 .badge-warning { background: #f59e0b; color: #fff; }
 .badge-info { background: #2563eb; color: #fff; }
+.badge-bidding { background: #EFF6FF; color: #3B82F6; font-weight: 600; }
 .badge-subcontract { background: #DBEAFE; color: #1E40AF; }
 .badge-emergency { background: #FEE2E2; color: #DC2626; }
 .badge-applied { background: #E8F5E9; color: #2D6A4F; }

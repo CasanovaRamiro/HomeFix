@@ -15,6 +15,8 @@ import {
   findPostsByGroupId,
   findPostCategories,
   findBiddingPostsByUser,
+  findAvailableBiddingPosts,
+  findWorkerAppBiddings,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
@@ -142,7 +144,9 @@ export const getClientBiddings = async (userId: string): Promise<{
 export const getBiddingDetail = async (biddingId: string, userId: string): Promise<DomainPost> => {
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
-  if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (post.userId !== userId && (!post.isBidding || post.status !== 'Active')) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
   return enrichWithClientRating(post)
 }
 
@@ -150,7 +154,9 @@ export const closeBidding = async (biddingId: string, userId: string) => {
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== PostStatus.Active) {
+  if (post.status === PostStatus.Paused) {
+    await updatePostStatus(biddingId, PostStatus.Active)
+  } else if (post.status !== PostStatus.Active) {
     throw Object.assign(new Error(`La licitación no puede cerrarse en estado ${post.status}`), { status: 400 })
   }
   return updatePostStatus(biddingId, PostStatus.Evaluating)
@@ -160,14 +166,45 @@ export const selectWinner = async (biddingId: string, userId: string, applicatio
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
-  if (post.status !== PostStatus.Evaluating) {
-    throw Object.assign(new Error(`La licitación debe estar en evaluación para seleccionar ganador`), { status: 400 })
+  if (post.status !== PostStatus.Active && post.status !== PostStatus.Evaluating) {
+    throw Object.assign(new Error(`La licitación debe estar activa o en evaluación para seleccionar ganador`), { status: 400 })
+  }
+
+  // If still active, close it first
+  if (post.status === PostStatus.Active) {
+    await updatePostStatus(biddingId, PostStatus.Evaluating)
   }
 
   await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
   await rejectPendingApplications(biddingId)
 
   return updatePostStatus(biddingId, PostStatus.InProgress)
+}
+
+export const listAvailableBiddings = async (userId: string) => {
+  const posts = await findAvailableBiddingPosts(userId)
+  return Promise.all(posts.map(async (p) => {
+    const rating = await getUserRating(p.userId)
+    return {
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      address: p.address,
+      budgetMax: p.budgetMax,
+      materialResponsibility: p.materialResponsibility,
+      images: p.images.map((i: { id?: string; url: string }) => ({ id: i.id ?? '', url: i.url })),
+      latitude: p.latitude,
+      longitude: p.longitude,
+      categories: p.categories.map((c) => ({ id: c.id ?? c.categoryId ?? '', name: c.name })),
+      client: { id: p.userId, name: p.user.name, surname: p.user.surname, rating: rating.averageRating, reviewCount: rating.reviewCount },
+      hasApplied: 'hasApplied' in p ? (p as DomainPost & { hasApplied: boolean }).hasApplied : false,
+      createdAt: p.createdAt.toISOString(),
+    }
+  }))
+}
+
+export const getWorkerBiddings = async (workerId: string) => {
+  return findWorkerAppBiddings(workerId)
 }
 
 export const createSubContract = async (input: CreateSubcontractCommand): Promise<DomainPost[]> => {

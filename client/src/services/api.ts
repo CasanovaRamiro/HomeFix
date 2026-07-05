@@ -147,6 +147,8 @@ export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
 
 export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
 
+export const closeBidding = (id: string) => api.post(`/posts/biddings/${id}/close`)
+
 export const completePost = (id: string) => api.patch(`/posts/${id}/complete`)
 
 export const reopenPost = (id: string) => api.patch(`/posts/${id}/reopen`)

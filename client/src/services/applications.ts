@@ -81,3 +81,14 @@ export const validateStartToken = (applicationId: string, token: string): Promis
 
 export const createClientReview = (data: ClientReviewInput) =>
   api.post('/reviews/client', data)
+
+export interface ApplyToBiddingInput {
+  postId: string
+  offeredCost: number
+  offeredDuration?: number
+  offeredStartDate?: string
+  message?: string
+}
+
+export const applyToBidding = (data: ApplyToBiddingInput) =>
+  api.post('/applications/bidding', data)

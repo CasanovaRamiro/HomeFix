@@ -83,6 +83,7 @@ const mockApplication = {
   chargesVisit: false,
   visitCost: null,
   scheduledDate: null,
+  offeredDuration: null,
   requiresStartToken: false,
   startToken: null,
   startTokenExpiresAt: null,
@@ -210,7 +211,7 @@ describe("applyToPost", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
     categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
     requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
@@ -241,8 +242,12 @@ describe("applyToPost", () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
       categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+<<<<<<< HEAD
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
       requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
+=======
+      chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
+>>>>>>> e4640d2 (Agregar funcionalidad del lado del trabajador)
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })
@@ -346,7 +351,7 @@ describe("applyToSubcontract", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
     categoryId: "cat-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
     requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
@@ -399,8 +404,12 @@ describe("applyToSubcontract", () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
       categoryId: "pc-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
+<<<<<<< HEAD
       chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
       requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
+=======
+      chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
+>>>>>>> e4640d2 (Agregar funcionalidad del lado del trabajador)
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
   })

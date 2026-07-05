@@ -284,6 +284,25 @@ export const validateStartToken = async (
   return { valid: true, validatedAt }
 }
 
+export const applyToBidding = async (workerId: string, input: { postId: string; offeredCost: number; offeredDuration?: number; offeredStartDate?: string; message?: string }) => {
+  const post = await findPostById(input.postId)
+  if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
+  if (!post.isBidding) throw Object.assign(new Error('El post no es una licitación'), { status: 400 })
+  if (post.status !== 'Active') throw Object.assign(new Error('La licitación no está activa'), { status: 400 })
+
+  const existing = await findApplication(workerId, input.postId)
+  if (existing) throw Object.assign(new Error('Ya te postulaste a esta licitación'), { status: 409 })
+
+  await createApplication(workerId, {
+    postId: input.postId,
+    chargesVisit: false,
+    visitCost: input.offeredCost,
+    offeredDuration: input.offeredDuration,
+    scheduledDate: input.offeredStartDate,
+    message: input.message,
+  })
+}
+
 export const getPostApplications = (clientId: string, postId: string): Promise<DomainPostApplication[]> =>
   findPostById(postId).then((post) => {
     if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })

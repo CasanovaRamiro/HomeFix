@@ -112,3 +112,45 @@ export const fetchBiddingApplications = (biddingId: string) =>
 
 export const selectBiddingWinner = (biddingId: string, applicationId: string) =>
   api.post(`/posts/biddings/${biddingId}/select-winner`, { applicationId })
+
+export interface AvailableBiddingDTO {
+  id: string
+  title: string
+  description: string
+  address: string
+  budgetMax: number | null
+  materialResponsibility: string | null
+  images: { id: string; url: string }[]
+  latitude: number | null
+  longitude: number | null
+  categories: { id: string; name: string }[]
+  client: { id: string; name: string; surname: string; rating: number; reviewCount: number }
+  hasApplied: boolean
+  createdAt: string
+}
+
+export interface WorkerBiddingDTO {
+  applicationId: string
+  status: string
+  offeredCost: number | null
+  offeredDuration: number | null
+  offeredStartDate: string | null
+  message: string | null
+  createdAt: string
+  bidding: {
+    id: string
+    title: string
+    description: string
+    budgetMax: number | null
+    materialResponsibility: string | null
+    status: string
+    categories: { id: string; name: string }[]
+    client: { id: string; name: string; surname: string }
+  }
+}
+
+export const fetchAvailableBiddings = () =>
+  api.get<AvailableBiddingDTO[]>('/posts/available-biddings')
+
+export const fetchWorkerBiddings = () =>
+  api.get<WorkerBiddingDTO[]>('/posts/worker-biddings')

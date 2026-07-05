@@ -86,8 +86,10 @@ export const createApplication = (workerId: string, input: CreateApplicationInpu
       availableDays: input.availableDays ? JSON.stringify(input.availableDays) : null,
       availableTimeFrom: input.availableTimeFrom ?? null,
       availableTimeTo: input.availableTimeTo ?? null,
-      chargesVisit: input.chargesVisit,
+      chargesVisit: input.chargesVisit ?? false,
       visitCost: input.visitCost ?? null,
+      offeredDuration: input.offeredDuration ?? null,
+      scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
     },
   })
 
@@ -137,7 +139,7 @@ export const findBiddingApplications = async (biddingId: string) => {
       status: a.status,
       message: a.message,
       offeredCost: a.visitCost,
-      offeredDuration: null as number | null,
+      offeredDuration: a.offeredDuration ?? null,
       offeredStartDate: a.scheduledDate?.toISOString() ?? null,
       createdAt: a.createdAt.toISOString(),
     }

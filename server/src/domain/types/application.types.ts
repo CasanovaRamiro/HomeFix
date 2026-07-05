@@ -6,8 +6,10 @@ export interface CreateApplicationInput {
   availableDays?: string[]
   availableTimeFrom?: string
   availableTimeTo?: string
-  chargesVisit: boolean
+  chargesVisit?: boolean
   visitCost?: number
+  offeredDuration?: number
+  scheduledDate?: string
 }
 
 export interface DomainMyApplication {
