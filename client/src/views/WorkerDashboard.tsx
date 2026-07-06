@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
-  CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
+  CheckCircle, CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
   ChevronRight, Shield, MessageSquare, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
@@ -451,10 +451,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
       })
       setAppliedIds((prev) => [...prev, selectedEmergency.id])
       setExito(true)
-      setTimeout(() => {
-        setSelectedEmergency(null)
-        setExito(false)
-      }, 1500)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al postularse'
       alert(msg)
@@ -595,11 +591,41 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
       {/* Apply Modal for emergencies */}
       {selectedEmergency && (
         exito ? (
-          <div className="modal-overlay" role="presentation">
-            <div className="card modal-card" role="dialog" style={{ textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: 0 }}>Postulacion enviada</h2>
-              <p style={{ fontSize: 14, color: '#64748B', marginTop: 8 }}>Te postulaste exitosamente a la urgencia</p>
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24,
+          }} onClick={handleCloseModal}>
+            <div style={{
+              background: '#fff', borderRadius: 20,
+              padding: '32px 28px', maxWidth: 420, width: '100%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center',
+            }} onClick={(e) => e.stopPropagation()}>
+              <div style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: '#ECFDF5', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px',
+              }}>
+                <CheckCircle size={26} color="#10B981" fill="#10B981" />
+              </div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 10px' }}>
+                ¡Postulación enviada!
+              </h2>
+              <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 28px', lineHeight: 1.6 }}>
+                Te postulaste exitosamente a esta urgencia.
+              </p>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  width: '100%', padding: '12px 0', borderRadius: 10,
+                  border: 'none', background: '#0F172A', color: '#fff',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         ) : (
