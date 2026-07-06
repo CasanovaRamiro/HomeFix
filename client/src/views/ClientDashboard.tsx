@@ -154,15 +154,6 @@ export default function ClientDashboard() {
                 )}
               </section>
 
-              {/* Mensajes */}
-              <section>
-                <h2 className="mb-4 text-xl font-bold text-slate-900">Mensajes</h2>
-                <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-md">
-                  <MessageSquare size={28} className="mx-auto text-slate-300" />
-                  <p className="mt-3 text-sm text-slate-400">Próximamente disponible.</p>
-                </div>
-              </section>
-
             </div>
 
             {/* Columna derecha — Emergencia + Telegram */}
@@ -184,6 +175,16 @@ export default function ClientDashboard() {
             </div>
 
           </div>
+
+          {/* Mensajes — siempre al final */}
+          <section className="mt-8">
+            <h2 className="mb-4 text-xl font-bold text-slate-900">Mensajes</h2>
+            <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-md">
+              <MessageSquare size={28} className="mx-auto text-slate-300" />
+              <p className="mt-3 text-sm text-slate-400">Próximamente disponible.</p>
+            </div>
+          </section>
+
         </div>
       </div>
 
