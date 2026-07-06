@@ -1173,16 +1173,16 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
 
   return (
     <div style={{ marginTop: 32 }}>
-      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '24px 24px 20px' }}>
+      <div className="agenda-card">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <div className="agenda-header">
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>Mi Agenda</h2>
           <span style={{ fontSize: 13, color: '#64748B' }}>{weekLabel}</span>
         </div>
         <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 20px' }}>Tus trabajos de esta semana</p>
 
         {/* Week strip */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 20 }}>
+        <div className="agenda-week">
           {weekDays.map((day) => {
             const ymd     = toYMDLocal(day)
             const count   = appsForDay(ymd).length
@@ -1248,10 +1248,7 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {selectedApps.map((app) => (
-                  <div key={app.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 16px',
-                  }}>
+                  <div key={app.id} className="agenda-job">
                     {app.availableTimeFrom && (
                       <div style={{ flexShrink: 0, minWidth: 44, textAlign: 'center' }}>
                         <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0 }}>{app.availableTimeFrom}</p>
@@ -1276,12 +1273,7 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
                     </div>
                     <Link
                       to={`/worker/posts/${app.postId}`}
-                      style={{
-                        flexShrink: 0, fontSize: 12, fontWeight: 600,
-                        color: '#059669', background: '#ECFDF5',
-                        border: '1px solid #A7F3D0', borderRadius: 8,
-                        padding: '5px 14px', textDecoration: 'none',
-                      }}
+                      className="agenda-job-link"
                     >
                       Ver
                     </Link>
@@ -1293,7 +1285,7 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
             <div style={{ textAlign: 'center', marginTop: 18 }}>
               <Link
                 to="/worker/calendar"
-                style={{ fontSize: 13, fontWeight: 600, color: '#64748B', textDecoration: 'none' }}
+                className="agenda-footer-link"
               >
                 Ver toda mi agenda
               </Link>
@@ -1492,6 +1484,12 @@ export default function WorkerDashboard() {
         .wd-main-grid { box-sizing: border-box; }
         .wd-content { min-width: 0; }
         .wd-content h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .agenda-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 24px; }
+        .agenda-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .agenda-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
+        .agenda-job { display: flex; align-items: center; gap: 14px; border: 1px solid #E2E8F0; border-radius: 14px; padding: 14px 16px; }
+        .agenda-job-link { flex-shrink: 0; font-size: 12px; font-weight: 600; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 5px 14px; text-decoration: none; }
+        .agenda-footer-link { font-size: 13px; font-weight: 600; color: #64748B; text-decoration: none; }
         @media (max-width: 1024px) { .wd-main-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
           .wd-metrics-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1507,6 +1505,11 @@ export default function WorkerDashboard() {
           .wd-metric-icon-svg { width: 18px !important; height: 18px !important; }
           .wd-metric-value { font-size: 22px !important; }
           .wd-metric-label { font-size: 11px !important; }
+          .agenda-card { padding: 16px; }
+          .agenda-header { flex-direction: column; align-items: flex-start; gap: 2px; }
+          .agenda-week { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+          .agenda-job { flex-direction: column; align-items: stretch; gap: 10px; }
+          .agenda-job-link { width: 100%; text-align: center; padding: 8px 14px; }
           .wd-header-container,
           .wd-section,
           .wd-main-grid { padding-left: 16px !important; padding-right: 16px !important; }
@@ -1518,6 +1521,7 @@ export default function WorkerDashboard() {
           }
         }
         @media (max-width: 360px) {
+          .agenda-week { grid-template-columns: repeat(2, 1fr); }
           .wd-header-container,
           .wd-section,
           .wd-main-grid { padding-left: 12px !important; padding-right: 12px !important; }
