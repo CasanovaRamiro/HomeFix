@@ -655,6 +655,7 @@ interface Application {
   clientPhone: string | null
   availableTimeFrom: string | null
   availableTimeTo: string | null
+  isBidding: boolean
 }
 
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
@@ -1109,7 +1110,7 @@ function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loadi
               </div>
               <div style={{ marginTop: 10 }}>
                 <Link
-                  to={`/worker/posts/${app.postId}`}
+                  to={app.isBidding ? `/worker/biddings/${app.postId}` : `/worker/posts/${app.postId}`}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     background: '#0F172A', borderRadius: 8,
@@ -1272,8 +1273,13 @@ function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading:
                       </div>
                     </div>
                     <Link
-                      to={`/worker/posts/${app.postId}`}
-                      className="agenda-job-link"
+                      to={app.isBidding ? `/worker/biddings/${app.postId}` : `/worker/posts/${app.postId}`}
+                      style={{
+                        flexShrink: 0, fontSize: 12, fontWeight: 600,
+                        color: '#059669', background: '#ECFDF5',
+                        border: '1px solid #A7F3D0', borderRadius: 8,
+                        padding: '5px 14px', textDecoration: 'none',
+                      }}
                     >
                       Ver
                     </Link>

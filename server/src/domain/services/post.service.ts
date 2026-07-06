@@ -17,6 +17,7 @@ import {
   findBiddingPostsByUser,
   findAvailableBiddingPosts,
   findWorkerAppBiddings,
+  selectBiddingWinner,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
@@ -144,7 +145,7 @@ export const getClientBiddings = async (userId: string): Promise<{
 export const getBiddingDetail = async (biddingId: string, userId: string): Promise<DomainPost> => {
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
-  if (post.userId !== userId && (!post.isBidding || post.status !== 'Active')) {
+  if (post.userId !== userId && !post.isBidding) {
     throw Object.assign(new Error('Forbidden'), { status: 403 })
   }
   return enrichWithClientRating(post)
@@ -156,6 +157,7 @@ export const closeBidding = async (biddingId: string, userId: string) => {
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
   if (post.status === PostStatus.Paused) {
     await updatePostStatus(biddingId, PostStatus.Active)
+    return
   } else if (post.status !== PostStatus.Active) {
     throw Object.assign(new Error(`La licitación no puede cerrarse en estado ${post.status}`), { status: 400 })
   }
@@ -170,15 +172,7 @@ export const selectWinner = async (biddingId: string, userId: string, applicatio
     throw Object.assign(new Error(`La licitación debe estar activa o en evaluación para seleccionar ganador`), { status: 400 })
   }
 
-  // If still active, close it first
-  if (post.status === PostStatus.Active) {
-    await updatePostStatus(biddingId, PostStatus.Evaluating)
-  }
-
-  await updateApplicationStatus(applicationId, ApplicationStatus.Accepted)
-  await rejectPendingApplications(biddingId)
-
-  return updatePostStatus(biddingId, PostStatus.InProgress)
+  return selectBiddingWinner(biddingId, applicationId, post.status)
 }
 
 export const listAvailableBiddings = async (userId: string) => {
@@ -198,6 +192,7 @@ export const listAvailableBiddings = async (userId: string) => {
       categories: p.categories.map((c) => ({ id: c.id ?? c.categoryId ?? '', name: c.name })),
       client: { id: p.userId, name: p.user.name, surname: p.user.surname, rating: rating.averageRating, reviewCount: rating.reviewCount },
       hasApplied: 'hasApplied' in p ? (p as DomainPost & { hasApplied: boolean }).hasApplied : false,
+      endDate: p.endDate.toISOString(),
       createdAt: p.createdAt.toISOString(),
     }
   }))

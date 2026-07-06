@@ -39,7 +39,6 @@ import AuthCallback from './views/AuthCallback'
 import ForgotPassword from './views/ForgotPassword'
 import WorkerAvailableBiddings from './views/WorkerAvailableBiddings'
 import WorkerMyBiddings from './views/WorkerMyBiddings'
-import WorkerBiddingHistory from './views/WorkerBiddingHistory'
 import WorkerBiddingDetail from './views/WorkerBiddingDetail'
 import { UserRole } from './types/user'
 
@@ -128,7 +127,6 @@ export default function App(): ReactNode {
         <Route path="/client/biddings/:id" element={<ClientRoute><BiddingDetail /></ClientRoute>} />
         <Route path="/worker/available-biddings" element={<WorkerRoute><WorkerAvailableBiddings /></WorkerRoute>} />
         <Route path="/worker/my-biddings" element={<WorkerRoute><WorkerMyBiddings /></WorkerRoute>} />
-        <Route path="/worker/bidding-history" element={<WorkerRoute><WorkerBiddingHistory /></WorkerRoute>} />
         <Route path="/worker/biddings/:id" element={<WorkerRoute><WorkerBiddingDetail /></WorkerRoute>} />
         <Route path="/worker/available-jobs" element={<WorkerRoute><AvailableJobs /></WorkerRoute>} />
         <Route path="/worker/:id" element={<WorkerRoute><WorkerProfile /></WorkerRoute>} />

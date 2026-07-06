@@ -9,7 +9,13 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
     where: { workerId, status: { notIn: [ApplicationStatus.Rejected, ApplicationStatus.Dismissed] } },
     include: {
       post: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          address: true,
+          startDate: true,
+          endDate: true,
+          isBidding: true,
           user: { select: { id: true, name: true, surname: true, phone: true } },
           categories: { include: { category: { select: { name: true } } } },
         },
@@ -32,7 +38,7 @@ export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true, type: true, subcontractGroupId: true } },
+      post: { select: { userId: true, title: true, status: true, type: true, isBidding: true, subcontractGroupId: true } },
       category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
@@ -72,6 +78,12 @@ export const rejectPendingApplications = (postId: string) =>
   prisma.application.updateMany({
     where: { postId, status: ApplicationStatus.Pending },
     data: { status: ApplicationStatus.Rejected },
+  })
+
+export const resetRejectedApplications = (postId: string) =>
+  prisma.application.updateMany({
+    where: { postId, status: ApplicationStatus.Rejected },
+    data: { status: ApplicationStatus.Pending },
   })
 
 export const createApplication = (workerId: string, input: CreateApplicationInput) =>

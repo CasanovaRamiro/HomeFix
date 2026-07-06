@@ -111,6 +111,7 @@ export interface AvailableBiddingDTO {
 export interface WorkerBiddingDTO {
   applicationId: string
   status: string
+  hasReview: boolean
   offeredCost: number | null
   offeredDuration: number | null
   offeredStartDate: string | null

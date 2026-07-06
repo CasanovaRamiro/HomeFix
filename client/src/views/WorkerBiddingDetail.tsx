@@ -6,8 +6,9 @@ import { applyToBidding } from '../services/applications'
 import type { Post } from '../types/post'
 import type { WorkerBiddingDTO } from '../services/posts'
 import StarRating from '../components/ui/StarRating'
-import { ArrowLeft, GitBranch, MapPin, Image as ImageIcon, Calendar, DollarSign, Clock, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { ArrowLeft, GitBranch, MapPin, Image as ImageIcon, Calendar, DollarSign, Clock, AlertCircle, CheckCircle, X, Star, FileText } from 'lucide-react'
 import { formatAddress } from '../utils/address'
+import ReviewModal from '../components/review/ReviewModal'
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   Active:      { label: 'Activa',          color: '#059669', bg: '#ECFDF5' },
@@ -26,6 +27,8 @@ const APP_STATUS_LABELS: Record<string, { label: string; color: string; bg: stri
   Completed: { label: 'Completada',    color: '#059669', bg: '#ECFDF5' },
 }
 
+
+
 export default function WorkerBiddingDetail() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
@@ -34,6 +37,7 @@ export default function WorkerBiddingDetail() {
   const [post, setPost] = useState<Post | null>(null)
   const [myApp, setMyApp] = useState<WorkerBiddingDTO | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   const [offeredCost, setOfferedCost] = useState('')
   const [offeredDuration, setOfferedDuration] = useState('')
@@ -81,6 +85,9 @@ export default function WorkerBiddingDetail() {
     if (!cost || cost <= 0) { setError('Ingresá un costo ofertado válido'); return }
     const dur = parseInt(offeredDuration)
     if (!dur || dur <= 0) { setError('Ingresá una duración estimada válida'); return }
+    if (offeredStartDate && post?.endDate && new Date(offeredStartDate) <= new Date(post.endDate)) {
+      setError('La fecha de inicio debe ser posterior a la fecha tope de la licitación'); return
+    }
 
     setSubmitting(true)
     try {
@@ -257,6 +264,46 @@ export default function WorkerBiddingDetail() {
                   {myApp.message}
                 </div>
               )}
+
+              {myApp.status === 'Accepted' && (
+                <button
+                  onClick={() => navigate('/create-subcontract', { state: { parentPostId: post.id } })}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#0F172A', border: 'none', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  Subcontratar
+                </button>
+              )}
+
+              {myApp.status === 'Completed' && (
+                myApp.hasReview ? (
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#10B981', fontWeight: 600 }}>
+                    <CheckCircle size={16} /> Reseña enviada
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    style={{
+                      marginTop: 10, width: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      background: '#10B981', border: 'none', borderRadius: 10,
+                      padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                      cursor: 'pointer', transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                  >
+                    <Star size={16} /> Calificar cliente
+                  </button>
+                )
+              )}
             </div>
           ) : post.status === 'Active' ? (
             <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #E2E8F0' }}>
@@ -334,6 +381,18 @@ export default function WorkerBiddingDetail() {
           )}
         </div>
       </div>
+
+      {showReviewModal && myApp && (
+        <ReviewModal
+          applicationId={myApp.applicationId}
+          clientName={`${post?.user?.name ?? ''} ${post?.user?.surname ?? ''}`}
+          onClose={() => setShowReviewModal(false)}
+          onSuccess={() => {
+            setMyApp((prev) => prev ? { ...prev, hasReview: true } : prev)
+            setShowReviewModal(false)
+          }}
+        />
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

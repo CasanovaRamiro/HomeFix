@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Gavel, ArrowLeft, Calendar, MapPin, Clock, DollarSign, Trophy, User, Loader, Package, Image, MessageCircle, PauseCircle, Play, CheckCircle, XCircle } from 'lucide-react'
+import { Gavel, ArrowLeft, Calendar, MapPin, Clock, DollarSign, Trophy, User, Loader, Package, Image, MessageCircle, PauseCircle, Play, CheckCircle, XCircle, UserX } from 'lucide-react'
 import { fetchBiddingById, fetchBiddingApplications, selectBiddingWinner } from '../services/posts'
-import { pausePost, cancelPost, closeBidding } from '../services/api'
+import { pausePost, cancelPost, closeBidding, completePost } from '../services/api'
 import type { Post } from '../types/post'
 import type { ApplicationDTO } from '../services/posts'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
 import { computeScores } from '../services/filtroPonderado'
+import { dismissWorker } from '../services/applications'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import LandingFooter from '../components/landing/LandingFooter'
 
 const statusStyles: Record<string, { color: string; bg: string; label: string }> = {
@@ -39,6 +41,16 @@ export default function BiddingDetail() {
   const [selecting, setSelecting] = useState<string | null>(null)
   const [selectedWinner, setSelectedWinner] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('bestOffer')
+  const [dismissModalOpen, setDismissModalOpen] = useState(false)
+  const [dismissing, setDismissing] = useState(false)
+  const [pauseConfirmOpen, setPauseConfirmOpen] = useState(false)
+  const [pauseLoading, setPauseLoading] = useState(false)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
+  const [closeLoading, setCloseLoading] = useState(false)
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+  const [cancelLoading, setCancelLoading] = useState(false)
+  const [finalizeConfirmOpen, setFinalizeConfirmOpen] = useState(false)
+  const [finalizeLoading, setFinalizeLoading] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -51,6 +63,10 @@ export default function BiddingDetail() {
         if (cancelled) return
         setBidding(bRes.data)
         setApplications(appsRes?.data ?? [])
+        if (bRes.data.status === 'In progress') {
+          const winner = appsRes?.data?.find((app: ApplicationDTO) => app.status === 'Accepted')
+          if (winner) setSelectedWinner(winner.id)
+        }
       })
       .catch(() => { if (!cancelled) setError('No se pudo cargar la licitación') })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -75,6 +91,10 @@ export default function BiddingDetail() {
   }
 
   const scored = computeScores(applications, weights)
+
+  const displayApp = selectedWinner
+    ? applications.find((a) => a.id === selectedWinner) ?? null
+    : scored[0]?.app ?? null
 
   const sortedApps = (() => {
     const list = sortBy === 'bestOffer' ? [...scored] : [...scored]
@@ -126,31 +146,97 @@ export default function BiddingDetail() {
 
   const handlePause = async () => {
     if (!id) return
+    setPauseLoading(true)
     try {
       await pausePost(id)
       window.location.reload()
     } catch {
+      setPauseLoading(false)
+      setPauseConfirmOpen(false)
       setError('Error al pausar la licitación')
     }
   }
 
   const handleClose = async () => {
     if (!id) return
+    setCloseLoading(true)
     try {
       await closeBidding(id)
       window.location.reload()
     } catch {
+      setCloseLoading(false)
+      setCloseConfirmOpen(false)
       setError('Error al cerrar la licitación')
     }
   }
 
   const handleCancel = async () => {
     if (!id) return
+    setCancelLoading(true)
     try {
       await cancelPost(id)
       window.location.reload()
     } catch {
+      setCancelLoading(false)
+      setCancelConfirmOpen(false)
       setError('Error al cancelar la licitación')
+    }
+  }
+
+  const winnerApp = applications.find((app) => app.id === selectedWinner)
+
+  const handleDismiss = async () => {
+    if (!id || !selectedWinner) return
+    setDismissing(true)
+    try {
+      await dismissWorker(selectedWinner)
+      setDismissModalOpen(false)
+      navigate('/review', {
+        state: {
+          postId: id,
+          applicationId: selectedWinner,
+          titulo: bidding?.title,
+          fecha: bidding?.endDate,
+          ubicacion: bidding?.address,
+          trabajador: {
+            id: winnerApp?.workerId ?? '',
+            nombre: winnerApp?.workerName ?? '',
+            categoria: '',
+            imagen: winnerApp?.workerPhoto ?? undefined,
+            verificado: false,
+          },
+        },
+      })
+    } catch {
+      setDismissing(false)
+      setError('Error al despedir al trabajador')
+    }
+  }
+
+  const handleFinalize = async () => {
+    if (!id || !selectedWinner) return
+    setFinalizeLoading(true)
+    try {
+      await completePost(id)
+      navigate('/review', {
+        state: {
+          postId: id,
+          titulo: bidding?.title,
+          fecha: bidding?.endDate,
+          ubicacion: bidding?.address,
+          trabajador: {
+            id: winnerApp?.workerId ?? '',
+            nombre: winnerApp?.workerName ?? '',
+            categoria: '',
+            imagen: winnerApp?.workerPhoto ?? undefined,
+            verificado: false,
+          },
+        },
+      })
+    } catch {
+      setFinalizeLoading(false)
+      setFinalizeConfirmOpen(false)
+      setError('Error al finalizar la licitación')
     }
   }
 
@@ -197,8 +283,9 @@ export default function BiddingDetail() {
       </div>
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', marginTop: -20, position: 'relative', zIndex: 10 }}>
-        {/* Info card */}
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+        <div className="bd-grid">
+          {/* Info card */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <span style={{ borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, background: ss.bg, color: ss.color }}>
               {ss.label}
@@ -266,29 +353,183 @@ export default function BiddingDetail() {
 
           {bidding.status === 'Active' && (
             <div className="pc-manage">
-              <button className="pd-btn pd-btn--warning" onClick={handlePause}>
+              <button className="pd-btn pd-btn--warning" onClick={() => setPauseConfirmOpen(true)}>
                 <PauseCircle size={16} /> Pausar licitación
               </button>
-              <button className="pd-btn pd-btn--accent" onClick={handleClose}>
+              <button className="pd-btn pd-btn--accent" onClick={() => setCloseConfirmOpen(true)}>
                 <CheckCircle size={16} /> Poner en Evaluating
               </button>
-              <button className="pd-btn pd-btn--danger" onClick={handleCancel}>
+              <button className="pd-btn pd-btn--danger" onClick={() => setCancelConfirmOpen(true)}>
                 <XCircle size={16} /> Cancelar
               </button>
             </div>
           )}
 
+          {bidding.status === 'Evaluating' && (
+            <div className="pc-manage">
+              <button className="pd-btn pd-btn--danger" onClick={() => setCancelConfirmOpen(true)}>
+                <XCircle size={16} /> Cancelar licitación
+              </button>
+            </div>
+          )}
+
+          {bidding.status === 'In progress' && selectedWinner && (
+            <div className="pc-manage" style={{ justifyContent: 'space-between' }}>
+              <button className="pd-btn pd-btn--accent" onClick={() => setFinalizeConfirmOpen(true)}>
+                <CheckCircle size={16} /> Finalizar
+              </button>
+              <button className="pd-btn pd-btn--danger" onClick={() => setDismissModalOpen(true)}>
+                <UserX size={16} /> Despedir Adjudicatario
+              </button>
+            </div>
+          )}
+
+          <ConfirmModal
+            open={dismissModalOpen}
+            title="Despedir Adjudicatario"
+            message="¿Seguro que querés despedir al adjudicatario? La licitación volverá a estado de evaluación y podrás seleccionar otra oferta."
+            confirmLabel="Sí, despedir"
+            onConfirm={handleDismiss}
+            onCancel={() => { setDismissModalOpen(false); setDismissing(false) }}
+            loading={dismissing}
+            danger
+          />
+
+          <ConfirmModal
+            open={pauseConfirmOpen}
+            title={bidding.status === 'Paused' ? 'Reanudar licitación' : 'Pausar licitación'}
+            message={bidding.status === 'Paused' ? '¿Reanudar la licitación para recibir nuevas ofertas?' : '¿Pausar la licitación? Las ofertas actuales se conservarán pero no se aceptarán nuevas.'}
+            confirmLabel={bidding.status === 'Paused' ? 'Reanudar' : 'Pausar'}
+            onConfirm={handlePause}
+            onCancel={() => { setPauseConfirmOpen(false); setPauseLoading(false) }}
+            loading={pauseLoading}
+            danger={bidding.status === 'Active'}
+          />
+
+          <ConfirmModal
+            open={closeConfirmOpen}
+            title="Poner en evaluación"
+            message="¿Cerrar la licitación y pasar las ofertas a evaluación? Ya no se aceptarán nuevas ofertas."
+            confirmLabel="Cerrar y evaluar"
+            onConfirm={handleClose}
+            onCancel={() => { setCloseConfirmOpen(false); setCloseLoading(false) }}
+            loading={closeLoading}
+          />
+
+          <ConfirmModal
+            open={cancelConfirmOpen}
+            title="Cancelar licitación"
+            message="¿Estás seguro de cancelar esta licitación? Esta acción no se puede deshacer."
+            confirmLabel="Sí, cancelar"
+            onConfirm={handleCancel}
+            onCancel={() => { setCancelConfirmOpen(false); setCancelLoading(false) }}
+            loading={cancelLoading}
+            danger
+          />
+
+          <ConfirmModal
+            open={finalizeConfirmOpen}
+            title="Finalizar licitación"
+            message="¿Estás seguro de finalizar esta licitación? El trabajador recibirá notificación y podrás dejar una reseña."
+            confirmLabel="Sí, finalizar"
+            onConfirm={handleFinalize}
+            onCancel={() => { setFinalizeConfirmOpen(false); setFinalizeLoading(false) }}
+            loading={finalizeLoading}
+          />
+
           {bidding.status === 'Paused' && (
             <div className="pc-manage">
-              <button className="pd-btn pd-btn--warning" onClick={handlePause}>
+              <button className="pd-btn pd-btn--warning" onClick={() => setPauseConfirmOpen(true)}>
                 <Play size={16} /> Reanudar licitación
               </button>
-              <button className="pd-btn pd-btn--accent" onClick={handleClose}>
+              <button className="pd-btn pd-btn--accent" onClick={() => setCloseConfirmOpen(true)}>
                 <CheckCircle size={16} /> Poner en Evaluating
               </button>
-              <button className="pd-btn pd-btn--danger" onClick={handleCancel}>
+              <button className="pd-btn pd-btn--danger" onClick={() => setCancelConfirmOpen(true)}>
                 <XCircle size={16} /> Cancelar
               </button>
+            </div>
+          )}
+        </div>
+
+          {displayApp && (
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+                {selectedWinner ? (
+                  <CheckCircle size={18} color="#10B981" />
+                ) : (
+                  <Trophy size={18} color="#F59E0B" />
+                )}
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                  {selectedWinner ? 'Oferta contratada' : 'Mejor oferta'}
+                </h2>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                {displayApp.workerPhoto ? (
+                  <img src={displayApp.workerPhoto} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <User size={20} style={{ color: '#94A3B8' }} />
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: 0 }}>{displayApp.workerName}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                    <Stars rating={displayApp.workerRating} />
+                    <span>({displayApp.workerReviewCount} reseñas)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12, fontSize: 13 }}>
+                <div style={{ color: '#475569' }}>
+                  <span style={{ color: '#64748B' }}>Presupuesto:</span>{' '}
+                  <strong>${displayApp.offeredCost?.toLocaleString('es-AR') ?? '—'}</strong>
+                </div>
+                {displayApp.offeredDuration != null && (
+                  <div style={{ color: '#475569' }}>
+                    <span style={{ color: '#64748B' }}>Días estimados:</span>{' '}
+                    <strong>{displayApp.offeredDuration} días</strong>
+                  </div>
+                )}
+                {displayApp.offeredStartDate && (
+                  <div style={{ color: '#475569' }}>
+                    <span style={{ color: '#64748B' }}>Inicio de obra:</span>{' '}
+                    <strong>{new Date(displayApp.offeredStartDate).toLocaleDateString('es-AR')}</strong>
+                  </div>
+                )}
+              </div>
+
+              {displayApp.message && (
+                <p style={{ fontSize: 13, color: '#475569', margin: '0 0 12px', fontStyle: 'italic' }}>
+                  "{displayApp.message}"
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="pd-btn pd-btn--whatsapp"
+                  style={{ flex: 1 }}
+                  onClick={() => window.open(
+                    `https://wa.me/${formatWhatsAppNumber(displayApp.workerPhone!)}?text=${encodeURIComponent('Hola, vi tu oferta en la licitación: ' + bidding?.title)}`,
+                    '_blank'
+                  )}
+                >
+                  <MessageCircle size={16} /> Contactar
+                </button>
+
+                {!selectedWinner && canSelectWinner && (
+                  <button
+                    className="pd-btn pd-btn--accent"
+                    style={{ flex: 1 }}
+                    onClick={() => handleSelectWinner(displayApp.id)}
+                    disabled={selecting === displayApp.id}
+                  >
+                    {selecting === displayApp.id ? 'Contratando...' : 'Contratar'}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -420,6 +661,8 @@ export default function BiddingDetail() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        .bd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 768px) { .bd-grid { grid-template-columns: 1fr; } }
       `}</style>
       <div style={{ marginTop: 48 }}>
         <LandingFooter />

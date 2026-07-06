@@ -39,9 +39,8 @@ const WORKER_BIDDING_GROUP: NavGroupDef = {
   label: 'Licitaciones',
   icon: Gavel,
   children: [
-    { href: '/worker/available-biddings', label: 'Disponibles',  icon: GitBranch },
-    { href: '/worker/my-biddings',        label: 'Gestor',       icon: GitBranch },
-    { href: '/worker/bidding-history',    label: 'Historial',    icon: ClipboardList },
+    { href: '/worker/available-biddings', label: 'Disponibles',     icon: GitBranch },
+    { href: '/worker/my-biddings',        label: 'Mis licitaciones', icon: GitBranch },
   ],
 }
 

@@ -24,6 +24,7 @@ export interface DomainMyApplication {
   serviceDate: Date
   endDate: Date
   status: string
+  isBidding: boolean
   category: string | null
   categoryId: string | null
   hasReview: boolean

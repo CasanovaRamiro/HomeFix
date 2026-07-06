@@ -382,6 +382,33 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
     select: { id: true, status: true },
   })
 
+export const selectBiddingWinner = (
+  biddingId: string,
+  applicationId: string,
+  currentStatus: string,
+): Promise<{ id: string; status: string }> =>
+  prisma.$transaction(async (tx) => {
+    if (currentStatus === PostStatus.Active) {
+      await tx.post.update({
+        where: { id: biddingId },
+        data: { status: PostStatus.Evaluating },
+      })
+    }
+    await tx.application.update({
+      where: { id: applicationId },
+      data: { status: ApplicationStatus.Accepted },
+    })
+    await tx.application.updateMany({
+      where: { postId: biddingId, status: ApplicationStatus.Pending, id: { not: applicationId } },
+      data: { status: ApplicationStatus.Rejected },
+    })
+    return tx.post.update({
+      where: { id: biddingId },
+      data: { status: PostStatus.InProgress },
+      select: { id: true, status: true },
+    })
+  })
+
 export const deletePostImages = (postId: string) =>
   prisma.postImage.deleteMany({ where: { postId } })
 
@@ -493,7 +520,7 @@ export const findPostCategories = (postId: string) =>
 
 export const findAvailableBiddingPosts = async (workerId?: string) => {
   const raw = await prisma.post.findMany({
-    where: { isBidding: true, status: 'Active' } as never,
+    where: { isBidding: true, status: 'Active', endDate: { gte: new Date() } } as never,
     orderBy: { createdAt: 'desc' },
     select: {
       ...postFields,
@@ -513,6 +540,7 @@ export const findWorkerAppBiddings = async (workerId: string) => {
     where: { workerId, post: { isBidding: true } } as never,
     orderBy: { createdAt: 'desc' },
     include: {
+      clientReview: { select: { id: true } },
       post: {
         select: {
           id: true,
@@ -530,6 +558,7 @@ export const findWorkerAppBiddings = async (workerId: string) => {
   return raw.map((a) => ({
     applicationId: a.id,
     status: a.status,
+    hasReview: a.clientReview !== null,
     offeredCost: a.visitCost,
     offeredDuration: a.offeredDuration,
     offeredStartDate: a.scheduledDate?.toISOString() ?? null,

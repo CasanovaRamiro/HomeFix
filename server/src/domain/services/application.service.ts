@@ -10,6 +10,7 @@ import {
   incrementStartTokenAttempts,
   clearStartToken,
   setTokenValidated,
+  resetRejectedApplications,
 } from '../../infrastructure/database/application.database.js'
 import prisma from '../../lib/prisma.js'
 import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
@@ -191,6 +192,20 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
   if (application.status !== ApplicationStatus.Accepted) throw Object.assign(new Error('Application is not accepted'), { status: 400 })
 
   const isSubContract = application.post.type === PostType.SubContract
+  const isBidding = application.post.isBidding === true
+
+  if (isBidding) {
+    if (application.post.status !== PostStatus.InProgress) {
+      throw Object.assign(new Error('Post is not in progress'), { status: 400 })
+    }
+    const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
+    await resetRejectedApplications(application.postId)
+    await updatePostStatus(application.postId, PostStatus.Evaluating)
+    notifyUser(getProvider(), application.workerId, 'worker_dismissed', {
+      postTitle: application.post.title,
+    })
+    return { id: dismissed.id, status: dismissed.status, postId: application.postId }
+  }
 
   if (isSubContract) {
     if (application.post.status !== PostStatus.Active && application.post.status !== PostStatus.InProgress) {
@@ -289,7 +304,12 @@ export const applyToBidding = async (workerId: string, input: { postId: string; 
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (!post.isBidding) throw Object.assign(new Error('El post no es una licitación'), { status: 400 })
   if (post.status !== 'Active') throw Object.assign(new Error('La licitación no está activa'), { status: 400 })
-
+  if (post.endDate && new Date(post.endDate) < new Date()) {
+    throw Object.assign(new Error('La licitación ya ha vencido'), { status: 400 })
+  }
+  if (input.offeredStartDate && post.endDate && new Date(input.offeredStartDate) <= new Date(post.endDate)) {
+    throw Object.assign(new Error('La fecha de inicio estimada debe ser posterior a la fecha tope de la licitación'), { status: 400 })
+  }
   const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('Ya te postulaste a esta licitación'), { status: 409 })
 

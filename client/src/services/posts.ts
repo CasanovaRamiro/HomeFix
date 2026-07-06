@@ -126,12 +126,14 @@ export interface AvailableBiddingDTO {
   categories: { id: string; name: string }[]
   client: { id: string; name: string; surname: string; rating: number; reviewCount: number }
   hasApplied: boolean
+  endDate: string
   createdAt: string
 }
 
 export interface WorkerBiddingDTO {
   applicationId: string
   status: string
+  hasReview: boolean
   offeredCost: number | null
   offeredDuration: number | null
   offeredStartDate: string | null

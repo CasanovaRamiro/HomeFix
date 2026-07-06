@@ -162,6 +162,9 @@ export default function WorkerAvailableBiddings() {
     if (!cost || cost <= 0) { setError('Ingresá un costo ofertado válido'); return }
     const dur = parseInt(offeredDuration)
     if (!dur || dur <= 0) { setError('Ingresá una duración estimada válida'); return }
+    if (offeredStartDate && new Date(offeredStartDate) <= new Date(selected.endDate)) {
+      setError('La fecha de inicio debe ser posterior a la fecha tope de la licitación'); return
+    }
 
     setSubmitting(true)
     try {
@@ -386,7 +389,7 @@ export default function WorkerAvailableBiddings() {
             gap: 6, marginBottom: 12,
           }}>
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               disabled={page === 1}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -402,7 +405,7 @@ export default function WorkerAvailableBiddings() {
               Página {page} de {totalPages}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               disabled={page === totalPages}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -437,7 +440,7 @@ export default function WorkerAvailableBiddings() {
                 gap: 6, marginTop: 24, paddingBottom: 8,
               }}>
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                   disabled={page === 1}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -457,7 +460,7 @@ export default function WorkerAvailableBiddings() {
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                     <button
                       key={p}
-                      onClick={() => setPage(p)}
+                      onClick={() => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                       style={{
                         width: 36, height: 36, borderRadius: 8,
                         border: p === page ? '1.5px solid #3B82F6' : '1.5px solid #E2E8F0',
@@ -476,7 +479,7 @@ export default function WorkerAvailableBiddings() {
                 </div>
 
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                   disabled={page === totalPages}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',

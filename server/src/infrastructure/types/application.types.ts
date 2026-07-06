@@ -21,6 +21,7 @@ export interface PrismaApplicationWithPost {
     address: string
     startDate: Date
     endDate: Date
+    isBidding: boolean
     user: { id: string; name: string; surname: string; phone: string | null }
     categories: { category: { name: string } }[]
   }
