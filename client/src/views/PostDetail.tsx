@@ -30,6 +30,7 @@ export default function PostDetail() {
   const [fVerified, setFVerified] = useState(false)
   const [fNoVisit, setFNoVisit] = useState(false)
   const [fMinRating, setFMinRating] = useState(0)
+  const [showFilters, setShowFilters] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editForm, setEditForm] = useState<UpdatePostData>({ title: '', categoryId: '', description: '', startDate: '', endDate: '', address: '' })
@@ -205,23 +206,27 @@ export default function PostDetail() {
                   <button className={sort === 'recent' ? 'on' : ''} onClick={() => setSort('recent')}>Recientes</button>
                 </div>
               </div>
-              <div className="appl-filters">
-                <span className="appl-filters-label"><SlidersHorizontal size={14} />Filtrar</span>
-                <button className={`appl-fchip${fVerified ? ' on' : ''}`} onClick={() => setFVerified((v) => !v)}>
-                  <BadgeCheck size={13} />Verificados
+              <div className={`appl-filters${showFilters ? ' is-open' : ''}`}>
+                <button className="appl-filters-toggle" onClick={() => setShowFilters((v) => !v)}>
+                  <SlidersHorizontal size={14} />Filtrar
                 </button>
-                <button className={`appl-fchip${fNoVisit ? ' on' : ''}`} onClick={() => setFNoVisit((v) => !v)}>
-                  <CircleCheck size={13} />No cobran visita
-                </button>
-                <button className={`appl-fchip${fMinRating === 4 ? ' on' : ''}`} onClick={() => setFMinRating((r) => (r === 4 ? 0 : 4))}>
-                  <Star size={13} />4.0+
-                </button>
-                <button className={`appl-fchip${fMinRating === 4.5 ? ' on' : ''}`} onClick={() => setFMinRating((r) => (r === 4.5 ? 0 : 4.5))}>
-                  <Star size={13} />4.5+
-                </button>
-                {anyFilter && (
-                  <button className="appl-clear" onClick={clearFilters}><X size={13} />Limpiar</button>
-                )}
+                <div className="appl-filters-body">
+                  <button className={`appl-fchip${fVerified ? ' on' : ''}`} onClick={() => setFVerified((v) => !v)}>
+                    <BadgeCheck size={13} />Verificados
+                  </button>
+                  <button className={`appl-fchip${fNoVisit ? ' on' : ''}`} onClick={() => setFNoVisit((v) => !v)}>
+                    <CircleCheck size={13} />No cobran visita
+                  </button>
+                  <button className={`appl-fchip${fMinRating === 4 ? ' on' : ''}`} onClick={() => setFMinRating((r) => (r === 4 ? 0 : 4))}>
+                    <Star size={13} />4.0+
+                  </button>
+                  <button className={`appl-fchip${fMinRating === 4.5 ? ' on' : ''}`} onClick={() => setFMinRating((r) => (r === 4.5 ? 0 : 4.5))}>
+                    <Star size={13} />4.5+
+                  </button>
+                  {anyFilter && (
+                    <button className="appl-clear" onClick={clearFilters}><X size={13} />Limpiar</button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -322,7 +327,7 @@ export default function PostDetail() {
                 <textarea value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
                   rows={4} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', outline: 'none', border: `1px solid ${theme.border}`, resize: 'none', boxSizing: 'border-box' }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+              <div className="pd-edit-dates" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: 500, display: 'block', marginBottom: '6px' }}>Fecha inicio</label>
                   <input type="date" value={editForm.startDate} onChange={(e) => setEditForm((p) => ({ ...p, startDate: e.target.value }))}

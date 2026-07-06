@@ -486,8 +486,9 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .appl-title { font-size: 18px; font-weight: 800; letter-spacing: -.01em; display: flex; align-items: center; gap: 9px; }
 .appl-bar { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); padding: 14px 16px; }
 .appl-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--color-border); }
-.appl-filters-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #94A3B8; margin-right: 2px; }
-.appl-filters-label svg { color: var(--color-muted); }
+.appl-filters-toggle { display: none; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #94A3B8; padding: 0; }
+.appl-filters-toggle svg { color: var(--color-muted); }
+.appl-filters-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .appl-fchip { display: inline-flex; align-items: center; gap: 6px; background: var(--color-card); border: 1.5px solid var(--color-border); color: #475569; padding: 6px 12px; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .14s, color .14s, background .14s; }
 .appl-fchip:hover { border-color: var(--color-primary-dark); color: var(--color-primary-dark); }
 .appl-fchip.on { background: #ECFDF5; border-color: var(--color-accent); color: #047857; }
@@ -572,12 +573,33 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 @media (max-width: 600px) {
   .pd-wrap, .pd-page { padding-left: 18px; padding-right: 18px; }
   .pd-hero { padding: 24px 0 34px; }
+  .pd-hero-card { padding: 16px 18px; }
   .pd-hero-title { font-size: 21px; }
+  .pd-hero-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  .post-card-body { padding: 16px; }
+  .pc-header-band { padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+  .pc-title { font-size: 17px; }
+  .pc-manage { flex-direction: column; }
+  .pc-manage .pd-btn { width: 100%; }
+
+  .acard { padding: 14px; }
+  .a-name { font-size: 14px; }
+
   .a-actions { flex-direction: column; }
   .a-actions .pd-btn { width: 100%; }
   .appl-sort { width: 100%; }
-  .appl-sort button { flex: 1; padding: 8px 4px; }
+  .appl-sort button { flex: 1; padding: 8px 4px; font-size: 12px; }
   .appl-title { font-size: 16px; }
+  .appl-filters-toggle { display: inline-flex; }
+  .appl-filters-body { display: none; width: 100%; }
+  .appl-filters.is-open .appl-filters-body { display: flex; flex-wrap: wrap; gap: 8px; }
+  .appl-clear { margin-left: 0; width: 100%; justify-content: center; padding: 8px; }
+
+  .pd-edit-dates { grid-template-columns: 1fr !important; }
+  .stv-input-row { flex-direction: column; }
+  .stv-input-row input { width: 100%; }
+  .stv-input-row button { width: 100%; }
 }
 
 /* ---------- image modal ---------- */
