@@ -207,7 +207,7 @@ function StartTokenValidateBox({ applicationId, onValidated }: { applicationId: 
       <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 10px', lineHeight: 1.5 }}>
         Pedile al trabajador el código de 4 dígitos y validalo para confirmar que el trabajo comenzó.
       </p>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="stv-input-row" style={{ display: 'flex', gap: 8 }}>
         <input
           value={code}
           onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setError('') }}
