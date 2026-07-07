@@ -65,7 +65,7 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
         style={{ maxHeight: '85vh', overflowY: 'auto' }}
       >
         <div style={{
-          background: '#0F172A', padding: '20px 24px',
+          background: '#10B981', padding: '20px 24px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>
@@ -73,7 +73,7 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
           </h2>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 4 }}
+            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4 }}
           >
             <X size={20} />
           </button>
@@ -125,7 +125,7 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
               onClick={onClose}
               style={{
                 marginTop: 20, width: '100%', padding: '12px 0', borderRadius: 10,
-                border: 'none', background: '#0F172A', color: '#fff',
+                border: 'none', background: '#10B981', color: '#fff',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}
             >
