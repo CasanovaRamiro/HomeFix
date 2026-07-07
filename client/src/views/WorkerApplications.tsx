@@ -182,6 +182,92 @@ function CancelModal({
   )
 }
 
+// ─── Review Modal ──────────────────────────────────────────────────────────────
+
+function ReviewModal({
+  applicationId,
+  clientName,
+  onClose,
+  onSuccess,
+}: {
+  applicationId: string
+  clientName: string
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const { submitting, submitted, error, submit } = useLeaveClientReview()
+  const [rating, setRating] = useState(0)
+  const [description, setDescription] = useState('')
+
+  const handleSubmit = async () => {
+    if (rating === 0) return
+    await submit({ applicationId, rating, description: description || undefined })
+  }
+
+  if (submitted) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }} onClick={onClose}>
+        <div style={{
+          background: '#fff', borderRadius: 20,
+          padding: '32px 28px', maxWidth: 420, width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center',
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: '#ECFDF5', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+          }}>
+            <Star size={26} color="#10B981" fill="#10B981" />
+          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 10px' }}>
+            ¡Reseña enviada!
+          </h2>
+          <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 28px', lineHeight: 1.6 }}>
+            Tu reseña sobre <strong>{clientName}</strong> se ha publicado correctamente.
+          </p>
+          <button
+            onClick={() => { onSuccess(); onClose() }}
+            style={{
+              width: '100%', padding: '12px 0', borderRadius: 10,
+              border: 'none', background: '#10B981', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#fff', borderRadius: 20,
+        padding: '32px 28px', maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+      }} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', textAlign: 'center' }}>
+          Calificar a {clientName}
+        </h2>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 24px', textAlign: 'center' }}>
+          ¿Cómo fue tu experiencia trabajando con este cliente?
+        </p>
+
+        <div style={{ marginBottom: 24 }}>
+          <ReviewStarRating value={rating} onChange={setRating} />
+        </div>
 
 
 // ─── View Review Modal ──────────────────────────────────────────────────────────
@@ -265,12 +351,12 @@ function ViewReviewModal({
           onClick={onClose}
           style={{
             width: '100%', padding: '12px 0', borderRadius: 10,
-            border: 'none', background: '#0F172A', color: '#fff',
+            border: 'none', background: '#10B981', color: '#fff',
             fontSize: 13, fontWeight: 600, cursor: 'pointer',
             transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E293B' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#0F172A' }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
         >
           Cerrar
         </button>
