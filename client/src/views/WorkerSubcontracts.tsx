@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlayCircle, PauseCircle, CheckCircle, Star, ArrowLeft, GitBranch, Calendar, Users, AlertCircle, XCircle, Activity } from 'lucide-react'
+import { PlayCircle, PauseCircle, CheckCircle, Star, ArrowLeft, GitBranch, Calendar, Users, AlertCircle, XCircle, Activity, Pencil } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 import { fetchMySubcontractManager } from '../services/posts'
 import type { SubcontractDetailDTO } from '../types/post'
@@ -250,47 +250,83 @@ export default function WorkerSubcontracts() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {filtered.map((sub) => (
-                    <div
-                      key={sub.id}
-                      onClick={() => navigate(`/worker/subcontracts/group/${sub.id}`)}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
-                      style={{
-                        background: '#fff',
-                        border: '1px solid #E2E8F0',
-                        borderRadius: 16,
-                        padding: 20,
-                        cursor: 'pointer',
-                        transition: 'box-shadow 0.2s',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                          {sub.title}
-                        </h3>
-                        <span style={{
-                          display: 'inline-block', borderRadius: 20, padding: '3px 10px',
-                          fontSize: 11, fontWeight: 700,
-                          background: statusBg[sub.status] || 'rgba(148, 163, 184, 0.1)',
-                          color: statusColor[sub.status] || '#64748B',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {statusLabel[sub.status] || sub.status}
-                        </span>
+                  {filtered.map((sub) => {
+                    const canEdit = sub.status === 'Active' || sub.status === 'Paused'
+                    return (
+                      <div
+                        key={sub.id}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: 16,
+                          padding: 20,
+                          cursor: 'pointer',
+                          transition: 'box-shadow 0.2s',
+                        }}
+                      >
+                        <div
+                          onClick={() => navigate(`/worker/subcontracts/group/${sub.id}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                              {sub.title}
+                            </h3>
+                            <span style={{
+                              display: 'inline-block', borderRadius: 20, padding: '3px 10px',
+                              fontSize: 11, fontWeight: 700,
+                              background: statusBg[sub.status] || 'rgba(148, 163, 184, 0.1)',
+                              color: statusColor[sub.status] || '#64748B',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {statusLabel[sub.status] || sub.status}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: '#64748B' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Calendar size={13} />
+                              {new Date(sub.createdAt).toLocaleDateString('es-AR')}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Users size={13} />
+                              {sub.categories.reduce((a, c) => a + c.quantity, 0)} puesto{sub.categories.reduce((a, c) => a + c.quantity, 0) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                        {canEdit && (
+                          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/worker/subcontracts/${sub.id}/edit`)
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 6,
+                                padding: '8px 14px', borderRadius: 8,
+                                fontSize: 13, fontWeight: 600,
+                                background: 'transparent', border: '1px solid #E2E8F0',
+                                color: '#475569', cursor: 'pointer',
+                                transition: 'all 0.15s',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#F8FAFC'
+                                e.currentTarget.style.borderColor = '#CBD5E1'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent'
+                                e.currentTarget.style.borderColor = '#E2E8F0'
+                              }}
+                            >
+                              <Pencil size={14} />
+                              Editar
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: '#64748B' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Calendar size={13} />
-                          {new Date(sub.createdAt).toLocaleDateString('es-AR')}
-                        </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Users size={13} />
-                          {sub.categories.reduce((a, c) => a + c.quantity, 0)} puesto{sub.categories.reduce((a, c) => a + c.quantity, 0) !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

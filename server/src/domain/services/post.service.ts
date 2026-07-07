@@ -349,9 +349,11 @@ export const getMySubcontractManager = async (userId: string): Promise<{
     grouped.get(key)!.push(post)
   }
 
-  const subcontracts: DomainPost[] = Array.from(grouped.values()).map((posts) => {
+  const subcontracts: DomainPost[] = Array.from(grouped.entries()).map(([key, posts]) => {
     const first = { ...posts[0] }
+    first.id = key
     first.categories = posts.flatMap((p) => p.categories)
+    first.postIds = posts.map((p) => p.id)
     const statusOrder = [PostStatus.Active, PostStatus.Paused, PostStatus.InProgress, PostStatus.Completed, PostStatus.Cancelled]
     first.status = statusOrder.find((s) => posts.some((p) => p.status === s)) ?? PostStatus.Active
     return first
@@ -369,17 +371,72 @@ export const getMySubcontractManager = async (userId: string): Promise<{
   return { stats, subcontracts }
 }
 
-export const getSubcontractGroupDetail = async (firstPostId: string): Promise<DomainPost | null> => {
-  const post = await findPostById(firstPostId)
-  if (!post || post.type !== PostType.SubContract) return null
+export const updateSubcontractGroup = async (
+  groupId: string,
+  userId: string,
+  input: {
+    title: string
+    description: string
+    startDate: string
+    endDate: string
+    address: string
+    latitude?: number | null
+    longitude?: number | null
+    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+  }
+): Promise<DomainPost[]> => {
+  let posts = await findPostsByGroupId(groupId)
 
-  const groupId = post.subcontractGroupId ?? post.parentPostId
-  let allPosts: DomainPost[]
+  if (posts.length === 0) {
+    const single = await findPostById(groupId)
+    if (single && single.type === PostType.SubContract) {
+      const realGroupId = single.subcontractGroupId ?? single.parentPostId
+      if (realGroupId) {
+        posts = await findPostsByGroupId(realGroupId)
+      } else {
+        posts = [single]
+      }
+    }
+  }
 
-  if (groupId) {
-    allPosts = await findPostsByGroupId(groupId)
-  } else {
-    allPosts = [post]
+  if (posts.length === 0) throw Object.assign(new Error('Subcontract group not found'), { status: 404 })
+
+  if (posts[0].userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+
+  const nonEditable = [PostStatus.InProgress, PostStatus.Completed, PostStatus.Cancelled]
+  if (nonEditable.includes(posts[0].status as PostStatus)) {
+    throw Object.assign(new Error(`Subcontract cannot be edited in its current state (${posts[0].status})`), { status: 400 })
+  }
+
+  const startDate = new Date(input.startDate)
+  const endDate = new Date(input.endDate)
+  if (endDate <= startDate) {
+    throw Object.assign(new Error('endDate must be after startDate'), { status: 400 })
+  }
+
+  const { updateSubcontractGroup: updateGroup } = await import('../../infrastructure/database/post.database.js')
+  const actualGroupId = posts[0].subcontractGroupId ?? posts[0].parentPostId ?? posts[0].id
+  return updateGroup(actualGroupId, {
+    title: input.title,
+    description: input.description,
+    startDate,
+    endDate,
+    address: input.address,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    positions: input.positions,
+  })
+}
+
+export const getSubcontractGroupDetail = async (groupIdOrPostId: string): Promise<DomainPost | null> => {
+  let allPosts = await findPostsByGroupId(groupIdOrPostId)
+
+  if (allPosts.length === 0) {
+    const post = await findPostById(groupIdOrPostId)
+    if (!post || post.type !== PostType.SubContract) return null
+
+    const realGroupId = post.subcontractGroupId ?? post.parentPostId
+    allPosts = realGroupId ? await findPostsByGroupId(realGroupId) : [post]
   }
 
   const merged = { ...allPosts[0] }

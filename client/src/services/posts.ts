@@ -156,3 +156,17 @@ export const fetchAvailableBiddings = () =>
 
 export const fetchWorkerBiddings = () =>
   api.get<WorkerBiddingDTO[]>('/posts/worker-biddings')
+
+export interface UpdateSubcontractInput {
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+}
+
+export const updateSubcontract = (id: string, data: UpdateSubcontractInput) =>
+  api.patch<SubcontractDetailDTO[]>(`/posts/subcontracts/group/${id}`, data)

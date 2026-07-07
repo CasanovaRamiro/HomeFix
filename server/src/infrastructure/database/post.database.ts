@@ -576,3 +576,60 @@ export const findWorkerAppBiddings = async (workerId: string) => {
     },
   }))
 }
+
+export const updateSubcontractGroup = async (
+  groupId: string,
+  data: {
+    title: string
+    description: string
+    startDate: Date
+    endDate: Date
+    address: string
+    latitude?: number | null
+    longitude?: number | null
+    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+  }
+): Promise<DomainPost[]> => {
+  const posts = await prisma.post.findMany({
+    where: { subcontractGroupId: groupId } as never,
+    select: { id: true },
+  })
+
+  await prisma.$transaction(async (tx) => {
+    for (const post of posts) {
+      await tx.post.update({
+        where: { id: post.id },
+        data: {
+          title: data.title,
+          description: data.description,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          address: data.address,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+        },
+      })
+
+      if (data.positions) {
+        await tx.postCategory.deleteMany({ where: { postId: post.id } })
+        if (data.positions.length > 0) {
+          await tx.postCategory.createMany({
+            data: data.positions.map(p => ({
+              postId: post.id,
+              categoryId: p.categoryId,
+              quantity: p.quantity,
+              roleDescription: p.roleDescription,
+            })),
+          })
+        }
+      }
+    }
+  })
+
+  const updated = await prisma.post.findMany({
+    where: { subcontractGroupId: groupId } as never,
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+
+  return updated.map(toDomainPost)
+}

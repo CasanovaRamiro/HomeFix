@@ -32,6 +32,7 @@ import AvailableSubcontracts from './views/AvailableSubcontracts'
 import SubcontractDetail from './views/SubcontractDetail'
 import WorkerSubcontracts from './views/WorkerSubcontracts'
 import CreateSubcontract from './views/CreateSubcontract'
+import EditSubcontract from './views/EditSubcontract'
 import KycVerify from './views/KycVerify'
 import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
@@ -120,6 +121,7 @@ export default function App(): ReactNode {
         <Route path="/worker/available-subcontracts" element={<WorkerRoute><AvailableSubcontracts /></WorkerRoute>} />
         <Route path="/worker/subcontracts" element={<WorkerRoute><WorkerSubcontracts /></WorkerRoute>} />
         <Route path="/worker/subcontracts/group/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
+        <Route path="/worker/subcontracts/:id/edit" element={<WorkerRoute><EditSubcontract /></WorkerRoute>} />
         <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/create-bidding" element={<ClientRoute><CreateBidding /></ClientRoute>} />
         <Route path="/client/biddings" element={<ClientRoute><ClientBiddings /></ClientRoute>} />

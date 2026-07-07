@@ -26,6 +26,7 @@ import {
   listAvailableBiddings,
   getWorkerBiddings,
   workerCompletePost,
+  updateSubcontractGroup,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import type { Auth0Claims } from '../../domain/services/auth.service.js'
@@ -218,6 +219,40 @@ router.get('/subcontracts/group/:id', async (req, res, next) => {
     const result = await getSubcontractGroupDetail(req.params.id)
     if (!result) return res.status(404).json({ error: 'Subcontract group not found' })
     res.json(toPostDTO(result))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.patch('/subcontracts/group/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as Auth0Claims | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
+
+    const { title, description, startDate, endDate, address, latitude, longitude, positions } = req.body
+    if (!title || !description || !startDate || !endDate || !address) {
+      res.status(400).json({ error: 'Todos los campos son obligatorios' })
+      return
+    }
+
+    const results = await updateSubcontractGroup(req.params.id, user.id, {
+      title,
+      description,
+      startDate,
+      endDate,
+      address,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      positions: Array.isArray(positions) ? positions : undefined,
+    })
+    res.json(results.map(toPostDTO))
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
