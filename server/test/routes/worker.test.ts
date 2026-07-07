@@ -235,7 +235,7 @@ describe('GET /workers/:id/stats', () => {
 
 describe('PATCH /workers/:id - matriculaUrl', () => {
   it('updates matriculaUrl when the requester is the owner', async () => {
-    const worker = await makeWorker('ana@test.com', 'Ana')
+    const worker = await makeWorker('test@test.com', 'Test')
 
     const res = await request(app)
       .patch(`/workers/${worker.id}`)
@@ -247,7 +247,7 @@ describe('PATCH /workers/:id - matriculaUrl', () => {
   })
 
   it('returns matriculaUrl as null when not set', async () => {
-    const worker = await makeWorker('ana@test.com', 'Ana')
+    const worker = await makeWorker('test@test.com', 'Test')
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
@@ -258,7 +258,7 @@ describe('PATCH /workers/:id - matriculaUrl', () => {
   })
 
   it('can clear matriculaUrl by sending null', async () => {
-    const worker = await makeWorker('ana@test.com', 'Ana')
+    const worker = await makeWorker('test@test.com', 'Test')
 
     await request(app)
       .patch(`/workers/${worker.id}`)
