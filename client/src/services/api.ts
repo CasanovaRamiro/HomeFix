@@ -208,4 +208,7 @@ export const telegramStatus = (): Promise<{ linked: boolean; linkedAt: string | 
 export const telegramUnlink = () =>
   api.delete('/telegram/unlink')
 
+export const downloadMatricula = (url: string): Promise<Blob> =>
+  api.get('/upload/download', { params: { url }, responseType: 'blob' }).then((r) => r.data)
+
 export default api

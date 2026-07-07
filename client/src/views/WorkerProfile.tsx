@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
-import api from '../services/api'
+import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, downloadMatricula, type Worker, type WorkerReview } from '../services/api'
 import { useCategories } from '../hooks/useCategories'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -226,14 +225,11 @@ export default function WorkerProfile() {
     }
   }
 
-  const downloadMatricula = async () => {
+  const handleDownloadMatricula = async () => {
     if (!worker?.matriculaUrl) return
     try {
-      const res = await api.get('/upload/download', {
-        params: { url: worker.matriculaUrl },
-        responseType: 'blob',
-      })
-      const blobUrl = URL.createObjectURL(res.data)
+      const blob = await downloadMatricula(worker.matriculaUrl)
+      const blobUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = 'matricula.pdf'
@@ -579,7 +575,7 @@ export default function WorkerProfile() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
                           type="button"
-                          onClick={downloadMatricula}
+                           onClick={handleDownloadMatricula}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 6,
                             background: '#EFF6FF', border: '1px solid #BFDBFE',
