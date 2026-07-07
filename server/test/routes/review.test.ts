@@ -471,3 +471,94 @@ describe('POST /reviews/client', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('GET /reviews/application/:applicationId', () => {
+  beforeEach(async () => {
+    currentUser = { sub: 'auth0|test123', email: 'client@test.com', name: 'Client User' }
+    const post = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Fix pipes',
+        description: 'Need a plumber',
+        address: '123 Main St',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-02'),
+        status: 'Completed',
+      },
+    })
+    postId = post.id
+
+    const application = await prisma.application.create({
+      data: { workerId, postId, status: 'Accepted' },
+    })
+    applicationId = application.id
+  })
+
+  it('should return 200 with the review when it exists', async () => {
+    await prisma.workerReview.create({
+      data: {
+        applicationId,
+        reviewerId: clientId,
+        workerId,
+        rating: 5,
+        description: 'Excellent work!',
+      },
+    })
+
+    const res = await request(app)
+      .get(`/reviews/application/${applicationId}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body.rating).toBe(5)
+    expect(res.body.description).toBe('Excellent work!')
+    expect(res.body.reviewer.name).toBe('Client')
+  })
+
+  it('should return 401 without authorization token', async () => {
+    const res = await request(app)
+      .get(`/reviews/application/${applicationId}`)
+
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when application does not exist', async () => {
+    const res = await request(app)
+      .get('/reviews/application/non-existent-id')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Application not found')
+  })
+
+  it('should return 403 when user does not own the post', async () => {
+    await prisma.workerReview.create({
+      data: {
+        applicationId,
+        reviewerId: clientId,
+        workerId,
+        rating: 4,
+        description: 'Good job',
+      },
+    })
+
+    await createUser('other@test.com', 'Other', 'hashed')
+    currentUser = { sub: 'auth0|other123', email: 'other@test.com', name: 'Other User' }
+
+    const res = await request(app)
+      .get(`/reviews/application/${applicationId}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when no review exists for the application', async () => {
+    const res = await request(app)
+      .get(`/reviews/application/${applicationId}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Review not found')
+  })
+})
