@@ -37,7 +37,7 @@ function StatusBadge({ status }: { status: string }) {
 
 
 export default function WorkerMyBiddings() {
-  const { user } = useAuth()
+  useAuth()
   const navigate = useNavigate()
   const [applications, setApplications] = useState<WorkerBiddingDTO[]>([])
   const [loading, setLoading] = useState(true)

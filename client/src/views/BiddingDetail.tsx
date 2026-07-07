@@ -565,7 +565,7 @@ export default function BiddingDetail() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
-            {sortedApps.map(({ app }, index) => {
+            {sortedApps.map(({ app }) => {
               const isWinner = selectedWinner === app.id
               return (
                 <div key={app.id} style={{

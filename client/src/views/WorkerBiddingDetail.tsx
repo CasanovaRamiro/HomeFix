@@ -56,7 +56,7 @@ export default function WorkerBiddingDetail() {
           fetchWorkerBiddings(),
         ])
         setPost(postRes.data)
-        const found = (appRes.data as WorkerBiddingDTO[]).find((a) => a.bidding.id === id)
+        const found = (appRes.data).find((a) => a.bidding.id === id)
         if (found) setMyApp(found)
       } catch {
         navigate('/worker')
@@ -100,7 +100,7 @@ export default function WorkerBiddingDetail() {
       })
       setSuccess('Oferta enviada exitosamente')
       const appRes = await fetchWorkerBiddings()
-      const found = (appRes.data as WorkerBiddingDTO[]).find((a) => a.bidding.id === id)
+      const found = (appRes.data).find((a) => a.bidding.id === id)
       if (found) setMyApp(found)
       setTimeout(() => navigate('/worker/my-biddings'), 2000)
     } catch (err: unknown) {
