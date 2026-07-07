@@ -1377,7 +1377,7 @@ describe('PATCH /posts/subcontracts/group/:id', () => {
     const groupIdValue = 'test-group-id-' + Date.now()
     groupId = groupIdValue
 
-    const _sub1 = await prisma.post.create({
+    await prisma.post.create({
       data: {
         userId,
         type: PostType.SubContract,
@@ -1392,7 +1392,7 @@ describe('PATCH /posts/subcontracts/group/:id', () => {
         categories: { create: { categoryId: cat.id, quantity: 2, filledCount: 0, roleDescription: 'Pintor' } },
       },
     })
-    const _sub2 = await prisma.post.create({
+    await prisma.post.create({
       data: {
         userId,
         type: PostType.SubContract,
