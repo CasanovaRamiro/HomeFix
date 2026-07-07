@@ -16,6 +16,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "didit:create-workflow": "tsx scripts/createDiditWorkflow.ts",
+    "log:coverage": "tsx scripts/log-coverage.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage:service": "vitest run --coverage test/service",
