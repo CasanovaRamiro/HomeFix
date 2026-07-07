@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: homefix_db
+      MYSQL_USER: homefix
+      MYSQL_PASSWORD: homefix123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      args:
+        VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
+        VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
+        VITE_AUTH0_AUDIENCE: ${VITE_AUTH0_AUDIENCE}
+        VITE_AUTH0_CALLBACK_URL: ${VITE_AUTH0_CALLBACK_URL:-http://localhost:3000/auth/callback}
+    # Runtime secrets — copy server/.env.example to server/.env and fill in values before running.
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: mysql://homefix:homefix123@db:3306/homefix_db
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

@@ -4,6 +4,9 @@ process.on('unhandledRejection', (reason) => {
   logger.fatal({ err: reason instanceof Error ? reason : new Error(String(reason)) }, 'Unhandled rejection')
 })
 
+import { existsSync } from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { env } from './lib/envConfig.js'
 import { assertMigrationsApplied } from './lib/assertMigrations.js'
 import { jwtCheck } from './presentation/middleware/auth0.middleware.js'
@@ -111,6 +114,13 @@ app.use('/client', jwtCheck, clientRoutes)
 app.use('/client-profiles', jwtCheck, clientProfileRoutes)
 app.use('/kyc', confirmRouter)
 app.use('/kyc', jwtCheck, kycRoutes)
+
+const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
+if (existsSync(publicDir)) {
+  app.use(express.static(publicDir))
+  app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))
+}
+
 app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {
