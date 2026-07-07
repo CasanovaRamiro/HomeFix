@@ -1352,13 +1352,10 @@ describe('PATCH /posts/:id/worker-complete', () => {
 
 describe('PATCH /posts/subcontracts/group/:id', () => {
   let groupId: string
-  let postIds: string[]
-  let catId: string
 
   beforeEach(async () => {
     const client = await createUser('client-sub@test.com', 'Client', 'hashed', { role: UserRole.Client })
     const cat = await createCategory('Pintor')
-    catId = cat.id
 
     const parentPost = await prisma.post.create({
       data: {
@@ -1410,7 +1407,6 @@ describe('PATCH /posts/subcontracts/group/:id', () => {
         categories: { create: { categoryId: cat.id, quantity: 1, filledCount: 0, roleDescription: 'Electricista' } },
       },
     })
-    postIds = [sub1.id, sub2.id]
   })
 
   const validBody = () => ({
