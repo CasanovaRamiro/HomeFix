@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Gavel, ArrowLeft, Calendar, MapPin, Clock, DollarSign, Trophy, User, Loader, Package, Image, MessageCircle, PauseCircle, Play, CheckCircle, XCircle, UserX } from 'lucide-react'
+import { Gavel, ArrowLeft, Calendar, MapPin, DollarSign, Trophy, User, Loader, Package, Image, MessageCircle, PauseCircle, Play, CheckCircle, XCircle, UserX } from 'lucide-react'
 import { fetchBiddingById, fetchBiddingApplications, selectBiddingWinner } from '../services/posts'
 import { pausePost, cancelPost, closeBidding, completePost } from '../services/api'
 import type { Post } from '../types/post'

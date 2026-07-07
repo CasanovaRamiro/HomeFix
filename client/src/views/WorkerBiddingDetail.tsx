@@ -6,7 +6,7 @@ import { applyToBidding } from '../services/applications'
 import type { Post } from '../types/post'
 import type { WorkerBiddingDTO } from '../services/posts'
 import StarRating from '../components/ui/StarRating'
-import { ArrowLeft, GitBranch, MapPin, Image as ImageIcon, Calendar, DollarSign, Clock, AlertCircle, CheckCircle, X, Star, FileText } from 'lucide-react'
+import { ArrowLeft, GitBranch, MapPin, Calendar, DollarSign, Clock, AlertCircle, CheckCircle, Star } from 'lucide-react'
 import { formatAddress } from '../utils/address'
 import ReviewModal from '../components/review/ReviewModal'
 
@@ -223,7 +223,7 @@ export default function WorkerBiddingDetail() {
               <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
                 {post.user?.name} {post.user?.surname}
               </div>
-              {post.user?.rating != null && <StarRating rating={post.user.rating} />}
+              {post.clientRating != null && <StarRating rating={post.clientRating} />}
             </div>
           </div>
 

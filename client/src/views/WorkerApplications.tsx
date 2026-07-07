@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
 import ReviewModal from '../components/review/ReviewModal'
 import { ApplicationStatus } from '../types/application'

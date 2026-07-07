@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { fetchWorkerBiddings } from '../services/posts'
 import type { WorkerBiddingDTO } from '../services/posts'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, GitBranch, Clock, CheckCircle, XCircle, AlertTriangle, MapPin, ChevronRight, AlertCircle, Star, FileText } from 'lucide-react'
+import { ArrowLeft, GitBranch, Clock, CheckCircle, XCircle, AlertTriangle, MapPin, ChevronRight, AlertCircle, Star } from 'lucide-react'
 import { formatAddress } from '../utils/address'
 import ReviewModal from '../components/review/ReviewModal'
 
@@ -64,7 +64,7 @@ export default function WorkerMyBiddings() {
   })()
 
   const counts = {
-    Total: applications.length,
+    Todas: applications.length,
     Pending: applications.filter((a) => a.status === 'Pending').length,
     Accepted: applications.filter((a) => a.status === 'Accepted').length,
     Historial: applications.filter((a) => ['Completed', 'Rejected', 'Dismissed'].includes(a.status)).length,

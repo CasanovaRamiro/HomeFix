@@ -1748,7 +1748,7 @@ describe('post.service - selectWinner', () => {
 
   it('selecciona ganador cuando la licitación está Active', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockBidding)
-    vi.mocked(selectBiddingWinner).mockResolvedValue(undefined)
+    vi.mocked(selectBiddingWinner).mockResolvedValue({ id: 'bidding-1', status: 'InProgress' })
 
     await postService.selectWinner('bidding-1', 'client-1', 'app-1')
 
@@ -1757,7 +1757,7 @@ describe('post.service - selectWinner', () => {
 
   it('selecciona ganador cuando la licitación está Evaluating', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'Evaluating' })
-    vi.mocked(selectBiddingWinner).mockResolvedValue(undefined)
+    vi.mocked(selectBiddingWinner).mockResolvedValue({ id: 'bidding-1', status: 'InProgress' })
 
     await postService.selectWinner('bidding-1', 'client-1', 'app-1')
 
@@ -1793,7 +1793,9 @@ describe('post.service - listAvailableBiddings', () => {
     latitude: -34.6,
     longitude: -58.4,
     categories: [{ id: 'cat-1', name: 'Albañilería', categoryId: 'cat-1' }],
+    startDate: new Date(),
     endDate: new Date('2026-07-15'),
+    status: 'Active',
     createdAt: new Date(),
     user: { id: 'client-1', name: 'Client', surname: 'Test' },
     hasApplied: false,
@@ -1836,22 +1838,21 @@ describe('post.service - getWorkerBiddings', () => {
   const mockWorkerBidding = {
     applicationId: 'app-1',
     status: 'Pending',
-    offeredCost: 250000,
-    offeredDuration: 15,
-    offeredStartDate: '2026-07-01',
-    message: 'Tengo experiencia',
-    createdAt: new Date(),
+    offeredCost: 250000 as number | null,
+    offeredDuration: 15 as number | null,
+    offeredStartDate: '2026-07-01' as string | null,
+    message: 'Tengo experiencia' as string | null,
+    createdAt: new Date().toISOString(),
     bidding: {
       id: 'bidding-1',
       title: 'Licitación test',
       description: 'Test',
-      address: 'Calle 123',
-      client: { id: 'client-1', name: 'Client', surname: 'Test' },
+      budgetMax: null as number | null,
+      materialResponsibility: null as string | null,
       status: 'Active',
-      images: [],
-      categories: [],
+      categories: [] as { id: string; name: string }[],
+      client: { id: 'client-1', name: 'Client', surname: 'Test' },
     },
-    client: { id: 'client-1', name: 'Client', surname: 'Test' },
     hasReview: false,
   }
 

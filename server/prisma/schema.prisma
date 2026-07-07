@@ -153,6 +153,7 @@ model Application {
   chargesVisit       Boolean        @default(false)
   visitCost          Float?
   scheduledDate      DateTime?
+  offeredDuration    Int?
   requiresStartToken  Boolean       @default(false)
   startToken          String?
   startTokenExpiresAt DateTime?
