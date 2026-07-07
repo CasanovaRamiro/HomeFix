@@ -118,7 +118,7 @@ app.use('/kyc', jwtCheck, kycRoutes)
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public')
 if (existsSync(publicDir)) {
   app.use(express.static(publicDir))
-  app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))
+  app.get('/{*path}', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))
 }
 
 app.use(errorHandler)
