@@ -13,6 +13,7 @@ const workerFields = {
   role: true,
   photo: true,
   matriculaUrl: true,
+  antecedentesPenalesUrl: true,
   availability: true,
   certificates: true,
   gallery: true,

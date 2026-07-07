@@ -48,13 +48,16 @@ export const getWorkerStats = async (id: string): Promise<WorkerStats> => {
 }
 
 export const updateWorkerProfile = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
-  if (input.photo !== undefined || input.matriculaUrl !== undefined) {
+  if (input.photo !== undefined || input.matriculaUrl !== undefined || input.antecedentesPenalesUrl !== undefined) {
     const current = await findWorkerById(id)
     if (current?.photo && input.photo !== undefined && current.photo !== input.photo && CLOUDINARY_URL_RE.test(current.photo)) {
       await deleteImage(current.photo).catch(() => {})
     }
     if (current?.matriculaUrl && input.matriculaUrl !== undefined && current.matriculaUrl !== input.matriculaUrl && CLOUDINARY_URL_RE.test(current.matriculaUrl)) {
       await deleteImage(current.matriculaUrl).catch(() => {})
+    }
+    if (current?.antecedentesPenalesUrl && input.antecedentesPenalesUrl !== undefined && current.antecedentesPenalesUrl !== input.antecedentesPenalesUrl && CLOUDINARY_URL_RE.test(current.antecedentesPenalesUrl)) {
+      await deleteImage(current.antecedentesPenalesUrl).catch(() => {})
     }
   }
   logger.info({ workerId: id, action: 'worker.profileUpdated' }, 'Worker profile updated')

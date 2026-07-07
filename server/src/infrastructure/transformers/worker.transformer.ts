@@ -21,6 +21,7 @@ export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
   role: w.role,
   photo: w.photo,
   matriculaUrl: w.matriculaUrl,
+  antecedentesPenalesUrl: w.antecedentesPenalesUrl,
   availability: parseJsonArray(w.availability),
   createdAt: w.createdAt,
   categories: w.categories.map((uc) => uc.category),

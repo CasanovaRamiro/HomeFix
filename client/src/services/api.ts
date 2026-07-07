@@ -52,6 +52,7 @@ export interface Worker {
   role: string
   photo: string | null
   matriculaUrl: string | null
+  antecedentesPenalesUrl: string | null
   availability: string[]
   createdAt: string
   categories: { id: string; name: string }[]
@@ -66,6 +67,7 @@ export interface WorkerUpdateData {
   bio?: string | null
   photo?: string | null
   matriculaUrl?: string | null
+  antecedentesPenalesUrl?: string | null
   categoryIds?: string[]
   availability?: string[]
   certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]
@@ -209,6 +211,9 @@ export const telegramUnlink = () =>
   api.delete('/telegram/unlink')
 
 export const downloadMatricula = (url: string): Promise<Blob> =>
+  api.get('/upload/download', { params: { url }, responseType: 'blob' }).then((r) => r.data)
+
+export const downloadAntecedentes = (url: string): Promise<Blob> =>
   api.get('/upload/download', { params: { url }, responseType: 'blob' }).then((r) => r.data)
 
 export default api
