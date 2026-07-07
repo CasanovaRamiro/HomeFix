@@ -4,4 +4,3 @@ allowBuilds:
   '@scarf/scarf': true
   esbuild: true
   prisma: true
-  unrs-resolver: true

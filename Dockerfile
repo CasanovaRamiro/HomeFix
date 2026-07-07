@@ -1,9 +1,9 @@
 # Stage 1: build the React frontend
 FROM node:22-slim AS frontend
-RUN npm install -g pnpm
+RUN npm install -g pnpm@11.1.3
 WORKDIR /app/client
-COPY client/package.json client/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY client/package.json client/pnpm-lock.yaml client/pnpm.json client/pnpm-workspace.yaml ./
+RUN pnpm install
 COPY client/ .
 
 ARG VITE_API_URL=""
@@ -23,11 +23,11 @@ RUN pnpm build
 # Stage 2: build the backend and embed the frontend
 FROM node:22-slim
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm
+RUN npm install -g pnpm@11.1.3
 WORKDIR /app/server
-COPY server/package.json server/pnpm-lock.yaml ./
+COPY server/package.json server/pnpm-lock.yaml server/pnpm.json server/pnpm-workspace.yaml ./
 COPY server/prisma ./prisma
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 COPY server/ .
 RUN pnpm build
 COPY --from=frontend /app/client/dist ./public
