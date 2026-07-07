@@ -73,7 +73,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
         {/* Header */}
         <div className="flex justify-between items-center gap-3">
           <div className="min-w-0">
-            <p className="font-bold text-slate-900 text-base truncate">
+            <p className="font-bold text-slate-900 text-base">
               {post.title}
             </p>
             <p className="text-slate-500 text-[13px] mt-0.5">
@@ -104,16 +104,18 @@ export default function TurnoCard({ post }: { post: UserPost }) {
       )}
 
       {/* Fecha + Botón */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <p className="flex items-center gap-1 text-sm text-slate-400">
-            <Calendar size={14} /> Fecha de publicación
+            <Calendar size={14} />
+            <span className="hidden sm:inline">Fecha de publicación</span>
+            <span className="sm:hidden">Publicado</span>
           </p>
           <p className="font-bold text-slate-900 text-sm">{fmtDate(post.startDate)}</p>
         </div>
         <button
           onClick={handleAction}
-          className={`flex items-center gap-2 text-sm font-semibold rounded-lg px-4 py-2 transition-colors ${
+          className={`flex items-center justify-center gap-2 text-sm font-semibold rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 transition-colors w-full sm:w-auto ${
             needsReview
               ? 'bg-amber-500 text-white hover:bg-amber-600!'
               : 'bg-[#10B981] text-white hover:bg-[#059669]!'
