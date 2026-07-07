@@ -39,6 +39,7 @@ const mockWorker = {
   bio: null as string | null,
   role: UserRole.Worker,
   photo: null as string | null,
+  matriculaUrl: null as string | null,
   availability: [] as string[],
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [{ id: 'uuid-category-1', name: 'Plumbing' }],
@@ -126,6 +127,37 @@ describe('worker.service - updateWorkerProfile', () => {
     await updateWorkerProfile('uuid-worker-1', { photo: 'https://res.cloudinary.com/demo/image/upload/v123/new.jpg' })
 
     expect(cloudinary.deleteImage).not.toHaveBeenCalled()
+  })
+
+  it('updates matriculaUrl when provided', async () => {
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, matriculaUrl: 'https://res.cloudinary.com/demo/upload/matricula.pdf' })
+
+    const result = await updateWorkerProfile('uuid-worker-1', { matriculaUrl: 'https://res.cloudinary.com/demo/upload/matricula.pdf' })
+
+    expect(workerData.updateWorker).toHaveBeenCalledWith('uuid-worker-1', { matriculaUrl: 'https://res.cloudinary.com/demo/upload/matricula.pdf' })
+    expect(result.matriculaUrl).toBe('https://res.cloudinary.com/demo/upload/matricula.pdf')
+  })
+
+  it('deletes old Cloudinary matricula when replaced with a new one', async () => {
+    const oldMatricula = 'https://res.cloudinary.com/demo/image/upload/v123/old-matricula.pdf'
+    vi.mocked(workerData.findWorkerById).mockResolvedValue({ ...mockWorker, matriculaUrl: oldMatricula })
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, matriculaUrl: 'https://res.cloudinary.com/demo/image/upload/v123/new-matricula.pdf' })
+    vi.mocked(cloudinary.deleteImage).mockResolvedValue(undefined)
+
+    await updateWorkerProfile('uuid-worker-1', { matriculaUrl: 'https://res.cloudinary.com/demo/image/upload/v123/new-matricula.pdf' })
+
+    expect(cloudinary.deleteImage).toHaveBeenCalledWith(oldMatricula)
+  })
+
+  it('clears matriculaUrl when set to null', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue({ ...mockWorker, matriculaUrl: 'https://res.cloudinary.com/demo/upload/old.pdf' })
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, matriculaUrl: null })
+    vi.mocked(cloudinary.deleteImage).mockResolvedValue(undefined)
+
+    await updateWorkerProfile('uuid-worker-1', { matriculaUrl: null })
+
+    expect(cloudinary.deleteImage).toHaveBeenCalledWith('https://res.cloudinary.com/demo/upload/old.pdf')
+    expect(workerData.updateWorker).toHaveBeenCalledWith('uuid-worker-1', { matriculaUrl: null })
   })
 })
 

@@ -8,10 +8,16 @@ cloudinary.config({
   api_secret: env.CLOUDINARY_API_SECRET,
 })
 
+const isRawFile = (mimetype: string) => mimetype === 'application/pdf'
+
 export const uploadImage = async (file: { buffer: Buffer; mimetype: string; originalname: string }): Promise<string> => {
   return new Promise((resolve, reject) => {
+    const options: Record<string, unknown> = { folder: 'ofix', resource_type: 'auto' }
+    if (isRawFile(file.mimetype)) {
+      options.resource_type = 'raw'
+    }
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'ofix', resource_type: 'auto' },
+      options,
       (err, result) => {
         if (err || !result) {
           logger.error({ err, filename: file.originalname, action: 'cloudinary.uploadFailed' }, 'Image upload to Cloudinary failed')
@@ -19,6 +25,11 @@ export const uploadImage = async (file: { buffer: Buffer; mimetype: string; orig
         } else {
           resolve(result.secure_url)
         }
+        if (err || !result) {
+          console.error('[Cloudinary upload error]', err)
+          reject(err instanceof Error ? err : new Error('Upload failed'))
+        }
+        else resolve(result.secure_url)
       },
     )
     uploadStream.end(file.buffer)

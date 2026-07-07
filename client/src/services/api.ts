@@ -51,6 +51,7 @@ export interface Worker {
   bio: string | null
   role: string
   photo: string | null
+  matriculaUrl: string | null
   availability: string[]
   createdAt: string
   categories: { id: string; name: string }[]
@@ -64,6 +65,7 @@ export interface WorkerUpdateData {
   phone?: string | null
   bio?: string | null
   photo?: string | null
+  matriculaUrl?: string | null
   categoryIds?: string[]
   availability?: string[]
   certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]
