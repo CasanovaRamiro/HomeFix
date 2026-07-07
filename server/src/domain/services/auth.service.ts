@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { createHttpError } from '../../lib/errors.js'
 import { env } from '../../lib/envConfig.js'
 import { findByEmail, createUser, addUserCategories, updateUserByEmail } from '../../infrastructure/database/user.database.js'
@@ -57,7 +58,7 @@ export const registerUser = async (input: RegisterInput) => {
     try {
       await assignAuth0Role(auth0User.auth0Id, clientRoleId)
     } catch {
-      console.error('Failed to assign client role in Auth0')
+      logger.error({ email, auth0Id: auth0User.auth0Id, action: 'auth.register.roleAssign' }, 'Failed to assign client role in Auth0')
     }
   }
 
@@ -70,6 +71,8 @@ export const registerUser = async (input: RegisterInput) => {
     role: UserRole.Client,
   }
   const user = await createUser(userData)
+
+  logger.info({ userId: user.id, email, role: UserRole.Client, action: 'auth.user.registered' }, 'Client registered')
 
   return {
     userId: user.id,
@@ -100,7 +103,7 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
     try {
       await assignAuth0Role(auth0User.auth0Id, workerRoleId)
     } catch {
-      console.error('Failed to assign worker role in Auth0')
+      logger.error({ email, auth0Id: auth0User.auth0Id, action: 'auth.register.roleAssign' }, 'Failed to assign worker role in Auth0')
     }
   }
 
@@ -120,6 +123,8 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   )
 
   await addUserCategories(user.id, categoryIds)
+
+  logger.info({ userId: user.id, email, role: UserRole.Worker, categories: input.categories, action: 'auth.user.registered' }, 'Worker registered')
 
   return {
     userId: user.id,
@@ -162,6 +167,8 @@ export const loginUser = async (input: LoginInput) => {
         phone: profile.phone_number,
       })
   if (!user) throw createHttpError(500, 'Could not resolve user')
+
+  logger.info({ userId: user.id, email, action: 'auth.user.loggedIn' }, 'User logged in')
 
   return {
     accessToken: tokenData.access_token,

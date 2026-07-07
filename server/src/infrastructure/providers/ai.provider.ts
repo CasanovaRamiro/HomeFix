@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { GoogleGenerativeAI, type Content } from '@google/generative-ai'
 import { env } from '../../lib/envConfig.js'
 
@@ -33,7 +34,7 @@ export async function generateWithRetry(contents: Content[], systemInstructions:
       return cleaned
     } catch (e) {
       if (attempt === MAX_RETRIES) {
-        console.error('[AI] Failed after retries:', e)
+        logger.error({ err: e, action: 'ai.generate' }, 'AI generation failed after retries')
         throw e
       }
     }

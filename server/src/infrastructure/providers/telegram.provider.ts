@@ -1,4 +1,5 @@
 import { Telegraf } from 'telegraf'
+import { logger } from '../../lib/logger.js'
 import type { NotificationProvider, NotificationMessage } from '../../domain/types/notification.types.js'
 import { env } from '../../lib/envConfig.js'
 import { createHttpError } from '../../lib/errors.js'
@@ -16,7 +17,7 @@ export const getBot = (): Telegraf => {
 export const createTelegramProvider = (): NotificationProvider => {
   const token = env.TELEGRAM_BOT_TOKEN
   if (!token) {
-    console.warn('TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled')
+    logger.warn({ action: 'telegram.init' }, 'TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled')
     return { name: 'telegram', send: async () => false }
   }
 
@@ -39,9 +40,9 @@ export const createTelegramProvider = (): NotificationProvider => {
       } catch (err) {
         const code = (err as { code?: number })?.code
         if (code === 403) {
-          console.warn(`Bot blocked by user ${recipient}`)
+          logger.warn({ recipient, action: 'telegram.send' }, 'Bot blocked by user')
         } else {
-          console.error(`Telegram send error: ${err instanceof Error ? err.message : err}`)
+          logger.error({ err, recipient, action: 'telegram.send' }, 'Telegram send error')
         }
         return false
       }

@@ -1,5 +1,6 @@
 import { readdirSync } from 'fs'
 import path from 'path'
+import { logger } from './logger.js'
 import prisma from './prisma.js'
 
 export async function assertMigrationsApplied() {
@@ -24,7 +25,7 @@ export async function assertMigrationsApplied() {
       WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
     `
   } catch {
-    console.error('\n[startup] Could not query _prisma_migrations — is the database reachable?\n')
+    logger.fatal({ action: 'startup' }, 'Could not query _prisma_migrations — is the database reachable?')
     process.exit(1)
   }
 
@@ -32,9 +33,9 @@ export async function assertMigrationsApplied() {
   const pending = migrationFolders.filter((name) => !appliedNames.has(name))
 
   if (pending.length > 0) {
-    console.error('\n[startup] Database schema is out of date. Pending migrations:\n')
-    pending.forEach((m) => console.error(`  • ${m}`))
-    console.error('\nRun: pnpm prisma migrate dev\n')
+    logger.fatal({ pending, action: 'startup' }, 'Database schema is out of date. Pending migrations.')
+    pending.forEach((m) => logger.error({ migration: m, action: 'startup' }, `  • ${m}`))
+    logger.fatal({ action: 'startup' }, 'Run: pnpm prisma migrate dev')
     process.exit(1)
   }
 }

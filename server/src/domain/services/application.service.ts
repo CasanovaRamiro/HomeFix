@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import {
   findApplicationsByWorker,
   findApplication,
@@ -70,6 +71,8 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
 
   const created = await createApplication(workerId, input)
 
+  logger.info({ applicationId: created.id, postId: input.postId, workerId, action: 'application.submitted' }, 'Worker applied to post')
+
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {
     workerName: worker ? `${worker.name}` : 'Alguien',
@@ -106,6 +109,8 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
     categoryId: category.id,
     subcontractGroupId: post.subcontractGroupId ?? undefined,
   })
+
+  logger.info({ applicationId: created.id, postId: input.postId, workerId, categoryId: input.categoryId, action: 'application.submitted' }, 'Worker applied to subcontract')
 
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {
@@ -162,6 +167,8 @@ export const acceptApplication = async (clientId: string, applicationId: string,
     throw err
   }
 
+  logger.info({ applicationId, postId: application.postId, workerId: application.workerId, clientId, action: 'application.accepted' }, 'Application accepted')
+
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
     postTitle: application.post.title,
   })
@@ -176,6 +183,8 @@ export const rejectApplication = async (clientId: string, applicationId: string)
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
 
   const rejected = await updateApplicationStatus(applicationId, ApplicationStatus.Rejected)
+
+  logger.info({ applicationId, postId: application.postId, workerId: application.workerId, clientId, action: 'application.rejected' }, 'Application rejected')
 
   notifyUser(getProvider(), application.workerId, 'application_rejected', {
     postTitle: application.post.title,

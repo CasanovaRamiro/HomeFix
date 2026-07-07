@@ -1,4 +1,5 @@
 import { getBot } from '../../infrastructure/providers/telegram.provider.js'
+import { logger } from '../../lib/logger.js'
 import type { Context } from 'telegraf'
 import prisma from '../../lib/prisma.js'
 import { UserRole } from '../../domain/types/userRole.js'
@@ -150,13 +151,13 @@ export const startBot = () => {
     bot.on('text', (ctx) => { void handleTextMessage(ctx) })
 
     bot.catch((err) => {
-      console.error('Telegram bot error:', err instanceof Error ? err.message : err)
+      logger.error({ err, action: 'telegram.bot' }, 'Telegram bot error')
     })
     bot.launch().catch((err) => {
-      console.error('Telegram bot launch error:', err instanceof Error ? err.message : err)
+      logger.error({ err, action: 'telegram.bot' }, 'Telegram bot launch error')
     })
-    console.log('Telegram bot started (polling)')
+    logger.info({ action: 'telegram.bot' }, 'Telegram bot started (polling)')
   } catch (err) {
-    console.error('Failed to start Telegram bot:', err instanceof Error ? err.message : err)
+    logger.error({ err, action: 'telegram.bot' }, 'Failed to start Telegram bot')
   }
 }

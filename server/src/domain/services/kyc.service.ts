@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { findByEmail, updateUserKycStatus } from '../../infrastructure/database/user.database.js'
 import { createDiditSession, getSessionStatus, getDecision } from '../../infrastructure/providers/didit.provider.js'
 import { createHttpError } from '../../lib/errors.js'
@@ -37,7 +38,7 @@ function mapDiditStatus(raw: string): KycStatus {
   if (exact) return exact
   const lower = DIDIT_STATUS_MAP_LOWER[raw.toLowerCase()]
   if (lower) return lower
-  console.warn(`[KYC] Status desconocido de Didit: "${raw}", mapeando a IN_REVIEW`)
+  logger.warn({ rawStatus: raw, action: 'kyc.mapStatus' }, 'Unknown Didit status, mapping to IN_REVIEW')
   return 'IN_REVIEW'
 }
 
@@ -133,7 +134,7 @@ export const getKycStatus = async (
     if (diditStatus) {
       const mappedStatus = mapDiditStatus(diditStatus)
       if (mappedStatus !== kycStatus) {
-        console.log(`[KYC] Status cambió para ${email}: ${kycStatus} → ${mappedStatus}`)
+        logger.info({ email, from: kycStatus, to: mappedStatus, action: 'kyc.statusChanged' }, `KYC status changed for ${email}`)
         const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
           ? new Date()
           : null
@@ -194,13 +195,13 @@ export const handleKycWebhook = async (
 
   const email = payload.vendor_data
   if (!email) {
-    console.warn('[KYC] Webhook sin vendor_data, ignorando:', payload.event_id)
+    logger.warn({ eventId: payload.event_id, action: 'kyc.webhook' }, 'Webhook missing vendor_data, ignoring')
     return { processed: false }
   }
 
   const user = await findByEmail(email)
   if (!user) {
-    console.warn('[KYC] Webhook para usuario inexistente:', email)
+    logger.warn({ email, eventId: payload.event_id, action: 'kyc.webhook' }, 'Webhook for non-existent user')
     return { processed: false }
   }
 
@@ -220,11 +221,11 @@ export const handleKycWebhook = async (
     diditVerificationId: payload.session_id,
   })
 
-  console.log(`[KYC] Webhook procesado: ${email} → ${mappedStatus} (event: ${payload.event_id})`)
+  logger.info({ email, status: mappedStatus, eventId: payload.event_id, action: 'kyc.webhookProcessed' }, 'KYC webhook processed')
 
   if (NOTIFIABLE_STATUSES.includes(mappedStatus)) {
     notifyKycStatus(email, user.name ?? email, mappedStatus).catch((err) => {
-      console.error('[KYC] Error enviando notificación:', err)
+      logger.error({ err, email, status: mappedStatus, action: 'kyc.notify' }, 'Error sending KYC notification')
     })
   }
 
@@ -237,7 +238,7 @@ async function notifyKycStatus(
   status: KycStatus,
 ): Promise<void> {
   const label = KYC_STATUS_LABELS[status]
-  console.log(`[KYC][EMAIL] Notificación → ${toEmail}: tu verificación fue ${label}`)
+  logger.info({ email: toEmail, status, action: 'kyc.emailNotification' }, `KYC email notification → ${toEmail}: ${label}`)
 
   // TODO: integrar con proveedor de email (SendGrid, SES, etc.)
   // Ejemplo futuro con SendGrid:

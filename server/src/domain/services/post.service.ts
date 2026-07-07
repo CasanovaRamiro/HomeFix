@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import {
   createPost as createPostData,
   createSubPost,
@@ -103,9 +104,11 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
     try {
       await broadcastEmergency(getProvider(), post.id, input.title, input.description, input.categoryId)
     } catch (err) {
-      console.error('Emergency broadcast failed:', err instanceof Error ? err.message : err)
+      logger.error({ err, postId: post.id, action: 'post.emergencyBroadcast' }, 'Emergency broadcast failed')
     }
   }
+
+  logger.info({ postId: post.id, userId: input.userId, isEmergency: !!input.isEmergency, action: 'post.created' }, 'Post created')
 
   return post
 }
@@ -367,6 +370,8 @@ export const cancelPost = async (postId: string, userId: string) => {
 
   const result = await updatePostStatus(postId, PostStatus.Cancelled)
 
+  logger.info({ postId, userId, action: 'post.cancelled' }, 'Post cancelled')
+
   const accepted = await findAcceptedApplications(postId)
   for (const app of accepted) {
     notifyWorker(app.workerId, 'post_cancelled', post.title)
@@ -409,6 +414,9 @@ export const finalizePost = async (postId: string, userId: string) => {
   }
   await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
+
+  logger.info({ postId, userId, action: 'post.finalized' }, 'Post finalized')
+
   return result
 }
 
@@ -442,6 +450,9 @@ export const completePost = async (postId: string, userId: string) => {
   }
   await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
+
+  logger.info({ postId, userId, action: 'post.completed' }, 'Post completed')
+
   return result
 }
 
@@ -465,6 +476,8 @@ export const workerCompletePost = async (postId: string, workerId: string) => {
   const result = await updatePostStatus(postId, PostStatus.Completed)
 
   notifyClient(post.userId, 'post_completed', post.title)
+
+  logger.info({ postId, workerId, action: 'post.workerCompleted' }, 'Worker completed post')
 
   return result
 }

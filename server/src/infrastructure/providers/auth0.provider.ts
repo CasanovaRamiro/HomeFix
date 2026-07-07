@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { createHttpError } from '../../lib/errors.js'
 import type { Auth0SignupResponse, Auth0TokenResponse, Auth0UserInfoResponse, Auth0ManagementUser } from '../types/auth0.types.js'
 import { env } from '../../lib/envConfig.js'
@@ -57,7 +58,7 @@ export const assignAuth0Role = async (auth0UserId: string, roleId: string) => {
 
   if (!resp.ok) {
     const text = await resp.text()
-    console.error('Failed to assign Auth0 role:', text)
+    logger.error({ body: text, action: 'auth0.assignRole' }, 'Failed to assign Auth0 role')
   }
 }
 
@@ -84,14 +85,15 @@ export const createAuth0User = async (payload: {
   if (!response.ok) {
     const text = await response.text()
 
-    console.error('Auth0 signup error', response.status, text)
     if (response.status === 400 && (/already exists|user already exists|exists/i.test(text) || /"code":"invalid_signup"/.test(text))) {
+      logger.warn({ email: payload.email, action: 'auth0.signup' }, 'Email already registered in Auth0')
       throw createHttpError(409, 'Email already registered')
     }
     if (response.status === 400 && /password|weak/i.test(text)) {
+      logger.warn({ action: 'auth0.signup' }, 'Password does not meet Auth0 policy')
       throw createHttpError(400, 'Password does not meet Auth0 policy')
     }
-    console.error('Auth0 signup error:', response.status, text)
+    logger.error({ status: response.status, body: text, action: 'auth0.signup' }, 'Auth0 signup failed')
     throw createHttpError(502, 'Failed to create user in Auth0')
   }
 
@@ -123,7 +125,7 @@ export const loginWithAuth0 = async (email: string, password: string): Promise<A
 
   if (!response.ok) {
     const text = await response.text()
-    console.error('Error de Auth0:', text)
+    logger.error({ status: response.status, body: text, action: 'auth0.login' }, 'Auth0 login failed')
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }

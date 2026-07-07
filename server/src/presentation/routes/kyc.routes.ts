@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { logger } from '../../lib/logger.js'
 import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from '../../domain/services/kyc.service.js'
 import { env } from '../../lib/envConfig.js'
 import { verifySignatureV2, verifySignatureSimple } from '../../infrastructure/webhooks/didit-signature.js'
@@ -109,7 +110,7 @@ router.get('/decision/:sessionId', async (req, res, next) => {
 webhookRouter.post('/webhook', async (req, res) => {
   const secret = env.DIDIT_WEBHOOK_SECRET
   if (!secret) {
-    console.error('[KYC] DIDIT_WEBHOOK_SECRET no configurado')
+    logger.error({ action: 'kyc.webhook' }, 'DIDIT_WEBHOOK_SECRET not configured')
     res.status(500).json({ error: 'Webhook not configured' })
     return
   }
@@ -131,7 +132,7 @@ webhookRouter.post('/webhook', async (req, res) => {
   }
 
   if (!verified) {
-    console.warn('[KYC] Webhook signature inválida')
+    logger.warn({ action: 'kyc.webhook' }, 'Invalid webhook signature')
     res.status(401).json({ error: 'Invalid signature' })
     return
   }
@@ -140,7 +141,7 @@ webhookRouter.post('/webhook', async (req, res) => {
     const result = await handleKycWebhook(req.body)
     res.status(200).json({ ok: true, processed: result.processed })
   } catch (e) {
-    console.error('[KYC] Error procesando webhook:', e)
+    logger.error({ err: e, action: 'kyc.webhook' }, 'Error processing webhook')
     res.status(200).json({ ok: true, processed: false })
   }
 })

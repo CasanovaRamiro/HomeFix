@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { env } from '../../lib/envConfig.js'
 
 const TIMEOUT_MS = 10_000
@@ -46,20 +47,20 @@ export const createDiditSession = async (
     })
   } catch (e) {
     clearTimeout(timeout)
-    console.error('[KYC] Didit request failed:', e)
+    logger.error({ err: e, action: 'didit.createSession' }, 'Didit request failed')
     throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
   }
   clearTimeout(timeout)
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
-    console.error('[KYC] Didit returned non-OK:', response.status, text)
+    logger.error({ status: response.status, body: text, action: 'didit.createSession' }, 'Didit returned non-OK')
     throw createHttpError(502, 'El servicio de verificación rechazó la solicitud')
   }
 
   const data = (await response.json()) as DiditSessionResponse
   if (!data.url || !data.session_id) {
-    console.error('[KYC] Didit response missing url/session_id:', data)
+    logger.error({ data, action: 'didit.createSession' }, 'Didit response missing url/session_id')
     throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
   }
 
@@ -96,14 +97,14 @@ export const getDecision = async (sessionId: string): Promise<DiditDecision> => 
     })
   } catch (e) {
     clearTimeout(timeout)
-    console.error('[KYC] Didit getDecision failed:', e)
+    logger.error({ err: e, action: 'didit.getDecision' }, 'Didit getDecision failed')
     throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
   }
   clearTimeout(timeout)
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
-    console.error('[KYC] Didit getDecision returned non-OK:', response.status, text)
+    logger.error({ status: response.status, body: text, action: 'didit.getDecision' }, 'Didit getDecision returned non-OK')
     if (response.status === 404) {
       throw createHttpError(404, 'La sesión de verificación no existe')
     }
@@ -112,7 +113,7 @@ export const getDecision = async (sessionId: string): Promise<DiditDecision> => 
 
   const data = (await response.json()) as Record<string, unknown>
   if (!data.session_id) {
-    console.error('[KYC] Didit getDecision missing session_id:', data)
+    logger.error({ data, action: 'didit.getDecision' }, 'Didit getDecision missing session_id')
     throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
   }
 
@@ -149,7 +150,7 @@ export const getSessionStatus = async (
     })
   } catch (e) {
     clearTimeout(timeout)
-    console.error('[KYC] Didit getSessionStatus failed:', e)
+    logger.error({ err: e, action: 'didit.getSessionStatus' }, 'Didit getSessionStatus failed')
     throw createHttpError(502, 'No se pudo contactar al servicio de verificación')
   }
   clearTimeout(timeout)
@@ -159,13 +160,13 @@ export const getSessionStatus = async (
       throw createHttpError(404, 'La sesión de verificación no existe')
     }
     const text = await response.text().catch(() => '')
-    console.error('[KYC] Didit getSessionStatus returned non-OK:', response.status, text)
+    logger.error({ status: response.status, body: text, action: 'didit.getSessionStatus' }, 'Didit getSessionStatus returned non-OK')
     throw createHttpError(502, 'El servicio de verificación rechazó la solicitud')
   }
 
   const data = (await response.json()) as DiditSessionResponse
   if (!data.session_id) {
-    console.error('[KYC] Didit getSessionStatus missing session_id:', data)
+    logger.error({ data, action: 'didit.getSessionStatus' }, 'Didit getSessionStatus missing session_id')
     throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
   }
 
