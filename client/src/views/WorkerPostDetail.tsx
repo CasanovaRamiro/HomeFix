@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, MapPin, Calendar, Clock, Tag, User,
-  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star,
+  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag,
 } from 'lucide-react'
-import api from '../services/api'
+import api, { workerCompletePost } from '../services/api'
 import type { PostDTO } from '../types/post'
 import { ApplicationStatus } from '../types/application'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
@@ -324,6 +324,7 @@ export default function WorkerPostDetail() {
   const [error, setError] = useState('')
   const [linkedSubcontractId, setLinkedSubcontractId] = useState<string | null>(null)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [completing, setCompleting] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -361,6 +362,17 @@ export default function WorkerPostDetail() {
     void load()
     return () => { cancelled = true }
   }, [id])
+
+  const handleWorkerComplete = async () => {
+    if (!application || completing) return
+    setCompleting(true)
+    try {
+      await workerCompletePost(post!.id)
+      setApplication({ ...application, status: ApplicationStatus.Completed })
+    } catch {
+      setCompleting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -440,10 +452,10 @@ export default function WorkerPostDetail() {
             {/* Postulación */}
             {application && <ApplicationCard app={application} />}
 
-            {/* Código de inicio (solo contratos normales que lo requieren) */}
+            {/* Código de inicio (solo contratos normales y emergencias que lo requieren) */}
             {application?.status === ApplicationStatus.Accepted &&
               application.requiresStartToken &&
-              post.type === 'post' && (
+              (post.type === 'post' || post.type === 'emergency') && (
                 <StartTokenWorkerCard
                   applicationId={application.id}
                   initialToken={application.startToken}
@@ -454,6 +466,29 @@ export default function WorkerPostDetail() {
             {!application && (
               <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 22px' }}>
                 <p style={{ fontSize: 14, color: '#64748B', margin: 0, fontWeight: 500 }}>No tenés una postulación activa en esta publicación.</p>
+              </div>
+            )}
+
+            {/* Finalizar trabajo (solo si el token fue validado) */}
+            {application?.status === ApplicationStatus.Accepted && application.tokenValidatedAt && (
+              <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 22px' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 8px' }}>¿Trabajo terminado?</h3>
+                <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px', lineHeight: 1.6 }}>
+                  Si ya terminaste el trabajo, marcalo como finalizado.
+                </p>
+                <button
+                  onClick={handleWorkerComplete}
+                  disabled={completing}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: completing ? '#93C5FD' : '#2563EB', border: 'none', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
+                    cursor: completing ? 'not-allowed' : 'pointer', transition: 'opacity 0.15s',
+                  }}
+                >
+                  <Flag size={16} />
+                  {completing ? 'Finalizando...' : 'Finalizar trabajo'}
+                </button>
               </div>
             )}
 

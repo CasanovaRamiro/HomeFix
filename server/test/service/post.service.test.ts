@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories } from "../../src/infrastructure/database/post.database.js";
 import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
-import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
+import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
@@ -26,6 +26,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   findAcceptedApplications: vi.fn(),
+  findAcceptedApplicationByWorker: vi.fn(),
   updateApplicationStatus: vi.fn(),
   rejectPendingApplications: vi.fn(),
 }));
@@ -1483,6 +1484,71 @@ describe('post.service - completePost with accepted application', () => {
       'post_completed',
       { postTitle: 'ReparaciÃ³n de caÃ±o' },
     )
+  })
+})
+
+describe('post.service - workerCompletePost', () => {
+  const mockPost = {
+    id: 'uuid-1',
+    userId: 'client-1',
+    title: 'ReparaciÃ³n de caÃ±o',
+    status: 'Active',
+  }
+
+  const mockAcceptedWithToken = {
+    id: 'app-1',
+    requiresStartToken: true,
+    tokenValidatedAt: new Date('2026-07-01T12:00:00Z'),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(findPostById).mockResolvedValue(mockPost as never)
+    vi.mocked(updateApplicationStatus).mockResolvedValue({ id: 'app-1', status: 'Completed' } as never)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockPost, status: 'Completed' } as never)
+    vi.mocked(rejectPendingApplications).mockResolvedValue(undefined as never)
+  })
+
+  it('completes the post when worker has a validated token', async () => {
+    vi.mocked(findAcceptedApplicationByWorker).mockResolvedValue(mockAcceptedWithToken as never)
+
+    const result = await postService.workerCompletePost('uuid-1', 'worker-1')
+
+    expect(result.status).toBe('Completed')
+    expect(updateApplicationStatus).toHaveBeenCalledWith('app-1', 'Completed')
+    expect(rejectPendingApplications).toHaveBeenCalledWith('uuid-1')
+    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Completed')
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      'client-1',
+      'post_completed',
+      { postTitle: 'ReparaciÃ³n de caÃ±o' },
+    )
+  })
+
+  it('throws 404 when worker has no accepted application', async () => {
+    vi.mocked(findAcceptedApplicationByWorker).mockResolvedValue(null)
+
+    await expect(postService.workerCompletePost('uuid-1', 'worker-1'))
+      .rejects.toMatchObject({ status: 404 })
+  })
+
+  it('throws 400 when token has not been validated', async () => {
+    vi.mocked(findAcceptedApplicationByWorker).mockResolvedValue({
+      ...mockAcceptedWithToken,
+      tokenValidatedAt: null,
+    } as never)
+
+    await expect(postService.workerCompletePost('uuid-1', 'worker-1'))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it('throws 404 when post does not exist', async () => {
+    vi.mocked(findAcceptedApplicationByWorker).mockResolvedValue(mockAcceptedWithToken as never)
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.workerCompletePost('uuid-1', 'worker-1'))
+      .rejects.toMatchObject({ status: 404 })
   })
 })
 

@@ -106,6 +106,12 @@ export const findAcceptedApplications = (postId: string) =>
     where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
   })
 
+export const findAcceptedApplicationByWorker = (postId: string, workerId: string) =>
+  prisma.application.findFirst({
+    where: { postId, workerId, status: ApplicationStatus.Accepted },
+    select: { id: true, requiresStartToken: true, tokenValidatedAt: true },
+  })
+
 export const findApplicationsByPost = async (postId: string): Promise<DomainPostApplication[]> => {
   const raw = await prisma.application.findMany({
     where: { postId },

@@ -1262,3 +1262,90 @@ describe('POST /posts/emergency/create', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('PATCH /posts/:id/worker-complete', () => {
+  let clientId: string
+  let postId: string
+  let applicationId: string
+
+  beforeEach(async () => {
+    const client = await createUser('client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    clientId = client.id
+
+    const post = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Trabajo para finalizar',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+    postId = post.id
+
+    const app = await prisma.application.create({
+      data: {
+        workerId: userId,
+        postId,
+        status: 'Accepted',
+        requiresStartToken: true,
+        tokenValidatedAt: new Date(),
+      },
+    })
+    applicationId = app.id
+  })
+
+  it('completa el post cuando el worker tiene el token validado', async () => {
+    const res = await request(app)
+      .patch(`/posts/${postId}/worker-complete`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('Completed')
+
+    const updatedApp = await prisma.application.findUnique({ where: { id: applicationId } })
+    expect(updatedApp?.status).toBe('Completed')
+  })
+
+  it('retorna 400 si el token no fue validado', async () => {
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { tokenValidatedAt: null },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${postId}/worker-complete`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 404 si el worker no tiene aplicación aceptada', async () => {
+    const otherPost = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Otro post',
+        description: 'Test',
+        address: 'Calle 456',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${otherPost.id}/worker-complete`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 401 sin token de auth', async () => {
+    const res = await request(app).patch(`/posts/${postId}/worker-complete`)
+    expect(res.status).toBe(401)
+  })
+})
