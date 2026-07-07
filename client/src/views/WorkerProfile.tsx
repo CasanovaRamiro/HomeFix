@@ -575,7 +575,7 @@ export default function WorkerProfile() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
                           type="button"
-                           onClick={handleDownloadMatricula}
+                          onClick={handleDownloadMatricula}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 6,
                             background: '#EFF6FF', border: '1px solid #BFDBFE',
