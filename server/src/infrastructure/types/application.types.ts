@@ -25,7 +25,7 @@ export interface PrismaApplicationWithPost {
     categories: { category: { name: string } }[]
   }
   category: { id: string; category: { name: string } } | null
-  clientReview: { id: string } | null
+  clientReview: { id: string; rating: number; description: string | null; createdAt: Date } | null
 }
 
 export interface PrismaApplicationWithWorker {

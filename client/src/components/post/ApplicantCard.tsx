@@ -44,6 +44,7 @@ interface ApplicantCardProps {
   onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
+  onViewReview?: () => void
   onTokenValidated?: () => void | Promise<void>
 }
 
@@ -237,7 +238,7 @@ function StartTokenValidateBox({ applicationId, onValidated }: { applicationId: 
 }
 
 export default function ApplicantCard({
-  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, isEmergency, onHire, onDismiss, onReview, onTokenValidated,
+  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, isEmergency, onHire, onDismiss, onReview, onViewReview, onTokenValidated,
 }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
@@ -247,10 +248,12 @@ export default function ApplicantCard({
 
   const initials = applicant.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
-  const isHired = applicationStatus === 'Accepted'
+  const isHired = applicationStatus === 'Accepted' || applicationStatus === 'Completed'
   const isOut = applicationStatus === 'Dismissed'
   const canHire = postStatus === 'Active' && applicationStatus === 'Pending' && !hireLocked
-  const canReview = (postStatus === 'Completed' || postStatus === 'Cancelled') && isHired && onReview && !applicant.hasReview
+  const canReviewOrView = (postStatus === 'Completed' || postStatus === 'Cancelled') && isHired && (
+    (!applicant.hasReview && !!onReview) || (applicant.hasReview && !!onViewReview)
+  )
   const tokenActive = postStatus !== 'Completed' && postStatus !== 'Cancelled'
   const showTokenValidate = isHired && !!applicant.requiresStartToken && !applicant.tokenValidatedAt && tokenActive
   const tokenConfirmed = isHired && !!applicant.requiresStartToken && !!applicant.tokenValidatedAt
@@ -357,9 +360,10 @@ export default function ApplicantCard({
                 <MessageCircle size={16} />Chatear
               </button>
             )}
-            {canReview && (
-              <button className="pd-btn pd-btn--accent" onClick={onReview}>
-                <Star size={16} />Calificar
+            {canReviewOrView && (
+              <button className="pd-btn pd-btn--accent" onClick={applicant.hasReview ? onViewReview : onReview}>
+                <Star size={16} />
+                {applicant.hasReview ? 'Ver reseña' : 'Calificar'}
               </button>
             )}
             {postStatus !== 'Completed' && postStatus !== 'Cancelled' && (

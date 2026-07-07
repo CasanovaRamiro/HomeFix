@@ -2,7 +2,7 @@
 import { findPostById } from '../../src/infrastructure/database/post.database.js'
 import { findAcceptedApplications, findApplicationById } from '../../src/infrastructure/database/application.database.js'
 import { createReview as createReviewData, createClientReview as createClientReviewData, findClientReviewByApplicationId, findWorkerReviewByApplicationId } from '../../src/infrastructure/database/review.database.js'
-import { createWorkerReview, createClientReview } from '../../src/domain/services/review.service.js'
+import { createWorkerReview, createClientReview, findWorkerReviewByApplication } from '../../src/domain/services/review.service.js'
 import type { CreateReviewInput, DomainClientReview } from '../../src/domain/types/review.types.js'
 import type { DomainWorkerReview } from '../../src/domain/types/worker.types.js'
 
@@ -379,6 +379,60 @@ describe('createClientReview', () => {
       description: undefined,
     })
     expect(result.rating).toBe(5)
+  })
+})
+
+describe('findWorkerReviewByApplication', () => {
+  const applicationId = 'app-uuid-1'
+  const postOwnerId = 'user-uuid-1'
+  const mockApplication = {
+    id: applicationId,
+    workerId: 'worker-uuid-1',
+    postId: 'post-uuid-1',
+    status: 'Accepted',
+    post: { userId: postOwnerId, title: 'Test Post', status: 'Completed' },
+  }
+  const mockReview: DomainWorkerReview = {
+    id: 'review-uuid-1',
+    rating: 5,
+    description: 'Great work!',
+    mediaUrls: null,
+    createdAt: new Date(),
+    reviewer: { id: postOwnerId, name: 'Test User' },
+    application: { postId: 'post-uuid-1', post: { id: 'post-uuid-1', title: 'Test Post' } },
+  }
+
+  it('should return the review when application exists and user owns the post', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+    vi.mocked(findWorkerReviewByApplicationId).mockResolvedValue(mockReview)
+
+    const result = await findWorkerReviewByApplication(applicationId, postOwnerId)
+
+    expect(findApplicationById).toHaveBeenCalledWith(applicationId)
+    expect(findWorkerReviewByApplicationId).toHaveBeenCalledWith(applicationId)
+    expect(result).toEqual(mockReview)
+  })
+
+  it('should throw 404 when application is not found', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(null)
+
+    await expect(findWorkerReviewByApplication(applicationId, postOwnerId)).rejects.toMatchObject({ status: 404, message: 'Application not found' })
+    expect(findWorkerReviewByApplicationId).not.toHaveBeenCalled()
+  })
+
+  it('should throw 403 when user does not own the post', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+
+    await expect(findWorkerReviewByApplication(applicationId, 'other-user-id')).rejects.toMatchObject({ status: 403, message: 'Forbidden' })
+    expect(findWorkerReviewByApplicationId).not.toHaveBeenCalled()
+  })
+
+  it('should throw 404 when review is not found', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication as never)
+    vi.mocked(findWorkerReviewByApplicationId).mockResolvedValue(null)
+
+    await expect(findWorkerReviewByApplication(applicationId, postOwnerId)).rejects.toMatchObject({ status: 404, message: 'Review not found' })
+    expect(findWorkerReviewByApplicationId).toHaveBeenCalledWith(applicationId)
   })
 })
 

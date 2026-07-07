@@ -68,7 +68,7 @@ export default function LeaveReview() {
 
   const handleSubmit = async () => {
     if (rating === 0 || !target.postId) return
-    await submit({ postId: target.postId, applicationId: target.applicationId, rating, description: comentario || undefined })
+    await submit({ postId: target.postId, applicationId: target.applicationId, rating, description: comentario || undefined, photos: fotos })
   }
 
   /* ── Pantalla de agradecimiento ─────────────────────────────── */
