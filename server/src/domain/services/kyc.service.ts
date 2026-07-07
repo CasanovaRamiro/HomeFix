@@ -55,7 +55,9 @@ export const startKycVerification = async (
   if (user.kycStatus === 'IN_REVIEW') {
     throw createHttpError(409, 'Ya tenés una verificación en curso')
   }
-  return createDiditSession(user.email)
+  const session = await createDiditSession(user.email)
+  logger.info({ email: user.email, sessionId: session.sessionId, action: 'kyc.verificationStarted' }, 'KYC verification started')
+  return session
 }
 
 export const confirmKyc = async (
@@ -100,6 +102,8 @@ export const confirmKyc = async (
     kycVerifiedAt: now,
     diditVerificationId: sessionId,
   })
+
+  logger.info({ email, sessionId, status: mappedStatus, action: 'kyc.confirmed' }, 'KYC confirmation completed')
 
   return { status: mappedStatus, sessionId }
 }

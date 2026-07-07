@@ -6,7 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
 const src = resolve(root, 'src')
 
-const READONLY_PREFIXES = ['get', 'find', 'list', 'is']
+const READONLY_PREFIXES = ['get', 'find', 'list', 'search', 'validate', 'is']
 
 interface FuncDef {
   name: string

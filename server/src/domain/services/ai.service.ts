@@ -2,6 +2,7 @@ import type { Content } from '@google/generative-ai'
 import { generateWithRetry } from '../../infrastructure/providers/ai.provider.js'
 import { listCategories } from '../../infrastructure/database/category.database.js'
 import type { AiSuggestRequest, AiResponse } from '../../presentation/types/ai.types.js'
+import { logger } from '../../lib/logger.js'
 
 const HISTORY_LIMIT = 6
 const CACHE_TTL = 5 * 60 * 1000
@@ -22,6 +23,7 @@ async function getCachedCategories(): Promise<{ id: string; name: string }[]> {
 export const clearCategoryCache = () => {
   categoriesCache = null
   categoriesCacheAt = 0
+  logger.info({ action: 'ai.categoryCacheCleared' }, 'Category cache cleared')
 }
 
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
@@ -94,6 +96,8 @@ confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
 
   const cleaned = await generateWithRetry(contents, systemInstructions)
   const response = JSON.parse(cleaned) as AiResponse
+
+  logger.info({ messageCount: input.messages.length, responseType: response.type, action: 'ai.postSuggested' }, 'Post suggestion generated')
 
   if (response.type === 'suggestion') {
     const valid = categories.find((c) => c.id === response.data.suggestedCategoryId)

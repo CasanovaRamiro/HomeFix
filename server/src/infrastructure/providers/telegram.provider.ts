@@ -11,6 +11,7 @@ export const getBot = (): Telegraf => {
   const token = env.TELEGRAM_BOT_TOKEN
   if (!token) throw createHttpError(500, 'TELEGRAM_BOT_TOKEN is not configured')
   _bot = new Telegraf(token)
+  logger.info({ action: 'telegram.botCreated' }, 'Telegram bot created')
   return _bot
 }
 

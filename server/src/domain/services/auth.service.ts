@@ -189,6 +189,8 @@ export const resendVerificationEmail = async (email: string | undefined) => {
 
   await sendAuth0VerificationEmail(auth0User.user_id)
 
+  logger.info({ email: normalizedEmail, action: 'auth.verificationEmailResent' }, 'Verification email resent')
+
   return { message: 'Email de verificación reenviado. Revisá tu bandeja de entrada.' }
 }
 
@@ -197,6 +199,8 @@ export const forgotPassword = async (email: string | undefined) => {
   if (!normalizedEmail) throw createHttpError(400, 'El correo electrónico es obligatorio')
 
   await sendAuth0PasswordReset(normalizedEmail)
+
+  logger.info({ email: normalizedEmail, action: 'auth.passwordResetRequested' }, 'Password reset email requested')
 
   return { message: 'Si el correo está registrado, recibirás un email para restablecer tu contraseña' }
 }
@@ -230,8 +234,10 @@ export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistrat
     if (goodName && safeUser.name === claims.sub) updates.name = goodName
 
     if (Object.keys(updates).length > 0) {
+      logger.info({ email, updates, action: 'auth.syncedUser' }, 'Auth0 user synced with updates')
       return updateUserByEmail(email, updates)
     }
+    logger.info({ email, action: 'auth.syncedUser' }, 'Auth0 user synced (no updates)')
     return safeUser
   }
 
@@ -246,6 +252,8 @@ export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistrat
     phone: claims.phone_number,
     role: UserRole.Client,
   })
+
+  logger.info({ userId: user.id, email, action: 'auth.syncedUser' }, 'Auth0 user created during sync')
 
   return user
 }

@@ -39,7 +39,10 @@ export const getManagementToken = async (): Promise<string> => {
     }),
   })
 
-  if (!resp.ok) throw createHttpError(502, 'Failed to get Auth0 Management API token')
+  if (!resp.ok) {
+    logger.error({ status: resp.status, action: 'auth0.getManagementToken' }, 'Failed to get Auth0 Management API token')
+    throw createHttpError(502, 'Failed to get Auth0 Management API token')
+  }
 
   const data = (await resp.json()) as { access_token: string; expires_in: number }
   _mgmtToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 }
@@ -141,6 +144,7 @@ export const getAuth0UserInfo = async (accessToken: string): Promise<Auth0UserIn
   })
 
   if (!response.ok) {
+    logger.error({ status: response.status, action: 'auth0.getUserInfo' }, 'Failed to fetch user profile from Auth0')
     throw createHttpError(502, 'Failed to fetch user profile from Auth0')
   }
 
@@ -155,7 +159,10 @@ export const getAuth0UserByEmail = async (email: string): Promise<Auth0Managemen
     headers: { Authorization: `Bearer ${token}` },
   })
 
-  if (!resp.ok) return null
+  if (!resp.ok) {
+    logger.error({ status: resp.status, email, action: 'auth0.getUserByEmail' }, 'Failed to find user by email in Auth0')
+    return null
+  }
 
   const users = (await resp.json()) as Auth0ManagementUser[]
   return users[0] ?? null
@@ -172,6 +179,7 @@ export const sendAuth0VerificationEmail = async (auth0UserId: string): Promise<v
   })
 
   if (!resp.ok) {
+    logger.error({ status: resp.status, auth0UserId, action: 'auth0.sendVerificationEmail' }, 'Failed to send verification email')
     throw createHttpError(502, 'Error al enviar el email de verificación')
   }
 }
@@ -188,6 +196,7 @@ export const sendAuth0PasswordReset = async (email: string): Promise<void> => {
   })
 
   if (!response.ok) {
+    logger.error({ status: response.status, email, action: 'auth0.sendPasswordReset' }, 'Failed to send password reset email')
     throw createHttpError(502, 'Error al contactar el servicio de autenticación')
   }
 }

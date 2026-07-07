@@ -2,6 +2,7 @@ import { findAllWorkers, findWorkerById, updateWorker } from '../../infrastructu
 import { findReviewsByWorkerId } from '../../infrastructure/database/review.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import type { DomainWorker, DomainWorkerReview, UpdateWorkerInput } from '../types/worker.types.js'
+import { logger } from '../../lib/logger.js'
 
 const CLOUDINARY_URL_RE = /\/upload\/(?:v\d+\/)?(.+)\.\w+$/
 
@@ -22,6 +23,7 @@ export const updateWorkerProfile = async (id: string, input: UpdateWorkerInput):
       await deleteImage(current.photo).catch(() => {})
     }
   }
+  logger.info({ workerId: id, action: 'worker.profileUpdated' }, 'Worker profile updated')
   return updateWorker(id, input)
 }
 
