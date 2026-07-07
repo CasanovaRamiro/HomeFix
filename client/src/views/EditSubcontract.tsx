@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Users, ArrowLeft, Plus, Trash2, Loader, Save } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
@@ -19,9 +18,9 @@ export default function EditSubcontract() {
     form, setForm,
     positions,
     loading,
-    formError, setFormError,
+    formError,
     formSubmitting,
-    formSuccess, setFormSuccess,
+    formSuccess,
     addPosition, removePosition, updatePosition,
     handleSubmit,
   } = useEditSubcontract(id || '')

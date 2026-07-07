@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { updateSubcontract, fetchSubcontractGroupDetail } from '../services/posts'
 import type { SubcontractPosition, SubcontractDetailDTO } from '../types/post'
 
