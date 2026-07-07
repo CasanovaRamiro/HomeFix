@@ -328,7 +328,7 @@ export const pausePost = async (postId: string, userId: string) => {
 
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
-    var newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
+    const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
     for (const p of groupPosts) {
       if (p.status !== PostStatus.Active && p.status !== PostStatus.Paused) continue
       await updatePostStatus(p.id, newStatus)
