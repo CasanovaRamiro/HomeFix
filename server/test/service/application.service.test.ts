@@ -639,6 +639,11 @@ describe("dismissWorker - bidding path", () => {
     visitCost: 250000,
     scheduledDate: null,
     offeredDuration: 15,
+    requiresStartToken: false,
+    startToken: null,
+    startTokenExpiresAt: null,
+    startTokenAttempts: 0,
+    tokenValidatedAt: null,
     post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true },
     category: null,
   }
@@ -818,7 +823,7 @@ const eligibleApp = {
   startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null },
+  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false },
 }
 
 describe("generateStartToken", () => {
