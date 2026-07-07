@@ -9,7 +9,6 @@ import type { PostDTO } from '../types/post'
 import { ApplicationStatus } from '../types/application'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'
 import { fetchMySubcontractManager } from '../services/posts'
-import ReviewStarRating from '../components/review/ReviewStarRating'
 import StartTokenWorkerCard from '../components/post/StartTokenWorkerCard'
 import ReviewModal from '../components/review/ReviewModal'
 
