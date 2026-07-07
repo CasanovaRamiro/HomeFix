@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories, createBiddingPost, findBiddingPostsByUser, findAvailableBiddingPosts, findWorkerAppBiddings, selectBiddingWinner } from "../../src/infrastructure/database/post.database.js";
 import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
 import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
-import type { CreatePostInput, CreateSubcontractCommand, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
+import type { CreatePostInput, CreateBiddingInput, CreateSubcontractCommand, DomainPost, DomainUserPost } from "../../src/domain/types/post.types.js";
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   createPost: vi.fn(),
@@ -21,6 +21,11 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   createSubPost: vi.fn(),
   findPostsByGroupId: vi.fn(),
   findPostCategories: vi.fn(),
+  createBiddingPost: vi.fn(),
+  findBiddingPostsByUser: vi.fn(),
+  findAvailableBiddingPosts: vi.fn(),
+  findWorkerAppBiddings: vi.fn(),
+  selectBiddingWinner: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -1485,6 +1490,396 @@ describe('post.service - completePost with accepted application', () => {
       'post_completed',
       { postTitle: 'ReparaciÃ³n de caÃ±o' },
     )
+  })
+})
+
+describe('post.service - createBidding', () => {
+  const validInput: CreateBiddingInput = {
+    userId: 'uuid-user-1',
+    title: 'Necesito albañil',
+    description: 'Para construir una pared',
+    categoryIds: ['cat-1'],
+    endDate: new Date('2026-07-15'),
+    address: 'Calle 123',
+    materialResponsibility: 'client',
+    imageUrls: [],
+    bidWeights: '["offeredCost","duration"]',
+  }
+
+  const createdBiddingMock: DomainPost = {
+    id: 'uuid-bidding-1',
+    userId: 'uuid-user-1',
+    title: 'Necesito albañil',
+    description: 'Para construir una pared',
+    address: 'Calle 123',
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-15'),
+    status: 'Active',
+    isBidding: true,
+    images: [],
+    latitude: null,
+    longitude: null,
+    createdAt: new Date(),
+    categories: [{ id: 'cat-1', name: 'Albañilería' }],
+    user: { id: 'uuid-user-1', name: 'Test', surname: 'User' },
+  }
+
+  it('crea una licitación correctamente', async () => {
+    vi.mocked(createBiddingPost).mockResolvedValue(createdBiddingMock)
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.0, reviewCount: 5 })
+
+    const result = await postService.createBidding(validInput)
+
+    expect(createBiddingPost).toHaveBeenCalledWith(validInput)
+    expect(result.id).toBe('uuid-bidding-1')
+    expect(result.clientRating).toBe(4.0)
+  })
+
+  it('lanza error si title está vacío', async () => {
+    await expect(postService.createBidding({ ...validInput, title: '' })).rejects.toThrow('title is required')
+  })
+
+  it('lanza error si description está vacío', async () => {
+    await expect(postService.createBidding({ ...validInput, description: '' })).rejects.toThrow('description is required')
+  })
+
+  it('lanza error si categoryIds está vacío', async () => {
+    await expect(postService.createBidding({ ...validInput, categoryIds: [] })).rejects.toThrow('At least one category is required')
+  })
+
+  it('lanza error si endDate falta', async () => {
+    const { endDate: _, ...sinEndDate } = validInput
+    await expect(postService.createBidding(sinEndDate as CreateBiddingInput)).rejects.toThrow('endDate is required')
+  })
+
+  it('lanza error si address está vacío', async () => {
+    await expect(postService.createBidding({ ...validInput, address: '' })).rejects.toThrow('address is required')
+  })
+
+  it('lanza error si materialResponsibility falta', async () => {
+    const { materialResponsibility: _, ...sinMat } = validInput
+    await expect(postService.createBidding(sinMat as CreateBiddingInput)).rejects.toThrow('materialResponsibility is required')
+  })
+
+  it('lanza error si bidWeights falta', async () => {
+    const { bidWeights: _, ...sinWeights } = validInput
+    await expect(postService.createBidding(sinWeights as CreateBiddingInput)).rejects.toThrow('bidWeights is required')
+  })
+})
+
+describe('post.service - getClientBiddings', () => {
+  const mockBidding: DomainPost = {
+    id: 'uuid-1',
+    userId: 'user-uuid-1',
+    title: 'Licitación test',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    isBidding: true,
+    images: [],
+    latitude: null,
+    longitude: null,
+    createdAt: new Date(),
+    categories: [],
+    user: { id: 'user-uuid-1', name: 'Test', surname: 'User' },
+  }
+
+  it('retorna stats y licitaciones del cliente', async () => {
+    vi.mocked(findBiddingPostsByUser).mockResolvedValue([mockBidding])
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 })
+
+    const result = await postService.getClientBiddings('user-uuid-1')
+
+    expect(result.stats).toEqual({ active: 1, evaluating: 0, inProgress: 0, completed: 0 })
+    expect(result.biddings).toHaveLength(1)
+    expect(result.biddings[0].clientRating).toBe(4.5)
+  })
+
+  it('retorna stats vacíos cuando no hay licitaciones', async () => {
+    vi.mocked(findBiddingPostsByUser).mockResolvedValue([])
+
+    const result = await postService.getClientBiddings('user-uuid-1')
+
+    expect(result.stats).toEqual({ active: 0, evaluating: 0, inProgress: 0, completed: 0 })
+    expect(result.biddings).toEqual([])
+  })
+
+  it('calcula stats correctos para múltiples estados', async () => {
+    const posts = [
+      { ...mockBidding, id: 'p1', status: 'Active' },
+      { ...mockBidding, id: 'p2', status: 'Evaluating' },
+      { ...mockBidding, id: 'p3', status: 'In progress' },
+      { ...mockBidding, id: 'p4', status: 'Completed' },
+    ] as DomainPost[]
+    vi.mocked(findBiddingPostsByUser).mockResolvedValue(posts)
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.0, reviewCount: 3 })
+
+    const result = await postService.getClientBiddings('user-uuid-1')
+
+    expect(result.stats).toEqual({ active: 1, evaluating: 1, inProgress: 1, completed: 1 })
+    expect(result.biddings).toHaveLength(4)
+  })
+})
+
+describe('post.service - getBiddingDetail', () => {
+  const mockBidding: DomainPost = {
+    id: 'bidding-1',
+    userId: 'client-1',
+    title: 'Licitación test',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    isBidding: true,
+    images: [],
+    latitude: null,
+    longitude: null,
+    createdAt: new Date(),
+    categories: [],
+    user: { id: 'client-1', name: 'Client', surname: 'Test' },
+  }
+
+  it('retorna la licitación con clientRating para el owner', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.2, reviewCount: 7 })
+
+    const result = await postService.getBiddingDetail('bidding-1', 'client-1')
+
+    expect(result.id).toBe('bidding-1')
+    expect(result.clientRating).toBe(4.2)
+  })
+
+  it('permite acceso a cualquier worker si es bidding', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 3.0, reviewCount: 1 })
+
+    const result = await postService.getBiddingDetail('bidding-1', 'worker-cualquiera')
+
+    expect(result.id).toBe('bidding-1')
+  })
+
+  it('lanza 404 si no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+
+    await expect(postService.getBiddingDetail('no-existe', 'user-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si no es bidding y el usuario no es el owner', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, isBidding: false })
+
+    await expect(postService.getBiddingDetail('bidding-1', 'worker-cualquiera')).rejects.toMatchObject({ status: 403 })
+  })
+})
+
+describe('post.service - closeBidding', () => {
+  const mockBidding: DomainPost = {
+    id: 'bidding-1',
+    userId: 'client-1',
+    title: 'Licitación test',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    isBidding: true,
+    images: [],
+    latitude: null,
+    longitude: null,
+    createdAt: new Date(),
+    categories: [],
+    user: { id: 'client-1', name: 'Client', surname: 'Test' },
+  }
+
+  it('pasa de Active a Evaluating', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockBidding, status: 'Evaluating' } as never)
+
+    await postService.closeBidding('bidding-1', 'client-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('bidding-1', 'Evaluating')
+  })
+
+  it('pasa de Paused a Active', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'Paused' })
+    vi.mocked(updatePostStatus).mockResolvedValue({ ...mockBidding, status: 'Active' } as never)
+
+    await postService.closeBidding('bidding-1', 'client-1')
+
+    expect(updatePostStatus).toHaveBeenCalledWith('bidding-1', 'Active')
+  })
+
+  it('lanza 404 si no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.closeBidding('no-existe', 'client-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si no es el owner', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    await expect(postService.closeBidding('bidding-1', 'otro-user')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si está en Evaluating', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'Evaluating' })
+    await expect(postService.closeBidding('bidding-1', 'client-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('post.service - selectWinner', () => {
+  const mockBidding: DomainPost = {
+    id: 'bidding-1',
+    userId: 'client-1',
+    title: 'Licitación test',
+    description: 'Test',
+    address: 'Calle 123',
+    startDate: new Date('2026-06-01'),
+    endDate: new Date('2026-06-15'),
+    status: 'Active',
+    isBidding: true,
+    images: [],
+    latitude: null,
+    longitude: null,
+    createdAt: new Date(),
+    categories: [],
+    user: { id: 'client-1', name: 'Client', surname: 'Test' },
+  }
+
+  it('selecciona ganador cuando la licitación está Active', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(selectBiddingWinner).mockResolvedValue(undefined)
+
+    await postService.selectWinner('bidding-1', 'client-1', 'app-1')
+
+    expect(selectBiddingWinner).toHaveBeenCalledWith('bidding-1', 'app-1', 'Active')
+  })
+
+  it('selecciona ganador cuando la licitación está Evaluating', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'Evaluating' })
+    vi.mocked(selectBiddingWinner).mockResolvedValue(undefined)
+
+    await postService.selectWinner('bidding-1', 'client-1', 'app-1')
+
+    expect(selectBiddingWinner).toHaveBeenCalledWith('bidding-1', 'app-1', 'Evaluating')
+  })
+
+  it('lanza 404 si no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(null)
+    await expect(postService.selectWinner('no-existe', 'client-1', 'app-1')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 403 si no es el owner', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    await expect(postService.selectWinner('bidding-1', 'otro-user', 'app-1')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lanza 400 si la licitación está In progress', async () => {
+    vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'In progress' })
+    await expect(postService.selectWinner('bidding-1', 'client-1', 'app-1')).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('post.service - listAvailableBiddings', () => {
+  const mockAvailableBidding = {
+    id: 'bidding-1',
+    userId: 'client-1',
+    title: 'Licitación disponible',
+    description: 'Test',
+    address: 'Calle 123',
+    budgetMax: 500000,
+    materialResponsibility: 'client',
+    images: [{ id: 'img-1', url: 'https://example.com/img.jpg' }],
+    latitude: -34.6,
+    longitude: -58.4,
+    categories: [{ id: 'cat-1', name: 'Albañilería', categoryId: 'cat-1' }],
+    endDate: new Date('2026-07-15'),
+    createdAt: new Date(),
+    user: { id: 'client-1', name: 'Client', surname: 'Test' },
+    hasApplied: false,
+  }
+
+  it('retorna licitaciones disponibles con datos del cliente', async () => {
+    vi.mocked(findAvailableBiddingPosts).mockResolvedValue([mockAvailableBidding])
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.5, reviewCount: 10 })
+
+    const result = await postService.listAvailableBiddings('worker-1')
+
+    expect(findAvailableBiddingPosts).toHaveBeenCalledWith('worker-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].title).toBe('Licitación disponible')
+    expect(result[0].client.rating).toBe(4.5)
+    expect(result[0].client.reviewCount).toBe(10)
+    expect(result[0].hasApplied).toBe(false)
+  })
+
+  it('retorna array vacío cuando no hay disponibles', async () => {
+    vi.mocked(findAvailableBiddingPosts).mockResolvedValue([])
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 0, reviewCount: 0 })
+
+    const result = await postService.listAvailableBiddings('worker-1')
+
+    expect(result).toEqual([])
+  })
+
+  it('mapea hasApplied correctamente', async () => {
+    vi.mocked(findAvailableBiddingPosts).mockResolvedValue([{ ...mockAvailableBidding, hasApplied: true }])
+    vi.mocked(getUserRating).mockResolvedValue({ averageRating: 4.0, reviewCount: 5 })
+
+    const result = await postService.listAvailableBiddings('worker-1')
+
+    expect(result[0].hasApplied).toBe(true)
+  })
+})
+
+describe('post.service - getWorkerBiddings', () => {
+  const mockWorkerBidding = {
+    applicationId: 'app-1',
+    status: 'Pending',
+    offeredCost: 250000,
+    offeredDuration: 15,
+    offeredStartDate: '2026-07-01',
+    message: 'Tengo experiencia',
+    createdAt: new Date(),
+    bidding: {
+      id: 'bidding-1',
+      title: 'Licitación test',
+      description: 'Test',
+      address: 'Calle 123',
+      client: { id: 'client-1', name: 'Client', surname: 'Test' },
+      status: 'Active',
+      images: [],
+      categories: [],
+    },
+    client: { id: 'client-1', name: 'Client', surname: 'Test' },
+    hasReview: false,
+  }
+
+  it('retorna las postulaciones del worker a licitaciones', async () => {
+    vi.mocked(findWorkerAppBiddings).mockResolvedValue([mockWorkerBidding])
+
+    const result = await postService.getWorkerBiddings('worker-1')
+
+    expect(findWorkerAppBiddings).toHaveBeenCalledWith('worker-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].applicationId).toBe('app-1')
+    expect(result[0].offeredCost).toBe(250000)
+  })
+
+  it('retorna array vacío cuando el worker no tiene postulaciones', async () => {
+    vi.mocked(findWorkerAppBiddings).mockResolvedValue([])
+
+    const result = await postService.getWorkerBiddings('worker-1')
+
+    expect(result).toEqual([])
+  })
+
+  it('incluye hasReview en la respuesta', async () => {
+    vi.mocked(findWorkerAppBiddings).mockResolvedValue([{ ...mockWorkerBidding, hasReview: true }])
+
+    const result = await postService.getWorkerBiddings('worker-1')
+
+    expect(result[0].hasReview).toBe(true)
   })
 })
 
