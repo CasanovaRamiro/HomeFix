@@ -268,7 +268,10 @@ function ReviewModal({
         <div style={{ marginBottom: 24 }}>
           <ReviewStarRating value={rating} onChange={setRating} />
         </div>
-
+      </div>
+    </div>
+  )
+}
 
 // ─── View Review Modal ──────────────────────────────────────────────────────────
 
