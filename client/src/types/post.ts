@@ -120,6 +120,7 @@ export interface AvailableSubcontractDTO {
 
 export interface SubcontractDetailCategory {
   id: string
+  categoryId: string
   name: string
   quantity: number
   filledCount: number

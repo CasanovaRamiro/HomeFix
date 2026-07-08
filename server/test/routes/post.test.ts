@@ -1349,3 +1349,214 @@ describe('PATCH /posts/:id/worker-complete', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('PATCH /posts/subcontracts/group/:id', () => {
+  let groupId: string
+
+  beforeEach(async () => {
+    const client = await createUser('client-sub@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    const cat = await createCategory('Pintor')
+
+    const parentPost = await prisma.post.create({
+      data: {
+        userId: client.id,
+        title: 'Trabajo original',
+        description: 'Desc',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Active',
+        categories: { create: { categoryId: cat.id } },
+      },
+    })
+
+    await prisma.application.create({
+      data: { workerId: userId, postId: parentPost.id, status: 'Accepted' },
+    })
+
+    const groupIdValue = 'test-group-id-' + Date.now()
+    groupId = groupIdValue
+
+    await prisma.post.create({
+      data: {
+        userId,
+        type: PostType.SubContract,
+        parentPostId: parentPost.id,
+        subcontractGroupId: groupIdValue,
+        title: 'Subcontratación: Pintor',
+        description: 'Pintar paredes',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Active',
+        categories: { create: { categoryId: cat.id, quantity: 2, filledCount: 0, roleDescription: 'Pintor' } },
+      },
+    })
+    await prisma.post.create({
+      data: {
+        userId,
+        type: PostType.SubContract,
+        parentPostId: parentPost.id,
+        subcontractGroupId: groupIdValue,
+        title: 'Subcontratación: Electricista',
+        description: 'Instalar cableado',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        address: 'Calle 1',
+        status: 'Active',
+        categories: { create: { categoryId: cat.id, quantity: 1, filledCount: 0, roleDescription: 'Electricista' } },
+      },
+    })
+  })
+
+  const validBody = () => ({
+    title: 'Subcontratación editada',
+    description: 'Descripción editada',
+    startDate: '2026-06-01',
+    endDate: '2026-06-20',
+    address: 'Nueva dirección 456',
+    latitude: -34.6,
+    longitude: -58.4,
+  })
+
+  it('actualiza todos los posts del grupo', async () => {
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(2)
+    expect(res.body[0].title).toBe('Subcontratación editada')
+    expect(res.body[0].description).toBe('Descripción editada')
+    expect(res.body[0].address).toBe('Nueva dirección 456')
+    expect(res.body[1].title).toBe('Subcontratación editada')
+  })
+
+  it('funciona con grupo pausado', async () => {
+    await prisma.post.updateMany({
+      where: { subcontractGroupId: groupId } as never,
+      data: { status: 'Paused' },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(2)
+  })
+
+  it('retorna 400 si el grupo está In progress', async () => {
+    await prisma.post.updateMany({
+      where: { subcontractGroupId: groupId } as never,
+      data: { status: 'In progress' },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si el grupo está Completed', async () => {
+    await prisma.post.updateMany({
+      where: { subcontractGroupId: groupId } as never,
+      data: { status: 'Completed' },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si el grupo está Cancelled', async () => {
+    await prisma.post.updateMany({
+      where: { subcontractGroupId: groupId } as never,
+      data: { status: 'Cancelled' },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 403 si el subcontrato es de otro usuario', async () => {
+    const otro = await createUser('otro-sub@test.com', 'Otro', 'hashed', { role: UserRole.Worker })
+    await prisma.post.updateMany({
+      where: { subcontractGroupId: groupId } as never,
+      data: { userId: otro.id },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 404 si el grupo no existe', async () => {
+    const res = await request(app)
+      .patch('/posts/subcontracts/group/non-existent-id')
+      .set('Authorization', `Bearer ${token}`)
+      .send(validBody())
+
+    expect(res.status).toBe(404)
+  })
+
+  it('retorna 400 si faltan campos obligatorios', async () => {
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: '', description: '', startDate: '', endDate: '', address: '' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 401 sin token', async () => {
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .send(validBody())
+
+    expect(res.status).toBe(401)
+  })
+
+  it('retorna 403 si el usuario no es worker', async () => {
+    await createUser('client-edit@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: 'auth0|client-edit', email: 'client-edit@test.com' })
+
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', 'Bearer test-token')
+      .send(validBody())
+
+    expect(res.status).toBe(403)
+    resetMockPayload()
+  })
+
+  it('acepta actualización sin coordenadas', async () => {
+    const res = await request(app)
+      .patch(`/posts/subcontracts/group/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Sin coordenadas',
+        description: 'Test',
+        startDate: '2026-06-01',
+        endDate: '2026-06-20',
+        address: 'Dirección sin coords',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body[0].title).toBe('Sin coordenadas')
+  })
+})
