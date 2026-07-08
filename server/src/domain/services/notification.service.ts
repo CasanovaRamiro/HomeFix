@@ -2,6 +2,7 @@ import type { NotificationMessage, NotificationProvider } from '../types/notific
 import { findUserById } from '../../infrastructure/database/user.database.js'
 import prisma from '../../lib/prisma.js'
 import { env } from '../../lib/envConfig.js'
+import { logger } from '../../lib/logger.js'
 
 type EventType =
   | 'application_new'
@@ -55,12 +56,16 @@ export const notifyUser = async (
   data: Record<string, string>,
 ): Promise<void> => {
   const user = await findUserById(userId)
-  if (!user?.telegramChatId) return
+  if (!user?.telegramChatId) {
+    logger.debug({ userId, event, action: 'notification.skippedNoChat' }, 'Notification skipped: user has no chat ID')
+    return
+  }
 
   const message = templates[event](data)
   const ok = await provider.send(user.telegramChatId, message)
 
   if (!ok && provider.name === 'telegram') {
+    logger.warn({ userId, event, action: 'notification.sendFailed' }, 'Failed to send notification, clearing chat ID')
     await clearTelegramChatId(userId)
   }
 }
@@ -80,6 +85,8 @@ export const broadcastEmergency = async (
     },
     select: { id: true, telegramChatId: true },
   })
+
+  logger.info({ postId, categoryId, recipientCount: workers.length, action: 'notification.emergencyBroadcast' }, `Broadcasting emergency post to ${workers.length} workers`)
 
   const postUrl = `${env.CORS_ORIGIN!}/posts/${postId}`
   const isHttps = env.CORS_ORIGIN!.startsWith('https://')

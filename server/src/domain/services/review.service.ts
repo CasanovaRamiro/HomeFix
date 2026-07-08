@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { findPostById } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplications, findApplicationById } from '../../infrastructure/database/application.database.js'
 import { createReview as createReviewData, createClientReview as createClientReviewData, findClientReviewByApplicationId, findWorkerReviewByApplicationId } from '../../infrastructure/database/review.database.js'
@@ -51,7 +52,7 @@ export const createWorkerReview = async (
     if (existing) {
       throw Object.assign(new Error('A review already exists for this application'), { status: 400 })
     }
-    return createReviewData({
+    const review = await createReviewData({
       applicationId: application.id,
       reviewerId: userId,
       workerId: application.workerId,
@@ -59,6 +60,10 @@ export const createWorkerReview = async (
       description: input.description,
       mediaUrls: input.mediaUrls,
     })
+
+    logger.info({ reviewId: review.id, applicationId: input.applicationId, workerId: application.workerId, reviewerId: userId, rating: input.rating, action: 'review.workerCreated' }, 'Worker review created')
+
+    return review
   }
 
   const post = await findPostById(postId)
@@ -80,7 +85,7 @@ export const createWorkerReview = async (
     throw Object.assign(new Error('Multiple accepted workers found — specify applicationId'), { status: 400 })
   }
 
-  return createReviewData({
+  const review = await createReviewData({
     applicationId: accepted[0].id,
     reviewerId: userId,
     workerId: accepted[0].workerId,
@@ -88,6 +93,10 @@ export const createWorkerReview = async (
     description: input.description,
     mediaUrls: input.mediaUrls,
   })
+
+  logger.info({ reviewId: review.id, applicationId: accepted[0].id, workerId: accepted[0].workerId, reviewerId: userId, rating: input.rating, action: 'review.workerCreated' }, 'Worker review created')
+
+  return review
 }
 
 export const findWorkerReviewByApplication = async (applicationId: string, userId: string): Promise<DomainWorkerReview> => {
@@ -133,11 +142,15 @@ export const createClientReview = async (
 
   const clientId = application.post.userId
 
-  return createClientReviewData({
+  const review = await createClientReviewData({
     applicationId,
     reviewerId: userId,
     clientId,
     rating: input.rating,
     description: input.description,
   })
+
+  logger.info({ reviewId: review.id, applicationId, clientId, reviewerId: userId, rating: input.rating, action: 'review.clientCreated' }, 'Client review created')
+
+  return review
 }

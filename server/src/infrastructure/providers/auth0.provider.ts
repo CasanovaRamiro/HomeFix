@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import { createHttpError } from '../../lib/errors.js'
 import type { Auth0SignupResponse, Auth0TokenResponse, Auth0UserInfoResponse, Auth0ManagementUser } from '../types/auth0.types.js'
 import { env } from '../../lib/envConfig.js'
@@ -38,7 +39,10 @@ export const getManagementToken = async (): Promise<string> => {
     }),
   })
 
-  if (!resp.ok) throw createHttpError(502, 'Failed to get Auth0 Management API token')
+  if (!resp.ok) {
+    logger.error({ status: resp.status, action: 'auth0.getManagementToken' }, 'Failed to get Auth0 Management API token')
+    throw createHttpError(502, 'Failed to get Auth0 Management API token')
+  }
 
   const data = (await resp.json()) as { access_token: string; expires_in: number }
   _mgmtToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 }
@@ -57,7 +61,7 @@ export const assignAuth0Role = async (auth0UserId: string, roleId: string) => {
 
   if (!resp.ok) {
     const text = await resp.text()
-    console.error('Failed to assign Auth0 role:', text)
+    logger.error({ body: text, action: 'auth0.assignRole' }, 'Failed to assign Auth0 role')
   }
 }
 
@@ -84,14 +88,15 @@ export const createAuth0User = async (payload: {
   if (!response.ok) {
     const text = await response.text()
 
-    console.error('Auth0 signup error', response.status, text)
     if (response.status === 400 && (/already exists|user already exists|exists/i.test(text) || /"code":"invalid_signup"/.test(text))) {
+      logger.warn({ email: payload.email, action: 'auth0.signup' }, 'Email already registered in Auth0')
       throw createHttpError(409, 'Email already registered')
     }
     if (response.status === 400 && /password|weak/i.test(text)) {
+      logger.warn({ action: 'auth0.signup' }, 'Password does not meet Auth0 policy')
       throw createHttpError(400, 'Password does not meet Auth0 policy')
     }
-    console.error('Auth0 signup error:', response.status, text)
+    logger.error({ status: response.status, body: text, action: 'auth0.signup' }, 'Auth0 signup failed')
     throw createHttpError(502, 'Failed to create user in Auth0')
   }
 
@@ -123,7 +128,7 @@ export const loginWithAuth0 = async (email: string, password: string): Promise<A
 
   if (!response.ok) {
     const text = await response.text()
-    console.error('Error de Auth0:', text)
+    logger.error({ status: response.status, body: text, action: 'auth0.login' }, 'Auth0 login failed')
     if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }
@@ -139,6 +144,7 @@ export const getAuth0UserInfo = async (accessToken: string): Promise<Auth0UserIn
   })
 
   if (!response.ok) {
+    logger.error({ status: response.status, action: 'auth0.getUserInfo' }, 'Failed to fetch user profile from Auth0')
     throw createHttpError(502, 'Failed to fetch user profile from Auth0')
   }
 
@@ -153,7 +159,10 @@ export const getAuth0UserByEmail = async (email: string): Promise<Auth0Managemen
     headers: { Authorization: `Bearer ${token}` },
   })
 
-  if (!resp.ok) return null
+  if (!resp.ok) {
+    logger.error({ status: resp.status, email, action: 'auth0.getUserByEmail' }, 'Failed to find user by email in Auth0')
+    return null
+  }
 
   const users = (await resp.json()) as Auth0ManagementUser[]
   return users[0] ?? null
@@ -170,6 +179,7 @@ export const sendAuth0VerificationEmail = async (auth0UserId: string): Promise<v
   })
 
   if (!resp.ok) {
+    logger.error({ status: resp.status, auth0UserId, action: 'auth0.sendVerificationEmail' }, 'Failed to send verification email')
     throw createHttpError(502, 'Error al enviar el email de verificación')
   }
 }
@@ -186,6 +196,7 @@ export const sendAuth0PasswordReset = async (email: string): Promise<void> => {
   })
 
   if (!response.ok) {
+    logger.error({ status: response.status, email, action: 'auth0.sendPasswordReset' }, 'Failed to send password reset email')
     throw createHttpError(502, 'Error al contactar el servicio de autenticación')
   }
 }

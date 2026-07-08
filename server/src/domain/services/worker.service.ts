@@ -4,6 +4,7 @@ import { countCompletedJobs, countDismissedJobs } from '../../infrastructure/dat
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { getUserRating } from './user.service.js'
 import type { DomainWorker, DomainWorkerReview, UpdateWorkerInput } from '../types/worker.types.js'
+import { logger } from '../../lib/logger.js'
 
 export interface WorkerStats {
   cancelledJobs: number
@@ -53,6 +54,7 @@ export const updateWorkerProfile = async (id: string, input: UpdateWorkerInput):
       await deleteImage(current.photo).catch(() => {})
     }
   }
+  logger.info({ workerId: id, action: 'worker.profileUpdated' }, 'Worker profile updated')
   return updateWorker(id, input)
 }
 

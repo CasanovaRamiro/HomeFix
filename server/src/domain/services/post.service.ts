@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import {
   createPost as createPostData,
   createSubPost,
@@ -84,6 +85,7 @@ export const createEmergencyPost = async (input: {
   latitude?: number | null
   longitude?: number | null
 }): Promise<DomainPost> => {
+  logger.info({ userId: input.userId, action: 'post.emergencyCreated' }, 'Emergency post created')
   return createPost({
     ...input,
     isEmergency: true,
@@ -108,9 +110,11 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
     try {
       await broadcastEmergency(getProvider(), post.id, input.title, input.description, input.categoryId)
     } catch (err) {
-      console.error('Emergency broadcast failed:', err instanceof Error ? err.message : err)
+      logger.error({ err, postId: post.id, action: 'post.emergencyBroadcast' }, 'Emergency broadcast failed')
     }
   }
+
+  logger.info({ postId: post.id, userId: input.userId, isEmergency: !!input.isEmergency, action: 'post.created' }, 'Post created')
 
   return post
 }
@@ -233,6 +237,8 @@ export const createSubContract = async (input: CreateSubcontractCommand): Promis
       })
     )
   )
+
+  logger.info({ userId: input.userId, parentPostId: input.parentPostId, groupId, positions: input.positions.length, action: 'post.subcontractCreated' }, 'Subcontract created')
 
   return results
 }
@@ -419,14 +425,16 @@ export const pausePost = async (postId: string, userId: string) => {
       if (p.status !== PostStatus.Active && p.status !== PostStatus.Paused) continue
       await updatePostStatus(p.id, newStatus)
     }
+    logger.info({ postId, userId, newStatus, action: 'post.toggledPause' }, `Post ${newStatus === PostStatus.Paused ? 'paused' : 'unpaused'}`)
     return { id: post.id, status: newStatus }
   }
 
   if (post.status !== PostStatus.Active && post.status !== PostStatus.Paused) {
     throw Object.assign(new Error(`Post cannot be paused in its current state (${post.status})`), { status: 400 })
   }
-  const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
-  return updatePostStatus(postId, newStatus)
+  const _newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
+  logger.info({ postId, userId, newStatus: _newStatus, action: 'post.toggledPause' }, `Post ${_newStatus === PostStatus.Paused ? 'paused' : 'unpaused'}`)
+  return updatePostStatus(postId, _newStatus)
 }
 
 export const cancelPost = async (postId: string, userId: string) => {
@@ -458,6 +466,8 @@ export const cancelPost = async (postId: string, userId: string) => {
   await rejectPendingApplications(postId)
 
   const result = await updatePostStatus(postId, PostStatus.Cancelled)
+
+  logger.info({ postId, userId, action: 'post.cancelled' }, 'Post cancelled')
 
   const accepted = await findAcceptedApplications(postId)
   for (const app of accepted) {
@@ -501,6 +511,9 @@ export const finalizePost = async (postId: string, userId: string) => {
   }
   await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
+
+  logger.info({ postId, userId, action: 'post.finalized' }, 'Post finalized')
+
   return result
 }
 
@@ -534,6 +547,9 @@ export const completePost = async (postId: string, userId: string) => {
   }
   await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
+
+  logger.info({ postId, userId, action: 'post.completed' }, 'Post completed')
+
   return result
 }
 
@@ -558,6 +574,8 @@ export const workerCompletePost = async (postId: string, workerId: string) => {
 
   notifyClient(post.userId, 'post_completed', post.title)
 
+  logger.info({ postId, workerId, action: 'post.workerCompleted' }, 'Worker completed post')
+
   return result
 }
 
@@ -576,6 +594,7 @@ export const reopenPost = async (postId: string, userId: string) => {
       }
       await updatePostStatus(p.id, PostStatus.Active)
     }
+    logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
     return { id: post.id, status: PostStatus.Active }
   }
 
@@ -586,6 +605,7 @@ export const reopenPost = async (postId: string, userId: string) => {
   for (const app of accepted) {
     await updateApplicationStatus(app.id, ApplicationStatus.Pending)
   }
+  logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
   return updatePostStatus(postId, PostStatus.Active)
 }
 
@@ -608,6 +628,7 @@ export const markInProgress = async (postId: string, userId: string) => {
       if (p.status !== PostStatus.Active) continue
       await updatePostStatus(p.id, PostStatus.InProgress)
     }
+    logger.info({ postId, userId, action: 'post.markedInProgress' }, 'Post marked in progress')
     return { id: post.id, status: PostStatus.InProgress }
   }
 
@@ -617,6 +638,7 @@ export const markInProgress = async (postId: string, userId: string) => {
     throw Object.assign(new Error('Must have at least one hired worker'), { status: 400 })
   }
 
+  logger.info({ postId, userId, action: 'post.markedInProgress' }, 'Post marked in progress')
   return updatePostStatus(postId, PostStatus.InProgress)
 }
 
@@ -636,6 +658,7 @@ export const updatePost = async (postId: string, userId: string, input: Omit<Upd
     ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
     : null
 
+  logger.info({ postId, userId, action: 'post.updated' }, 'Post updated')
   return updatePostData(postId, {
     ...input,
     userId,

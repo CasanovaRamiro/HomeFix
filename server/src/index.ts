@@ -1,5 +1,7 @@
+import { logger } from './lib/logger.js'
+
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:', reason instanceof Error ? reason.message : reason)
+  logger.fatal({ err: reason instanceof Error ? reason : new Error(String(reason)) }, 'Unhandled rejection')
 })
 
 import { env } from './lib/envConfig.js'
@@ -114,7 +116,7 @@ app.use(errorHandler)
 if (env.NODE_ENV !== 'test') {
   await assertMigrationsApplied()
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+    logger.info({ port: PORT }, `Server running on port ${PORT}`)
     if (env.TELEGRAM_BOT_TOKEN) startBot()
   })
 }

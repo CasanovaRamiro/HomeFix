@@ -6,6 +6,7 @@ import {
 import { getClientReviewAggregate } from '../../infrastructure/database/user.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import type { DomainClientProfile, UpdateClientProfileInput } from '../types/clientProfile.types.js'
+import { logger } from '../../lib/logger.js'
 
 const CLOUDINARY_URL_RE = /\/upload\/(?:v\d+\/)?(.+)\.\w+$/
 
@@ -39,6 +40,7 @@ export const updateClientProfile = async (
       await deleteImage(current.photo).catch(() => {})
     }
   }
+  logger.info({ clientId: id, action: 'clientProfile.updated' }, 'Client profile updated')
   await updateClientProfileDb(id, input)
   return getClientProfile(id)
 }

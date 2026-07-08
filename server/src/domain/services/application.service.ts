@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger.js'
 import {
   findApplicationsByWorker,
   findApplication,
@@ -42,6 +43,7 @@ export const cancelApplication = async (workerId: string, applicationId: string)
   const result = await deleteApplication(workerId, applicationId)
   if (result.count === 0)
     throw Object.assign(new Error('Postulación no encontrada o no cancelable'), { status: 404 })
+  logger.info({ applicationId, workerId, action: 'application.cancelled' }, 'Application cancelled by worker')
   return { message: 'Postulación cancelada' }
 }
 
@@ -70,6 +72,8 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
     throw Object.assign(new Error('visitCost must be a positive number when chargesVisit is true'), { status: 400 })
 
   const created = await createApplication(workerId, input)
+
+  logger.info({ applicationId: created.id, postId: input.postId, workerId, action: 'application.submitted' }, 'Worker applied to post')
 
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {
@@ -107,6 +111,8 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
     categoryId: category.id,
     subcontractGroupId: post.subcontractGroupId ?? undefined,
   })
+
+  logger.info({ applicationId: created.id, postId: input.postId, workerId, categoryId: input.categoryId, action: 'application.submitted' }, 'Worker applied to subcontract')
 
   const worker = await findUserById(workerId)
   notifyUser(getProvider(), post.userId, 'application_new', {
@@ -163,6 +169,8 @@ export const acceptApplication = async (clientId: string, applicationId: string,
     throw err
   }
 
+  logger.info({ applicationId, postId: application.postId, workerId: application.workerId, clientId, action: 'application.accepted' }, 'Application accepted')
+
   notifyUser(getProvider(), application.workerId, 'application_accepted', {
     postTitle: application.post.title,
   })
@@ -177,6 +185,8 @@ export const rejectApplication = async (clientId: string, applicationId: string)
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
 
   const rejected = await updateApplicationStatus(applicationId, ApplicationStatus.Rejected)
+
+  logger.info({ applicationId, postId: application.postId, workerId: application.workerId, clientId, action: 'application.rejected' }, 'Application rejected')
 
   notifyUser(getProvider(), application.workerId, 'application_rejected', {
     postTitle: application.post.title,
@@ -228,6 +238,8 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
     await updatePostStatus(application.postId, PostStatus.Active)
   }
 
+  logger.info({ applicationId, workerId: application.workerId, clientId, postId: application.postId, action: 'application.workerDismissed' }, 'Worker dismissed from application')
+
   notifyUser(getProvider(), application.workerId, 'worker_dismissed', {
     postTitle: application.post.title,
   })
@@ -261,6 +273,8 @@ export const generateStartToken = async (workerId: string, applicationId: string
   const expiresAt = new Date(Date.now() + START_TOKEN_TTL_MS)
   await setStartToken(applicationId, token, expiresAt)
 
+  logger.info({ applicationId, workerId, action: 'application.tokenGenerated' }, 'Start token generated')
+
   return { token, expiresAt }
 }
 
@@ -286,11 +300,14 @@ export const validateStartToken = async (
     const { startTokenAttempts } = await incrementStartTokenAttempts(applicationId)
     const attemptsLeft = Math.max(0, START_TOKEN_MAX_ATTEMPTS - startTokenAttempts)
     if (attemptsLeft === 0) await clearStartToken(applicationId)
+    logger.warn({ applicationId, clientId, attemptsLeft, action: 'application.tokenValidationFailed' }, 'Start token validation failed')
     return { valid: false, attemptsLeft }
   }
 
   const validatedAt = new Date()
   await setTokenValidated(applicationId, validatedAt)
+
+  logger.info({ applicationId, clientId, action: 'application.tokenValidated' }, 'Start token validated')
 
   notifyUser(getProvider(), application.workerId, 'start_confirmed', {
     postTitle: application.post.title,

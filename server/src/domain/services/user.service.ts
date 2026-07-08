@@ -3,6 +3,7 @@ import type { DomainClientReview } from '../types/review.types.js'
 import type { DomainWorkerReview } from '../types/worker.types.js'
 import type { DomainUserRating, ReviewTarget } from '../types/user.types.js'
 import { UserRole } from '../types/userRole.js'
+import { logger } from '../../lib/logger.js'
 
 export const listUsers = () => findAll()
 
@@ -41,8 +42,12 @@ export const getUserRating = async (userId: string): Promise<DomainUserRating> =
   return { averageRating, reviewCount: totalCount }
 }
 
-export const setEmergencyNotifications = (userId: string, enabled: boolean) =>
-  updateEmergencyNotifications(userId, enabled)
+export const setEmergencyNotifications = async (userId: string, enabled: boolean) => {
+  logger.info({ userId, enabled, action: 'user.emergencyNotificationsSet' }, `Emergency notifications ${enabled ? 'enabled' : 'disabled'}`)
+  return updateEmergencyNotifications(userId, enabled)
+}
 
-export const setRequiresStartToken = (userId: string, enabled: boolean) =>
-  updateRequiresStartToken(userId, enabled)
+export const setRequiresStartToken = async (userId: string, enabled: boolean) => {
+  logger.info({ userId, enabled, action: 'user.startTokenRequirementSet' }, `Start token requirement ${enabled ? 'enabled' : 'disabled'}`)
+  return updateRequiresStartToken(userId, enabled)
+}
