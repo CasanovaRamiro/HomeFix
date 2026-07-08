@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { MapPin, Calendar, ArrowLeft, Bell, XCircle, FileText, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
-import ReviewModal from '../components/review/ReviewModal'
+import { useLeaveClientReview } from '../hooks/useLeaveClientReview'
+import ReviewStarRating from '../components/review/ReviewStarRating'
 import { ApplicationStatus } from '../types/application'
 
 const PAGE_SIZE = 8
