@@ -1882,6 +1882,9 @@ describe('post.service - getWorkerBiddings', () => {
     const result = await postService.getWorkerBiddings('worker-1')
 
     expect(result[0].hasReview).toBe(true)
+  })
+})
+
 describe('post.service - workerCompletePost', () => {
   const mockPost = {
     id: 'uuid-1',
