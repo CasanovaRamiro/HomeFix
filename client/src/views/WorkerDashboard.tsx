@@ -60,7 +60,7 @@ function getInitials(name: string, surname?: string): string {
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
-function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfile; stats: DashboardStats; isVerified: boolean }) {
+function ProfileHeader({ profile, stats, isVerified, kycLoading }: { profile: DashboardProfile; stats: DashboardStats; isVerified: boolean; kycLoading: boolean }) {
   const navigate = useNavigate()
   const firstName = profile.name.split(' ')[0]
   const categoryText = profile.categories.length > 0
@@ -101,7 +101,14 @@ function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfi
                 <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
                   Hola, {firstName}
                 </h1>
-                {isVerified ? (
+                {kycLoading ? (
+                  <span style={{
+                    display: 'inline-block',
+                    width: 130, height: 27, borderRadius: 20,
+                    background: 'rgba(255,255,255,0.08)',
+                    animation: 'wd-pulse 1.2s ease-in-out infinite',
+                  }} />
+                ) : isVerified ? (
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     background: 'rgba(16, 185, 129, 0.2)', color: '#34D399',
@@ -1317,6 +1324,7 @@ export default function WorkerDashboard() {
   const [applications, setApplications] = useState<Application[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
   const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const [kycLoading, setKycLoading] = useState(true)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredLocationFilter)
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1367,6 +1375,8 @@ export default function WorkerDashboard() {
       setKycStatus(status)
     } catch {
       // keep default NOT_STARTED
+    } finally {
+      setKycLoading(false)
     }
   }, [])
 
@@ -1460,7 +1470,7 @@ export default function WorkerDashboard() {
       fontFamily: "'Montserrat', system-ui, sans-serif",
       overflowX: 'hidden', width: '100%', maxWidth: '100%',
     }}>
-      <ProfileHeader profile={data.profile} stats={data.stats} isVerified={kycStatus === 'APPROVED'} />
+      <ProfileHeader profile={data.profile} stats={data.stats} isVerified={kycStatus === 'APPROVED'} kycLoading={kycLoading} />
       <MetricsStrip stats={data.stats} />
       <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
 
@@ -1479,6 +1489,7 @@ export default function WorkerDashboard() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes wd-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .wd-header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
         .wd-left-info { display: flex; align-items: center; gap: 20px; }
         .wd-action-buttons { display: flex; gap: 10px; flex-shrink: 0; }
