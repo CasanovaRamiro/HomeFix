@@ -195,14 +195,15 @@ function ReviewModal({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const { submitting, submitted, error, submit } = useLeaveClientReview()
+  const { submitting: _submitting, submitted, error: _error, submit } = useLeaveClientReview()
   const [rating, setRating] = useState(0)
-  const [description, setDescription] = useState('')
+  const [description, _setDescription] = useState('')
 
-  const handleSubmit = async () => {
+  const _handleSubmit = async () => {
     if (rating === 0) return
     await submit({ applicationId, rating, description: description || undefined })
   }
+  void _submitting; void _error; void _setDescription; void _handleSubmit
 
   if (submitted) {
     return (
