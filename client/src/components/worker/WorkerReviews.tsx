@@ -1,25 +1,40 @@
+import { useState, useMemo } from 'react'
+import { Star, ChevronDown } from 'lucide-react'
 import type { WorkerReview } from '../../services/api'
+import ViewReviewModal from '../review/ViewReviewModal'
 
 interface Props {
   reviews: WorkerReview[]
   loading: boolean
+  workerName: string
 }
 
-function Stars({ rating }: { rating: number }) {
+function parseMediaUrls(urls: string | null): string[] {
+  if (!urls) return []
+  try {
+    const parsed = JSON.parse(urls)
+    return Array.isArray(parsed) ? parsed : [urls]
+  } catch {
+    return [urls]
+  }
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-AR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+}
+
+function StarDisplay({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
-    <div style={{ display: 'flex', gap: 2 }}>
+    <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <svg
+        <Star
           key={n}
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill={n <= rating ? '#F59E0B' : 'none'}
-          stroke={n <= rating ? '#F59E0B' : '#D1D5DB'}
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
+          size={size}
+          strokeWidth={1.6}
+          className={n <= rating ? 'fill-warning text-warning' : 'fill-transparent text-slate-300'}
+        />
       ))}
     </div>
   )
@@ -28,78 +43,197 @@ function Stars({ rating }: { rating: number }) {
 function Avatar({ name }: { name: string }) {
   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
   return (
-    <div style={{
-      width: 40, height: 40, borderRadius: '50%',
-      background: '#E5E7EB', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 700, color: '#374151',
-    }}>
+    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
       {initials}
     </div>
   )
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
-}
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Más recientes' },
+  { value: 'highest', label: 'Mejor calificados' },
+  { value: 'lowest', label: 'Peor calificados' },
+] as const
 
-export default function WorkerReviews({ reviews, loading }: Props) {
-  const avg = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null
+type SortKey = (typeof SORT_OPTIONS)[number]['value']
 
-  return (
-    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 28 }}>
+export default function WorkerReviews({ reviews, loading, workerName }: Props) {
+  const [sortBy, setSortBy] = useState<SortKey>('recent')
+  const [selectedReview, setSelectedReview] = useState<WorkerReview | null>(null)
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: 0 }}>Reseñas</h3>
-        {avg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Stars rating={Math.round(Number(avg))} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{avg}</span>
-            <span style={{ fontSize: 13, color: '#9CA3AF' }}>({reviews.length})</span>
-          </div>
-        )}
-      </div>
+  const avg = useMemo(() => {
+    if (!reviews.length) return null
+    return reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+  }, [reviews])
 
-      {/* States */}
-      {loading && (
-        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Cargando reseñas...</p>
-      )}
+  const distribution = useMemo(() => {
+    const dist = [0, 0, 0, 0, 0]
+    reviews.forEach((r) => dist[r.rating - 1]++)
+    return dist
+  }, [reviews])
 
-      {!loading && reviews.length === 0 && (
-        <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>Este trabajador aún no tiene reseñas.</p>
-      )}
+  const sortedReviews = useMemo(() => {
+    const copy = [...reviews]
+    if (sortBy === 'highest') return copy.sort((a, b) => b.rating - a.rating)
+    if (sortBy === 'lowest') return copy.sort((a, b) => a.rating - b.rating)
+    return copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [reviews, sortBy])
 
-      {/* Review list */}
-      {!loading && reviews.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {reviews.map((review, i) => (
-            <div
-              key={review.id}
-              style={{
-                paddingTop: i === 0 ? 0 : 20,
-                paddingBottom: 20,
-                borderBottom: i < reviews.length - 1 ? '1px solid #F3F4F6' : 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                <Avatar name={review.reviewer.name} />
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 2px' }}>{review.reviewer.name}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Stars rating={review.rating} />
-                    <span style={{ fontSize: 12, color: '#9CA3AF' }}>{formatDate(review.createdAt)}</span>
-                  </div>
-                </div>
+  const maxCount = Math.max(...distribution, 1)
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-5 bg-slate-200 rounded w-1/3" />
+          <div className="h-3 bg-slate-200 rounded w-1/4" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-3 pt-4 border-t border-slate-100">
+              <div className="w-10 h-10 rounded-full bg-slate-200" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-slate-200 rounded w-1/4" />
+                <div className="h-3 bg-slate-200 rounded w-3/4" />
               </div>
-              <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, margin: 0 }}>{review.description}</p>
             </div>
           ))}
         </div>
-      )}
+      </div>
+    )
+  }
 
-    </div>
+  if (!reviews.length) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center">
+        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
+          <Star size={24} className="text-slate-300" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-700 mb-1">Sin reseñas aún</h3>
+        <p className="text-sm text-slate-500">Este trabajador aún no tiene reseñas.</p>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Reseñas</h2>
+            {avg && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-3xl font-bold text-slate-900">{avg.toFixed(1)}</span>
+                <StarDisplay rating={Math.round(avg)} size={18} />
+                <span className="text-sm text-slate-500">({reviews.length})</span>
+              </div>
+            )}
+          </div>
+          {/* Sort dropdown */}
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="appearance-none bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Rating distribution */}
+        <div className="mb-6 pb-6 border-b border-slate-100">
+          {[5, 4, 3, 2, 1].map((star) => {
+            const count = distribution[star - 1]
+            const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
+            return (
+              <div key={star} className="flex items-center gap-2 py-1">
+                <span className="text-sm font-medium text-slate-600 w-4 text-right">{star}</span>
+                <Star size={13} className="fill-warning text-warning shrink-0" />
+                <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-warning rounded-full transition-all duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-sm text-slate-500 w-6 text-right">{count}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Review list */}
+        <div className="space-y-0">
+          {sortedReviews.map((review) => {
+            const images = parseMediaUrls(review.mediaUrls)
+            return (
+              <div
+                key={review.id}
+                onClick={() => setSelectedReview(review)}
+                className="group cursor-pointer py-4 border-t border-slate-100 first:border-t-0 hover:bg-slate-50/50 -mx-6 px-6 transition-colors"
+              >
+                <div className="flex gap-3">
+                  <Avatar name={review.reviewer.name} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <span className="text-sm font-semibold text-slate-900 truncate">
+                        {review.reviewer.name}
+                      </span>
+                      <span className="text-xs text-slate-400 whitespace-nowrap">
+                        {fmtDate(review.createdAt)}
+                      </span>
+                    </div>
+                    <StarDisplay rating={review.rating} size={13} />
+
+                    {review.application?.post?.title && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        Servicio: <span className="text-slate-500">{review.application.post.title}</span>
+                      </p>
+                    )}
+
+                    {review.description && (
+                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed line-clamp-3">
+                        {review.description}
+                      </p>
+                    )}
+
+                    {images.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {images.slice(0, 3).map((url, idx) => (
+                          <div
+                            key={idx}
+                            className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0"
+                          >
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                        {images.length > 3 && (
+                          <div className="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-500 font-medium shrink-0">
+                            +{images.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-amber-600 font-medium mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Ver detalle →
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <ViewReviewModal
+        open={!!selectedReview}
+        review={selectedReview}
+        workerName={workerName}
+        onClose={() => setSelectedReview(null)}
+      />
+    </>
   )
 }

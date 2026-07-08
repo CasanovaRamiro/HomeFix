@@ -72,6 +72,28 @@ describe('findApplicationsByWorker', () => {
     const results = await findApplicationsByWorker(workerId)
     expect(results).toEqual([])
   })
+
+  it('returns application with clientReview populated when a client review exists', async () => {
+    const post = await makePost(clientId)
+    const application = await prisma.application.create({ data: { workerId, postId: post.id, status: 'Accepted' } })
+    await prisma.clientReview.create({
+      data: {
+        applicationId: application.id,
+        reviewerId: workerId,
+        clientId,
+        rating: 4,
+        description: 'Great client',
+      },
+    })
+
+    const results = await findApplicationsByWorker(workerId)
+
+    expect(results).toHaveLength(1)
+    expect(results[0].clientReview).not.toBeNull()
+    expect(results[0].clientReview!.rating).toBe(4)
+    expect(results[0].clientReview!.description).toBe('Great client')
+    expect(results[0].clientReview!.createdAt).toBeInstanceOf(Date)
+  })
 })
 
 describe('deleteApplication', () => {

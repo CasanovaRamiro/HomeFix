@@ -463,6 +463,143 @@ describe('PATCH /applications/:applicationId/accept', () => {
   })
 })
 
+describe('PATCH /applications/:applicationId/accept — requiresStartToken', () => {
+  it('setea requiresStartToken=true en la aplicación al aceptar un post normal si el cliente lo tiene habilitado', async () => {
+    const clientWithToken = await createUser('client-token@test.com', 'Client Token', 'hashed', {
+      role: UserRole.Client,
+      requiresStartToken: true,
+    })
+    const cat = await createCategory('Token Category')
+    setPayload('client-token-user', { sub: clientWithToken.id, email: 'client-token@test.com', role: UserRole.Client })
+
+    const post = await prisma.post.create({
+      data: {
+        userId: clientWithToken.id,
+        title: 'Post con token',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId: cat.id } },
+      },
+    })
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Pending' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', 'Bearer client-token-user')
+
+    expect(res.status).toBe(200)
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.requiresStartToken).toBe(true)
+  })
+
+  it('setea requiresStartToken=true al aceptar un post de emergencia si el cliente lo tiene habilitado', async () => {
+    const clientWithToken = await createUser('client-emergency@test.com', 'Client Emergency', 'hashed', {
+      role: UserRole.Client,
+      requiresStartToken: true,
+    })
+    const cat = await createCategory('Emergency Category')
+    setPayload('client-emergency-user', { sub: clientWithToken.id, email: 'client-emergency@test.com', role: UserRole.Client })
+
+    const post = await prisma.post.create({
+      data: {
+        userId: clientWithToken.id,
+        title: 'Emergencia con token',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        type: 'emergency',
+        isEmergency: true,
+        categories: { create: { categoryId: cat.id } },
+      },
+    })
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Pending' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', 'Bearer client-emergency-user')
+
+    expect(res.status).toBe(200)
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.requiresStartToken).toBe(true)
+  })
+
+  it('no setea requiresStartToken al aceptar un subcontrato aunque el cliente lo tenga habilitado', async () => {
+    const clientWithToken = await createUser('client-sub@test.com', 'Client Sub', 'hashed', {
+      role: UserRole.Client,
+      requiresStartToken: true,
+    })
+    const cat = await createCategory('Sub Category')
+    setPayload('client-sub-user', { sub: clientWithToken.id, email: 'client-sub@test.com', role: UserRole.Client })
+
+    const post = await prisma.post.create({
+      data: {
+        userId: clientWithToken.id,
+        title: 'Subcontrato sin token',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        type: 'subcontract',
+        allowsSubcontracting: true,
+        categories: { create: { categoryId: cat.id, quantity: 2, filledCount: 0 } },
+      },
+      include: { categories: true },
+    })
+    const postCategoryId = post.categories[0].id
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Pending', categoryId: postCategoryId },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', 'Bearer client-sub-user')
+
+    expect(res.status).toBe(200)
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.requiresStartToken).toBe(false)
+  })
+
+  it('no setea requiresStartToken si el cliente no lo tiene habilitado', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Post sin token',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+    const application = await prisma.application.create({
+      data: { workerId, postId: post.id, status: 'Pending' },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(200)
+
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.requiresStartToken).toBe(false)
+  })
+})
+
 describe('PATCH /applications/:applicationId/reject', () => {
   it('rechaza la aplicación y el post queda Active', async () => {
     const post = await createActivePost()

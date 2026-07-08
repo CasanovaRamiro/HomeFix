@@ -25,6 +25,12 @@ interface Application {
   category?: string
   image?: string
   hasReview: boolean
+  clientReview?: {
+    id: string
+    rating: number
+    description: string | null
+    createdAt: string
+  } | null
   clientRating: number
   clientPhone: string | null
 }
@@ -178,9 +184,104 @@ function CancelModal({
 
 
 
+// ─── View Review Modal ──────────────────────────────────────────────────────────
+
+function ViewReviewModal({
+  app,
+  onClose,
+}: {
+  app: Application
+  onClose: () => void
+}) {
+  const review = app.clientReview
+  if (!review) return null
+
+  const formattedDate = new Date(review.createdAt).toLocaleDateString('es-ES', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  })
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#fff', borderRadius: 20,
+        padding: '32px 28px', maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+      }} onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: '#FFFBEB', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 20px',
+        }}>
+          <Star size={26} color="#F59E0B" fill="#F59E0B" />
+        </div>
+
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', textAlign: 'center' }}>
+          Reseña a {app.client}
+        </h2>
+        <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', textAlign: 'center' }}>
+          {formattedDate}
+        </p>
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginBottom: 20 }}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={28}
+              className={star <= review.rating ? 'fill-warning text-warning' : 'fill-transparent text-slate-300'}
+              style={{
+                fill: star <= review.rating ? '#F59E0B' : 'transparent',
+                color: star <= review.rating ? '#F59E0B' : '#CBD5E1',
+                strokeWidth: 1.6,
+              }}
+            />
+          ))}
+        </div>
+
+        {review.description && (
+          <div style={{
+            background: '#F8FAFC', borderRadius: 12,
+            padding: '16px 18px', marginBottom: 24,
+            border: '1px solid #E2E8F0',
+          }}>
+            <p style={{ fontSize: 14, color: '#374151', margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
+              &ldquo;{review.description}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {!review.description && (
+          <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', margin: '0 0 24px', fontStyle: 'italic' }}>
+            Sin comentarios
+          </p>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%', padding: '12px 0', borderRadius: 10,
+            border: 'none', background: '#0F172A', color: '#fff',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#1E293B' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#0F172A' }}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Application Card ─────────────────────────────────────────────────────────
 
-function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application; onCancelled: (id: string) => void; onReviewClick: (app: Application) => void }) {
+function ApplicationCard({ app, onCancelled, onReviewClick, onViewReviewClick }: { app: Application; onCancelled: (id: string) => void; onReviewClick: (app: Application) => void; onViewReviewClick: (app: Application) => void }) {
   const navigate = useNavigate()
   const appliedAt   = app.appliedAt?.substring(0, 10)   ?? ''
   const serviceDate = app.serviceDate?.substring(0, 10) ?? ''
@@ -376,7 +477,7 @@ function ApplicationCard({ app, onCancelled, onReviewClick }: { app: Application
 
           {app.status === ApplicationStatus.Completed && (
             app.hasReview ? (
-              <button style={{
+              <button onClick={() => onViewReviewClick(app)} style={{
                 width: '100%', background: '#ECFDF5',
                 border: '1.5px solid #A7F3D0',
                 borderRadius: 10, color: '#059669',
@@ -437,6 +538,7 @@ export default function WorkerApplications() {
   const [loading, setLoading]           = useState(true)
   const [notification, setNotification] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<{ appId: string; clientName: string } | null>(null)
+  const [viewReviewTarget, setViewReviewTarget] = useState<Application | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -608,6 +710,7 @@ export default function WorkerApplications() {
                   app={a}
                   onCancelled={(id) => setApplications((prev) => prev.filter((x) => x.id !== id))}
                   onReviewClick={(app) => setReviewTarget({ appId: app.id, clientName: app.client })}
+                  onViewReviewClick={(app) => setViewReviewTarget(app)}
                 />
               ))}
             </div>
@@ -699,6 +802,12 @@ export default function WorkerApplications() {
               a.id === reviewTarget.appId ? { ...a, hasReview: true } : a
             ))
           }}
+        />
+      )}
+      {viewReviewTarget && (
+        <ViewReviewModal
+          app={viewReviewTarget}
+          onClose={() => setViewReviewTarget(null)}
         />
       )}
     </div>

@@ -21,7 +21,7 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
         },
       },
       category: { include: { category: { select: { name: true } } } },
-      clientReview: { select: { id: true } },
+      clientReview: { select: { id: true, rating: true, description: true, createdAt: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -157,6 +157,11 @@ export const findBiddingApplications = async (biddingId: string) => {
     }
   })
 }
+export const findAcceptedApplicationByWorker = (postId: string, workerId: string) =>
+  prisma.application.findFirst({
+    where: { postId, workerId, status: ApplicationStatus.Accepted },
+    select: { id: true, requiresStartToken: true, tokenValidatedAt: true },
+  })
 
 export const findApplicationsByPost = async (postId: string): Promise<DomainPostApplication[]> => {
   const raw = await prisma.application.findMany({

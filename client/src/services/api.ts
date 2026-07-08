@@ -157,6 +157,8 @@ export const finalizePost = (id: string) => api.patch(`/posts/${id}/finalize`)
 
 export const markPostInProgress = (id: string) => api.patch(`/posts/${id}/mark-in-progress`)
 
+export const workerCompletePost = (id: string) => api.patch(`/posts/${id}/worker-complete`)
+
 export interface UpdatePostData {
   title: string
   categoryId: string

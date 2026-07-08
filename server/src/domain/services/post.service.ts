@@ -20,7 +20,7 @@ import {
   selectBiddingWinner,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
-import { findAcceptedApplication, findAcceptedApplications, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
+import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -534,6 +534,30 @@ export const completePost = async (postId: string, userId: string) => {
   }
   await rejectPendingApplications(postId)
   const result = await updatePostStatus(postId, PostStatus.Completed)
+  return result
+}
+
+const notifyClient = (clientId: string, event: string, postTitle: string) => {
+  notifyUser(getProvider(), clientId, event as never, { postTitle })
+}
+
+export const workerCompletePost = async (postId: string, workerId: string) => {
+  const app = await findAcceptedApplicationByWorker(postId, workerId)
+  if (!app) throw Object.assign(new Error('No tenés una postulación aceptada en esta publicación'), { status: 404 })
+
+  if (!app.tokenValidatedAt) {
+    throw Object.assign(new Error('Debe validar el código de inicio antes de finalizar el trabajo'), { status: 400 })
+  }
+
+  const post = await findPostById(postId)
+  if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
+
+  await updateApplicationStatus(app.id, ApplicationStatus.Completed)
+  await rejectPendingApplications(postId)
+  const result = await updatePostStatus(postId, PostStatus.Completed)
+
+  notifyClient(post.userId, 'post_completed', post.title)
+
   return result
 }
 

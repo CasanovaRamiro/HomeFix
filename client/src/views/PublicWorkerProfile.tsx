@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { ArrowLeft, Star, Briefcase, MapPin, Award, Calendar } from 'lucide-react'
+import WorkerReviews from '../components/worker/WorkerReviews'
 
 export default function PublicWorkerProfile() {
   const { id } = useParams<{ id: string }>()
@@ -264,34 +265,7 @@ export default function PublicWorkerProfile() {
               </div>
             )}
 
-            {/* Reviews */}
-            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 24 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>
-                Reseñas ({reviews.length})
-              </h2>
-              {reviews.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {reviews.map((r) => (
-                    <div key={r.id} style={{ paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <p style={{ fontWeight: 600, color: '#111827', fontSize: 14, margin: 0 }}>{r.reviewer.name}</p>
-                        <div style={{ display: 'flex', gap: 2 }}>
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star key={i} size={12} color={i <= r.rating ? '#10B981' : '#D1D5DB'} fill={i <= r.rating ? '#10B981' : 'none'} />
-                          ))}
-                        </div>
-                      </div>
-                      <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, margin: 0 }}>{r.description}</p>
-                      <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0' }}>{new Date(r.createdAt).toLocaleDateString('es-AR')}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', margin: 0, padding: '24px 0' }}>
-                  No hay reseñas aún
-                </p>
-              )}
-            </div>
+            <WorkerReviews reviews={reviews} loading={loading} workerName={worker.name} />
           </div>
 
           {/* Right sidebar */}

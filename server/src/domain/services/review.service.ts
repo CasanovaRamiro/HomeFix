@@ -90,6 +90,21 @@ export const createWorkerReview = async (
   })
 }
 
+export const findWorkerReviewByApplication = async (applicationId: string, userId: string): Promise<DomainWorkerReview> => {
+  const application = await findApplicationById(applicationId)
+  if (!application) {
+    throw Object.assign(new Error('Application not found'), { status: 404 })
+  }
+  if (application.post.userId !== userId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+  const review = await findWorkerReviewByApplicationId(applicationId)
+  if (!review) {
+    throw Object.assign(new Error('Review not found'), { status: 404 })
+  }
+  return review
+}
+
 export const createClientReview = async (
   applicationId: string,
   userId: string,

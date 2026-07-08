@@ -28,6 +28,7 @@ export interface DomainMyApplication {
   category: string | null
   categoryId: string | null
   hasReview: boolean
+  clientReview: { id: string; rating: number; description: string | null; createdAt: Date } | null
   clientRating: number
   message: string | null
   availableDays: string[]

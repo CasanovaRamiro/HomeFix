@@ -16,6 +16,7 @@ export const toMyApplicationDTO = (app: DomainMyApplication) => ({
   category: app.category,
   categoryId: app.categoryId,
   hasReview: app.hasReview,
+  clientReview: app.clientReview ? { ...app.clientReview, createdAt: app.clientReview.createdAt.toISOString() } : null,
   clientPhone: app.clientPhone,
   clientRating: app.clientRating,
   message: app.message,

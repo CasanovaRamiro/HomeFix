@@ -130,7 +130,7 @@ export const acceptApplication = async (clientId: string, applicationId: string,
     }
   }
 
-  // Start-token handshake is only for normal contracts, and snapshots the client's
+  // Start-token handshake is only for normal contracts and emergencies, and snapshots the client's
   // current setting so a later toggle change never affects an in-flight job.
   const requiresStartToken =
     application.post.type !== PostType.SubContract && (await getRequiresStartToken(clientId))
