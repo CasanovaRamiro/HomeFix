@@ -117,7 +117,7 @@ describe('DELETE /telegram/unlink', () => {
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
-    expect(res.body.message).toContain('desvinculado')
+    expect(res.body.message).toContain('desvinculada')
 
     const user = await prisma.user.findUnique({ where: { email: 'test@test.com' } })
     expect(user?.telegramChatId).toBeNull()
