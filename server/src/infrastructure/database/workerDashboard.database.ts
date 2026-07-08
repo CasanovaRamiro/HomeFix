@@ -80,3 +80,8 @@ export const countCompletedJobs = (workerId: string) =>
   prisma.application.count({
     where: { workerId, status: 'Completed' },
   })
+
+export const countDismissedJobs = (workerId: string) =>
+  prisma.application.count({
+    where: { workerId, status: 'Dismissed' },
+  })

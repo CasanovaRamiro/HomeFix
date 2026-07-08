@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
+import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ArrowLeft, Star, Briefcase, MapPin, Award, Calendar } from 'lucide-react'
+import { ArrowLeft, Star, Briefcase, XCircle, Flag } from 'lucide-react'
 import WorkerReviews from '../components/worker/WorkerReviews'
 
 export default function PublicWorkerProfile() {
@@ -13,6 +13,7 @@ export default function PublicWorkerProfile() {
 
   const [worker, setWorker] = useState<Worker | null>(null)
   const [reviews, setReviews] = useState<WorkerReview[]>([])
+  const [stats, setStats] = useState<WorkerStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -20,15 +21,16 @@ export default function PublicWorkerProfile() {
   useEffect(() => {
     if (!id) return
     const controller = new AbortController()
-    getWorker(id)
-      .then((w) => {
+    Promise.all([
+      getWorker(id),
+      getWorkerReviews(id),
+      getWorkerStats(id),
+    ])
+      .then(([w, r, s]) => {
         if (controller.signal.aborted) return
         setWorker(w)
-        return getWorkerReviews(id)
-      })
-      .then((r) => {
-        if (controller.signal.aborted || !r) return
         setReviews(r)
+        setStats(s)
       })
       .catch(() => {
         if (!controller.signal.aborted) setError('No se encontró el profesional.')
@@ -140,14 +142,16 @@ export default function PublicWorkerProfile() {
               {/* Stats grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
                 {[
-                  { icon: MapPin, label: 'Ubicación', value: '—' },
-                  { icon: Briefcase, label: 'Trabajos', value: `${reviews.length}+` },
-                  { icon: Award, label: 'Respuesta', value: '—' },
-                  { icon: Calendar, label: 'Miembro', value: memberSince },
+                  { icon: Briefcase, label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
+                  { icon: Star, label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
+                  { icon: XCircle, label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
+                  { icon: Flag, label: 'Reportes', value: stats ? String(stats.reports) : '—' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} style={{ background: '#F3F4F6', borderRadius: 10, padding: 10 }}>
-                    <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600, margin: '0 0 2px' }}>{label}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ height: 26, display: 'flex', alignItems: 'flex-start' }}>
+                      <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600, margin: 0 }}>{label}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
                       <Icon size={13} color="#9CA3AF" />
                       <span style={{ fontWeight: 700, color: '#111827', fontSize: 13 }}>{value}</span>
                     </div>
@@ -215,14 +219,16 @@ export default function PublicWorkerProfile() {
             {!isMobile && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {[
-                  { label: 'Ubicación', value: '—' },
-                  { label: 'Trabajos', value: `${reviews.length}+` },
-                  { label: 'Respuesta', value: '—' },
-                  { label: 'Miembro', value: memberSince },
+                  { label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
+                  { label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
+                  { label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
+                  { label: 'Reportes', value: stats ? String(stats.reports) : '—' },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 16 }}>
-                    <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600, margin: '0 0 4px' }}>{label}</p>
-                    <p style={{ fontWeight: 700, color: '#111827', fontSize: 14, margin: 0 }}>{value}</p>
+                    <div style={{ height: 26, display: 'flex', alignItems: 'flex-start' }}>
+                      <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', fontWeight: 600, margin: 0 }}>{label}</p>
+                    </div>
+                    <p style={{ fontWeight: 700, color: '#111827', fontSize: 14, margin: '8px 0 0' }}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -291,10 +297,12 @@ export default function PublicWorkerProfile() {
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Estadísticas</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {[
-                    { label: 'Trabajos Completados', value: reviews.length > 0 ? String(reviews.length) : '—' },
+                    { label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
                     { label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
-                    { label: 'Tasa de Aceptación', value: '—' },
-                    { label: 'Tiempo de Respuesta', value: '—' },
+                    { label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
+                    { label: 'Reportes', value: stats ? String(stats.reports) : '—' },
+                    { label: 'Ubicación', value: '—' },
+                    { label: 'Miembro desde', value: memberSince },
                   ].map(({ label, value }) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
                       <span style={{ fontSize: 13, color: '#6B7280' }}>{label}</span>

@@ -7,6 +7,7 @@ import {
   countWorkerApplications,
   countNewJobsForWorker,
   countCompletedJobs,
+  countDismissedJobs,
 } from '../../src/infrastructure/database/workerDashboard.database.js'
 
 let workerId: string
@@ -229,6 +230,38 @@ describe('countCompletedJobs', () => {
     await prisma.application.create({ data: { workerId: other.id, postId: post.id, status: 'Completed' } })
 
     const result = await countCompletedJobs(workerId)
+    expect(result).toBe(0)
+  })
+})
+
+describe('countDismissedJobs', () => {
+  it('returns 0 when worker has no applications', async () => {
+    const result = await countDismissedJobs(workerId)
+    expect(result).toBe(0)
+  })
+
+  it('returns the number of dismissed applications', async () => {
+    const post = await makePost()
+    await prisma.application.create({ data: { workerId, postId: post.id, status: 'Dismissed' } })
+
+    const result = await countDismissedJobs(workerId)
+    expect(result).toBe(1)
+  })
+
+  it('does not count non-dismissed applications', async () => {
+    const post = await makePost()
+    await prisma.application.create({ data: { workerId, postId: post.id, status: 'Completed' } })
+
+    const result = await countDismissedJobs(workerId)
+    expect(result).toBe(0)
+  })
+
+  it('does not count dismissed jobs from other workers', async () => {
+    const other = await createUser('other@test.com', 'Other', 'hashed', { role: UserRole.Worker })
+    const post = await makePost()
+    await prisma.application.create({ data: { workerId: other.id, postId: post.id, status: 'Dismissed' } })
+
+    const result = await countDismissedJobs(workerId)
     expect(result).toBe(0)
   })
 })

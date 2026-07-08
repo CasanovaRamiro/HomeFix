@@ -174,3 +174,61 @@ describe('GET /workers/:id/reviews', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('GET /workers/:id/stats', () => {
+  it('returns worker stats', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}/stats`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveProperty('cancelledJobs')
+    expect(res.body).toHaveProperty('reports')
+    expect(res.body).toHaveProperty('totalJobs')
+    expect(res.body).toHaveProperty('avgRating')
+    expect(res.body).toHaveProperty('reviewCount')
+    expect(res.body.reports).toBe(0)
+    expect(res.body.totalJobs).toBe(0)
+    expect(res.body.cancelledJobs).toBe(0)
+  })
+
+  it('returns correct cancelledJobs count', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const client = await makeUser('carlos@test.com', 'Carlos')
+    const post = await prisma.post.create({
+      data: {
+        userId: client.id,
+        title: 'Fix pipes',
+        description: 'Need a plumber',
+        address: '123 Main St',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-02'),
+      },
+    })
+    await prisma.application.create({
+      data: { workerId: worker.id, postId: post.id, status: 'Dismissed' },
+    })
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}/stats`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.cancelledJobs).toBe(1)
+  })
+
+  it('returns 404 when the worker does not exist', async () => {
+    const res = await request(app)
+      .get('/workers/non-existent-id/stats')
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request(app).get('/workers/non-existent-id/stats')
+    expect(res.status).toBe(401)
+  })
+})
