@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma.js'
-import type { CreatePostInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
+import type { CreatePostInput, CreateBiddingInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import { PostType } from '../../domain/types/postType.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
@@ -22,6 +22,10 @@ type _CreatePostRecordInput = {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   allowsSubcontracting?: boolean
+  isBidding?: boolean
+  bidWeights?: string
+  materialResponsibility?: string
+  budgetMax?: number | null
   images?: { url: string }[]
   categories: {
     categoryId: string
@@ -48,6 +52,10 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
       allowsSubcontracting: data.allowsSubcontracting ?? true,
+      isBidding: data.isBidding ?? false,
+      bidWeights: data.bidWeights ?? null,
+      materialResponsibility: data.materialResponsibility ?? null,
+      budgetMax: data.budgetMax ?? null,
       images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
       categories: { create: data.categories },
     },
@@ -77,6 +85,10 @@ const postFields = {
   isEmergency: true,
   emergencyExpiresAt: true,
   allowsSubcontracting: true,
+  isBidding: true,
+  bidWeights: true,
+  materialResponsibility: true,
+  budgetMax: true,
   categories: {
     select: {
       id: true,
@@ -126,6 +138,30 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
     categories: [{ categoryId: data.categoryId }],
   })
 }
+
+export const createBiddingPost = async (data: CreateBiddingInput): Promise<DomainPost> =>
+  _createPostRecord({
+    userId: data.userId,
+    type: PostType.Post,
+    parentPostId: null,
+    subcontractGroupId: null,
+    title: data.title,
+    description: data.description,
+    startDate: new Date(),
+    endDate: data.endDate,
+    address: data.address,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    isEmergency: false,
+    emergencyExpiresAt: null,
+    allowsSubcontracting: true,
+    isBidding: true,
+    bidWeights: data.bidWeights,
+    materialResponsibility: data.materialResponsibility,
+    budgetMax: data.budgetMax ?? null,
+    images: data.imageUrls.map(url => ({ url })),
+    categories: data.categoryIds.map(cid => ({ categoryId: cid })),
+  })
 
 export const createSubPost = async (data: {
   userId: string
@@ -222,6 +258,15 @@ export const findAvailablePosts = async (
 export const findAvailableSubcontracts = async (): Promise<DomainPost[]> => {
   const raw = await prisma.post.findMany({
     where: { type: PostType.SubContract, status: 'Active' } as never,
+    orderBy: { createdAt: 'desc' },
+    select: postFields,
+  }) as unknown as PrismaPostFull[]
+  return raw.map(toDomainPost)
+}
+
+export const findBiddingPostsByUser = async (userId: string): Promise<DomainPost[]> => {
+  const raw = await prisma.post.findMany({
+    where: { userId, isBidding: true } as never,
     orderBy: { createdAt: 'desc' },
     select: postFields,
   }) as unknown as PrismaPostFull[]
@@ -326,6 +371,7 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
     hasReview: post.applications.some((a) => a.review !== null),
     isEmergency: post.isEmergency,
     emergencyExpiresAt: post.emergencyExpiresAt,
+    isBidding: post.isBidding,
   }))
 }
 
@@ -334,6 +380,33 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
     where: { id },
     data: { status },
     select: { id: true, status: true },
+  })
+
+export const selectBiddingWinner = (
+  biddingId: string,
+  applicationId: string,
+  currentStatus: string,
+): Promise<{ id: string; status: string }> =>
+  prisma.$transaction(async (tx) => {
+    if (currentStatus === PostStatus.Active) {
+      await tx.post.update({
+        where: { id: biddingId },
+        data: { status: PostStatus.Evaluating },
+      })
+    }
+    await tx.application.update({
+      where: { id: applicationId },
+      data: { status: ApplicationStatus.Accepted },
+    })
+    await tx.application.updateMany({
+      where: { postId: biddingId, status: ApplicationStatus.Pending, id: { not: applicationId } },
+      data: { status: ApplicationStatus.Rejected },
+    })
+    return tx.post.update({
+      where: { id: biddingId },
+      data: { status: PostStatus.InProgress },
+      select: { id: true, status: true },
+    })
   })
 
 export const deletePostImages = (postId: string) =>
@@ -444,3 +517,62 @@ export const findPostCategories = (postId: string) =>
   prisma.postCategory.findMany({
     where: { postId },
   })
+
+export const findAvailableBiddingPosts = async (workerId?: string) => {
+  const raw = await prisma.post.findMany({
+    where: { isBidding: true, status: 'Active', endDate: { gte: new Date() } } as never,
+    orderBy: { createdAt: 'desc' },
+    select: {
+      ...postFields,
+      applications: workerId
+        ? { where: { workerId }, select: { id: true }, take: 1 }
+        : false,
+    },
+  }) as unknown as (PrismaPostFull & { applications?: { id: string }[] })[]
+  return raw.map((p) => ({
+    ...toDomainPost(p),
+    hasApplied: workerId ? (p.applications?.length ?? 0) > 0 : false,
+  }))
+}
+
+export const findWorkerAppBiddings = async (workerId: string) => {
+  const raw = await prisma.application.findMany({
+    where: { workerId, post: { isBidding: true } } as never,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      clientReview: { select: { id: true } },
+      post: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          budgetMax: true,
+          materialResponsibility: true,
+          user: { select: { id: true, name: true, surname: true } },
+          categories: { include: { category: { select: { id: true, name: true } } } },
+        },
+      },
+    },
+  })
+  return raw.map((a) => ({
+    applicationId: a.id,
+    status: a.status,
+    hasReview: a.clientReview !== null,
+    offeredCost: a.visitCost,
+    offeredDuration: a.offeredDuration,
+    offeredStartDate: a.scheduledDate?.toISOString() ?? null,
+    message: a.message,
+    createdAt: a.createdAt.toISOString(),
+    bidding: {
+      id: a.post.id,
+      title: a.post.title,
+      description: a.post.description,
+      budgetMax: a.post.budgetMax,
+      materialResponsibility: a.post.materialResponsibility,
+      status: a.post.status,
+      categories: a.post.categories.map((pc) => ({ id: pc.category.id, name: pc.category.name })),
+      client: { id: a.post.user.id, name: a.post.user.name, surname: a.post.user.surname },
+    },
+  }))
+}

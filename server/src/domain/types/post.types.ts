@@ -30,6 +30,10 @@ export interface DomainPost {
   originalClientRating?: number
   parentUser?: { name: string; surname: string }
   postIds?: string[]
+  isBidding?: boolean
+  bidWeights?: string
+  materialResponsibility?: string
+  budgetMax?: number
 }
 
 export interface DomainUserPost {
@@ -47,6 +51,7 @@ export interface DomainUserPost {
   hasReview: boolean
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+  isBidding?: boolean
 }
 
 export interface CreatePostInput {
@@ -75,6 +80,21 @@ export interface UpdatePostInput {
   categoryId: string
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
+}
+
+export interface CreateBiddingInput {
+  userId: string
+  title: string
+  description: string
+  categoryIds: string[]
+  endDate: Date
+  budgetMax?: number
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  materialResponsibility: string
+  imageUrls: string[]
+  bidWeights: string
 }
 
 export interface CreateSubcontractCommand {

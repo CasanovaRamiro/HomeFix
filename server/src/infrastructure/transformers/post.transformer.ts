@@ -28,5 +28,9 @@ export const toDomainPost = (post: PrismaPostFull): DomainPost => ({
     filledCount: pc.filledCount,
     roleDescription: pc.roleDescription,
   })),
+  isBidding: post.isBidding,
+  bidWeights: post.bidWeights ?? undefined,
+  materialResponsibility: post.materialResponsibility ?? undefined,
+  budgetMax: post.budgetMax ?? undefined,
   user: post.user,
 })

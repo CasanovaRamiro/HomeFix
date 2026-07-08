@@ -67,6 +67,7 @@ const mockAcceptedApp = {
   chargesVisit: false,
   visitCost: null,
       scheduledDate: null,
+      offeredDuration: null,
   requiresStartToken: false,
   startToken: null,
   startTokenExpiresAt: null,
@@ -210,6 +211,8 @@ describe('createWorkerReview (dismissed worker by applicationId)', () => {
     status: 'Dismissed',
     createdAt: new Date(),
     updatedAt: new Date(),
+    scheduledDate: null,
+    offeredDuration: null,
     post: { userId, title: 'Test Post', status: 'Active' },
   }
   const dismissInput: CreateReviewInput = { postId, applicationId, rating: 1, description: 'No se presentÃ³' }
@@ -275,6 +278,8 @@ const mockApplication = {
   status: 'Accepted',
   createdAt: new Date(),
   updatedAt: new Date(),
+  scheduledDate: null,
+  offeredDuration: null,
   post: {
     userId: clientId2,
     status: 'Completed',

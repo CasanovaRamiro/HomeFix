@@ -3,6 +3,7 @@ import {
   createPost,
   createEmergencyPost,
   createSubContract,
+  createBidding,
   getUserPosts,
   getPostById,
   getSubcontractById,
@@ -17,6 +18,13 @@ import {
   reopenPost,
   markInProgress,
   updatePost,
+  getMySubcontractManager,
+  getSubcontractGroupDetail,
+  getBiddingDetail,
+  closeBidding,
+  selectWinner,
+  listAvailableBiddings,
+  getWorkerBiddings,
   workerCompletePost,
 } from '../../domain/services/post.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
@@ -25,7 +33,6 @@ import { UserRole } from '../../domain/types/userRole.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
 import { validateCreateSubcontractBody } from '../middleware/subcontract.middleware.js'
 import type { CreateSubcontractRequest } from '../types/post.types.js'
-import { getMySubcontractManager, getSubcontractGroupDetail } from '../../domain/services/post.service.js'
 
 const router = Router()
 
@@ -258,6 +265,106 @@ router.post('/create', async (req, res, next) => {
   } catch (error) {
     const err = error as Error & { status?: number }
     if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.post('/create-bidding', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as Auth0Claims | undefined
+    const user = await syncAuth0User(claims)
+
+    if (user.role !== UserRole.Client) {
+      res.status(403).json({ error: 'Client access required' })
+      return
+    }
+
+    const { title, description, categoryIds, endDate, budgetMax, address, latitude, longitude, materialResponsibility, imageUrls, bidWeights } = req.body
+
+    if (!title || !categoryIds || !categoryIds.length || !endDate || !address || !materialResponsibility || !bidWeights) {
+      res.status(400).json({ error: 'Campos obligatorios faltantes' })
+      return
+    }
+
+    const result = await createBidding({
+      userId: user.id,
+      title,
+      description: description || '',
+      categoryIds,
+      endDate: new Date(endDate),
+      budgetMax: budgetMax ?? undefined,
+      address,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      materialResponsibility,
+      imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+      bidWeights,
+    })
+
+    res.status(201).json(toPostDTO(result))
+  } catch (error) {
+    const err = error as Error & { status?: number }
+    if (!err.status) err.status = 400
+    next(err)
+  }
+})
+
+router.get('/biddings/:id', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await getBiddingDetail(req.params.id, user.id)
+    res.json(toPostDTO(result))
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/biddings/:id/close', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await closeBidding(req.params.id, user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/available-biddings', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await listAvailableBiddings(user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/worker-biddings', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const result = await getWorkerBiddings(user.id)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/biddings/:id/select-winner', async (req, res, next) => {
+  try {
+    const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
+    const user = await syncAuth0User(claims)
+    const { applicationId } = req.body
+    if (!applicationId) {
+      res.status(400).json({ error: 'applicationId is required' })
+      return
+    }
+    const result = await selectWinner(req.params.id, user.id, applicationId)
+    res.json(result)
+  } catch (err) {
     next(err)
   }
 })

@@ -5,7 +5,7 @@ import * as userDatabase from "../../src/infrastructure/database/user.database.j
 import * as userService from "../../src/domain/services/user.service.js"
 import { PostType } from "../../src/domain/types/postType.js"
 import * as notificationService from "../../src/domain/services/notification.service.js"
-import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract, getMyApplications, cancelApplication, getPostApplications, generateStartToken, validateStartToken } from "../../src/domain/services/application.service.js"
+import { acceptApplication, rejectApplication, dismissWorker, applyToPost, applyToSubcontract, getMyApplications, cancelApplication, getPostApplications, generateStartToken, validateStartToken, applyToBidding } from "../../src/domain/services/application.service.js"
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findApplicationsByWorker: vi.fn(),
@@ -20,6 +20,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   incrementStartTokenAttempts: vi.fn(),
   clearStartToken: vi.fn(),
   setTokenValidated: vi.fn(),
+  resetRejectedApplications: vi.fn(),
 }))
 
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
@@ -83,12 +84,13 @@ const mockApplication = {
   chargesVisit: false,
   visitCost: null,
   scheduledDate: null,
+  offeredDuration: null,
   requiresStartToken: false,
   startToken: null,
   startTokenExpiresAt: null,
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null },
+  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false },
   category: null,
 }
 
@@ -161,7 +163,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is not Active", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null },
+      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -170,7 +172,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is Paused", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null },
+      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null, isBidding: false },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -179,7 +181,7 @@ describe("acceptApplication", () => {
   it("throws 400 when application already accepted in another position of the same subcontract group", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null },
+      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null, isBidding: false },
       category: { id: "cat-1", quantity: 2, filledCount: 0 },
     })
     mockPrisma.application.updateMany.mockRejectedValue(
@@ -210,7 +212,7 @@ describe("applyToPost", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "post-1",
     categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
     requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
@@ -241,7 +243,7 @@ describe("applyToPost", () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "post-1",
       categoryId: null, subcontractGroupId: null, message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-      chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
       requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
@@ -346,7 +348,7 @@ describe("applyToSubcontract", () => {
   const mockCreated = {
     id: "app-new", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
     categoryId: "cat-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-    chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+    chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
     requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
   }
 
@@ -399,7 +401,7 @@ describe("applyToSubcontract", () => {
     vi.mocked(applicationData.findApplication).mockResolvedValue({
       id: "existing-app", status: "Pending", workerId: "worker-1", postId: "subcontract-1",
       categoryId: "pc-1", subcontractGroupId: "group-1", message: null, availableDays: null, availableTimeFrom: null, availableTimeTo: null,
-      chargesVisit: false, visitCost: null, scheduledDate: null, createdAt: new Date(), updatedAt: new Date(),
+      chargesVisit: false, visitCost: null, scheduledDate: null, offeredDuration: null, createdAt: new Date(), updatedAt: new Date(),
       requiresStartToken: false, startToken: null, startTokenExpiresAt: null, startTokenAttempts: 0, tokenValidatedAt: null,
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
@@ -454,6 +456,88 @@ describe("applyToSubcontract", () => {
   })
 })
 
+describe("applyToBidding", () => {
+  const validInput = {
+    postId: "bidding-1",
+    offeredCost: 250000,
+    offeredDuration: 15,
+    offeredStartDate: "2027-08-01",
+    message: "Tengo experiencia",
+  }
+
+  const mockBiddingPost = {
+    id: "bidding-1", userId: "client-1", title: "Licitación test", status: "Active",
+    description: "Test", address: "",
+    startDate: new Date("2026-06-01"),
+    endDate: new Date("2027-06-30"),
+    createdAt: new Date(), images: [], latitude: null, longitude: null,
+    categories: [],
+    user: { id: "client-1", name: "Client", surname: "Test" },
+    isBidding: true,
+    budgetMax: 500000,
+  }
+
+  beforeEach(() => {
+    vi.mocked(postData.findPostById).mockResolvedValue(mockBiddingPost as never)
+    vi.mocked(applicationData.findApplication).mockResolvedValue(null)
+    vi.mocked(applicationData.createApplication).mockResolvedValue({ id: "app-new" } as never)
+  })
+
+  it("crea la postulación a licitación correctamente", async () => {
+    await applyToBidding("worker-1", validInput)
+    expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", {
+      postId: "bidding-1",
+      chargesVisit: false,
+      visitCost: 250000,
+      offeredDuration: 15,
+      scheduledDate: "2027-08-01",
+      message: "Tengo experiencia",
+    })
+  })
+
+  it("lanza 404 si el post no existe", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue(null)
+    await expect(applyToBidding("worker-1", validInput)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("lanza 400 si el post no es una licitación", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockBiddingPost, isBidding: false } as never)
+    await expect(applyToBidding("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si la licitación no está activa", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({ ...mockBiddingPost, status: "Evaluating" } as never)
+    await expect(applyToBidding("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si la licitación ya venció", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockBiddingPost,
+      endDate: new Date("2025-01-01"),
+    } as never)
+    await expect(applyToBidding("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si offeredStartDate es anterior o igual a endDate", async () => {
+    await expect(applyToBidding("worker-1", { ...validInput, offeredStartDate: "2026-06-15" }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 409 si el worker ya se postuló", async () => {
+    vi.mocked(applicationData.findApplication).mockResolvedValue({ id: "existing" } as never)
+    await expect(applyToBidding("worker-1", validInput)).rejects.toMatchObject({ status: 409 })
+  })
+
+  it("acepta postulación sin offeredStartDate ni message", async () => {
+    const { offeredStartDate: _, message: _m, ...minInput } = validInput
+    await applyToBidding("worker-1", minInput)
+    expect(applicationData.createApplication).toHaveBeenCalledWith("worker-1", expect.objectContaining({
+      postId: "bidding-1",
+      visitCost: 250000,
+    }))
+  })
+})
+
 describe("rejectApplication", () => {
   it("returns rejected application when valid", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
@@ -489,7 +573,7 @@ describe("dismissWorker", () => {
   const acceptedApplication = {
     ...mockApplication,
     status: "Accepted",
-    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null },
+    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
   }
 
   it("dismisses the worker and reopens the post when valid", async () => {
@@ -529,11 +613,76 @@ describe("dismissWorker", () => {
   it("throws 400 if post is not In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedApplication,
-      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null },
+      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null, isBidding: false },
     })
 
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
     expect(postData.updatePostStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe("dismissWorker - bidding path", () => {
+  const acceptedBiddingApp = {
+    id: "app-1",
+    workerId: "worker-1",
+    postId: "bidding-1",
+    categoryId: null,
+    subcontractGroupId: null,
+    status: "Accepted",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    message: null,
+    availableDays: null,
+    availableTimeFrom: null,
+    availableTimeTo: null,
+    chargesVisit: false,
+    visitCost: 250000,
+    scheduledDate: null,
+    offeredDuration: 15,
+    requiresStartToken: false,
+    startToken: null,
+    startTokenExpiresAt: null,
+    startTokenAttempts: 0,
+    tokenValidatedAt: null,
+    post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true },
+    category: null,
+  }
+
+  it("despide al ganador y vuelve la licitación a Evaluating", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(acceptedBiddingApp)
+    vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...acceptedBiddingApp, status: "Dismissed" })
+    vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
+
+    const result = await dismissWorker("client-1", "app-1")
+
+    expect(result.status).toBe("Dismissed")
+    expect(result.postId).toBe("bidding-1")
+    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Dismissed")
+    expect(applicationData.resetRejectedApplications).toHaveBeenCalledWith("bidding-1")
+    expect(postData.updatePostStatus).toHaveBeenCalledWith("bidding-1", "Evaluating")
+  })
+
+  it("lanza 404 si la aplicación no existe", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(null)
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 404 })
+  })
+
+  it("lanza 403 si no es el owner", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(acceptedBiddingApp)
+    await expect(dismissWorker("otro-cliente", "app-1")).rejects.toMatchObject({ status: 403 })
+  })
+
+  it("lanza 400 si la aplicación no está Accepted", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({ ...acceptedBiddingApp, status: "Pending" })
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("lanza 400 si el post no está In progress", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...acceptedBiddingApp,
+      post: { userId: "client-1", title: "Licitación test", status: "Evaluating", type: "Post", subcontractGroupId: null, isBidding: true },
+    })
+    await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
 })
 
@@ -674,7 +823,7 @@ const eligibleApp = {
   startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null },
+  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false },
 }
 
 describe("generateStartToken", () => {

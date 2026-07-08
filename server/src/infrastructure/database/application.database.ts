@@ -9,7 +9,13 @@ export const findApplicationsByWorker = async (workerId: string): Promise<Domain
     where: { workerId, status: { notIn: [ApplicationStatus.Rejected, ApplicationStatus.Dismissed] } },
     include: {
       post: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          address: true,
+          startDate: true,
+          endDate: true,
+          isBidding: true,
           user: { select: { id: true, name: true, surname: true, phone: true } },
           categories: { include: { category: { select: { name: true } } } },
         },
@@ -32,7 +38,7 @@ export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true, type: true, subcontractGroupId: true } },
+      post: { select: { userId: true, title: true, status: true, type: true, isBidding: true, subcontractGroupId: true } },
       category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
@@ -74,6 +80,12 @@ export const rejectPendingApplications = (postId: string) =>
     data: { status: ApplicationStatus.Rejected },
   })
 
+export const resetRejectedApplications = (postId: string) =>
+  prisma.application.updateMany({
+    where: { postId, status: ApplicationStatus.Rejected },
+    data: { status: ApplicationStatus.Pending },
+  })
+
 export const createApplication = (workerId: string, input: CreateApplicationInput) =>
   prisma.application.create({
     data: {
@@ -86,8 +98,10 @@ export const createApplication = (workerId: string, input: CreateApplicationInpu
       availableDays: input.availableDays ? JSON.stringify(input.availableDays) : null,
       availableTimeFrom: input.availableTimeFrom ?? null,
       availableTimeTo: input.availableTimeTo ?? null,
-      chargesVisit: input.chargesVisit,
+      chargesVisit: input.chargesVisit ?? false,
       visitCost: input.visitCost ?? null,
+      offeredDuration: input.offeredDuration ?? null,
+      scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
     },
   })
 
@@ -106,6 +120,43 @@ export const findAcceptedApplications = (postId: string) =>
     where: { postId, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
   })
 
+export const findBiddingApplications = async (biddingId: string) => {
+  const raw = await prisma.application.findMany({
+    where: { postId: biddingId },
+    include: {
+      worker: {
+        select: {
+          id: true,
+          name: true,
+          surname: true,
+          photo: true,
+          phone: true,
+          reviewsReceived: { select: { rating: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+  return raw.map((a) => {
+    const ratings = a.worker.reviewsReceived.map((r) => r.rating)
+    const avgRating = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
+    return {
+      id: a.id,
+      workerId: a.workerId,
+      workerName: `${a.worker.name} ${a.worker.surname}`,
+      workerPhoto: a.worker.photo,
+      workerPhone: a.worker.phone,
+      workerRating: avgRating,
+      workerReviewCount: ratings.length,
+      status: a.status,
+      message: a.message,
+      offeredCost: a.visitCost,
+      offeredDuration: a.offeredDuration ?? null,
+      offeredStartDate: a.scheduledDate?.toISOString() ?? null,
+      createdAt: a.createdAt.toISOString(),
+    }
+  })
+}
 export const findAcceptedApplicationByWorker = (postId: string, workerId: string) =>
   prisma.application.findFirst({
     where: { postId, workerId, status: ApplicationStatus.Accepted },

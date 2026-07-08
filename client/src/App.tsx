@@ -23,6 +23,10 @@ import PublicClientProfile from './views/PublicClientProfile'
 
 import WorkerLanding from './views/WorkerLanding'
 
+import CreateBidding from './views/CreateBidding'
+import ClientBiddings from './views/ClientBiddings'
+import BiddingHistory from './views/BiddingHistory'
+import BiddingDetail from './views/BiddingDetail'
 import AvailableJobs from './views/AvailableJobs'
 import AvailableSubcontracts from './views/AvailableSubcontracts'
 import SubcontractDetail from './views/SubcontractDetail'
@@ -33,6 +37,9 @@ import RegisterChoice from './views/RegisterChoice'
 import LeaveReview from './views/LeaveReview'
 import AuthCallback from './views/AuthCallback'
 import ForgotPassword from './views/ForgotPassword'
+import WorkerAvailableBiddings from './views/WorkerAvailableBiddings'
+import WorkerMyBiddings from './views/WorkerMyBiddings'
+import WorkerBiddingDetail from './views/WorkerBiddingDetail'
 import { UserRole } from './types/user'
 
 
@@ -114,6 +121,13 @@ export default function App(): ReactNode {
         <Route path="/worker/subcontracts" element={<WorkerRoute><WorkerSubcontracts /></WorkerRoute>} />
         <Route path="/worker/subcontracts/group/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
         <Route path="/worker/subcontracts/:id" element={<WorkerRoute><SubcontractDetail /></WorkerRoute>} />
+        <Route path="/create-bidding" element={<ClientRoute><CreateBidding /></ClientRoute>} />
+        <Route path="/client/biddings" element={<ClientRoute><ClientBiddings /></ClientRoute>} />
+        <Route path="/client/bidding-history" element={<ClientRoute><BiddingHistory /></ClientRoute>} />
+        <Route path="/client/biddings/:id" element={<ClientRoute><BiddingDetail /></ClientRoute>} />
+        <Route path="/worker/available-biddings" element={<WorkerRoute><WorkerAvailableBiddings /></WorkerRoute>} />
+        <Route path="/worker/my-biddings" element={<WorkerRoute><WorkerMyBiddings /></WorkerRoute>} />
+        <Route path="/worker/biddings/:id" element={<WorkerRoute><WorkerBiddingDetail /></WorkerRoute>} />
         <Route path="/worker/available-jobs" element={<WorkerRoute><AvailableJobs /></WorkerRoute>} />
         <Route path="/worker/:id" element={<WorkerRoute><WorkerProfile /></WorkerRoute>} />
         <Route path="*" element={<NotFoundRedirect />} />

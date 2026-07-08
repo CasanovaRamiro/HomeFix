@@ -72,6 +72,10 @@ model Post {
   isEmergency     Boolean          @default(false)
   emergencyExpiresAt DateTime?
   allowsSubcontracting Boolean    @default(true)
+  isBidding           Boolean    @default(false)
+  bidWeights          String?    @db.Text
+  materialResponsibility String? @default("to_agree")
+  budgetMax           Float?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   categories      PostCategory[]
@@ -149,6 +153,7 @@ model Application {
   chargesVisit       Boolean        @default(false)
   visitCost          Float?
   scheduledDate      DateTime?
+  offeredDuration    Int?
   requiresStartToken  Boolean       @default(false)
   startToken          String?
   startTokenExpiresAt DateTime?

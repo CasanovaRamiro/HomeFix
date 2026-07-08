@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/homefix-logo.png'
-import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch } from 'lucide-react'
+import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch, Gavel, FilePlus } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -35,17 +35,38 @@ const SUBCONTRACT_GROUP: NavGroupDef = {
   ],
 }
 
+const WORKER_BIDDING_GROUP: NavGroupDef = {
+  label: 'Licitaciones',
+  icon: Gavel,
+  children: [
+    { href: '/worker/available-biddings', label: 'Disponibles',     icon: GitBranch },
+    { href: '/worker/my-biddings',        label: 'Mis licitaciones', icon: GitBranch },
+  ],
+}
+
 const WORKER_LINKS: NavItemDef[] = [
   { href: '/worker',                  label: 'Inicio',               icon: Home },
   { href: '/worker/available-jobs',   label: 'Trabajos Disponibles', icon: Briefcase },
   { href: '/worker/calendar',         label: 'Mi Agenda',            icon: CalendarDays },
   SUBCONTRACT_GROUP,
+  WORKER_BIDDING_GROUP,
   { href: '/worker/my-applications',  label: 'Historial',            icon: ClipboardList },
 ]
+
+const CLIENT_BIDDING_GROUP: NavGroupDef = {
+  label: 'Licitaciones',
+  icon: Gavel,
+  children: [
+    { href: '/create-bidding',       label: 'Nueva Licitación', icon: FilePlus },
+    { href: '/client/biddings',      label: 'Gestor',           icon: GitBranch },
+    { href: '/client/bidding-history', label: 'Historial',      icon: ClipboardList },
+  ],
+}
 
 const CLIENT_LINKS: NavItemDef[] = [
   { href: '/dashboard',        label: 'Inicio',               icon: Home },
   { href: '/post-options', label: 'Nueva Solicitud',      icon: FileText },
+  CLIENT_BIDDING_GROUP,
   { href: '/client/history', label: 'Historial', icon: ClipboardList },
 ]
 
