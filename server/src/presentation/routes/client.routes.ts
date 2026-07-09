@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import { getClientBiddings } from '../../domain/services/post.service.js'
 import { getClientStats } from '../../domain/services/clientStats.service.js'
@@ -7,8 +6,6 @@ import { findHistoryPostsByUser } from '../../infrastructure/database/clientHist
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
 
 const router = Router()
-
-router.use(jwtCheck)
 
 router.get('/stats', async (req, res, next) => {
   try {

@@ -1,10 +1,9 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { suggestPost } from '../../domain/services/ai.service.js'
 
 const router = Router()
 
-router.post('/suggest', jwtCheck, async (req, res, next) => {
+router.post('/suggest', async (req, res, next) => {
   try {
     const result = await suggestPost(req.body)
     res.json(result)
