@@ -1,0 +1,76 @@
+# Local development only. Ignored by Railway (uses server/Dockerfile via railway.json)
+# and Vercel (client). Nothing here affects the hosted deployments.
+#
+# Usage (from repo root):
+#   pnpm docker-db   # MySQL only — pairs with local `pnpm dev-be` / `dev-fe`
+#   pnpm docker-be   # backend in Docker (hot reload)
+#   pnpm docker-fe   # frontend in Docker (hot reload)
+#
+# Defaults to `docker compose`. For podman, set COMPOSE_CMD once, e.g.:
+#   export COMPOSE_CMD=podman-compose
+#   pnpm docker-db
+# (or prefix a single call: COMPOSE_CMD=podman-compose pnpm docker-be)
+
+services:
+  db:
+    image: mysql:8
+    container_name: ofix-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ofix_db
+      MYSQL_USER: ofix
+      MYSQL_PASSWORD: ofix123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ofix-db-data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uofix", "-pofix123"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  be:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: ofix-be
+    env_file:
+      - ./server/.env
+    environment:
+      # Override ONLY the DB host: inside the network the DB is `db`, not `localhost`.
+      # Your server/.env is loaded above and otherwise untouched.
+      DATABASE_URL: "mysql://ofix:ofix123@db:3306/ofix_db"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    # Wait for MySQL to accept TCP before migrating. This is explicit (not relying on
+    # compose-level `depends_on: service_healthy`) so it behaves identically under
+    # Docker Compose and podman-compose. bash + /dev/tcp are available in node:22-slim.
+    command: >
+      bash -c "until (exec 3<>/dev/tcp/db/3306) 2>/dev/null; do echo 'waiting for db...'; sleep 2; done;
+      pnpm db:migrate:deploy && pnpm dev"
+    depends_on:
+      - db
+
+  fe:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: ofix-fe
+    env_file:
+      - ./client/.env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    # --host exposes Vite outside the container so the host browser can reach it.
+    command: sh -c "pnpm dev --host 0.0.0.0"
+
+volumes:
+  ofix-db-data:

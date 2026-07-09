@@ -8,6 +8,9 @@
     "build-be": "pnpm --prefix server run build",
     "lint-be": "pnpm --prefix server run lint",
     "dev-be": "pnpm --prefix server run dev",
+    "docker-db": "node scripts/compose.mjs up db",
+    "docker-be": "node scripts/compose.mjs up --build be",
+    "docker-fe": "node scripts/compose.mjs up --build fe",
     "test": "pnpm --prefix server run test",
     "log:coverage": "pnpm --prefix server run log:coverage"
   }

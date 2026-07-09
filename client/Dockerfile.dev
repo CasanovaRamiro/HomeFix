@@ -1,0 +1,14 @@
+# Local dev image (Vite HMR). Client deploys to Vercel, which ignores this file.
+FROM node:22-slim
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Install into the image; source is bind-mounted at runtime and node_modules kept
+# in an anonymous volume so the host's copy doesn't overwrite the container's.
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --no-frozen-lockfile
+
+EXPOSE 5173
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]
