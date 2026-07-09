@@ -1,12 +1,9 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User, type Auth0Claims } from '../../domain/services/auth.service.js'
 import { createLink, getStatus, unlink } from '../../domain/services/bot.service.js'
 import { toBotLinkDTO, toBotStatusDTO } from '../transformers/bot.transformer.js'
 
 const router = Router()
-
-router.use(jwtCheck)
 
 router.post('/link', async (req, res, next) => {
   try {

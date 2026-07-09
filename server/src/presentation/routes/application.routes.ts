@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import {
   getMyApplications,
@@ -18,8 +17,6 @@ import { findBiddingApplications } from '../../infrastructure/database/applicati
 import { toMyApplicationDTO, toStartTokenDTO, toStartTokenValidatedDTO } from '../transformers/application.transformer.js'
 
 const router = Router()
-
-router.use(jwtCheck)
 
 router.get('/post/:postId', async (req, res, next) => {
   try {
