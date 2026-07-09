@@ -9,9 +9,10 @@ import { uploadImages } from '../services/upload'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
 import StartTokenToggle from '../components/client/StartTokenToggle'
+import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 import {
   ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
-  Briefcase, Star, CheckCircle, Edit3,
+  Briefcase, Star, CheckCircle, Edit3, Send,
 } from 'lucide-react'
 
 export default function ClientProfile() {
@@ -384,6 +385,17 @@ export default function ClientProfile() {
 
           {/* Right column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Telegram */}
+            {!isEditing && (
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Send size={16} color="#3B82F6" />
+                  Telegram
+                </h3>
+                <TelegramLinkCard showUnlink />
+              </div>
+            )}
+
             {/* Start-token setting */}
             {!isEditing && (
               <StartTokenToggle clientId={client.id} initialEnabled={client.requiresStartToken ?? false} />
