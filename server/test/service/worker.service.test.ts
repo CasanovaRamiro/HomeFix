@@ -45,6 +45,8 @@ const mockWorker = {
    certificates: [],
    gallery: [],
    emergenciesEnabled: true,
+   location: null as string | null,
+   isVerified: false,
  }
 
 
