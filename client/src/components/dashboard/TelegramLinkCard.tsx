@@ -1,6 +1,6 @@
 import { type JSX, useState, useEffect } from 'react'
 import { Send, CheckCircle, XCircle, Copy, ExternalLink, Loader2 } from 'lucide-react'
-import { telegramLink, telegramStatus, telegramUnlink } from '../../services/api'
+import { telegramLink, telegramStatus, telegramUnlink } from '../../services/telegram'
 
 export default function TelegramLinkCard(): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'loading' | 'linked' | 'unlinked'>('idle')

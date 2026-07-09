@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createEmergencyPost, getClientProfile } from '../services/api'
+import { createEmergencyPost } from '../services/posts'
+import { getClientProfile } from '../services/clientProfiles'
 
 export function useCreateEmergency(userId: string) {
   const [form, setForm] = useState({

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createClientReview } from '../services/applications'
+import { createClientReview } from '../services/reviews'
 import type { ClientReviewInput } from '../types/clientReview'
 
 export function useLeaveClientReview() {

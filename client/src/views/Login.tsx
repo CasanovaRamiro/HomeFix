@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Shield,
 } from 'lucide-react'
-import api from '../services/api'
+import { login, resendVerification } from '../services/auth'
 import { emitAuthChange } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 import { loginWithGoogle } from '../lib/auth0'
@@ -54,11 +54,7 @@ export default function Login() {
 
     try {
       setIsSubmitting(true)
-      const { data } = await api.post<{
-        accessToken: string
-        idToken?: string
-        user: { id: string; name: string; email: string; photo: string | null; role: UserRole }
-      }>('/auth/login', form)
+      const data = await login(form)
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, email:data.user.email, role: data.user.role, photo: data.user.photo ?? null }))
       emitAuthChange()
@@ -81,7 +77,7 @@ export default function Login() {
     setResendLoading(true)
     setResendSuccess('')
     try {
-      await api.post('/auth/resend-verification', { email: form.email })
+      await resendVerification(form.email)
       setResendSuccess('Email reenviado. Revisá tu bandeja de entrada.')
     } catch {
       setResendSuccess('No se pudo reenviar. Intentá de nuevo más tarde.')

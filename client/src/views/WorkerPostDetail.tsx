@@ -4,7 +4,8 @@ import {
   ArrowLeft, MapPin, Calendar, Clock, Tag, User,
   CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag,
 } from 'lucide-react'
-import api, { workerCompletePost } from '../services/api'
+import api from '../services/api'
+import { workerCompletePost } from '../services/posts'
 import type { PostDTO } from '../types/post'
 import { ApplicationStatus } from '../types/application'
 import { formatWhatsAppNumber } from '../services/formatWhatsApp'

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText, User, Send } from 'lucide-react'
-import { getUserPosts, type UserPost } from '../services/api'
+import { getUserPosts, type UserPost } from '../services/posts'
 import { useAuth } from '../hooks/useAuth'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'

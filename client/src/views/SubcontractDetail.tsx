@@ -131,7 +131,7 @@ export default function SubcontractDetail() {
 
   const handlePause = async () => {
     try {
-      const { pausePost } = await import('../services/api')
+      const { pausePost } = await import('../services/posts')
       await pausePost(subcontract.id)
       window.location.reload()
     } catch { alert('No se pudo cambiar el estado') }
@@ -139,7 +139,7 @@ export default function SubcontractDetail() {
 
   const handleCancel = async () => {
     try {
-      const { cancelPost } = await import('../services/api')
+      const { cancelPost } = await import('../services/posts')
       await cancelPost(subcontract.id)
       navigate(backLink)
     } catch { alert('No se pudo cancelar') }
@@ -147,7 +147,7 @@ export default function SubcontractDetail() {
 
   const handleMarkInProgress = async () => {
     try {
-      const { markPostInProgress } = await import('../services/api')
+      const { markPostInProgress } = await import('../services/posts')
       await markPostInProgress(subcontract.id)
       window.location.reload()
     } catch { alert('No se pudo marcar en progreso') }
@@ -155,7 +155,7 @@ export default function SubcontractDetail() {
 
   const handleComplete = async () => {
     try {
-      const { completePost } = await import('../services/api')
+      const { completePost } = await import('../services/posts')
       await completePost(subcontract.id)
       window.location.reload()
     } catch { alert('No se pudo completar') }
@@ -163,7 +163,7 @@ export default function SubcontractDetail() {
 
   const handleReactivateConfirm = async () => {
     try {
-      const { reopenPost } = await import('../services/api')
+      const { reopenPost } = await import('../services/posts')
       await reopenPost(subcontract.id)
       setShowReactivateConfirm(false)
       if (pendingReviewNav) {

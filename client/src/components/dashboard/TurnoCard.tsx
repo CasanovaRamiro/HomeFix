@@ -1,6 +1,6 @@
 import { Calendar, Eye, Users, AlertTriangle, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { UserPost } from '../../services/api'
+import type { UserPost } from '../../services/posts'
 import { PostStatus } from '../../types/post'
 
 const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
