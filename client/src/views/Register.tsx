@@ -5,7 +5,7 @@ import {
   Eye, EyeOff, Mail, Lock, User, Phone,
   AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck, MailCheck,
 } from 'lucide-react'
-import api from '../services/api'
+import api, { getErrorMessage } from '../services/api'
 import { loginWithGoogle } from '../lib/auth0'
 
 type RegisterResponse = {
@@ -109,8 +109,7 @@ export default function Register() {
       if (!data.roleAssigned) setRoleWarning(data.message)
       setSubmitted(true)
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { error?: string } } }
-      setError(axiosErr.response?.data?.error ?? 'No se pudo completar el registro')
+      setError(getErrorMessage(err, 'No se pudo completar el registro'))
     } finally {
       setIsSubmitting(false)
     }

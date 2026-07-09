@@ -6,7 +6,7 @@ import {
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
   CreditCard, MailCheck,
 } from 'lucide-react'
-import api from '../services/api'
+import api, { getErrorMessage } from '../services/api'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
 import { startKycVerification, confirmKycSession } from '../services/kyc'
@@ -145,9 +145,7 @@ export default function RegisterWorker() {
         setSubmitted(true)
       }
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { error?: string } } }
-      const msg = axiosErr.response?.data?.error ?? 'No se pudo completar el registro'
-      setErrors({ email: msg })
+      setErrors({ email: getErrorMessage(err, 'No se pudo completar el registro') })
       setStep(1)
     } finally {
       setIsSubmitting(false)
@@ -548,8 +546,7 @@ export default function RegisterWorker() {
                           },
                         })
                       } catch (err) {
-                        const axiosErr = err as { response?: { data?: { error?: string } } }
-                        setErrors({ email: axiosErr.response?.data?.error ?? 'No se pudo completar el registro' })
+                        setErrors({ email: getErrorMessage(err, 'No se pudo completar el registro') })
                         setStep(1)
                       } finally { setIsSubmitting(false) }
                     }}

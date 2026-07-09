@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Shield,
 } from 'lucide-react'
-import api from '../services/api'
+import api, { getErrorMessage } from '../services/api'
+import axios from 'axios'
 import { emitAuthChange } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 import { loginWithGoogle } from '../lib/auth0'
@@ -68,11 +69,10 @@ export default function Login() {
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
     } catch (err) {
-      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } }
-      if (axiosErr.response?.status === 403) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
         setEmailNotVerified(true)
       } else {
-        setError(axiosErr.response?.data?.error ?? 'Error al iniciar sesion')
+        setError(getErrorMessage(err, 'Error al iniciar sesion'))
       }
     } finally {
       setIsSubmitting(false)
