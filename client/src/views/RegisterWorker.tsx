@@ -52,6 +52,7 @@ export default function RegisterWorker() {
   const [submitted, setSubmitted] = useState(false)
   const [roleWarning, setRoleWarning] = useState('')
   const [kycStartFailed, setKycStartFailed] = useState(false)
+  const [kycSkipped, setKycSkipped] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({
     name: '',
@@ -194,16 +195,22 @@ export default function RegisterWorker() {
               </div>
 
               <h1 className="text-2xl font-bold text-slate-900">
-                {kycMethod === 'automatic'
-                  ? 'Verificá tu email para continuar'
-                  : '¡Verificá tu email!'}
+                {kycSkipped
+                  ? '¡Cuenta creada!'
+                  : kycMethod === 'automatic'
+                    ? 'Verificá tu email para continuar'
+                    : '¡Verificá tu email!'}
               </h1>
               <p className="mt-3 text-slate-500">
-                {kycMethod === 'automatic'
-                  ? <>Antes de poder validar tu identidad con Didit, debés verificar tu correo.</>
-                  : <>Te enviamos un email de verificación a{' '}
+                {kycSkipped
+                  ? <>Te enviamos un email de verificación a{' '}
                     {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
-                    Hacé clic en el enlace para activar tu cuenta.</>}
+                    Hacé clic en el enlace para activar tu cuenta. Vas a poder verificar tu identidad más adelante, cuando quieras, desde tu perfil.</>
+                  : kycMethod === 'automatic'
+                    ? <>Antes de poder validar tu identidad con Didit, debés verificar tu correo.</>
+                    : <>Te enviamos un email de verificación a{' '}
+                      {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
+                      Hacé clic en el enlace para activar tu cuenta.</>}
               </p>
               <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
@@ -224,13 +231,17 @@ export default function RegisterWorker() {
               <div className="mt-6 flex gap-3 text-left bg-slate-900/5 border border-slate-900/10 rounded-xl p-4">
                 <Shield className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-slate-900">Después de verificar</p>
+                  <p className="font-medium text-slate-900">
+                    {kycSkipped ? 'Verificación de identidad pendiente' : 'Después de verificar'}
+                  </p>
                   <p className="text-slate-500 mt-1">
-                    {kycMethod === 'automatic' && !kycStartFailed
-                      ? 'Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.'
-                      : kycMethod === 'automatic'
-                        ? 'Vas a poder iniciar la verificación con DNI y selfie desde tu cuenta cuando quieras.'
-                        : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
+                    {kycSkipped
+                      ? 'Ya podés usar tu cuenta, pero vas a necesitar verificar tu identidad para poder postularte a trabajos. Lo podés hacer cuando quieras desde tu perfil.'
+                      : kycMethod === 'automatic' && !kycStartFailed
+                        ? 'Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.'
+                        : kycMethod === 'automatic'
+                          ? 'Vas a poder iniciar la verificación con DNI y selfie desde tu cuenta cuando quieras.'
+                          : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
                   </p>
                 </div>
               </div>
@@ -538,13 +549,9 @@ export default function RegisterWorker() {
                           name: form.name, lastName: form.lastName, email: form.email,
                           password: form.password, phone: form.phone || undefined, categories: selected,
                         })
-                        navigate('/login', {
-                          state: {
-                            registered: true,
-                            email: form.email,
-                            roleWarning: data.roleAssigned ? undefined : data.message,
-                          },
-                        })
+                        if (!data.roleAssigned) setRoleWarning(data.message)
+                        setKycSkipped(true)
+                        setSubmitted(true)
                       } catch (err) {
                         setErrors({ email: getErrorMessage(err, 'No se pudo completar el registro') })
                         setStep(1)
