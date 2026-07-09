@@ -247,7 +247,7 @@ describe('PATCH /workers/:id - matriculaUrl', () => {
   })
 
   it('returns matriculaUrl as null when not set', async () => {
-    const worker = await makeWorker('test@test.com', 'Test')
+    const worker = await makeWorker('ana@test.com', 'Ana')
 
     const res = await request(app)
       .get(`/workers/${worker.id}`)
@@ -272,5 +272,47 @@ describe('PATCH /workers/:id - matriculaUrl', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.matriculaUrl).toBeNull()
+  })
+})
+
+describe('PATCH /workers/:id - antecedentesPenalesUrl', () => {
+  it('updates antecedentesPenalesUrl when the requester is the owner', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    const res = await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/antecedentes.pdf' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.antecedentesPenalesUrl).toBe('https://res.cloudinary.com/demo/upload/antecedentes.pdf')
+  })
+
+  it('returns antecedentesPenalesUrl as null when not set', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.antecedentesPenalesUrl).toBeNull()
+  })
+
+  it('can clear antecedentesPenalesUrl by sending null', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/antecedentes.pdf' })
+
+    const res = await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ antecedentesPenalesUrl: null })
+
+    expect(res.status).toBe(200)
+    expect(res.body.antecedentesPenalesUrl).toBeNull()
   })
 })

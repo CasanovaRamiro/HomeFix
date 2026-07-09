@@ -7,6 +7,7 @@ export interface DomainWorker {
   role: string
   photo: string | null
   matriculaUrl: string | null
+  antecedentesPenalesUrl: string | null
   availability: string[]
   createdAt: Date
   categories: { id: string; name: string }[]
@@ -21,6 +22,7 @@ export interface UpdateWorkerInput {
   bio?: string | null
   photo?: string | null
   matriculaUrl?: string | null
+  antecedentesPenalesUrl?: string | null
   categoryIds?: string[]
   availability?: string[]
   certificates?: { id: string; title: string; issuer?: string | null; imageUrl: string }[]

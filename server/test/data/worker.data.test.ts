@@ -220,4 +220,31 @@ describe('updateWorker', () => {
 
     expect(updated.matriculaUrl).toBeNull()
   })
+
+  it('persists and returns antecedentesPenalesUrl', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const url = 'https://res.cloudinary.com/demo/upload/antecedentes.pdf'
+
+    const updated = await updateWorker(worker.id, { antecedentesPenalesUrl: url })
+
+    expect(updated.antecedentesPenalesUrl).toBe(url)
+  })
+
+  it('returns antecedentesPenalesUrl as null when not set', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+
+    const found = await findWorkerById(worker.id)
+
+    expect(found!.antecedentesPenalesUrl).toBeNull()
+  })
+
+  it('can clear antecedentesPenalesUrl by setting it to null', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana', {
+      antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/old.pdf',
+    })
+
+    const updated = await updateWorker(worker.id, { antecedentesPenalesUrl: null })
+
+    expect(updated.antecedentesPenalesUrl).toBeNull()
+  })
 })

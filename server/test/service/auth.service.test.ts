@@ -44,6 +44,7 @@ const mockUser = {
   requiresStartToken: false,
   photo: null as string | null,
   matriculaUrl: null as string | null,
+  antecedentesPenalesUrl: null as string | null,
   availability: null as string | null,
   telegramChatId: null as string | null,
   telegramLinkedAt: null as Date | null,

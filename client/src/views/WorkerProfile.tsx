@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, downloadMatricula, type Worker, type WorkerReview } from '../services/api'
+import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, downloadMatricula, downloadAntecedentes, type Worker, type WorkerReview } from '../services/api'
 import { useCategories } from '../hooks/useCategories'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -49,6 +49,8 @@ export default function WorkerProfile() {
   const [galSaving, setGalSaving] = useState(false)
   const [matriculaFile, setMatriculaFile] = useState<File | null>(null)
   const [matriculaSaving, setMatriculaSaving] = useState(false)
+  const [antecedentesFile, setAntecedentesFile] = useState<File | null>(null)
+  const [antecedentesSaving, setAntecedentesSaving] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -239,6 +241,56 @@ export default function WorkerProfile() {
       URL.revokeObjectURL(blobUrl)
     } catch {
       setError('Error al descargar matrícula')
+    }
+  }
+
+  const handleAntecedentesFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type === 'application/pdf') {
+      setAntecedentesFile(file)
+    }
+    e.target.value = ''
+  }
+
+  const uploadAntecedentes = async () => {
+    if (!antecedentesFile || !worker) return
+    setAntecedentesSaving(true)
+    try {
+      const urls = await uploadImages([antecedentesFile])
+      const updated = await updateWorkerProfile(worker.id, { antecedentesPenalesUrl: urls[0] })
+      setWorker(updated)
+      setAntecedentesFile(null)
+    } catch {
+      setError('Error al subir antecedentes penales')
+    } finally {
+      setAntecedentesSaving(false)
+    }
+  }
+
+  const removeAntecedentes = async () => {
+    if (!worker) return
+    try {
+      const updated = await updateWorkerProfile(worker.id, { antecedentesPenalesUrl: null })
+      setWorker(updated)
+    } catch {
+      setError('Error al eliminar antecedentes penales')
+    }
+  }
+
+  const handleDownloadAntecedentes = async () => {
+    if (!worker?.antecedentesPenalesUrl) return
+    try {
+      const blob = await downloadAntecedentes(worker.antecedentesPenalesUrl)
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = 'antecedentes_penales.pdf'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      setError('Error al descargar antecedentes penales')
     }
   }
 
@@ -553,21 +605,81 @@ export default function WorkerProfile() {
                     </button>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
-                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Antecedentes</span>
-                    <button
-                      type="button"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        background: '#10B981', border: 'none',
-                        color: '#fff', fontSize: 13, fontWeight: 600,
-                        padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
-                        minWidth: 160,
-                      }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
-                    >
-                      Cargar Antecedentes
-                    </button>
+                    <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Antecedentes Penales</span>
+                    {worker.antecedentesPenalesUrl ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={handleDownloadAntecedentes}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            background: '#EFF6FF', border: '1px solid #BFDBFE',
+                            color: '#2563EB', fontSize: 13, fontWeight: 600,
+                            padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Descargar PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeAntecedentes}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: '#FEE2E2', border: 'none',
+                            color: '#DC2626', fontSize: 13, fontWeight: 600,
+                            padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    ) : antecedentesFile ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: '#6B7280' }}>{antecedentesFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={uploadAntecedentes}
+                          disabled={antecedentesSaving}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            background: '#10B981', border: 'none',
+                            color: '#fff', fontSize: 13, fontWeight: 600,
+                            padding: '9px 16px', borderRadius: 10,
+                            cursor: antecedentesSaving ? 'not-allowed' : 'pointer',
+                            opacity: antecedentesSaving ? 0.6 : 1,
+                          }}
+                        >
+                          {antecedentesSaving ? 'Subiendo...' : 'Subir'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAntecedentesFile(null)}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: '#F3F4F6', border: 'none',
+                            color: '#374151', fontSize: 13, fontWeight: 600,
+                            padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          background: '#10B981', border: 'none',
+                          color: '#fff', fontSize: 13, fontWeight: 600,
+                          padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                          minWidth: 160,
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                      >
+                        Cargar Antecedentes
+                        <input type="file" accept="application/pdf" onChange={handleAntecedentesFile} style={{ display: 'none' }} />
+                      </label>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
                     <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Matrícula</span>
@@ -575,7 +687,7 @@ export default function WorkerProfile() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
                           type="button"
-                           onClick={handleDownloadMatricula}
+                          onClick={handleDownloadMatricula}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 6,
                             background: '#EFF6FF', border: '1px solid #BFDBFE',

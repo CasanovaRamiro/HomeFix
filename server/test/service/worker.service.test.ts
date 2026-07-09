@@ -40,6 +40,7 @@ const mockWorker = {
   role: UserRole.Worker,
   photo: null as string | null,
   matriculaUrl: null as string | null,
+  antecedentesPenalesUrl: null as string | null,
   availability: [] as string[],
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   categories: [{ id: 'uuid-category-1', name: 'Plumbing' }],
@@ -158,6 +159,37 @@ describe('worker.service - updateWorkerProfile', () => {
 
     expect(cloudinary.deleteImage).toHaveBeenCalledWith('https://res.cloudinary.com/demo/upload/old.pdf')
     expect(workerData.updateWorker).toHaveBeenCalledWith('uuid-worker-1', { matriculaUrl: null })
+  })
+
+  it('updates antecedentesPenalesUrl when provided', async () => {
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/antecedentes.pdf' })
+
+    const result = await updateWorkerProfile('uuid-worker-1', { antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/antecedentes.pdf' })
+
+    expect(workerData.updateWorker).toHaveBeenCalledWith('uuid-worker-1', { antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/antecedentes.pdf' })
+    expect(result.antecedentesPenalesUrl).toBe('https://res.cloudinary.com/demo/upload/antecedentes.pdf')
+  })
+
+  it('deletes old Cloudinary antecedentes when replaced with a new one', async () => {
+    const oldUrl = 'https://res.cloudinary.com/demo/upload/v123/old-antecedentes.pdf'
+    vi.mocked(workerData.findWorkerById).mockResolvedValue({ ...mockWorker, antecedentesPenalesUrl: oldUrl })
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/v123/new-antecedentes.pdf' })
+    vi.mocked(cloudinary.deleteImage).mockResolvedValue(undefined)
+
+    await updateWorkerProfile('uuid-worker-1', { antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/v123/new-antecedentes.pdf' })
+
+    expect(cloudinary.deleteImage).toHaveBeenCalledWith(oldUrl)
+  })
+
+  it('clears antecedentesPenalesUrl when set to null', async () => {
+    vi.mocked(workerData.findWorkerById).mockResolvedValue({ ...mockWorker, antecedentesPenalesUrl: 'https://res.cloudinary.com/demo/upload/old.pdf' })
+    vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, antecedentesPenalesUrl: null })
+    vi.mocked(cloudinary.deleteImage).mockResolvedValue(undefined)
+
+    await updateWorkerProfile('uuid-worker-1', { antecedentesPenalesUrl: null })
+
+    expect(cloudinary.deleteImage).toHaveBeenCalledWith('https://res.cloudinary.com/demo/upload/old.pdf')
+    expect(workerData.updateWorker).toHaveBeenCalledWith('uuid-worker-1', { antecedentesPenalesUrl: null })
   })
 })
 

@@ -21,15 +21,9 @@ export const uploadImage = async (file: { buffer: Buffer; mimetype: string; orig
       (err, result) => {
         if (err || !result) {
           logger.error({ err, filename: file.originalname, action: 'cloudinary.uploadFailed' }, 'Image upload to Cloudinary failed')
-          reject(err instanceof Error ? err : new Error('Upload failed'))
-        } else {
-          resolve(result.secure_url)
+          return reject(err instanceof Error ? err : new Error('Upload failed'))
         }
-        if (err || !result) {
-          console.error('[Cloudinary upload error]', err)
-          reject(err instanceof Error ? err : new Error('Upload failed'))
-        }
-        else resolve(result.secure_url)
+        resolve(result.secure_url)
       },
     )
     uploadStream.end(file.buffer)
