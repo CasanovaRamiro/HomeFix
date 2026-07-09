@@ -90,11 +90,11 @@ export const createAuth0User = async (payload: {
 
     if (response.status === 400 && (/already exists|user already exists|exists/i.test(text) || /"code":"invalid_signup"/.test(text))) {
       logger.warn({ email: payload.email, action: 'auth0.signup' }, 'Email already registered in Auth0')
-      throw createHttpError(409, 'Email already registered')
+      throw createHttpError(409, 'El correo electrónico ya está registrado')
     }
     if (response.status === 400 && /password|weak/i.test(text)) {
       logger.warn({ action: 'auth0.signup' }, 'Password does not meet Auth0 policy')
-      throw createHttpError(400, 'Password does not meet Auth0 policy')
+      throw createHttpError(400, 'La contraseña no cumple con los requisitos de seguridad. Probá con una combinación más segura (mínimo 8 caracteres, mayúsculas, minúsculas, números y símbolos).')
     }
     logger.error({ status: response.status, body: text, action: 'auth0.signup' }, 'Auth0 signup failed')
     throw createHttpError(502, 'Failed to create user in Auth0')

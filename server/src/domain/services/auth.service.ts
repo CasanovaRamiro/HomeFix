@@ -152,8 +152,8 @@ export const loginUser = async (input: LoginInput) => {
   const email = input.email?.trim().toLowerCase()
   const password = input.password
 
-  if (!email) throw createHttpError(400, 'Email is required')
-  if (!password) throw createHttpError(400, 'Password is required')
+  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
+  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
   const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
