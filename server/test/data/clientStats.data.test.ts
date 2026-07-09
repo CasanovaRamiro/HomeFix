@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
+import { cleanDb, createUser, prisma } from '../helpers/db.js'
 import { countClientPosts, findCompletedPostsWithApps } from '../../src/infrastructure/database/clientStats.database.js'
 import { PostStatus } from '../../src/domain/types/postStatus.js'
 import { ApplicationStatus } from '../../src/domain/types/applicationStatus.js'
