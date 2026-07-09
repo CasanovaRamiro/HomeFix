@@ -129,7 +129,7 @@ export const loginWithAuth0 = async (email: string, password: string): Promise<A
   if (!response.ok) {
     const text = await response.text()
     logger.error({ status: response.status, body: text, action: 'auth0.login' }, 'Auth0 login failed')
-    if (response.status === 400 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
+    if (response.status < 500 && /invalid_grant|wrong email|wrong password|invalid/i.test(text)) {
       throw createHttpError(401, 'Correo electrónico o contraseña incorrectos')
     }
     throw createHttpError(502, 'Error al autenticar con Auth0')
