@@ -205,7 +205,7 @@ export default function RegisterWorker() {
                 {kycSkipped
                   ? <>Te enviamos un email de verificación a{' '}
                     {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
-                    Hacé clic en el enlace para activar tu cuenta. Vas a poder verificar tu identidad más adelante, cuando quieras, desde tu perfil.</>
+                    Hacé clic en el enlace para activar tu cuenta.</>
                   : kycMethod === 'automatic'
                     ? <>Antes de poder validar tu identidad con Didit, debés verificar tu correo.</>
                     : <>Te enviamos un email de verificación a{' '}
@@ -251,7 +251,7 @@ export default function RegisterWorker() {
                 onClick={() => navigate('/login')}
                 className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
-                {kycMethod === 'automatic' ? 'Validar email e iniciar verificación de identidad' : 'Ir a iniciar sesión'}
+                {!kycSkipped && kycMethod === 'automatic' ? 'Validar email e iniciar verificación de identidad' : 'Ir a iniciar sesión'}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
