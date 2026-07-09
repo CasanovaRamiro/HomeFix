@@ -6,10 +6,11 @@ import {
   ChevronRight, Shield, MessageSquare, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
-import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
 import { fetchEmergencyPosts, searchPostsByLocation } from '../services/posts'
-import { applyToPost } from '../services/applications'
+import { applyToPost, fetchMyApplications, type MyApplication } from '../services/applications'
+import { updateUserEmergencyNotifications } from '../services/users'
+import { fetchWorkerDashboard, type DashboardProfile, type DashboardStats, type DashboardData } from '../services/workerDashboard'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { postToTrabajo } from '../lib/post'
@@ -20,35 +21,6 @@ import type { LocationFilter } from '../components/worker/types'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-interface DashboardProfile {
-  id: string
-  name: string
-  surname: string
-  email: string
-  phone: string | null
-  bio: string | null
-  photo: string | null
-  createdAt: string
-  location: string | null
-  categories: { id: string; name: string }[]
-  emergenciesEnabled: boolean
-}
-
-interface DashboardStats {
-  totalJobs: number
-  reviewCount: number
-  avgRating: number
-  newJobs: number
-  pendingApplications: number
-  upcomingAppointments: number
-  responseRate: number
-}
-
-interface DashboardData {
-  profile: DashboardProfile
-  stats: DashboardStats
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -413,7 +385,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
 
   const loadAppliedIds = useCallback(async () => {
     try {
-      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
+      const res = await fetchMyApplications()
       setAppliedIds(res.data.map((a) => a.postId))
     } catch {
       setAppliedIds([])
@@ -429,7 +401,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   const handleToggle = async () => {
     const newValue = !isActive
     try {
-      await api.patch(`/users/${workerId}/emergencies`, { enabled: newValue })
+      await updateUserEmergencyNotifications(workerId, newValue)
       setIsActive(newValue)
     } catch (error) {
       console.error('Error updating emergency notifications:', error)
@@ -640,24 +612,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
     </div>
   )
 }
-// ─── Application type (from /applications/my-applications) ───────────────────
-// ─── Application type (from /applications/my-applications) ───────────────────
-
-interface Application {
-  id: string
-  postId: string
-  title: string
-  client: string
-  location: string
-  appliedAt: string
-  serviceDate: string
-  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
-  clientPhone: string | null
-  availableTimeFrom: string | null
-  availableTimeTo: string | null
-  isBidding: boolean
-}
-
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
 
 const LOCATION_FILTER_KEY = 'homefix_dashboard_location_filter'
@@ -1044,7 +998,7 @@ function AppStatusBadge({ status }: { status: string }) {
   )
 }
 
-function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+function MisPostulacionesSection({ apps, loading }: { apps: MyApplication[]; loading: boolean }) {
   // Pending first, then Accepted by most recent appliedAt
   const sorted = [...apps]
     .filter((a) => a.status === 'Pending' || a.status === 'Accepted')
@@ -1154,7 +1108,7 @@ function getWeekDays(today: Date): Date[] {
   })
 }
 
-function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+function ProximasCitasSection({ apps, loading }: { apps: MyApplication[]; loading: boolean }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayYMD = toYMDLocal(today)
@@ -1314,7 +1268,7 @@ export default function WorkerDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [nearbyJobs, setNearbyJobs] = useState<Post[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
-  const [applications, setApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<MyApplication[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
   const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredLocationFilter)
@@ -1325,7 +1279,7 @@ export default function WorkerDashboard() {
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await api.get<DashboardData>('/worker-dashboard')
+      const res = await fetchWorkerDashboard()
       setData(res.data)
     } catch {
       setError('No se pudo cargar el dashboard')
@@ -1352,7 +1306,7 @@ export default function WorkerDashboard() {
 
   const fetchApplications = useCallback(async () => {
     try {
-      const res = await api.get<Application[]>('/applications/my-applications')
+      const res = await fetchMyApplications()
       setApplications(res.data)
     } catch {
       setApplications([])

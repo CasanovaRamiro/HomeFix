@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import api, { uploadImages } from '../services/api'
+import api from '../services/api'
+import { uploadImages } from '../services/upload'
 import type { ReviewInput } from '../types/review'
 
 export function useLeaveReview() {

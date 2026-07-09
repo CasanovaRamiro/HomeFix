@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import { Mail, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2, Shield } from 'lucide-react'
-import api from '../services/api'
+import { forgotPassword } from '../services/auth'
 import logo from '../assets/homefix-logo.png'
 import heroBg from '../assets/hero-bg.jpg'
 import './auth.css'
@@ -26,7 +26,7 @@ export default function ForgotPassword() {
 
     try {
       setIsSubmitting(true)
-      await api.post('/auth/forgot-password', { email: email.trim() })
+      await forgotPassword(email.trim())
       setSuccess('Si el correo está registrado, recibirás un email para restablecer tu contraseña.')
     } catch (err) {
       const axiosErr = err as { response?: { data?: { error?: string } } }

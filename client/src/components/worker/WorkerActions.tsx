@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { updateUserEmergencyNotifications } from '../../services/api'
+import { updateUserEmergencyNotifications } from '../../services/users'
 
 interface Props {
   workerId: string

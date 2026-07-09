@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gavel, PlayCircle, CheckCircle, XCircle, Activity, Calendar, Users, AlertCircle } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
-import { fetchClientBiddings } from '../services/posts'
+import { fetchClientBiddings } from '../services/client'
 import type { Post } from '../types/post'
 import { PostStatus } from '../types/post'
 

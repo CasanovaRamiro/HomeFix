@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Navigate } from 'react-router-dom'
 import {
-  getClientProfile, updateClientProfile, getClientReviews, uploadImages,
-  type ClientProfile as ClientProfileType, type ClientReview,
-} from '../services/api'
+  getClientProfile, updateClientProfile,
+  type ClientProfile as ClientProfileType,
+} from '../services/clientProfiles'
+import { getClientReviews, type ClientReview } from '../services/users'
+import { uploadImages } from '../services/upload'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
 import StartTokenToggle from '../components/client/StartTokenToggle'

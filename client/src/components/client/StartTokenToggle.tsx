@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { updateUserRequiresStartToken } from '../../services/api'
+import { updateUserRequiresStartToken } from '../../services/users'
 
 interface Props {
   clientId: string

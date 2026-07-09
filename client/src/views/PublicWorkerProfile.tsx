@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/api'
+import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/workers'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { ArrowLeft, Star, Briefcase, XCircle, Flag } from 'lucide-react'
 import WorkerReviews from '../components/worker/WorkerReviews'

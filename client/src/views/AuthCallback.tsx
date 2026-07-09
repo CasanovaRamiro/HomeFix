@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { exchangeCodeForTokens } from '../lib/auth0'
 import { emitAuthChange } from '../hooks/useAuth'
-import api from '../services/api'
+import { fetchMe } from '../services/auth'
 import { UserRole } from '../types/user'
 
 function getInitialError(): string {
@@ -65,13 +65,7 @@ export default function AuthCallback() {
         }
         if (isRegister) headers['x-auth-source'] = 'register'
 
-        const { data: user } = await api.get<{
-          id: string
-          name: string
-          email: string
-          photo: string | null
-          role: string
-        }>('/auth/me', { headers })
+        const user = await fetchMe(headers)
 
         localStorage.setItem('token', tokens.access_token)
         localStorage.setItem('user', JSON.stringify({ id: user.id, name: user.name, email: user.email,role: user.role, photo: user.photo ?? null }))

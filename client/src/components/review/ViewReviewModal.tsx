@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Star, X } from 'lucide-react'
-import type { WorkerReview } from '../../services/api'
+import type { WorkerReview } from '../../services/workers'
 import ImageModal from '../ui/ImageModal'
 
 function fmtDate(iso: string): string {

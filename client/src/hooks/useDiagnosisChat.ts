@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { sendMessage, type AiMessage, type AiSuggestionData } from '../services/diagnostico'
+import { sendMessage, type AiMessage, type AiSuggestionData } from '../services/ai'
 
 function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {

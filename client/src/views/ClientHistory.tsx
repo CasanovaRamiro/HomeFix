@@ -1,26 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, XCircle, MessageSquare, Star, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
-import api from '../services/api'
-import type { UserPost } from '../services/api'
+import type { UserPost } from '../services/posts'
+import { fetchClientStats, fetchClientPosts, type ClientStats } from '../services/client'
 import { PostStatus } from '../types/post'
 import StatCard from '../components/dashboard/StatCard'
 import TurnoCard from '../components/dashboard/TurnoCard'
 import LandingFooter from '../components/landing/LandingFooter'
-
-interface ClientStats {
-  completedPosts: number
-  cancelledPosts: number
-  unreviewedJobs: number
-  clientRating: { averageRating: number; reviewCount: number }
-}
-
-interface PaginatedPosts {
-  data: UserPost[]
-  total: number
-  page: number
-  limit: number
-}
 
 type HistoryTab = 'Todas' | 'Completadas' | 'Canceladas'
 
@@ -36,7 +22,7 @@ export default function ClientHistory() {
   const [filter, setFilter] = useState<HistoryTab>('Todas')
 
   const fetchPosts = useCallback((p: number) => {
-    api.get<PaginatedPosts>(`/client/posts?page=${p}&limit=${PAGE_SIZE}`)
+    fetchClientPosts(p, PAGE_SIZE)
       .then((res) => {
         setPosts(res.data.data)
         setTotal(res.data.total)
@@ -45,8 +31,8 @@ export default function ClientHistory() {
 
   useEffect(() => {
     Promise.all([
-      api.get<ClientStats>('/client/stats'),
-      api.get<PaginatedPosts>(`/client/posts?page=1&limit=${PAGE_SIZE}`),
+      fetchClientStats(),
+      fetchClientPosts(1, PAGE_SIZE),
     ])
       .then(([statsRes, postsRes]) => {
         setStats(statsRes.data)

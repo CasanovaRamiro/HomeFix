@@ -1,6 +1,7 @@
 import { useState } from 'react'
   import { useTheme } from './useTheme'
-  import api, { uploadImages } from '../services/api'
+  import api from '../services/api'
+  import { uploadImages } from '../services/upload'
 
   export interface PostFormData {
     title: string
