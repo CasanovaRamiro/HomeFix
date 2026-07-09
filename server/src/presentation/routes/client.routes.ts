@@ -2,12 +2,9 @@ import { Router } from 'express'
 import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import { getClientBiddings } from '../../domain/services/post.service.js'
-import { getClientRating } from '../../domain/services/user.service.js'
-import { PostStatus } from '../../domain/types/postStatus.js'
-import { ApplicationStatus } from '../../domain/types/applicationStatus.js'
+import { getClientStats } from '../../domain/services/clientStats.service.js'
 import { findHistoryPostsByUser } from '../../infrastructure/database/clientHistory.database.js'
 import { toPostDTO, toUserPostDTO } from '../transformers/post.transformer.js'
-import prisma from '../../lib/prisma.js'
 
 const router = Router()
 
@@ -17,28 +14,8 @@ router.get('/stats', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-
-    const [completedPosts, cancelledPosts, rating] = await Promise.all([
-      prisma.post.count({ where: { userId: user.id, status: PostStatus.Completed } }),
-      prisma.post.count({ where: { userId: user.id, status: PostStatus.Cancelled } }),
-      getClientRating(user.id),
-    ])
-
-    const completedWithApps = await prisma.post.findMany({
-      where: { userId: user.id, status: PostStatus.Completed },
-      include: {
-        applications: {
-          where: { status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
-          include: { review: { select: { id: true } } },
-        },
-      },
-    })
-
-    const unreviewedJobs = completedWithApps.filter(
-      (p) => p.applications.some((a) => !a.review)
-    ).length
-
-    res.json({ completedPosts, cancelledPosts, unreviewedJobs, clientRating: rating })
+    const stats = await getClientStats(user.id)
+    res.json(stats)
   } catch (err) {
     next(err)
   }
