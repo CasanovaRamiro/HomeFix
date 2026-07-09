@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
   Mail,
@@ -36,8 +36,10 @@ export default function Login() {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSuccess, setResendSuccess] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const googleUnregistered = searchParams.get('google') === 'unregistered'
+  const registrationRoleWarning = (location.state as { roleWarning?: string } | null)?.roleWarning
 
   const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value })
@@ -109,6 +111,11 @@ export default function Login() {
               <p>Ingresa tus credenciales para acceder a tu cuenta</p>
             </div>
 
+            {registrationRoleWarning != null && registrationRoleWarning !== '' && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> <span>{registrationRoleWarning}</span>
+              </div>
+            )}
             {error && (
               <div className="au-error"><AlertCircle /> {error}</div>
             )}

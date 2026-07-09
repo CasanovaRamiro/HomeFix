@@ -18,6 +18,7 @@ type RegisterResponse = {
   userId: string
   email: string
   emailVerified: boolean
+  roleAssigned: boolean
   message: string
 }
 
@@ -49,6 +50,8 @@ export default function RegisterWorker() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [roleWarning, setRoleWarning] = useState('')
+  const [kycStartFailed, setKycStartFailed] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({
     name: '',
@@ -106,7 +109,7 @@ export default function RegisterWorker() {
   const handleFinalSubmit = async () => {
     try {
       setIsSubmitting(true)
-      await api.post<RegisterResponse>('/auth/register/worker', {
+      const { data } = await api.post<RegisterResponse>('/auth/register/worker', {
         name: form.name,
         lastName: form.lastName,
         email: form.email,
@@ -114,6 +117,7 @@ export default function RegisterWorker() {
         phone: form.phone || undefined,
         categories: selected,
       })
+      if (!data.roleAssigned) setRoleWarning(data.message)
 
       if (kycMethod === 'automatic') {
         try {
@@ -131,6 +135,10 @@ export default function RegisterWorker() {
           setErrors({})
           return
         } catch {
+          // Registration succeeded but the automatic login/KYC-start chain
+          // failed (e.g. Didit unavailable). Tell the user instead of
+          // silently showing the same screen as a full success.
+          setKycStartFailed(true)
           setSubmitted(true)
         }
       } else {
@@ -201,15 +209,30 @@ export default function RegisterWorker() {
               </p>
               <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
+              {roleWarning && (
+                <div className="mt-4 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[12px] text-left">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /> {roleWarning}
+                </div>
+              )}
+
+              {kycStartFailed && (
+                <div className="mt-4 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[12px] text-left">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  No pudimos iniciar la verificación automática de identidad en este momento. Tu cuenta ya está creada: iniciá sesión más tarde para reintentarlo.
+                </div>
+              )}
+
               {/* KYC next step */}
               <div className="mt-6 flex gap-3 text-left bg-slate-900/5 border border-slate-900/10 rounded-xl p-4">
                 <Shield className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-medium text-slate-900">Después de verificar</p>
                   <p className="text-slate-500 mt-1">
-                    {kycMethod === 'automatic'
+                    {kycMethod === 'automatic' && !kycStartFailed
                       ? 'Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.'
-                      : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
+                      : kycMethod === 'automatic'
+                        ? 'Vas a poder iniciar la verificación con DNI y selfie desde tu cuenta cuando quieras.'
+                        : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
                   </p>
                 </div>
               </div>
@@ -513,11 +536,17 @@ export default function RegisterWorker() {
                     onClick={async () => {
                       try {
                         setIsSubmitting(true)
-                        await api.post<RegisterResponse>('/auth/register/worker', {
+                        const { data } = await api.post<RegisterResponse>('/auth/register/worker', {
                           name: form.name, lastName: form.lastName, email: form.email,
                           password: form.password, phone: form.phone || undefined, categories: selected,
                         })
-                        navigate('/login', { state: { registered: true, email: form.email } })
+                        navigate('/login', {
+                          state: {
+                            registered: true,
+                            email: form.email,
+                            roleWarning: data.roleAssigned ? undefined : data.message,
+                          },
+                        })
                       } catch (err) {
                         const axiosErr = err as { response?: { data?: { error?: string } } }
                         setErrors({ email: axiosErr.response?.data?.error ?? 'No se pudo completar el registro' })
