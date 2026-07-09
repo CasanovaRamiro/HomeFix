@@ -57,6 +57,8 @@ export interface Worker {
   emergenciesEnabled: boolean
   certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
   gallery: { id: string; imageUrl: string; caption: string | null }[]
+  location: string | null
+  isVerified: boolean
 }
 
 export interface WorkerUpdateData {

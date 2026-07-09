@@ -17,6 +17,10 @@ const workerFields = {
   gallery: true,
   emergenciesEnabled: true,
   createdAt: true,
+  kycStatus: true,
+  address: {
+    select: { street: true, number: true, city: true, state: true },
+  },
   categories: {
     select: {
       category: {

@@ -3,7 +3,7 @@ import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/api'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ArrowLeft, Star, Briefcase, XCircle, Flag } from 'lucide-react'
+import { ArrowLeft, Star, Briefcase, XCircle, Flag, CheckCircle2 } from 'lucide-react'
 import WorkerReviews from '../components/worker/WorkerReviews'
 
 export default function PublicWorkerProfile() {
@@ -119,7 +119,20 @@ export default function PublicWorkerProfile() {
                 background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
                 padding: 24,
               }}>
-                <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>{worker.name}</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>{worker.name}</h1>
+                  {worker.isVerified && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      background: 'rgba(16, 185, 129, 0.2)', color: '#34D399',
+                      fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                    }}>
+                      <CheckCircle2 size={13} />
+                      Verificado
+                    </span>
+                  )}
+                </div>
                 <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: '2px 0 0' }}>
                   {categoryNames.join(' · ')}
                 </p>
@@ -193,7 +206,20 @@ export default function PublicWorkerProfile() {
             {/* Desktop header */}
             {!isMobile && (
               <div style={{ marginBottom: 8 }}>
-                <h1 style={{ fontSize: 28, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{worker.name}</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <h1 style={{ fontSize: 28, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{worker.name}</h1>
+                  {worker.isVerified && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      background: '#ECFDF5', color: '#059669',
+                      fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                      border: '1px solid #A7F3D0',
+                    }}>
+                      <CheckCircle2 size={13} />
+                      Verificado
+                    </span>
+                  )}
+                </div>
                 <p style={{ color: '#6B7280', fontSize: 15, margin: '0 0 6px' }}>{categoryNames.join(' · ')}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Star size={18} color="#F59E0B" fill="#F59E0B" />
@@ -301,7 +327,7 @@ export default function PublicWorkerProfile() {
                     { label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
                     { label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
                     { label: 'Reportes', value: stats ? String(stats.reports) : '—' },
-                    { label: 'Ubicación', value: '—' },
+                    { label: 'Ubicación', value: worker.location ?? '—' },
                     { label: 'Miembro desde', value: memberSince },
                   ].map(({ label, value }) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>

@@ -12,6 +12,8 @@ export interface DomainWorker {
   certificates: { id: string; title: string; issuer: string | null; imageUrl: string }[]
   gallery: { id: string; imageUrl: string; caption: string | null }[]
   emergenciesEnabled: boolean
+  location: string | null
+  isVerified: boolean
 }
 
 export interface UpdateWorkerInput {
