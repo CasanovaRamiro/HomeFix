@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install into the image; source is bind-mounted at runtime and node_modules kept
 # in an anonymous volume so the host's copy doesn't overwrite the container's.
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 RUN pnpm install --no-frozen-lockfile
 
 EXPOSE 5173

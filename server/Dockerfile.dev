@@ -9,7 +9,7 @@ WORKDIR /app
 # Copy manifest + prisma schema first so `pnpm install` (postinstall: prisma generate) works,
 # then install into the image. The source is bind-mounted at runtime; node_modules stays
 # in an anonymous volume so the container's install isn't clobbered by the host's.
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 COPY prisma ./prisma
 RUN pnpm install --no-frozen-lockfile
 
