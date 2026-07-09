@@ -21,7 +21,8 @@
     "test:watch": "vitest",
     "test:coverage:service": "vitest run --coverage test/service",
     "test:coverage:data": "vitest run --coverage test/data",
-    "test:coverage:routes": "vitest run --coverage test/routes"
+    "test:coverage:routes": "vitest run --coverage test/routes",
+    "test:lint:semantics": "node scripts/analyze-test-semantics.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
