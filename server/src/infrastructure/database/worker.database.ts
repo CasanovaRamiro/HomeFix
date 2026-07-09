@@ -12,6 +12,7 @@ const workerFields = {
   bio: true,
   role: true,
   photo: true,
+  matriculaUrl: true,
   availability: true,
   certificates: true,
   gallery: true,

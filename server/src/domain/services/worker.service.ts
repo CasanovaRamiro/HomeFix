@@ -48,10 +48,13 @@ export const getWorkerStats = async (id: string): Promise<WorkerStats> => {
 }
 
 export const updateWorkerProfile = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
-  if (input.photo !== undefined) {
+  if (input.photo !== undefined || input.matriculaUrl !== undefined) {
     const current = await findWorkerById(id)
-    if (current?.photo && current.photo !== input.photo && CLOUDINARY_URL_RE.test(current.photo)) {
+    if (current?.photo && input.photo !== undefined && current.photo !== input.photo && CLOUDINARY_URL_RE.test(current.photo)) {
       await deleteImage(current.photo).catch(() => {})
+    }
+    if (current?.matriculaUrl && input.matriculaUrl !== undefined && current.matriculaUrl !== input.matriculaUrl && CLOUDINARY_URL_RE.test(current.matriculaUrl)) {
+      await deleteImage(current.matriculaUrl).catch(() => {})
     }
   }
   logger.info({ workerId: id, action: 'worker.profileUpdated' }, 'Worker profile updated')

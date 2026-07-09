@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, type Worker, type WorkerReview } from '../services/api'
+import { getWorker, updateWorkerProfile, uploadImages, getWorkerReviews, downloadMatricula, type Worker, type WorkerReview } from '../services/api'
 import { useCategories } from '../hooks/useCategories'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth, emitAuthChange } from '../hooks/useAuth'
@@ -47,6 +47,8 @@ export default function WorkerProfile() {
   const [galFiles, setGalFiles] = useState<File[]>([])
   const [galPreviews, setGalPreviews] = useState<string[]>([])
   const [galSaving, setGalSaving] = useState(false)
+  const [matriculaFile, setMatriculaFile] = useState<File | null>(null)
+  const [matriculaSaving, setMatriculaSaving] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -188,6 +190,56 @@ export default function WorkerProfile() {
       const updated = await updateWorkerProfile(worker.id, { gallery: worker.gallery.filter((g) => g.id !== imageId) })
       setWorker(updated)
     } catch { setError('Error al eliminar imagen') }
+  }
+
+  const handleMatriculaFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type === 'application/pdf') {
+      setMatriculaFile(file)
+    }
+    e.target.value = ''
+  }
+
+  const uploadMatricula = async () => {
+    if (!matriculaFile || !worker) return
+    setMatriculaSaving(true)
+    try {
+      const urls = await uploadImages([matriculaFile])
+      const updated = await updateWorkerProfile(worker.id, { matriculaUrl: urls[0] })
+      setWorker(updated)
+      setMatriculaFile(null)
+    } catch {
+      setError('Error al subir matrícula')
+    } finally {
+      setMatriculaSaving(false)
+    }
+  }
+
+  const removeMatricula = async () => {
+    if (!worker) return
+    try {
+      const updated = await updateWorkerProfile(worker.id, { matriculaUrl: null })
+      setWorker(updated)
+    } catch {
+      setError('Error al eliminar matrícula')
+    }
+  }
+
+  const handleDownloadMatricula = async () => {
+    if (!worker?.matriculaUrl) return
+    try {
+      const blob = await downloadMatricula(worker.matriculaUrl)
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = 'matricula.pdf'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      setError('Error al descargar matrícula')
+    }
   }
 
   const toggleCategory = (catId: string) => {
@@ -519,20 +571,80 @@ export default function WorkerProfile() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F9FAFB', borderRadius: 12 }}>
                     <span style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>Matrícula</span>
-                    <button
-                      type="button"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        background: '#10B981', border: 'none',
-                        color: '#fff', fontSize: 13, fontWeight: 600,
-                        padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
-                        minWidth: 160,
-                      }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
-                    >
-                      Cargar Matrícula
-                    </button>
+                    {worker.matriculaUrl ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button
+                          type="button"
+                           onClick={handleDownloadMatricula}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            background: '#EFF6FF', border: '1px solid #BFDBFE',
+                            color: '#2563EB', fontSize: 13, fontWeight: 600,
+                            padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Descargar PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeMatricula}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: '#FEE2E2', border: 'none',
+                            color: '#DC2626', fontSize: 13, fontWeight: 600,
+                            padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    ) : matriculaFile ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: '#6B7280' }}>{matriculaFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={uploadMatricula}
+                          disabled={matriculaSaving}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            background: '#10B981', border: 'none',
+                            color: '#fff', fontSize: 13, fontWeight: 600,
+                            padding: '9px 16px', borderRadius: 10,
+                            cursor: matriculaSaving ? 'not-allowed' : 'pointer',
+                            opacity: matriculaSaving ? 0.6 : 1,
+                          }}
+                        >
+                          {matriculaSaving ? 'Subiendo...' : 'Subir'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMatriculaFile(null)}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: '#F3F4F6', border: 'none',
+                            color: '#374151', fontSize: 13, fontWeight: 600,
+                            padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          background: '#10B981', border: 'none',
+                          color: '#fff', fontSize: 13, fontWeight: 600,
+                          padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
+                          minWidth: 160,
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
+                      >
+                        Cargar Matrícula
+                        <input type="file" accept="application/pdf" onChange={handleMatriculaFile} style={{ display: 'none' }} />
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
