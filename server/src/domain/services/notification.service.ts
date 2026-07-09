@@ -1,6 +1,6 @@
 import type { NotificationMessage, NotificationProvider } from '../types/notification.types.js'
 import { findUserById } from '../../infrastructure/database/user.database.js'
-import prisma from '../../lib/prisma.js'
+import { clearBotLink, findEmergencyWorkers } from '../../infrastructure/database/bot.database.js'
 import { env } from '../../lib/envConfig.js'
 import { logger } from '../../lib/logger.js'
 
@@ -66,7 +66,7 @@ export const notifyUser = async (
 
   if (!ok && provider.name === 'telegram') {
     logger.warn({ userId, event, action: 'notification.sendFailed' }, 'Failed to send notification, clearing chat ID')
-    await clearTelegramChatId(userId)
+    await clearBotLink(userId)
   }
 }
 
@@ -77,14 +77,7 @@ export const broadcastEmergency = async (
   postDescription: string,
   categoryId: string,
 ): Promise<void> => {
-  const workers = await prisma.user.findMany({
-    where: {
-      emergenciesEnabled: true,
-      telegramChatId: { not: null },
-      categories: { some: { categoryId } },
-    },
-    select: { id: true, telegramChatId: true },
-  })
+  const workers = await findEmergencyWorkers(categoryId)
 
   logger.info({ postId, categoryId, recipientCount: workers.length, action: 'notification.emergencyBroadcast' }, `Broadcasting emergency post to ${workers.length} workers`)
 
@@ -98,11 +91,6 @@ export const broadcastEmergency = async (
   }
 
   for (const worker of workers) {
-    if (!worker.telegramChatId) continue
-    await provider.send(worker.telegramChatId, message)
+    await provider.send(worker.chatId, message)
   }
-}
-
-const clearTelegramChatId = async (userId: string) => {
-  await prisma.user.update({ where: { id: userId }, data: { telegramChatId: null, telegramLinkedAt: null } })
 }

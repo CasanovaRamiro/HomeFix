@@ -25,10 +25,11 @@ import workerDashboardRoutes from './presentation/routes/workerDashboard.routes.
 import reviewRoutes from './presentation/routes/review.routes.js'
 import kycRoutes, { confirmRouter, webhookRouter } from './presentation/routes/kyc.routes.js'
 import uploadRoutes from './presentation/routes/upload.routes.js'
-import telegramRoutes from './presentation/routes/telegram.routes.js'
+import botRoutes from './presentation/routes/bot.routes.js'
 import clientRoutes from './presentation/routes/client.routes.js'
 import clientProfileRoutes from './presentation/routes/clientProfile.routes.js'
-import { startBot } from './presentation/telegram/bot.js'
+import { launchBot } from './infrastructure/providers/telegram.provider.js'
+import { registerTelegramHandlers } from './presentation/bot.js'
 
 export const app = express()
 const PORT = env.PORT
@@ -106,7 +107,7 @@ app.use('/worker-dashboard', jwtCheck, workerDashboardRoutes)
 app.use('/reviews', jwtCheck, reviewRoutes)
 app.use('/kyc', webhookRouter)
 app.use('/upload', jwtCheck, uploadRoutes)
-app.use('/telegram', telegramRoutes)
+app.use('/telegram', botRoutes)
 app.use('/client', jwtCheck, clientRoutes)
 app.use('/client-profiles', jwtCheck, clientProfileRoutes)
 app.use('/kyc', confirmRouter)
@@ -117,6 +118,6 @@ if (env.NODE_ENV !== 'test') {
   await assertMigrationsApplied()
   app.listen(PORT, () => {
     logger.info({ port: PORT }, `Server running on port ${PORT}`)
-    if (env.TELEGRAM_BOT_TOKEN) startBot()
+    if (env.TELEGRAM_BOT_TOKEN) launchBot(registerTelegramHandlers)
   })
 }
