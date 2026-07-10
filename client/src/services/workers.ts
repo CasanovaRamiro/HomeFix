@@ -38,6 +38,7 @@ export interface WorkerUpdateData {
 
 export interface WorkerReview {
   id: string
+  workerId: string
   rating: number
   description: string
   mediaUrls: string | null

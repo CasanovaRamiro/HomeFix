@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Star, X } from 'lucide-react'
+import { Star, X, Flag } from 'lucide-react'
 import type { WorkerReview } from '../../services/workers'
 import ImageModal from '../ui/ImageModal'
+import ReportModal from '../report/ReportModal'
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-AR', {
@@ -28,12 +29,14 @@ interface Props {
   open: boolean
   review: WorkerReview | null
   workerName: string
+  reviewType?: 'worker_review' | 'client_review'
   loading?: boolean
   onClose: () => void
 }
 
-export default function ViewReviewModal({ open, review, workerName, loading, onClose }: Props) {
+export default function ViewReviewModal({ open, review, workerName, reviewType = 'worker_review', loading, onClose }: Props) {
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -122,9 +125,22 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
             </div>
 
             <button
+              onClick={() => setShowReportModal(true)}
+              style={{
+                marginTop: 16, width: '100%', padding: '10px 0', borderRadius: 10,
+                border: '1px solid #E2E8F0', background: '#fff', color: '#64748B',
+                fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <Flag size={14} />
+              Reportar esta reseña
+            </button>
+
+            <button
               onClick={onClose}
               style={{
-                marginTop: 20, width: '100%', padding: '12px 0', borderRadius: 10,
+                marginTop: 8, width: '100%', padding: '12px 0', borderRadius: 10,
                 border: 'none', background: '#10B981', color: '#fff',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}
@@ -142,6 +158,16 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
           onClose={() => setSelectedImg(null)}
           onPrev={selectedImg > 0 ? () => setSelectedImg(selectedImg - 1) : undefined}
           onNext={selectedImg < imageUrls.length - 1 ? () => setSelectedImg(selectedImg + 1) : undefined}
+        />
+      )}
+
+      {showReportModal && review && (
+        <ReportModal
+          open={showReportModal}
+          targetType={reviewType}
+          targetId={review.id}
+          targetName={review.reviewer.name}
+          onClose={() => setShowReportModal(false)}
         />
       )}
     </div>

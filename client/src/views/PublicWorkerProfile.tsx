@@ -3,6 +3,7 @@ import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/workers'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useAuth } from '../hooks/useAuth'
 import { ArrowLeft, Star, Briefcase, XCircle, Flag, CheckCircle2 } from 'lucide-react'
 import WorkerReviews from '../components/worker/WorkerReviews'
 
@@ -10,6 +11,7 @@ export default function PublicWorkerProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { user } = useAuth()
 
   const [worker, setWorker] = useState<Worker | null>(null)
   const [reviews, setReviews] = useState<WorkerReview[]>([])
@@ -297,7 +299,7 @@ export default function PublicWorkerProfile() {
               </div>
             )}
 
-            <WorkerReviews reviews={reviews} loading={loading} workerName={worker.name} />
+            <WorkerReviews reviews={reviews} loading={loading} workerName={worker.name} currentUserId={user?.id} />
           </div>
 
           {/* Right sidebar */}
