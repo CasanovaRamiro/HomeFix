@@ -10,6 +10,7 @@ export interface CreateReviewInput {
 
 export interface DomainClientReview {
   id: string
+  clientId: string
   rating: number
   description: string | null
   createdAt: Date

@@ -21,6 +21,7 @@ const userId = 'user-uuid-1'
 
 const mockClientReview: DomainClientReview = {
   id: 'client-review-1',
+  clientId: userId,
   rating: 4,
   description: 'Great client',
   createdAt: new Date('2026-06-01'),
@@ -30,6 +31,7 @@ const mockClientReview: DomainClientReview = {
 
 const mockWorkerReview: DomainWorkerReview = {
   id: 'worker-review-1',
+  workerId: userId,
   rating: 5,
   description: 'Excellent work',
   mediaUrls: null,

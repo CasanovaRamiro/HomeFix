@@ -77,6 +77,7 @@ const mockAcceptedApp = {
 
 const mockReview: DomainWorkerReview = {
   id: 'review-uuid-1',
+  workerId: 'worker-uuid-1',
   rating: 5,
   description: 'Great work!',
   mediaUrls: null,
@@ -288,6 +289,7 @@ const mockApplication = {
 
 const mockClientReview: DomainClientReview = {
   id: 'review-uuid-1',
+  clientId: clientId2,
   rating: 4,
   description: 'Great client',
   createdAt: new Date(),
@@ -399,6 +401,7 @@ describe('findWorkerReviewByApplication', () => {
   }
   const mockReview: DomainWorkerReview = {
     id: 'review-uuid-1',
+    workerId: 'worker-uuid-1',
     rating: 5,
     description: 'Great work!',
     mediaUrls: null,

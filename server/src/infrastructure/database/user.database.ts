@@ -28,6 +28,7 @@ export const findAll = (): Promise<DomainUser[]> =>
 
 const clientReviewFields = {
   id: true,
+  clientId: true,
   rating: true,
   description: true,
   createdAt: true,
@@ -39,6 +40,7 @@ type ClientReviewResult = Prisma.ClientReviewGetPayload<{ select: typeof clientR
 
 const toDomainClientReview = (r: ClientReviewResult): DomainClientReview => ({
   id: r.id,
+  clientId: r.clientId,
   rating: r.rating,
   description: r.description,
   createdAt: r.createdAt,
@@ -48,6 +50,7 @@ const toDomainClientReview = (r: ClientReviewResult): DomainClientReview => ({
 
 const workerReviewFields = {
   id: true,
+  workerId: true,
   rating: true,
   description: true,
   mediaUrls: true,
@@ -65,6 +68,7 @@ type WorkerReviewResult = Prisma.WorkerReviewGetPayload<{ select: typeof workerR
 
 const toDomainWorkerReview = (r: WorkerReviewResult): DomainWorkerReview => ({
   id: r.id,
+  workerId: r.workerId,
   rating: r.rating,
   description: r.description,
   mediaUrls: r.mediaUrls,

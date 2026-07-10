@@ -15,6 +15,10 @@ vi.mock('../../src/infrastructure/database/workerDashboard.database.js', () => (
   countDismissedJobs: vi.fn(),
 }))
 
+vi.mock('../../src/infrastructure/database/report.database.js', () => ({
+  countReportsByWorker: vi.fn(),
+}))
+
 vi.mock('../../src/domain/services/user.service.js', () => ({
   getUserRating: vi.fn(),
 }))
@@ -27,6 +31,7 @@ import * as workerData from '../../src/infrastructure/database/worker.database.j
 import * as reviewData from '../../src/infrastructure/database/review.database.js'
 import * as userService from '../../src/domain/services/user.service.js'
 import * as workerDashboardData from '../../src/infrastructure/database/workerDashboard.database.js'
+import * as reportData from '../../src/infrastructure/database/report.database.js'
 import * as cloudinary from '../../src/infrastructure/providers/cloudinary.provider.js'
 import { listWorkers, getWorker, getWorkerStats, updateWorkerProfile, getWorkerReviews } from '../../src/domain/services/worker.service.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
@@ -167,6 +172,7 @@ describe('worker.service - getWorkerReviews', () => {
   const mockReviews = [
     {
       id: 'review-1',
+      workerId: 'uuid-worker-1',
       rating: 5,
       description: 'Excellent',
       mediaUrls: null,
@@ -201,12 +207,13 @@ describe('worker.service - getWorkerStats', () => {
     vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 10, averageRating: 4.5 })
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(5)
     vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(2)
+    vi.mocked(reportData.countReportsByWorker).mockResolvedValue(3)
 
     const result = await getWorkerStats('uuid-worker-1')
 
     expect(result.totalJobs).toBe(5)
     expect(result.cancelledJobs).toBe(2)
-    expect(result.reports).toBe(0)
+    expect(result.reports).toBe(3)
     expect(result.avgRating).toBe(4.5)
     expect(result.reviewCount).toBe(10)
   })
@@ -222,6 +229,7 @@ describe('worker.service - getWorkerStats', () => {
     vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
     vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(0)
+    vi.mocked(reportData.countReportsByWorker).mockResolvedValue(0)
 
     const result = await getWorkerStats('uuid-worker-1')
 
@@ -235,6 +243,7 @@ describe('worker.service - getWorkerStats', () => {
     vi.mocked(userService.getUserRating).mockResolvedValue({ reviewCount: 0, averageRating: 0 })
     vi.mocked(workerDashboardData.countCompletedJobs).mockResolvedValue(0)
     vi.mocked(workerDashboardData.countDismissedJobs).mockResolvedValue(0)
+    vi.mocked(reportData.countReportsByWorker).mockResolvedValue(0)
 
     await getWorkerStats('uuid-worker-1')
 

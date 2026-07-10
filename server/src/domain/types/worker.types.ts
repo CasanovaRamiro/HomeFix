@@ -32,6 +32,7 @@ export interface UpdateWorkerInput {
 
 export interface DomainWorkerReview {
   id: string
+  workerId: string
   rating: number
   description: string | null
   mediaUrls: string | null

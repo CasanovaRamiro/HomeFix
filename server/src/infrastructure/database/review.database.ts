@@ -7,6 +7,7 @@ import type { DomainClientReview } from '../../domain/types/review.types.js'
 
 const reviewFields = {
   id: true,
+  workerId: true,
   rating: true,
   description: true,
   mediaUrls: true,
@@ -56,6 +57,14 @@ export const findWorkerReviewByApplicationId = async (applicationId: string): Pr
   return raw ? toDomainWorkerReview(raw) : null
 }
 
+export const findWorkerReviewById = async (id: string): Promise<DomainWorkerReview | null> => {
+  const raw = await prisma.workerReview.findUnique({
+    where: { id },
+    select: reviewFields,
+  })
+  return raw ? toDomainWorkerReview(raw) : null
+}
+
 export const findReviewsByWorkerId = async (workerId: string): Promise<DomainWorkerReview[]> => {
   const raw = await prisma.workerReview.findMany({
     where: { workerId },
@@ -67,6 +76,7 @@ export const findReviewsByWorkerId = async (workerId: string): Promise<DomainWor
 
 const clientReviewFields = {
   id: true,
+  clientId: true,
   rating: true,
   description: true,
   createdAt: true,
@@ -105,6 +115,14 @@ export const createClientReview = async (data: CreateClientReviewData): Promise<
 export const findClientReviewByApplicationId = async (applicationId: string): Promise<DomainClientReview | null> => {
   const raw = await prisma.clientReview.findUnique({
     where: { applicationId },
+    select: clientReviewFields,
+  })
+  return raw ? toDomainClientReview(raw) : null
+}
+
+export const findClientReviewById = async (id: string): Promise<DomainClientReview | null> => {
+  const raw = await prisma.clientReview.findUnique({
+    where: { id },
     select: clientReviewFields,
   })
   return raw ? toDomainClientReview(raw) : null
