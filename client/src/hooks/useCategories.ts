@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { fetchCategories, type Category } from '../services/categories'
 
-export interface Category {
-  id: string
-  name: string
-}
+export type { Category }
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<Category[]>('/categories')
+    fetchCategories()
       .then(({ data }) => { if (Array.isArray(data)) setCategories(data) })
       .catch(() => setCategories([]))
       .finally(() => setLoading(false))

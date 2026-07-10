@@ -1,11 +1,8 @@
 import { Router } from 'express'
-import { jwtCheck } from '../middleware/auth0.middleware.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import { getWorkerDashboard } from '../../domain/services/workerDashboard.service.js'
 
 const router = Router()
-
-router.use(jwtCheck)
 
 router.get('/', async (req, res, next) => {
   try {

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Star, ChevronDown } from 'lucide-react'
-import type { WorkerReview } from '../../services/api'
+import type { WorkerReview } from '../../services/workers'
 import ViewReviewModal from '../review/ViewReviewModal'
 
 interface Props {

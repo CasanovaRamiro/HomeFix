@@ -4,7 +4,7 @@ import { Gavel, ArrowLeft, ArrowUp, ArrowDown, Clock, DollarSign, Star, Calendar
 import { useTheme } from '../hooks/useTheme'
 import { useCategories } from '../hooks/useCategories'
 import { createBidding } from '../services/posts'
-import { uploadImages } from '../services/api'
+import { uploadImages } from '../services/upload'
 import SuccessScreen from '../components/post/SuccessScreen'
 import SubmitButton from '../components/ui/SubmitButton'
 import AddressAutocomplete from '../components/ui/AddressAutocomplete'

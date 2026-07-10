@@ -4,7 +4,7 @@ import { BadgeCheck, CheckCircle, Loader2, Star } from 'lucide-react'
 import FileUpload from '../components/ui/FileUpload'
 import ReviewStarRating from '../components/review/ReviewStarRating'
 import { useLeaveReview } from '../hooks/useLeaveReview'
-import { getWorker } from '../services/api'
+import { getWorker } from '../services/workers'
 
 const MAX_CHARS = 500
 

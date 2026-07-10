@@ -6,21 +6,13 @@ import {
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
   CreditCard, MailCheck,
 } from 'lucide-react'
-import api, { getErrorMessage } from '../services/api'
+import { getErrorMessage } from '../services/api'
+import { registerWorker, login } from '../services/auth'
 import { useCategories } from '../hooks/useCategories'
 import { getCategoryMeta } from './categoryMeta'
 import { startKycVerification, confirmKycSession } from '../services/kyc'
 import DiditVerificationModal from '../components/DiditVerificationModal'
 import { emitAuthChange } from '../hooks/useAuth'
-import { UserRole } from '../types/user'
-
-type RegisterResponse = {
-  userId: string
-  email: string
-  emailVerified: boolean
-  roleAssigned: boolean
-  message: string
-}
 
 // min 8 chars, 1 upper, 1 lower, 1 number, 1 symbol
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
@@ -110,7 +102,7 @@ export default function RegisterWorker() {
   const handleFinalSubmit = async () => {
     try {
       setIsSubmitting(true)
-      const { data } = await api.post<RegisterResponse>('/auth/register/worker', {
+      const data = await registerWorker({
         name: form.name,
         lastName: form.lastName,
         email: form.email,
@@ -122,10 +114,7 @@ export default function RegisterWorker() {
 
       if (kycMethod === 'automatic') {
         try {
-          const { data: loginData } = await api.post<{
-            accessToken: string
-            user: { id: string; name: string; email: string; photo: string | null; role: UserRole }
-          }>('/auth/login', { email: form.email, password: form.password })
+          const loginData = await login({ email: form.email, password: form.password })
           localStorage.setItem('token', loginData.accessToken)
           localStorage.setItem('user', JSON.stringify({ id: loginData.user.id, name: loginData.user.name, email: loginData.user.email, role: loginData.user.role, photo: loginData.user.photo ?? null }))
           emitAuthChange()
@@ -545,7 +534,7 @@ export default function RegisterWorker() {
                     onClick={async () => {
                       try {
                         setIsSubmitting(true)
-                        const { data } = await api.post<RegisterResponse>('/auth/register/worker', {
+                        const data = await registerWorker({
                           name: form.name, lastName: form.lastName, email: form.email,
                           password: form.password, phone: form.phone || undefined, categories: selected,
                         })

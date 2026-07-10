@@ -1,4 +1,4 @@
-import type { ApplicationDTO } from './posts'
+import type { ApplicationDTO } from './applications'
 
 // ─── Factores de ponderación según posición de prioridad ───
 // El cliente define un orden de prioridad (weight) para 4 criterios.

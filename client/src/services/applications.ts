@@ -1,5 +1,4 @@
 import api from './api'
-import type { ClientReviewInput } from '../types/clientReview'
 
 export interface ApplicationResponse {
   id: string
@@ -79,9 +78,6 @@ export const generateStartToken = (applicationId: string): Promise<StartTokenRes
 export const validateStartToken = (applicationId: string, token: string): Promise<{ validatedAt: string }> =>
   api.post<{ validatedAt: string }>(`/applications/${applicationId}/validate-start-token`, { token }).then(r => r.data)
 
-export const createClientReview = (data: ClientReviewInput) =>
-  api.post('/reviews/client', data)
-
 export interface ApplyToBiddingInput {
   postId: string
   offeredCost: number
@@ -92,3 +88,40 @@ export interface ApplyToBiddingInput {
 
 export const applyToBidding = (data: ApplyToBiddingInput) =>
   api.post('/applications/bidding', data)
+
+export interface ApplicationDTO {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhoto: string | null
+  workerPhone: string | null
+  workerRating: number
+  workerReviewCount: number
+  status: string
+  message: string | null
+  offeredCost: number | null
+  offeredDuration: number | null
+  offeredStartDate: string | null
+  createdAt: string
+}
+
+export const fetchBiddingApplications = (biddingId: string) =>
+  api.get<ApplicationDTO[]>(`/applications/bidding/${biddingId}`)
+
+export interface MyApplication {
+  id: string
+  postId: string
+  title: string
+  client: string
+  location: string
+  appliedAt: string
+  serviceDate: string
+  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
+  clientPhone: string | null
+  availableTimeFrom: string | null
+  availableTimeTo: string | null
+  isBidding: boolean
+}
+
+export const fetchMyApplications = () =>
+  api.get<MyApplication[]>('/applications/my-applications')

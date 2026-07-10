@@ -1,8 +1,8 @@
 import { type JSX, useState, useEffect } from 'react'
 import { Send, CheckCircle, XCircle, Copy, ExternalLink, Loader2 } from 'lucide-react'
-import { telegramLink, telegramStatus, telegramUnlink } from '../../services/api'
+import { telegramLink, telegramStatus, telegramUnlink } from '../../services/telegram'
 
-export default function TelegramLinkCard(): JSX.Element {
+export default function TelegramLinkCard({ showUnlink = false }: { showUnlink?: boolean }): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'loading' | 'linked' | 'unlinked'>('idle')
   const [code, setCode] = useState<string | null>(null)
   const [deepLink, setDeepLink] = useState<string | null>(null)
@@ -94,14 +94,16 @@ export default function TelegramLinkCard(): JSX.Element {
           <p className="text-xs text-slate-500">
             Vinculado{linkedAt ? ` el ${new Date(linkedAt).toLocaleDateString()}` : ''}
           </p>
-          <button
-            onClick={handleUnlink}
-            disabled={busy}
-            className="flex items-center gap-1.5 text-xs font-semibold text-red-500 transition-colors hover:text-red-600"
-          >
-            {busy ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-            Desvincular
-          </button>
+          {showUnlink && (
+            <button
+              onClick={handleUnlink}
+              disabled={busy}
+              className="flex items-center gap-1.5 text-xs font-semibold text-red-500 transition-colors hover:text-red-600"
+            >
+              {busy ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+              Desvincular
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

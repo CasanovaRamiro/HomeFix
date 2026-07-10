@@ -232,3 +232,45 @@ describe('GET /workers/:id/stats', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('PATCH /workers/:id - matriculaUrl', () => {
+  it('updates matriculaUrl when the requester is the owner', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    const res = await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ matriculaUrl: 'https://res.cloudinary.com/demo/upload/matricula.pdf' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.matriculaUrl).toBe('https://res.cloudinary.com/demo/upload/matricula.pdf')
+  })
+
+  it('returns matriculaUrl as null when not set', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    const res = await request(app)
+      .get(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.matriculaUrl).toBeNull()
+  })
+
+  it('can clear matriculaUrl by sending null', async () => {
+    const worker = await makeWorker('test@test.com', 'Test')
+
+    await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ matriculaUrl: 'https://res.cloudinary.com/demo/upload/matricula.pdf' })
+
+    const res = await request(app)
+      .patch(`/workers/${worker.id}`)
+      .set('Authorization', 'Bearer test-auth0-token')
+      .send({ matriculaUrl: null })
+
+    expect(res.status).toBe(200)
+    expect(res.body.matriculaUrl).toBeNull()
+  })
+})

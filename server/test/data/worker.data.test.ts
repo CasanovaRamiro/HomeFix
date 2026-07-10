@@ -193,4 +193,31 @@ describe('updateWorker', () => {
 
     expect(updated.categories).toHaveLength(0)
   })
+
+  it('persists and returns matriculaUrl', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+    const matriculaUrl = 'https://res.cloudinary.com/demo/upload/matricula.pdf'
+
+    const updated = await updateWorker(worker.id, { matriculaUrl })
+
+    expect(updated.matriculaUrl).toBe(matriculaUrl)
+  })
+
+  it('returns matriculaUrl as null when not set', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana')
+
+    const found = await findWorkerById(worker.id)
+
+    expect(found!.matriculaUrl).toBeNull()
+  })
+
+  it('can clear matriculaUrl by setting it to null', async () => {
+    const worker = await makeWorker('ana@test.com', 'Ana', {
+      matriculaUrl: 'https://res.cloudinary.com/demo/upload/old.pdf',
+    })
+
+    const updated = await updateWorker(worker.id, { matriculaUrl: null })
+
+    expect(updated.matriculaUrl).toBeNull()
+  })
 })

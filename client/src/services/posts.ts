@@ -1,5 +1,5 @@
 import api from './api'
-import type { Post, CreateSubcontractInput, SubcontractDTO, AvailableSubcontractDTO, SubcontractDetailDTO } from '../types/post'
+import type { Post, PostStatus, CreateSubcontractInput, SubcontractDTO, AvailableSubcontractDTO, SubcontractDetailDTO } from '../types/post'
 
 export interface PaginatedPosts {
   data: Post[]
@@ -67,22 +67,6 @@ export const fetchSubcontractGroupDetail = (id: string) =>
 
 // --- Bidding types & services ---
 
-export interface ApplicationDTO {
-  id: string
-  workerId: string
-  workerName: string
-  workerPhoto: string | null
-  workerPhone: string | null
-  workerRating: number
-  workerReviewCount: number
-  status: string
-  message: string | null
-  offeredCost: number | null
-  offeredDuration: number | null
-  offeredStartDate: string | null
-  createdAt: string
-}
-
 export interface CreateBiddingInput {
   title: string
   description: string
@@ -101,14 +85,8 @@ export interface CreateBiddingInput {
 export const createBidding = (data: CreateBiddingInput) =>
   api.post<Post>('/posts/create-bidding', data)
 
-export const fetchClientBiddings = () =>
-  api.get<{ stats: { active: number; evaluating: number; completed: number }; biddings: Post[] }>('/client/biddings')
-
 export const fetchBiddingById = (id: string) =>
   api.get<Post>(`/posts/biddings/${id}`)
-
-export const fetchBiddingApplications = (biddingId: string) =>
-  api.get<ApplicationDTO[]>(`/applications/bidding/${biddingId}`)
 
 export const selectBiddingWinner = (biddingId: string, applicationId: string) =>
   api.post(`/posts/biddings/${biddingId}/select-winner`, { applicationId })
@@ -170,3 +148,63 @@ export interface UpdateSubcontractInput {
 
 export const updateSubcontract = (id: string, data: UpdateSubcontractInput) =>
   api.patch<SubcontractDetailDTO[]>(`/posts/subcontracts/group/${id}`, data)
+
+// --- User posts & post lifecycle ---
+
+export interface UserPost {
+  id: string
+  title: string
+  description: string
+  status: PostStatus
+  createdAt: string
+  address: string
+  startDate: string
+  endDate: string
+  categories: { id: string; name: string }[]
+  worker: { id: string; name: string } | null
+  applicantCount: number
+  hasReview: boolean
+  isEmergency: boolean
+  emergencyExpiresAt: string | null
+  isBidding: boolean
+}
+
+export const getUserPosts = (): Promise<UserPost[]> =>
+  api.post<UserPost[]>('/posts/user-posts').then((r) => r.data)
+
+export const pausePost = (id: string) => api.patch(`/posts/${id}/pause`)
+
+export const cancelPost = (id: string) => api.patch(`/posts/${id}/cancel`)
+
+export const closeBidding = (id: string) => api.post(`/posts/biddings/${id}/close`)
+
+export const completePost = (id: string) => api.patch(`/posts/${id}/complete`)
+
+export const reopenPost = (id: string) => api.patch(`/posts/${id}/reopen`)
+
+export const finalizePost = (id: string) => api.patch(`/posts/${id}/finalize`)
+
+export const markPostInProgress = (id: string) => api.patch(`/posts/${id}/mark-in-progress`)
+
+export const workerCompletePost = (id: string) => api.patch(`/posts/${id}/worker-complete`)
+
+export interface UpdatePostData {
+  title: string
+  categoryId: string
+  description: string
+  startDate: string
+  endDate: string
+  address: string
+}
+
+export const updatePost = (id: string, data: UpdatePostData) =>
+  api.patch(`/posts/${id}`, data)
+
+export const createEmergencyPost = (data: {
+  title: string
+  description: string
+  categoryId: string
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+}) => api.post('/posts/emergency/create', data)

@@ -6,10 +6,11 @@ import {
   ChevronRight, Shield, MessageSquare, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
-import api from '../services/api'
 import LandingFooter from '../components/landing/LandingFooter'
 import { fetchEmergencyPosts, searchPostsByLocation } from '../services/posts'
-import { applyToPost } from '../services/applications'
+import { applyToPost, fetchMyApplications, type MyApplication } from '../services/applications'
+import { updateUserEmergencyNotifications } from '../services/users'
+import { fetchWorkerDashboard, type DashboardProfile, type DashboardStats, type DashboardData } from '../services/workerDashboard'
 import type { Post } from '../types/post'
 import { useAuth } from '../hooks/useAuth'
 import { postToTrabajo } from '../lib/post'
@@ -21,35 +22,6 @@ import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface DashboardProfile {
-  id: string
-  name: string
-  surname: string
-  email: string
-  phone: string | null
-  bio: string | null
-  photo: string | null
-  createdAt: string
-  location: string | null
-  categories: { id: string; name: string }[]
-  emergenciesEnabled: boolean
-}
-
-interface DashboardStats {
-  totalJobs: number
-  reviewCount: number
-  avgRating: number
-  newJobs: number
-  pendingApplications: number
-  upcomingAppointments: number
-  responseRate: number
-}
-
-interface DashboardData {
-  profile: DashboardProfile
-  stats: DashboardStats
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getInitials(name: string, surname?: string): string {
@@ -60,7 +32,7 @@ function getInitials(name: string, surname?: string): string {
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
-function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfile; stats: DashboardStats; isVerified: boolean }) {
+function ProfileHeader({ profile, stats, isVerified, kycLoading }: { profile: DashboardProfile; stats: DashboardStats; isVerified: boolean; kycLoading: boolean }) {
   const navigate = useNavigate()
   const firstName = profile.name.split(' ')[0]
   const categoryText = profile.categories.length > 0
@@ -101,7 +73,14 @@ function ProfileHeader({ profile, stats, isVerified }: { profile: DashboardProfi
                 <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
                   Hola, {firstName}
                 </h1>
-                {isVerified ? (
+                {kycLoading ? (
+                  <span style={{
+                    display: 'inline-block',
+                    width: 130, height: 27, borderRadius: 20,
+                    background: 'rgba(255,255,255,0.08)',
+                    animation: 'wd-pulse 1.2s ease-in-out infinite',
+                  }} />
+                ) : isVerified ? (
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     background: 'rgba(16, 185, 129, 0.2)', color: '#34D399',
@@ -413,7 +392,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
 
   const loadAppliedIds = useCallback(async () => {
     try {
-      const res = await api.get<{ postId: string }[]>('/applications/my-applications')
+      const res = await fetchMyApplications()
       setAppliedIds(res.data.map((a) => a.postId))
     } catch {
       setAppliedIds([])
@@ -429,7 +408,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   const handleToggle = async () => {
     const newValue = !isActive
     try {
-      await api.patch(`/users/${workerId}/emergencies`, { enabled: newValue })
+      await updateUserEmergencyNotifications(workerId, newValue)
       setIsActive(newValue)
     } catch (error) {
       console.error('Error updating emergency notifications:', error)
@@ -640,24 +619,6 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
     </div>
   )
 }
-// ─── Application type (from /applications/my-applications) ───────────────────
-// ─── Application type (from /applications/my-applications) ───────────────────
-
-interface Application {
-  id: string
-  postId: string
-  title: string
-  client: string
-  location: string
-  appliedAt: string
-  serviceDate: string
-  status: 'Accepted' | 'Rejected' | 'Pending' | 'Completed'
-  clientPhone: string | null
-  availableTimeFrom: string | null
-  availableTimeTo: string | null
-  isBidding: boolean
-}
-
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
 
 const LOCATION_FILTER_KEY = 'homefix_dashboard_location_filter'
@@ -1044,7 +1005,7 @@ function AppStatusBadge({ status }: { status: string }) {
   )
 }
 
-function MisPostulacionesSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+function MisPostulacionesSection({ apps, loading }: { apps: MyApplication[]; loading: boolean }) {
   // Pending first, then Accepted by most recent appliedAt
   const sorted = [...apps]
     .filter((a) => a.status === 'Pending' || a.status === 'Accepted')
@@ -1154,7 +1115,7 @@ function getWeekDays(today: Date): Date[] {
   })
 }
 
-function ProximasCitasSection({ apps, loading }: { apps: Application[]; loading: boolean }) {
+function ProximasCitasSection({ apps, loading }: { apps: MyApplication[]; loading: boolean }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayYMD = toYMDLocal(today)
@@ -1314,9 +1275,10 @@ export default function WorkerDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [nearbyJobs, setNearbyJobs] = useState<Post[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
-  const [applications, setApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<MyApplication[]>([])
   const [appsLoading, setAppsLoading] = useState(true)
   const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const [kycLoading, setKycLoading] = useState(true)
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredLocationFilter)
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const jobsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1325,7 +1287,7 @@ export default function WorkerDashboard() {
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await api.get<DashboardData>('/worker-dashboard')
+      const res = await fetchWorkerDashboard()
       setData(res.data)
     } catch {
       setError('No se pudo cargar el dashboard')
@@ -1352,7 +1314,7 @@ export default function WorkerDashboard() {
 
   const fetchApplications = useCallback(async () => {
     try {
-      const res = await api.get<Application[]>('/applications/my-applications')
+      const res = await fetchMyApplications()
       setApplications(res.data)
     } catch {
       setApplications([])
@@ -1367,6 +1329,8 @@ export default function WorkerDashboard() {
       setKycStatus(status)
     } catch {
       // keep default NOT_STARTED
+    } finally {
+      setKycLoading(false)
     }
   }, [])
 
@@ -1460,7 +1424,7 @@ export default function WorkerDashboard() {
       fontFamily: "'Montserrat', system-ui, sans-serif",
       overflowX: 'hidden', width: '100%', maxWidth: '100%',
     }}>
-      <ProfileHeader profile={data.profile} stats={data.stats} isVerified={kycStatus === 'APPROVED'} />
+      <ProfileHeader profile={data.profile} stats={data.stats} isVerified={kycStatus === 'APPROVED'} kycLoading={kycLoading} />
       <MetricsStrip stats={data.stats} />
       <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
 
@@ -1479,6 +1443,7 @@ export default function WorkerDashboard() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes wd-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
         .wd-header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
         .wd-left-info { display: flex; align-items: center; gap: 20px; }
         .wd-action-buttons { display: flex; gap: 10px; flex-shrink: 0; }

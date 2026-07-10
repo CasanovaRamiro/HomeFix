@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getClientProfile, getClientReviews, type ClientProfile, type ClientReview } from '../services/api'
+import { getClientProfile, type ClientProfile } from '../services/clientProfiles'
+import { getClientReviews, type ClientReview } from '../services/users'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { ArrowLeft, Star, Briefcase, Calendar } from 'lucide-react'
 

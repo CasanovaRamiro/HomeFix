@@ -1,4 +1,4 @@
-import type { Worker } from '../../services/api'
+import type { Worker } from '../../services/workers'
 
 interface Props {
   worker: Worker

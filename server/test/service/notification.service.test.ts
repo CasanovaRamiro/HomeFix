@@ -1,15 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { notifyUser, broadcastEmergency } from '../../src/domain/services/notification.service.js'
 
-vi.mock('../../src/lib/prisma.js', () => ({
-  default: {
-    user: {
-      update: vi.fn().mockResolvedValue({}),
-      findMany: vi.fn(),
-    },
-  },
-}))
-
 let mockCorsOrigin = 'http://localhost:5173'
 vi.mock('../../src/lib/envConfig.js', () => ({
   env: {
@@ -21,7 +12,13 @@ vi.mock('../../src/infrastructure/database/user.database.js', () => ({
   findUserById: vi.fn(),
 }))
 
+vi.mock('../../src/infrastructure/database/bot.database.js', () => ({
+  clearBotLink: vi.fn().mockResolvedValue(undefined),
+  findEmergencyWorkers: vi.fn(),
+}))
+
 import * as userData from '../../src/infrastructure/database/user.database.js'
+import * as botData from '../../src/infrastructure/database/bot.database.js'
 
 const mockSend = vi.fn<() => Promise<boolean>>()
 const mockProvider = {
@@ -102,27 +99,18 @@ describe('notifyUser', () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
     mockSend.mockResolvedValue(false)
 
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    const updateSpy = vi.mocked(prisma.user.update)
-
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
 
-    expect(updateSpy).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: { telegramChatId: null, telegramLinkedAt: null },
-    })
+    expect(botData.clearBotLink).toHaveBeenCalledWith('user-1')
   })
 
   it('no limpia telegramChatId si el provider no es telegram', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
     const otherProvider = { name: 'email', send: vi.fn().mockResolvedValue(false) }
 
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    const updateSpy = vi.mocked(prisma.user.update)
-
     await notifyUser(otherProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
 
-    expect(updateSpy).not.toHaveBeenCalled()
+    expect(botData.clearBotLink).not.toHaveBeenCalled()
   })
 
   it('incluye los datos del template en el texto', async () => {
@@ -169,31 +157,22 @@ describe('broadcastEmergency', () => {
   })
 
   it('envía a workers con emergenciesEnabled y categoría coincidente', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: 'worker-1', telegramChatId: '111' },
-      { id: 'worker-2', telegramChatId: '222' },
-    ] as never)
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
+      { id: 'worker-1', chatId: '111' },
+      { id: 'worker-2', chatId: '222' },
+    ])
     mockSend.mockResolvedValue(true)
 
     await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'Se rompió el caño del baño', 'cat-1')
 
-    expect(prisma.user.findMany).toHaveBeenCalledWith({
-      where: {
-        emergenciesEnabled: true,
-        telegramChatId: { not: null },
-        categories: { some: { categoryId: 'cat-1' } },
-      },
-      select: { id: true, telegramChatId: true },
-    })
+    expect(botData.findEmergencyWorkers).toHaveBeenCalledWith('cat-1')
     expect(mockSend).toHaveBeenCalledTimes(2)
   })
 
   it('incluye descripción en el mensaje', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: 'worker-1', telegramChatId: '111' },
-    ] as never)
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
+      { id: 'worker-1', chatId: '111' },
+    ])
     mockSend.mockResolvedValue(true)
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'Se rompió el caño del baño, pierde agua', 'cat-1')
@@ -205,10 +184,9 @@ describe('broadcastEmergency', () => {
   })
 
   it('incluye enlace como texto cuando CORS_ORIGIN es HTTP', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: 'worker-1', telegramChatId: '111' },
-    ] as never)
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
+      { id: 'worker-1', chatId: '111' },
+    ])
     mockSend.mockResolvedValue(true)
     mockCorsOrigin = 'http://localhost:5173'
 
@@ -223,10 +201,9 @@ describe('broadcastEmergency', () => {
   })
 
   it('incluye botón cuando CORS_ORIGIN es HTTPS', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: 'worker-1', telegramChatId: '111' },
-    ] as never)
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
+      { id: 'worker-1', chatId: '111' },
+    ])
     mockSend.mockResolvedValue(true)
     mockCorsOrigin = 'https://homefix.vercel.app'
 
@@ -240,20 +217,18 @@ describe('broadcastEmergency', () => {
   })
 
   it('no desvincula al worker si el envío falla', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: 'worker-1', telegramChatId: '111' },
-    ] as never)
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
+      { id: 'worker-1', chatId: '111' },
+    ])
     mockSend.mockResolvedValue(false)
 
     await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'desc', 'cat-1')
 
-    expect(prisma.user.update).not.toHaveBeenCalled()
+    expect(botData.clearBotLink).not.toHaveBeenCalled()
   })
 
   it('no hace nada si no hay workers con emergenciesEnabled', async () => {
-    const prisma = (await import('../../src/lib/prisma.js')).default
-    vi.mocked(prisma.user.findMany).mockResolvedValue([])
+    vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([])
 
     await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'desc', 'cat-1')
 

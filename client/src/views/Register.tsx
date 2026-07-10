@@ -5,16 +5,9 @@ import {
   Eye, EyeOff, Mail, Lock, User, Phone,
   AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck, MailCheck,
 } from 'lucide-react'
-import api, { getErrorMessage } from '../services/api'
+import { getErrorMessage } from '../services/api'
+import { register } from '../services/auth'
 import { loginWithGoogle } from '../lib/auth0'
-
-type RegisterResponse = {
-  userId: string
-  email: string
-  emailVerified: boolean
-  roleAssigned: boolean
-  message: string
-}
 
 const inputBase =
   'w-full h-10 rounded-xl border bg-white text-[13px] text-slate-900 placeholder:text-slate-400 ' +
@@ -98,14 +91,13 @@ export default function Register() {
 
     try {
       setIsSubmitting(true)
-      const payload = {
+      const data = await register({
         name: form.name,
         lastName: form.lastName,
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
-      }
-      const { data } = await api.post<RegisterResponse>('/auth/register', payload)
+      })
       if (!data.roleAssigned) setRoleWarning(data.message)
       setSubmitted(true)
     } catch (err) {

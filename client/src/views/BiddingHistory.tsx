@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gavel, CheckCircle, XCircle, Calendar, ArrowLeft } from 'lucide-react'
-import { fetchClientBiddings } from '../services/posts'
+import { fetchClientBiddings } from '../services/client'
 import type { Post } from '../types/post'
 import { PostStatus } from '../types/post'
 import LandingFooter from '../components/landing/LandingFooter'

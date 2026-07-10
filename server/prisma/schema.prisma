@@ -26,6 +26,7 @@ model User {
   emergenciesEnabled Boolean         @default(false)
   requiresStartToken Boolean         @default(false)
   photo           String?
+  matriculaUrl    String?
   availability    String?          @db.Text
   telegramChatId  String?          @unique
   telegramLinkedAt DateTime?
