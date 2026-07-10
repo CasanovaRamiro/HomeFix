@@ -14,6 +14,7 @@ import uploadRoutes from './upload.routes.js'
 import botRoutes from './bot.routes.js'
 import clientRoutes from './client.routes.js'
 import clientProfileRoutes from './clientProfile.routes.js'
+import reportRoutes from './report.routes.js'
 import kycRoutes, { confirmRouter, webhookRouter } from './kyc.routes.js'
 
 export function registerRoutes(app: Express): void {
@@ -32,6 +33,7 @@ export function registerRoutes(app: Express): void {
   app.use('/telegram', jwtCheck, botRoutes)
   app.use('/client', jwtCheck, clientRoutes)
   app.use('/client-profiles', jwtCheck, clientProfileRoutes)
+  app.use('/reports', jwtCheck, reportRoutes)
 
   // KYC spans three auth contexts: public webhook, public (rate-limited)
   // confirm, and authenticated session/status endpoints.
