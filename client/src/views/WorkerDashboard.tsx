@@ -621,7 +621,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
 }
 // ─── Jobs In Zone ─────────────────────────────────────────────────────────────
 
-const LOCATION_FILTER_KEY = 'homefix_dashboard_location_filter'
+const LOCATION_FILTER_KEY = 'homefix_location_filter'
 
 function loadStoredLocationFilter(): LocationFilter | null {
   try {
