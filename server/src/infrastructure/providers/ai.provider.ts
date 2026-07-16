@@ -5,8 +5,8 @@ import { env } from '../../lib/envConfig.js'
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL })
 
-const TIMEOUT_MS = 8000
-const MAX_RETRIES = 1
+const TIMEOUT_MS = 15000
+const MAX_RETRIES = 2
 
 function extractJson(text: string): string {
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
