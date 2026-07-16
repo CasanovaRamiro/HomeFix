@@ -440,7 +440,7 @@ describe("AI Suggestion Service", () => {
         }),
       ).rejects.toThrow("Gemini API Error");
 
-      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(3);
     });
 
     it("should retry on timeout and succeed on retry", async () => {
@@ -518,7 +518,7 @@ describe("AI Suggestion Service", () => {
         }),
       ).rejects.toThrow();
 
-      const lastCall = mockGenerateContent.mock.calls[1];
+      const lastCall = mockGenerateContent.mock.calls[2];
       expect(lastCall[0].generationConfig?.temperature).toBe(0);
     });
 

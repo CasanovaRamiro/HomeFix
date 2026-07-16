@@ -31,6 +31,15 @@ export interface AiSuggestionResponse {
 export type AiResponse = AiQuestionResponse | AiSuggestionResponse
 
 export async function sendMessage(messages: AiMessage[]): Promise<AiResponse> {
-  const { data } = await api.post<AiResponse>('/ai/suggest', { messages })
-  return data
+  const MAX_RETRIES = 1
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const { data } = await api.post<AiResponse>('/ai/suggest', { messages })
+      return data
+    } catch (e) {
+      if (attempt === MAX_RETRIES) throw e
+      await new Promise(r => setTimeout(r, 1000))
+    }
+  }
+  throw new Error('No se pudo enviar el mensaje')
 }
