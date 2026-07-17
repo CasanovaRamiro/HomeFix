@@ -99,24 +99,33 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
         <div className={`trabajo-card-strip ${meta.strip}`} />
       )}
       <div className="trabajo-card-body">
-       <div className="trabajo-card-head">
-          <span className={`badge ${meta.bg} ${meta.text}`}>
-            <meta.Icon size={14} style={{ marginRight: 4 }} />
-            {trabajo.categoria}
-          </span>
-          {isOwnPost && (
-            <span className="badge badge-own">Tu publicación</span>
+        <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+            <div className="trabajo-card-head">
+              <span className={`badge ${meta.bg} ${meta.text}`}>
+                <meta.Icon size={14} style={{ marginRight: 4 }} />
+                {trabajo.categoria}
+              </span>
+              {isOwnPost && (
+                <span className="badge badge-own">Tu publicación</span>
+              )}
+              {isApplied && (
+                <span className="badge badge-applied">Postulado</span>
+              )}
+            </div>
+            <h3>{trabajo.titulo}</h3>
+            <p className="trabajo-desc">{trabajo.descripcion}</p>
+            <p className="trabajo-address">
+              <MapPin size={12} />
+              {shortAddress(trabajo.address)}
+            </p>
+          </div>
+          {trabajo.photo && (
+            <div style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
+              <img src={trabajo.photo} alt={trabajo.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
           )}
-          {isApplied && (
-            <span className="badge badge-applied">Postulado</span>
-          )}
-       </div>
-        <h3>{trabajo.titulo}</h3>
-        <p className="trabajo-desc">{trabajo.descripcion}</p>
-        <p className="trabajo-address">
-          <MapPin size={12} />
-          {shortAddress(trabajo.address)}
-        </p>
+        </div>
       </div>
       <div className="trabajo-card-footer">
         <div className="trabajo-client">

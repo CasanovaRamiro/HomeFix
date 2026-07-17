@@ -27,6 +27,8 @@ export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
   certificates: parseJsonArray(w.certificates),
   gallery: parseJsonArray(w.gallery),
   emergenciesEnabled: w.emergenciesEnabled,
+  location: w.address ? `${w.address.city}, ${w.address.state}` : null,
+  isVerified: w.kycStatus === 'APPROVED',
 })
 
 export const toDomainWorkerReview = (r: ReviewResult): DomainWorkerReview => ({
