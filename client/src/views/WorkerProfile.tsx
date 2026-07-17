@@ -580,8 +580,8 @@ export default function WorkerProfile() {
                            onClick={handleDownloadMatricula}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 6,
-                            background: '#EFF6FF', border: '1px solid #BFDBFE',
-                            color: '#2563EB', fontSize: 13, fontWeight: 600,
+                            background: '#ECFDF5', border: '1px solid #A7F3D0',
+                            color: '#10B981', fontSize: 13, fontWeight: 600,
                             padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
                           }}
                         >
@@ -902,7 +902,7 @@ export default function WorkerProfile() {
                         </div>
                         {isEditing && !isEditingCert && (
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={() => startEditCert(c)} style={{ background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#2563EB', fontSize: 12, fontWeight: 600 }}>
+                            <button onClick={() => startEditCert(c)} style={{ background: '#ECFDF5', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#10B981', fontSize: 12, fontWeight: 600 }}>
                               Editar
                             </button>
                             <button onClick={() => removeCert(c.id)} style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#DC2626', fontSize: 12, fontWeight: 600 }}>
