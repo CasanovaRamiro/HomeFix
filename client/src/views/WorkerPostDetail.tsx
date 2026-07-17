@@ -243,7 +243,7 @@ export default function WorkerPostDetail() {
       <div style={{ minHeight: '100vh', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
         <AlertCircle size={40} color="#DC2626" />
         <p style={{ fontSize: 15, color: '#374151', fontWeight: 500 }}>{error || 'Publicación no encontrada'}</p>
-        <button onClick={() => navigate(-1)} style={{ background: '#0F172A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={() => navigate(-1)} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
           Volver
         </button>
       </div>
@@ -336,7 +336,7 @@ export default function WorkerPostDetail() {
                   disabled={completing}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: completing ? '#93C5FD' : '#2563EB', border: 'none', borderRadius: 10,
+                    background: completing ? '#A7F3D0' : '#10B981', border: 'none', borderRadius: 10,
                     padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
                     cursor: completing ? 'not-allowed' : 'pointer', transition: 'opacity 0.15s',
                   }}
@@ -382,9 +382,9 @@ export default function WorkerPostDetail() {
                     '_blank'
                   )}
                   style={{
-                    marginTop: 16, width: '100%',
+                    marginTop: 10, width: '100%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: '#25D366', border: 'none', borderRadius: 10,
+                    background: '#10B981', border: 'none', borderRadius: 10,
                     padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
                     cursor: 'pointer', transition: 'opacity 0.15s',
                   }}
@@ -419,7 +419,7 @@ export default function WorkerPostDetail() {
                   style={{
                     marginTop: 10, width: '100%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: '#2563EB', border: 'none', borderRadius: 10,
+                    background: '#10B981', border: 'none', borderRadius: 10,
                     padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#fff',
                     cursor: 'pointer', transition: 'opacity 0.15s',
                   }}

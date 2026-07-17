@@ -365,12 +365,12 @@ function EmergencyCard({ post, isApplied, onPostular }: { post: Post; isApplied:
               onClick={() => onPostular(post)}
               style={{
               flex: 1, padding: '10px 0', borderRadius: 10,
-              border: 'none', background: '#EF4444',
+              border: 'none', background: '#10B981',
               color: '#fff', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', transition: 'background 0.15s',
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#DC2626' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#EF4444' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#10B981' }}
             >
               Postularse
             </button>
@@ -599,7 +599,7 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
                 onClick={handleCloseModal}
                 style={{
                   width: '100%', padding: '12px 0', borderRadius: 10,
-                  border: 'none', background: '#0F172A', color: '#fff',
+                  border: 'none', background: '#10B981', color: '#fff',
                   fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 }}
               >

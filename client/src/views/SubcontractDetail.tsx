@@ -487,7 +487,7 @@ export default function SubcontractDetail() {
                     }
                   }}
                   disabled={enviando}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer bg-blue-500 text-white transition-all"
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold border-none cursor-pointer bg-[#10B981] text-white transition-all"
                 >
                   {enviando ? 'Enviando...' : 'Enviar postulación a subcontrato'}
                 </button>

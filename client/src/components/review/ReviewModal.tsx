@@ -39,7 +39,7 @@ export default function ReviewModal({
             Tu reseña sobre <strong>{clientName}</strong> se ha publicado correctamente.
           </p>
           <button onClick={() => { onSuccess(); onClose() }}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', background: '#0F172A', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             Cerrar
           </button>
         </div>
