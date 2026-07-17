@@ -10,7 +10,7 @@ import BiddingCard from '../components/worker/BiddingCard'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, GitBranch, RefreshCw, XCircle,
+  ArrowLeft, GitBranch, RefreshCw, XCircle, CheckCircle,
   ChevronLeft, ChevronRight, X,
 } from 'lucide-react'
 
@@ -344,7 +344,10 @@ export default function WorkerAvailableBiddings() {
           maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
           animation: 'slideIn 0.3s ease',
         }}>
-          <XCircle size={20} color={notificacion.tipo === 'error' ? '#DC2626' : '#059669'} />
+          {notificacion.tipo === 'error'
+            ? <XCircle size={20} color="#DC2626" />
+            : <CheckCircle size={20} color="#059669" />
+          }
           <span style={{ fontSize: 14, fontWeight: 500, color: notificacion.tipo === 'error' ? '#991B1B' : '#065F46' }}>
             {notificacion.mensaje}
           </span>

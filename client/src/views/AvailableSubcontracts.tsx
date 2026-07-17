@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle, Calendar, MapPin, Users } from 'lucide-react'
+import { GitBranch, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle, CheckCircle, Calendar, MapPin, Users } from 'lucide-react'
 import { fetchAvailableSubcontracts } from '../services/posts'
 import { applyToSubcontract } from '../services/applications'
 import { getWorker } from '../services/workers'
@@ -430,7 +430,10 @@ export default function AvailableSubcontracts() {
           maxWidth: 420, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
           animation: 'slideIn 0.3s ease',
         }}>
-          <XCircle size={20} color={notificacion.tipo === 'error' ? '#DC2626' : '#059669'} />
+          {notificacion.tipo === 'error'
+            ? <XCircle size={20} color="#DC2626" />
+            : <CheckCircle size={20} color="#059669" />
+          }
           <span style={{ fontSize: 14, fontWeight: 500, color: notificacion.tipo === 'error' ? '#991B1B' : '#065F46' }}>
             {notificacion.mensaje}
           </span>
