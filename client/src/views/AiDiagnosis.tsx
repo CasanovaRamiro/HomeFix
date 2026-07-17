@@ -296,7 +296,7 @@ export default function AiDiagnosis() {
                   onMouseEnter={e => { e.currentTarget.style.background = theme.accentHover; e.currentTarget.style.transform = 'scale(1.02)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.transform = 'scale(1)' }}
                 >
-                  volver al Inicio
+                  Volver al Inicio
                 </button>
               </div>
             ) : (
