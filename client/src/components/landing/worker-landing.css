@@ -85,3 +85,39 @@
   .lp-root .lp-wstats { grid-template-columns: 1fr 1fr; }
   .lp-root .lp-steps-4 { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Large screens (> 1440px)
+   ============================================================ */
+@media (min-width: 1440px) {
+  .lp-root .lp-hero-worker .lp-hero-inner { max-width: 720px; }
+  .lp-root .lp-wstats { max-width: 880px; }
+  .lp-root .lp-wstat-val { font-size: 32px; }
+  .lp-root .lp-split { gap: 80px; }
+}
+
+/* ============================================================
+   Large desktop (>= 1920px)
+   ============================================================ */
+@media (min-width: 1920px) {
+  .lp-root .lp-hero-worker .lp-hero-inner { max-width: 820px; }
+  .lp-root .lp-wstats { max-width: 1000px; }
+  .lp-root .lp-wstat-val { font-size: 36px; }
+  .lp-root .lp-wstat-lbl { font-size: 14px; }
+  .lp-root .lp-split { gap: 100px; }
+  .lp-root .lp-split-media { aspect-ratio: 4/3; }
+  .lp-root .lp-req-item { font-size: 17px; }
+  .lp-root .lp-req-check { width: 30px; height: 30px; }
+  .lp-root .lp-req-check svg { width: 18px; height: 18px; }
+}
+
+/* ============================================================
+   Extra large screens (>= 2560px)
+   ============================================================ */
+@media (min-width: 2560px) {
+  .lp-root .lp-hero-worker .lp-hero-inner { max-width: 920px; }
+  .lp-root .lp-wstats { max-width: 1100px; }
+  .lp-root .lp-wstat { padding: 24px 28px; }
+  .lp-root .lp-wstat-val { font-size: 40px; }
+  .lp-root .lp-wstat-lbl { font-size: 15px; }
+}
