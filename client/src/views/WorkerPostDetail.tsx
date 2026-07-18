@@ -430,6 +430,23 @@ export default function WorkerPostDetail() {
                   Calificar cliente
                 </button>
               )}
+              {(application?.status === ApplicationStatus.Accepted || application?.status === ApplicationStatus.Completed) && (
+                <button
+                  onClick={() => {}}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#fff', border: '1.5px solid #E2E8F0', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#0F172A',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  <Flag size={16} />
+                  Reportar cliente
+                </button>
+              )}
               {linkedSubcontractId && (
                 <button
                   onClick={() => navigate(`/worker/subcontracts/group/${linkedSubcontractId}`)}

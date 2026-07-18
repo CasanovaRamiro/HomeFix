@@ -265,26 +265,13 @@ export default function AvailableSubcontracts() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
-      {/* ── Header con degradado ── */}
+      {/* ── Header ── */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #1E293B 100%)',
+          background: '#0F172A',
           width: '100%', paddingTop: 40, paddingBottom: 48,
-          position: 'relative', overflow: 'hidden',
         }}
       >
-        <div
-          style={{
-            position: 'absolute', top: -60, right: -60, width: 200, height: 200,
-            borderRadius: '50%', background: 'rgba(59,130,246,0.08)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', bottom: -40, left: -30, width: 160, height: 160,
-            borderRadius: '50%', background: 'rgba(59,130,246,0.06)',
-          }}
-        />
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button
