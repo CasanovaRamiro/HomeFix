@@ -1,6 +1,7 @@
 import { findAllWorkers, findWorkerById, updateWorker } from '../../infrastructure/database/worker.database.js'
 import { findReviewsByWorkerId } from '../../infrastructure/database/review.database.js'
 import { countCompletedJobs, countDismissedJobs } from '../../infrastructure/database/workerDashboard.database.js'
+import { countReportsByWorker } from '../../infrastructure/database/report.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { getUserRating } from './user.service.js'
 import type { DomainWorker, DomainWorkerReview, UpdateWorkerInput } from '../types/worker.types.js'
@@ -32,15 +33,16 @@ export const getWorkerStats = async (id: string): Promise<WorkerStats> => {
     throw Object.assign(new Error('Worker not found'), { status: 404 })
   }
 
-  const [reviewStats, completedJobs, dismissedJobs] = await Promise.all([
+  const [reviewStats, completedJobs, dismissedJobs, reportCount] = await Promise.all([
     getUserRating(id),
     countCompletedJobs(id),
     countDismissedJobs(id),
+    countReportsByWorker(id),
   ])
 
   return {
     cancelledJobs: dismissedJobs,
-    reports: 0,
+    reports: reportCount,
     totalJobs: completedJobs,
     avgRating: reviewStats.averageRating,
     reviewCount: reviewStats.reviewCount,

@@ -321,6 +321,7 @@ export default function PostDetail() {
         open={reviewToView !== null || viewReviewLoading}
         review={reviewToView}
         workerName={viewReviewWorkerName}
+        reviewType="client_review"
         loading={viewReviewLoading}
         onClose={() => { setReviewToView(null); setViewReviewWorkerName('') }}
       />

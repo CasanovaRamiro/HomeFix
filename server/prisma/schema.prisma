@@ -11,6 +11,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ReportReason {
+  MAL_COMPORTAMIENTO
+  TRABAJO_DEFECTUOSO
+  INCUMPLIMIENTO
+  FALTA_DE_RESPETO
+  FRAUDE
+  OTRO
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -38,6 +47,8 @@ model User {
   clientReviewsGiven    ClientReview[]    @relation("ClientReviewsGiven")
   clientReviewsReceived ClientReview[]    @relation("ClientReviewsReceived")
   applications          Application[]
+  reportsMade      Report[]  @relation("ReportsMade")
+  reportsReceived  Report[]  @relation("ReportsReceived")
   nationalId       String
   nationalIdTypeId String  @map("national_id_type_id")
   addressId        String  @map("address_id")
@@ -167,6 +178,7 @@ model Application {
   category           PostCategory?  @relation(fields: [categoryId], references: [id])
   review             WorkerReview?
   clientReview       ClientReview?
+  reports            Report[]
 
   // Uniqueness on (workerId, postId, COALESCE(categoryId,'__none__')) is enforced by a functional
   // unique index in migration 20260619000001 — Prisma can't express it, so it isn't declared here.
@@ -221,11 +233,27 @@ model TelegramLinkCode {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("telegram_link_code")
 }
 
+model Report {
+  id              String        @id @default(uuid())
+  reporterId      String
+  reportedUserId  String
+  reason          ReportReason
+  description     String?       @db.Text
+  applicationId   String?
+  reviewId        String?
+  targetType      String
+  createdAt       DateTime      @default(now())
+  reporter        User          @relation("ReportsMade", fields: [reporterId], references: [id])
+  reportedUser    User          @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  application     Application?  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  @@unique([applicationId, reporterId], name: "Report_applicationId_reporterId_key")
+  @@unique([reviewId, reporterId], name: "Report_reviewId_reporterId_key")
+}
 
 
 

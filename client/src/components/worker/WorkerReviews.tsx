@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react'
-import { Star, ChevronDown } from 'lucide-react'
+import { Star, ChevronDown, Flag } from 'lucide-react'
 import type { WorkerReview } from '../../services/workers'
 import ViewReviewModal from '../review/ViewReviewModal'
+import ReportModal from '../report/ReportModal'
 
 interface Props {
   reviews: WorkerReview[]
   loading: boolean
   workerName: string
+  currentUserId?: string
 }
 
 function parseMediaUrls(urls: string | null): string[] {
@@ -57,9 +59,10 @@ const SORT_OPTIONS = [
 
 type SortKey = (typeof SORT_OPTIONS)[number]['value']
 
-export default function WorkerReviews({ reviews, loading, workerName }: Props) {
+export default function WorkerReviews({ reviews, loading, workerName, currentUserId }: Props) {
   const [sortBy, setSortBy] = useState<SortKey>('recent')
   const [selectedReview, setSelectedReview] = useState<WorkerReview | null>(null)
+  const [reportReview, setReportReview] = useState<WorkerReview | null>(null)
 
   const avg = useMemo(() => {
     if (!reviews.length) return null
@@ -181,9 +184,21 @@ export default function WorkerReviews({ reviews, loading, workerName }: Props) {
                       <span className="text-sm font-semibold text-slate-900 truncate">
                         {review.reviewer.name}
                       </span>
-                      <span className="text-xs text-slate-400 whitespace-nowrap">
-                        {fmtDate(review.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {currentUserId && currentUserId === review.workerId && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setReportReview(review) }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: '#94A3B8' }}
+                            title="Reportar reseña"
+                          >
+                            <Flag size={13} />
+                          </button>
+                        )}
+                        <span className="text-xs text-slate-400 whitespace-nowrap">
+                          {fmtDate(review.createdAt)}
+                        </span>
+                      </div>
                     </div>
                     <StarDisplay rating={review.rating} size={13} />
 
@@ -234,6 +249,16 @@ export default function WorkerReviews({ reviews, loading, workerName }: Props) {
         workerName={workerName}
         onClose={() => setSelectedReview(null)}
       />
+
+      {reportReview && (
+        <ReportModal
+          open={!!reportReview}
+          targetType="worker_review"
+          targetId={reportReview.id}
+          targetName={reportReview.reviewer.name}
+          onClose={() => setReportReview(null)}
+        />
+      )}
     </>
   )
 }

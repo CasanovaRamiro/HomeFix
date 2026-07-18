@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Star, BadgeCheck, Briefcase, Clock, Banknote, Check, User,
-  MessageCircle, UserX, UserCheck, CalendarCheck, KeyRound, CheckCircle,
+  MessageCircle, UserX, UserCheck, CalendarCheck, KeyRound, CheckCircle, Flag,
 } from 'lucide-react'
 import ConfirmModal from '../ui/ConfirmModal'
+import ReportModal from '../report/ReportModal'
 import { acceptApplication, dismissWorker, validateStartToken } from '../../services/applications'
 import { formatWhatsAppNumber } from '../../services/formatWhatsApp'
 
@@ -245,6 +246,7 @@ export default function ApplicantCard({
   const [loading, setLoading] = useState(false)
   const [dismissModalOpen, setDismissModalOpen] = useState(false)
   const [dismissing, setDismissing] = useState(false)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
 
   const initials = applicant.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -371,6 +373,9 @@ export default function ApplicantCard({
                 <button className="pd-btn pd-btn--danger" onClick={() => setDismissModalOpen(true)}>
                   <UserX size={16} />Despedir
                 </button>
+                <button className="pd-btn pd-btn--outline" onClick={() => setReportModalOpen(true)}>
+                  <Flag size={16} />Reportar
+                </button>
                 <ConfirmModal
                   open={dismissModalOpen}
                   title="Despedir trabajador"
@@ -414,6 +419,14 @@ export default function ApplicantCard({
           Inicio confirmado el {new Date(applicant.tokenValidatedAt!).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
+
+      <ReportModal
+        open={reportModalOpen}
+        targetType="application"
+        targetId={applicationId}
+        targetName={applicant.name}
+        onClose={() => setReportModalOpen(false)}
+      />
     </div>
   )
 }

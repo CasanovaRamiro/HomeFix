@@ -33,6 +33,7 @@ export const toDomainWorker = (w: WorkerResult): DomainWorker => ({
 
 export const toDomainWorkerReview = (r: ReviewResult): DomainWorkerReview => ({
   id: r.id,
+  workerId: r.workerId,
   rating: r.rating,
   description: r.description,
   mediaUrls: r.mediaUrls,

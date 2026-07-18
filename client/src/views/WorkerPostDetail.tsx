@@ -12,6 +12,7 @@ import { formatWhatsAppNumber } from '../services/formatWhatsApp'
 import { fetchMySubcontractManager } from '../services/posts'
 import StartTokenWorkerCard from '../components/post/StartTokenWorkerCard'
 import ReviewModal from '../components/review/ReviewModal'
+import ReportModal from '../components/report/ReportModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -179,6 +180,7 @@ export default function WorkerPostDetail() {
   const [error, setError] = useState('')
   const [linkedSubcontractId, setLinkedSubcontractId] = useState<string | null>(null)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
   const [completing, setCompleting] = useState(false)
 
   useEffect(() => {
@@ -430,6 +432,23 @@ export default function WorkerPostDetail() {
                   Calificar cliente
                 </button>
               )}
+              {(application?.status === ApplicationStatus.Accepted || application?.status === ApplicationStatus.Completed) && (
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  style={{
+                    marginTop: 10, width: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#fff', border: '1.5px solid #E2E8F0', borderRadius: 10,
+                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#DC2626',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                >
+                  <Flag size={16} />
+                  Reportar cliente
+                </button>
+              )}
               {linkedSubcontractId && (
                 <button
                   onClick={() => navigate(`/worker/subcontracts/group/${linkedSubcontractId}`)}
@@ -476,6 +495,16 @@ export default function WorkerPostDetail() {
           clientName={`${post.user.name} ${post.user.surname}`}
           onClose={() => setShowReviewModal(false)}
           onSuccess={() => setApplication({ ...application, hasReview: true })}
+        />
+      )}
+
+      {showReportModal && application && (
+        <ReportModal
+          open={showReportModal}
+          targetType="application"
+          targetId={application.id}
+          targetName={`${post.user.name} ${post.user.surname}`}
+          onClose={() => setShowReportModal(false)}
         />
       )}
 
