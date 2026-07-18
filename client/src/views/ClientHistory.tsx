@@ -74,15 +74,15 @@ export default function ClientHistory() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <div className="bg-[linear-gradient(135deg,#EEF4FF_0%,#DBE7FF_100%)] px-6 pb-10 pt-6">
+      <div className="px-6 pb-10 pt-6" style={{ background: '#059669' }}>
         <div className="mx-auto max-w-5xl">
           <p
             onClick={() => navigate('/dashboard')}
-            className="mb-4 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+            className="mb-4 text-sm text-emerald-100 hover:text-white transition-colors cursor-pointer"
           >
             &larr; Volver al inicio
           </p>
-          <h1 className="text-2xl font-extrabold text-slate-900">Historial de publicaciones</h1>
+          <h1 className="text-2xl font-extrabold text-white">Historial de publicaciones</h1>
         </div>
       </div>
 
