@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createEmergencyPost } from '../services/posts'
-import { getClientProfile } from '../services/clientProfiles'
 
-export function useCreateEmergency(userId: string) {
+export function useCreateEmergency(_userId: string) {
   const [form, setForm] = useState({
     title: '',
     description: 'Necesito ayuda urgente',
@@ -12,27 +11,8 @@ export function useCreateEmergency(userId: string) {
     longitude: null as number | null,
   })
   const [loading, setLoading] = useState(false)
-  const [addressLoading, setAddressLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    setAddressLoading(true)
-    getClientProfile(userId)
-      .then(profile => {
-        if (cancelled) return
-        if (profile.address) {
-          const addrStr = `${profile.address.street} ${profile.address.number}, ${profile.address.city}, ${profile.address.state}`
-          setForm(prev => ({ ...prev, address: addrStr }))
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setAddressLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [userId])
 
   const handleSubmit = async () => {
     setError('')
@@ -63,7 +43,7 @@ export function useCreateEmergency(userId: string) {
 
   return {
     form, setForm,
-    loading, error, success, addressLoading,
+    loading, error, success,
     handleSubmit,
   }
 }
