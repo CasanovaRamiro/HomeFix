@@ -357,7 +357,7 @@ export default function BiddingDetail() {
                 <PauseCircle size={16} /> Pausar licitación
               </button>
               <button className="pd-btn pd-btn--accent" onClick={() => setCloseConfirmOpen(true)}>
-                <CheckCircle size={16} /> Poner en Evaluating
+                <CheckCircle size={16} /> Poner en evaluación
               </button>
               <button className="pd-btn pd-btn--danger" onClick={() => setCancelConfirmOpen(true)}>
                 <XCircle size={16} /> Cancelar
@@ -443,7 +443,7 @@ export default function BiddingDetail() {
                 <Play size={16} /> Reanudar licitación
               </button>
               <button className="pd-btn pd-btn--accent" onClick={() => setCloseConfirmOpen(true)}>
-                <CheckCircle size={16} /> Poner en Evaluating
+                <CheckCircle size={16} /> Poner en evaluación
               </button>
               <button className="pd-btn pd-btn--danger" onClick={() => setCancelConfirmOpen(true)}>
                 <XCircle size={16} /> Cancelar
