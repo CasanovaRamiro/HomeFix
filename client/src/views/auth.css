@@ -272,3 +272,44 @@
   .au-logo { margin-bottom: 32px; }
   .au-head { margin-bottom: 28px; }
 }
+
+/* ============================================================
+   Large screens (> 1440px)
+   ============================================================ */
+@media (min-width: 1440px) {
+  .au-form-wrap { max-width: 480px; }
+  .au-visual-mid { max-width: 480px; }
+  .au-visual-content { padding: 72px; }
+  .au-head h1 { font-size: 2.6rem; }
+  .au-input { height: 60px; font-size: 16px; }
+  .au-btn-submit { height: 60px; font-size: 17px; }
+}
+
+/* ============================================================
+   Large desktop (>= 1920px)
+   ============================================================ */
+@media (min-width: 1920px) {
+  .au-form-wrap { max-width: 520px; }
+  .au-visual-mid { max-width: 520px; }
+  .au-visual-mid h2 { font-size: 3.2rem; }
+  .au-visual-mid .au-vsub { max-width: 440px; font-size: 18px; }
+  .au-visual-content { padding: 88px; }
+  .au-head h1 { font-size: 2.8rem; }
+  .au-head p { font-size: 16px; }
+  .au-stats { gap: 40px; }
+  .au-stat .au-stat-num { font-size: 3rem; }
+  .au-stat .au-stat-label { font-size: 15px; }
+}
+
+/* ============================================================
+   Extra large screens (>= 2560px)
+   ============================================================ */
+@media (min-width: 2560px) {
+  .au-form-wrap { max-width: 560px; }
+  .au-visual-mid { max-width: 560px; }
+  .au-visual-mid h2 { font-size: 3.6rem; }
+  .au-visual-content { padding: 100px; }
+  .au-head h1 { font-size: 3rem; }
+  .au-input { height: 64px; font-size: 17px; }
+  .au-btn-submit { height: 64px; font-size: 18px; }
+}

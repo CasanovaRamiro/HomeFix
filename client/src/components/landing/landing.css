@@ -206,3 +206,70 @@
   .lp-grid-3, .lp-grid-cats, .lp-steps, .lp-footer-grid { grid-template-columns: 1fr; }
   .lp-hero-cta .lp-btn, .lp-final-cta .lp-btn { width: 100%; }
 }
+
+/* ============================================================
+   Large screens (> 1440px)
+   ============================================================ */
+@media (min-width: 1440px) {
+  .lp-container { max-width: 1440px; padding: 0 40px; }
+  .lp-section { padding: 100px 0; }
+  .lp-grid-3 { gap: 32px; }
+  .lp-grid-cats { gap: 28px; }
+  .lp-cat { height: 300px; }
+  .lp-hero-inner { max-width: 780px; }
+  .lp-hero-sub { max-width: 640px; font-size: 20px; }
+  .lp-trust-card { padding: 36px; }
+  .lp-step h3 { font-size: 22px; }
+  .lp-feat-item h3 { font-size: 17px; }
+  .lp-footer-grid { gap: 64px; }
+}
+
+/* ============================================================
+   Large desktop (>= 1920px)
+   ============================================================ */
+@media (min-width: 1920px) {
+  .lp-container { max-width: 1600px; padding: 0 48px; }
+  .lp-section { padding: 120px 0; }
+  .lp-grid-3 { gap: 40px; }
+  .lp-grid-cats { gap: 32px; }
+  .lp-cat { height: 340px; }
+  .lp-hero { min-height: 80vh; }
+  .lp-hero-inner { max-width: 880px; }
+  .lp-hero-sub { max-width: 720px; font-size: 21px; }
+  .lp-hero-title { font-size: 4rem; }
+  .lp-h2 { font-size: 2.5rem; }
+  .lp-head .lp-lead { font-size: 19px; }
+  .lp-trust-card { padding: 40px; }
+  .lp-trust-card h3 { font-size: 22px; }
+  .lp-step h3 { font-size: 24px; }
+  .lp-step p { font-size: 16px; }
+  .lp-feat-item h3 { font-size: 18px; }
+  .lp-feat-item p { font-size: 15px; }
+  .lp-review { padding: 28px; }
+  .lp-review p.lp-review-text { font-size: 15px; }
+  .lp-final h2 { font-size: 3.5rem; }
+  .lp-final p { font-size: 19px; }
+  .lp-footer-grid { gap: 80px; padding-top: 80px; }
+  .lp-footer-brand p { font-size: 15px; }
+}
+
+/* ============================================================
+   Extra large screens (>= 2560px) — 4K / TV displays
+   ============================================================ */
+@media (min-width: 2560px) {
+  .lp-container { max-width: 1800px; padding: 0 60px; }
+  .lp-hero { min-height: 75vh; }
+  .lp-hero-title { font-size: 4.5rem; }
+  .lp-hero-sub { max-width: 800px; font-size: 22px; }
+  .lp-h2 { font-size: 2.75rem; }
+  .lp-cat { height: 380px; }
+  .lp-cat-label h3 { font-size: 20px; }
+  .lp-trust-card { padding: 44px; }
+  .lp-trust-card h3 { font-size: 24px; }
+  .lp-step-num { width: 72px; height: 72px; font-size: 28px; }
+  .lp-step h3 { font-size: 26px; }
+  .lp-feat-item h3 { font-size: 20px; }
+  .lp-feat-icon { width: 56px; height: 56px; }
+  .lp-final h2 { font-size: 4rem; }
+  .lp-footer-grid { gap: 96px; padding-top: 96px; }
+}

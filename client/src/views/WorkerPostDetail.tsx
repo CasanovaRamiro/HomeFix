@@ -257,7 +257,7 @@ export default function WorkerPostDetail() {
 
       {/* Header */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container-md" style={{ padding: '0 32px' }}>
           <button onClick={() => navigate(-1)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, fontWeight: 500, cursor: 'pointer', marginBottom: 24, padding: 0 }}>
             <ArrowLeft size={14} /> Volver
           </button>
@@ -292,7 +292,7 @@ export default function WorkerPostDetail() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1100, margin: '-28px auto 60px', padding: '0 32px', position: 'relative', zIndex: 10 }}>
+      <div className="hf-container-md" style={{ margin: '-28px auto 60px', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
 
           {/* Left column */}

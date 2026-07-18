@@ -267,7 +267,7 @@ export default function BiddingDetail() {
     <div style={{ minHeight: '100vh', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
       {/* Header verde */}
       <div style={{ background: '#059669', width: '100%', paddingTop: 32, paddingBottom: 40 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
           <button
             onClick={() => navigate('/client/biddings')}
             style={{
@@ -282,7 +282,7 @@ export default function BiddingDetail() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', marginTop: -20, position: 'relative', zIndex: 10 }}>
+      <div className="hf-container" style={{ padding: '0 32px', marginTop: -20, position: 'relative', zIndex: 10 }}>
         <div className="bd-grid">
           {/* Info card */}
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 24 }}>

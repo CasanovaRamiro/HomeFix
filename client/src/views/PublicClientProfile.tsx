@@ -68,13 +68,13 @@ export default function PublicClientProfile() {
   const initials = fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
   const memberSince = new Date(client.createdAt).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
 
-  const container = { maxWidth: 1024, margin: '0 auto', padding: isMobile ? '0 16px' : '0 24px' }
+  const containerPadding = isMobile ? '0 16px' : '0 24px'
 
   return (
     <div style={{ minHeight: '100vh', background: '#F9FAFB', fontFamily: 'system-ui, sans-serif' }}>
       {/* Back bar */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB' }}>
-        <div style={{ ...container, display: 'flex', alignItems: 'center', height: 56 }}>
+        <div className="hf-container-sm" style={{ padding: containerPadding, display: 'flex', alignItems: 'center', height: 56 }}>
           <button
             onClick={() => navigate(-1 as never)}
             style={{
@@ -89,7 +89,7 @@ export default function PublicClientProfile() {
         </div>
       </div>
 
-      <div style={{ ...container, paddingTop: isMobile ? 20 : 32, paddingBottom: 48 }}>
+      <div className="hf-container-sm" style={{ padding: containerPadding, paddingTop: isMobile ? 20 : 32, paddingBottom: 48 }}>
 
         {/* Mobile header */}
         {isMobile && (

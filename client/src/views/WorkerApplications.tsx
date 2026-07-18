@@ -712,7 +712,7 @@ export default function WorkerApplications() {
 
       {/* Dark header */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
 
           {/* Back */}
           <button onClick={() => navigate('/worker')} style={{
@@ -739,7 +739,7 @@ export default function WorkerApplications() {
       </div>
 
       {/* Metrics strip — fuera del header, solapado */}
-      <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
+      <div className="hf-container" style={{ margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div className="wa-metrics-grid">
           <MetricCard value={metrics.total}     label="Total"       valueColor="#0F172A" />
           <MetricCard value={metrics.pending}   label="Pendientes"  valueColor="#D97706" />
@@ -750,7 +750,7 @@ export default function WorkerApplications() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '36px 32px 60px' }}>
+      <div className="hf-container" style={{ margin: '0 auto', padding: '36px 32px 60px' }}>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>

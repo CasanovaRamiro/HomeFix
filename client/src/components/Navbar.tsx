@@ -142,7 +142,7 @@ export default function Navbar(): React.ReactElement | null {
   return (
     <nav style={{ background: theme.card, borderBottom: `1px solid ${theme.border}` }}
       className="sticky top-0 z-50 backdrop-blur-md">
-      <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 2rem' }}>
+      <div style={{ maxWidth: '90rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
 
           {/* Logo */}

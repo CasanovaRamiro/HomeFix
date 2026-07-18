@@ -1224,4 +1224,77 @@
   .trabajo-date-short { display: inline; }
 }
 
+/* ============================================================
+   Large screens (> 1440px) — Trabajos / Jobs
+   ============================================================ */
+@media (min-width: 1440px) {
+  .trabajos-hero-inner { max-width: 1320px; }
+  .trabajos-error { max-width: 1320px; }
+  .trabajos-layout { max-width: 1320px; gap: 1.5rem; }
+  .trabajos-grid-container { max-width: 1500px; padding: 0 40px 2rem; }
+  .trabajos-list-2col { gap: 16px; }
+  .trabajo-card-body { padding: 14px 16px; }
+  .trabajo-card h3 { font-size: 1.1rem; }
+  .trabajo-desc { font-size: 14px; }
+  .trabajo-detail-images { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .trabajo-detail-images img { height: 120px; }
+  .trabajos-detail-body { padding: 18px 20px 20px; }
+  .trabajo-detail-desc { font-size: 15px; }
+  .trabajo-facts { gap: 14px; }
+  .trabajo-facts dd { font-size: 15px; }
+  .bidding-card-body { padding: 18px 18px 0; }
+  .bidding-card h3 { font-size: 16px; }
+  .bidding-desc { font-size: 14px; }
+}
+
+/* ============================================================
+   Large desktop (>= 1920px)
+   ============================================================ */
+@media (min-width: 1920px) {
+  .trabajos-hero { padding: 1.5rem 1rem 1.75rem; }
+  .trabajos-hero-inner { max-width: 1500px; }
+  .trabajos-hero h1 { font-size: 1.75rem; }
+  .trabajos-error { max-width: 1500px; }
+  .trabajos-layout { max-width: 1500px; gap: 1.75rem; }
+  .trabajos-grid-container { max-width: 1700px; padding: 0 48px 2.5rem; }
+  .trabajos-list-2col { grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .trabajo-card-body { padding: 16px 18px; }
+  .trabajo-card h3 { font-size: 1.15rem; }
+  .trabajo-desc { font-size: 14.5px; }
+  .trabajo-card-footer { padding: 12px 18px; }
+  .trabajo-client-name { max-width: 240px; }
+  .trabajo-detail-images { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .trabajo-detail-images img { height: 140px; }
+  .trabajos-detail-card { border-radius: 12px; }
+  .trabajos-detail-head { padding: 20px 20px 0; }
+  .trabajos-detail-head h2 { font-size: 1.1rem; }
+  .trabajos-detail-body { padding: 20px 24px 24px; }
+  .trabajo-detail-desc { font-size: 15.5px; }
+  .trabajo-facts dt { font-size: 12px; }
+  .trabajo-facts dd { font-size: 16px; }
+  .bidding-card-body { padding: 20px 20px 0; }
+  .bidding-card h3 { font-size: 17px; }
+  .bidding-desc { font-size: 14.5px; }
+  .bidding-card-footer { padding: 14px 20px; }
+  .modal-card { max-width: 480px; }
+}
+
+/* ============================================================
+   Extra large screens (>= 2560px)
+   ============================================================ */
+@media (min-width: 2560px) {
+  .trabajos-hero h1 { font-size: 2rem; }
+  .trabajos-hero-inner { max-width: 1800px; }
+  .trabajos-layout { max-width: 1800px; }
+  .trabajos-grid-container { max-width: 2000px; padding: 0 60px 3rem; }
+  .trabajos-list-2col { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+  .trabajo-card-body { padding: 18px 20px; }
+  .trabajo-card h3 { font-size: 1.25rem; }
+  .trabajo-desc { font-size: 15px; }
+  .trabajo-detail-images { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .trabajo-detail-images img { height: 160px; }
+  .trabajos-detail-head h2 { font-size: 1.2rem; }
+  .trabajos-detail-body { padding: 24px 28px 28px; }
+}
+
 

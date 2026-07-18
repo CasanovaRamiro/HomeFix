@@ -75,7 +75,7 @@ export default function ClientHistory() {
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="px-6 pb-10 pt-6" style={{ background: '#059669' }}>
-        <div className="mx-auto max-w-5xl">
+        <div className="hf-container-md">
           <p
             onClick={() => navigate('/dashboard')}
             className="mb-4 text-sm text-emerald-100 hover:text-white transition-colors cursor-pointer"
@@ -86,7 +86,7 @@ export default function ClientHistory() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-6 -mt-5">
+      <div className="hf-container-md px-6 -mt-5">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="spinner" />

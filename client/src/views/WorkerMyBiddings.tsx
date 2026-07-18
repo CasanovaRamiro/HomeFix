@@ -91,7 +91,7 @@ export default function WorkerMyBiddings() {
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(59,130,246,0.08)' }} />
         <div style={{ position: 'absolute', bottom: -40, left: -30, width: 160, height: 160, borderRadius: '50%', background: 'rgba(59,130,246,0.06)' }} />
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button onClick={() => navigate('/worker')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, color: '#94A3B8', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
               <ArrowLeft size={14} />
@@ -110,7 +110,7 @@ export default function WorkerMyBiddings() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 32px' }}>
+      <div className="hf-container" style={{ padding: '24px 32px' }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {FILTER_TABS.map((tab) => (
             <button

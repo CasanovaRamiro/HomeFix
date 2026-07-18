@@ -42,7 +42,7 @@ function ProfileHeader({ profile, stats, isVerified, kycLoading }: { profile: Da
 
   return (
     <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-      <div className="wd-header-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+      <div className="wd-header-container hf-container" style={{ padding: '0 32px' }}>
         <div className="wd-header-row">
 
           {/* Left: Avatar + Info */}
@@ -223,8 +223,8 @@ function MetricCard({
 
 function MetricsStrip({ stats }: { stats: DashboardStats }) {
   return (
-    <div className="wd-section" style={{
-      maxWidth: 1280, margin: '0 auto', padding: '0 32px',
+    <div className="wd-section hf-container" style={{
+      padding: '0 32px',
       marginTop: -28, position: 'relative', zIndex: 10,
     }}>
       <div className="wd-metrics-grid">
@@ -465,8 +465,8 @@ function EmergencySection({ workerId, emergenciesEnabled: initialEnabled }: { wo
   }, [isActive])
 
   return (
-    <div className="wd-section" style={{
-      maxWidth: 1280, margin: '0 auto', padding: '0 32px',
+    <div className="wd-section hf-container" style={{
+      padding: '0 32px',
       marginTop: 36,
       transition: 'all 0.3s ease'
     }}>
@@ -1429,7 +1429,7 @@ export default function WorkerDashboard() {
       <EmergencySection workerId={data.profile.id} emergenciesEnabled={data.profile.emergenciesEnabled} />
 
       {/* Central section: main content + sidebar */}
-      <div className="wd-main-grid" style={{ maxWidth: 1280, margin: '36px auto 0', padding: '0 32px' }}>
+      <div className="wd-main-grid hf-container" style={{ margin: '36px auto 0', padding: '0 32px' }}>
         {/* Left column */}
         <div className="wd-content">
           <JobsInZoneSection posts={nearbyJobs} loading={jobsLoading} locationFilter={locationFilter} onToggleLocation={handleToggleLocation} userId={data.profile.id} />
@@ -1499,6 +1499,21 @@ export default function WorkerDashboard() {
           .wd-action-buttons { flex-direction: column; align-items: stretch; }
           .wd-action-buttons button { width: 100%; justify-content: center; }
           .wd-header-row { gap: 12px; }
+        }
+        @media (min-width: 1440px) {
+          .wd-metrics-grid { gap: 20px; }
+          .wd-main-grid { grid-template-columns: 1fr 380px; gap: 28px; }
+          .wd-emergency-grid { gap: 20px; }
+          .agenda-card { padding: 28px; }
+          .agenda-job { padding: 16px 18px; }
+        }
+        @media (min-width: 1920px) {
+          .wd-metrics-grid { gap: 24px; }
+          .wd-main-grid { grid-template-columns: 1fr 420px; gap: 32px; }
+          .wd-emergency-grid { gap: 24px; }
+          .agenda-card { padding: 32px; }
+          .agenda-week { gap: 8px; }
+          .agenda-job { padding: 18px 20px; gap: 16px; }
         }
       `}</style>
       <div style={{ marginTop: 48 }}>

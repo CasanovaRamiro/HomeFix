@@ -119,7 +119,7 @@ export default function ClientBiddings() {
     }}>
       {/* Header verde cliente */}
       <div style={{ background: '#059669', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
           <button
             onClick={() => navigate(-1)}
             style={{
@@ -143,8 +143,8 @@ export default function ClientBiddings() {
       </div>
 
       {/* Metrics strip */}
-      <div style={{
-        maxWidth: 1280, margin: '0 auto', padding: '0 32px',
+      <div className="hf-container" style={{
+        padding: '0 32px',
         marginTop: -28, position: 'relative', zIndex: 10,
       }}>
         {loading ? (

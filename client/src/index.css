@@ -56,6 +56,48 @@ body {
 a { color: var(--primary); }
 a:hover { color: var(--accent); }
 
+/* ============================================================
+   Responsive container utilities — replace inline maxWidth
+   ============================================================ */
+.hf-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.hf-container-md {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.hf-container-sm {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+.hf-container-xs {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+@media (min-width: 1440px) {
+  .hf-container { max-width: 1440px; }
+  .hf-container-md { max-width: 1320px; }
+  .hf-container-sm { max-width: 1200px; }
+  .hf-container-xs { max-width: 1000px; }
+}
+@media (min-width: 1920px) {
+  .hf-container { max-width: 1600px; }
+  .hf-container-md { max-width: 1500px; }
+  .hf-container-sm { max-width: 1320px; }
+  .hf-container-xs { max-width: 1100px; }
+}
+@media (min-width: 2560px) {
+  .hf-container { max-width: 1800px; }
+  .hf-container-md { max-width: 1700px; }
+  .hf-container-sm { max-width: 1500px; }
+  .hf-container-xs { max-width: 1280px; }
+}
+
 /* Auth screens */
 .center {
   min-height: 100vh;
@@ -640,3 +682,67 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .img-modal-arrow:hover { background: rgba(255,255,255,.28); }
 .img-modal-arrow--prev { left: 20px; }
 .img-modal-arrow--next { right: 20px; }
+
+/* ============================================================
+   Large screens (> 1440px) — Post Detail
+   ============================================================ */
+@media (min-width: 1440px) {
+  .pd-wrap, .pd-page { max-width: 1400px; padding: 0 40px; }
+  .pd-hero { padding: 28px 0 40px; }
+  .pd-hero-card { padding: 26px 28px; border-radius: 18px; }
+  .pd-hero-title { font-size: 32px; }
+  .pd-hero-meta span { font-size: 14px; }
+  .pd-layout { grid-template-columns: 420px minmax(0, 1fr); gap: 32px; }
+  .post-card-body { padding: 24px 24px 22px; }
+  .pc-title { font-size: 21px; }
+  .pc-desc { font-size: 14px; }
+  .pc-photos img { width: 104px; height: 80px; }
+  .acard { padding: 20px; }
+  .a-name { font-size: 17px; }
+  .appl-title { font-size: 20px; }
+}
+
+/* ============================================================
+   Large desktop (>= 1920px)
+   ============================================================ */
+@media (min-width: 1920px) {
+  .pd-wrap, .pd-page { max-width: 1600px; padding: 0 48px; }
+  .pd-hero { padding: 32px 0 48px; }
+  .pd-hero-card { padding: 28px 32px; border-radius: 20px; }
+  .pd-hero-title { font-size: 36px; }
+  .pd-hero-meta span { font-size: 15px; }
+  .pd-layout { grid-template-columns: 480px minmax(0, 1fr); gap: 40px; }
+  .post-card-body { padding: 28px 28px 26px; }
+  .pc-title { font-size: 23px; }
+  .pc-desc { font-size: 14.5px; line-height: 1.7; }
+  .pc-facts { gap: 2px; }
+  .pc-fact { padding: 13px 15px; }
+  .pc-fact-label { font-size: 11px; }
+  .pc-fact-val { font-size: 14px; }
+  .pc-photos img { width: 112px; height: 88px; }
+  .pc-manage { gap: 10px; }
+  .pd-btn { padding: 10px 18px; font-size: 14px; }
+  .acard { padding: 22px; border-radius: 14px; }
+  .a-name { font-size: 18px; }
+  .a-msg { font-size: 14.5px; padding: 13px 16px; }
+  .a-actions { gap: 12px; padding-top: 18px; margin-top: 18px; }
+  .appl-bar { padding: 18px 20px; border-radius: 14px; }
+  .appl-title { font-size: 22px; }
+  .appl-empty { padding: 56px 28px; }
+}
+
+/* ============================================================
+   Extra large screens (>= 2560px)
+   ============================================================ */
+@media (min-width: 2560px) {
+  .pd-wrap, .pd-page { max-width: 1800px; padding: 0 60px; }
+  .pd-hero-title { font-size: 40px; }
+  .pd-layout { grid-template-columns: 520px minmax(0, 1fr); gap: 48px; }
+  .post-card-body { padding: 32px 32px 28px; }
+  .pc-title { font-size: 25px; }
+  .pc-photos img { width: 120px; height: 96px; }
+  .pd-btn { padding: 12px 20px; font-size: 15px; }
+  .acard { padding: 24px; }
+  .a-name { font-size: 19px; }
+  .appl-title { font-size: 24px; }
+}
