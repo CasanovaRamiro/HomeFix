@@ -68,7 +68,7 @@ export default function RegisterChoice() {
         </button>
       </div>
       <main className="flex-1 flex items-center justify-center px-6 py-14 sm:py-16">
-        <div className="max-w-4xl w-full">
+        <div className="hf-container-xs w-full">
           {/* Title block */}
           <div className="text-center mb-11">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-full mb-5 text-sm font-semibold text-accent-hover">

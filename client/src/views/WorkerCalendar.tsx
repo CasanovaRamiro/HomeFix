@@ -390,7 +390,7 @@ export default function WorkerCalendar() {
 
       {/* Dark header */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
           <button onClick={() => navigate('/worker')} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             background: 'none', border: 'none', padding: 0,
@@ -413,7 +413,7 @@ export default function WorkerCalendar() {
       </div>
 
       {/* Metric strip */}
-      <div style={{ maxWidth: 1280, margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
+      <div className="hf-container" style={{ margin: '-28px auto 0', padding: '0 32px', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 200px))', gap: 16 }}>
           {[
             { value: apps.length,                                                              label: 'Visitas totales',   color: '#0F172A' },
@@ -429,7 +429,7 @@ export default function WorkerCalendar() {
       </div>
 
       {/* Main content */}
-      <div style={{ maxWidth: 1280, margin: '36px auto', padding: '0 32px 60px' }}>
+      <div className="hf-container" style={{ margin: '36px auto', padding: '0 32px 60px' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
             <div style={{

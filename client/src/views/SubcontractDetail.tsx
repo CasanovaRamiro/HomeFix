@@ -97,7 +97,7 @@ export default function SubcontractDetail() {
     return (
       <>
         <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
-          <div className="max-w-7xl mx-auto">
+          <div className="hf-container">
             <h1 className="text-4xl font-bold text-white">Detalle de subcontrato</h1>
             <Link to={isGroup ? '/worker/subcontracts' : '/worker/available-subcontracts'} className="!text-white text-sm hover:!text-slate-300 transition-colors inline-block mt-1">
               ← Volver
@@ -105,7 +105,7 @@ export default function SubcontractDetail() {
           </div>
         </div>
         <div className="post-detail px-6 md:px-12">
-          <div className="max-w-7xl mx-auto">
+          <div className="hf-container">
             <p className="error" style={{ color: '#DC2626', padding: '12px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA' }}>{error}</p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function SubcontractDetail() {
   return (
     <>
       <div className="bg-primary-dark px-6 pt-12 pb-16 md:px-12">
-        <div className="max-w-7xl mx-auto">
+        <div className="hf-container">
           <h1 className="text-4xl font-bold text-white">{subcontract.title}</h1>
           <Link to={backLink} className="!text-white text-sm hover:!text-slate-300 transition-colors inline-block mt-1">
             ← Volver
@@ -185,7 +185,7 @@ export default function SubcontractDetail() {
       </div>
 
       <div className="post-detail px-6 md:px-12">
-        <div className="max-w-7xl mx-auto">
+        <div className="hf-container">
 
           {/* Original client (only if linked) */}
           {subcontract.parentPostId && (

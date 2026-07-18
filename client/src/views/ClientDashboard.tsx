@@ -56,7 +56,7 @@ export default function ClientDashboard() {
 
       {/* Hero claro — identidad Cliente (verde) */}
       <div className="bg-accent-hover px-6 pt-8 pb-12 md:px-12">
-        <div className="mx-auto max-w-7xl">
+        <div className="hf-container">
           {/* Badge de rol */}
           <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-bold tracking-wide text-white">
             <span className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -82,7 +82,7 @@ export default function ClientDashboard() {
 
       {/* Contenido */}
       <div className="px-6 md:px-12">
-        <div className="mx-auto max-w-7xl">
+        <div className="hf-container">
 
           {/* Stats — superpuestas sobre el hero */}
           <div className="relative -mt-7 mb-10 grid grid-cols-2 auto-rows-fr gap-5 lg:grid-cols-4">

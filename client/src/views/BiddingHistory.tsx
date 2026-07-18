@@ -48,7 +48,7 @@ export default function BiddingHistory() {
   return (
     <div className="min-h-screen bg-slate-100">
       <div style={{ background: '#059669', width: '100%', paddingTop: 32, paddingBottom: 40 }}>
-        <div className="mx-auto max-w-5xl px-6">
+        <div className="hf-container-md px-6">
           <button
             onClick={() => navigate('/client/biddings')}
             style={{
@@ -63,7 +63,7 @@ export default function BiddingHistory() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-6 -mt-5">
+      <div className="hf-container-md px-6 -mt-5">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="spinner" />

@@ -272,7 +272,7 @@ export default function AvailableSubcontracts() {
           width: '100%', paddingTop: 40, paddingBottom: 48,
         }}
       >
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button
               onClick={() => navigate('/worker')}
@@ -345,7 +345,7 @@ export default function AvailableSubcontracts() {
 
       {/* ── Barra de filtros ── */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
+        <div className="filter-bar-container hf-container" style={{ padding: '16px 32px' }}>
           <div className="trabajos-filters-row">
             <div className="filter-group filter-category">
               <CustomSelect
@@ -399,7 +399,7 @@ export default function AvailableSubcontracts() {
       </div>
 
       {error !== '' && (
-        <div style={{ maxWidth: 1280, margin: '12px auto 0', padding: '0 32px' }}>
+        <div className="hf-container" style={{ margin: '12px auto 0', padding: '0 32px' }}>
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#DC2626', fontSize: 14 }}>⚠</span>
             <span style={{ color: '#991B1B', fontSize: 13 }}>{error}</span>
@@ -428,7 +428,7 @@ export default function AvailableSubcontracts() {
       )}
 
       {/* ── Grid de cards ── */}
-      <div style={{ maxWidth: 1280, margin: '28px auto 0', padding: '0 32px 3rem' }}>
+      <div className="hf-container" style={{ margin: '28px auto 0', padding: '0 32px 3rem' }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <div

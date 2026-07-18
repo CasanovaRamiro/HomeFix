@@ -56,6 +56,44 @@ body {
 a { color: var(--primary); }
 a:hover { color: var(--accent); }
 
+/* ============================================================
+   Responsive container utilities — replace inline maxWidth
+   ============================================================ */
+.hf-container {
+  width: 100%;
+  margin: 0 auto;
+}
+.hf-container-md {
+  width: 100%;
+  margin: 0 auto;
+}
+.hf-container-sm {
+  width: 100%;
+  margin: 0 auto;
+}
+.hf-container-xs {
+  width: 100%;
+  margin: 0 auto;
+}
+@media (min-width: 1440px) {
+  .hf-container { max-width: 1440px; }
+  .hf-container-md { max-width: 1320px; }
+  .hf-container-sm { max-width: 1200px; }
+  .hf-container-xs { max-width: 1000px; }
+}
+@media (min-width: 1920px) {
+  .hf-container { max-width: 1600px; }
+  .hf-container-md { max-width: 1500px; }
+  .hf-container-sm { max-width: 1320px; }
+  .hf-container-xs { max-width: 1100px; }
+}
+@media (min-width: 2560px) {
+  .hf-container { max-width: 1800px; }
+  .hf-container-md { max-width: 1700px; }
+  .hf-container-sm { max-width: 1500px; }
+  .hf-container-xs { max-width: 1280px; }
+}
+
 /* Auth screens */
 .center {
   min-height: 100vh;

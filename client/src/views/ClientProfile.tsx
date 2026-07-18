@@ -136,7 +136,7 @@ export default function ClientProfile() {
 
       {/* Dark header */}
       <div style={{ background: '#0F172A', width: '100%' }}>
-        <div style={{ maxWidth: 1024, margin: '0 auto', padding: isMobile ? '14px 16px' : '20px 24px' }}>
+        <div className="hf-container-sm" style={{ padding: isMobile ? '14px 16px' : '20px 24px' }}>
           <button
             onClick={() => navigate('/dashboard')}
             style={{
@@ -203,7 +203,7 @@ export default function ClientProfile() {
       </div>
 
       {error && (
-        <div style={{ maxWidth: 1024, margin: '16px auto 0', padding: '0 16px' }}>
+        <div className="hf-container-sm" style={{ margin: '16px auto 0', padding: '0 16px' }}>
           <div style={{ background: '#FEF2F2', color: '#DC2626', padding: '10px 16px', borderRadius: 10, fontSize: 14 }}>
             {error}
           </div>
@@ -211,7 +211,7 @@ export default function ClientProfile() {
       )}
 
       {/* Content */}
-      <div style={{ maxWidth: 1024, margin: '0 auto', padding: isMobile ? '20px 16px' : '32px 24px' }}>
+      <div className="hf-container-sm" style={{ margin: '0 auto', padding: isMobile ? '20px 16px' : '32px 24px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: 24, alignItems: 'start' }}>
 
           {/* Left column */}

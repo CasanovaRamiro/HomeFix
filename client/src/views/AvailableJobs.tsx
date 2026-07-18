@@ -247,7 +247,7 @@ export default function AvailableJobs(): JSX.Element {
   return (
     <div style={{ minHeight: '100vh', width: '100%', overflowX: 'hidden', background: '#F3F4F6', fontFamily: "'Montserrat', system-ui, sans-serif" }}>
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px' }}>
+        <div className="hf-container" style={{ padding: '0 32px' }}>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button
@@ -320,7 +320,7 @@ export default function AvailableJobs(): JSX.Element {
 
       {/* FilterBar — fuera del header oscuro */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div className="filter-bar-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 32px' }}>
+        <div className="filter-bar-container hf-container" style={{ padding: '16px 32px' }}>
           <FilterBar
             category={category}
             onCategoryChange={setCategory}
@@ -336,7 +336,7 @@ export default function AvailableJobs(): JSX.Element {
       </div>
 
       {error !== '' && (
-        <p style={{ color: '#EF4444', fontSize: 13, maxWidth: 1280, margin: '12px auto 0', padding: '0 32px' }}>{error}</p>
+        <p className="hf-container" style={{ color: '#EF4444', fontSize: 13, margin: '12px auto 0', padding: '0 32px' }}>{error}</p>
       )}
 
       {notificacion && (
@@ -359,7 +359,7 @@ export default function AvailableJobs(): JSX.Element {
         </div>
       )}
 
-      <div className="trabajos-grid-container" style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 32px 2rem' }}>
+      <div className="trabajos-grid-container hf-container" style={{ margin: '24px auto 0', padding: '0 32px 2rem' }}>
         {loading && <p style={{ color: '#64748B', fontSize: 14 }}>Cargando trabajos...</p>}
         {!loading && categoriesReady && workerCategories.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', border: '1px solid #E2E8F0', borderRadius: 8, background: '#fff' }}>
