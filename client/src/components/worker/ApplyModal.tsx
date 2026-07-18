@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TriangleAlert, User, MapPin } from 'lucide-react'
+import { TriangleAlert, User, MapPin, X } from 'lucide-react'
 
 export interface ApplicationFormData {
   message: string
@@ -168,14 +168,26 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
   }
 
   return (
-    <div className="modal-overlay" role="presentation" onClick={() => !enviando && onClose()}>
+    <div className="modal-overlay" role="presentation">
       <div
         className="card modal-card"
         role="dialog"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: '90vh', overflowY: 'auto', minWidth: 440 }}
+        style={{ maxHeight: '90vh', overflowY: 'auto', minWidth: 440, position: 'relative' }}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={enviando}
+          style={{
+            position: 'absolute', top: 12, right: 12,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: '#94A3B8', padding: 4,
+          }}
+        >
+          <X size={20} />
+        </button>
         <h2 id="modal-title">{subcontractMode ? 'Postularte a subcontrato' : selected.isEmergency ? 'Postularte a esta urgencia' : 'Postularte a este trabajo'}</h2>
         <p className="trabajos-muted">{selected.titulo}</p>
 

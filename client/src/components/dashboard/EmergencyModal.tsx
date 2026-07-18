@@ -14,7 +14,7 @@ interface Props {
 export default function EmergencyModal({ userId, onClose, onSuccess }: Props): JSX.Element {
   const theme = useTheme()
   const { categories, loading: loadingCategories } = useCategories()
-  const { form, setForm, loading, error, success, addressLoading, handleSubmit } = useCreateEmergency(userId)
+  const { form, setForm, loading, error, success, handleSubmit } = useCreateEmergency(userId)
 
   useEffect(() => {
     if (success) onSuccess()
@@ -49,7 +49,7 @@ export default function EmergencyModal({ userId, onClose, onSuccess }: Props): J
         alignItems: 'center', justifyContent: 'center',
         padding: '16px',
       }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+
     >
       <div
         style={{
@@ -144,17 +144,10 @@ export default function EmergencyModal({ userId, onClose, onSuccess }: Props): J
 
         <div style={{ marginBottom: '24px' }}>
           <label style={labelStyle}>Dirección</label>
-          {addressLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.muted, fontSize: '13px' }}>
-              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-              Cargando dirección...
-            </div>
-          ) : (
-            <AddressAutocomplete
-              value={form.address}
-              onChange={(address, lat, lng) => setForm(p => ({ ...p, address, latitude: lat, longitude: lng }))}
-            />
-          )}
+          <AddressAutocomplete
+            value={form.address}
+            onChange={(address, lat, lng) => setForm(p => ({ ...p, address, latitude: lat, longitude: lng }))}
+          />
           {form.latitude && form.longitude && (
             <p style={{ margin: '6px 0 0', fontSize: '12px', color: theme.accent }}>
               ✓ Ubicación confirmada
