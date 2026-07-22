@@ -25,6 +25,7 @@ export interface RegisterResponse {
   userId: string
   email: string
   emailVerified: boolean
+  roleAssigned: boolean
   message: string
 }
 

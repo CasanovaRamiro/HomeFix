@@ -5,6 +5,7 @@ import {
   Eye, EyeOff, Mail, Lock, User, Phone,
   AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck, MailCheck,
 } from 'lucide-react'
+import { getErrorMessage } from '../services/api'
 import { register } from '../services/auth'
 import { loginWithGoogle } from '../lib/auth0'
 
@@ -43,6 +44,7 @@ export default function Register() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [roleWarning, setRoleWarning] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -89,17 +91,17 @@ export default function Register() {
 
     try {
       setIsSubmitting(true)
-      await register({
+      const data = await register({
         name: form.name,
         lastName: form.lastName,
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
       })
+      if (!data.roleAssigned) setRoleWarning(data.message)
       setSubmitted(true)
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { error?: string } } }
-      setError(axiosErr.response?.data?.error ?? 'No se pudo completar el registro')
+      setError(getErrorMessage(err, 'No se pudo completar el registro'))
     } finally {
       setIsSubmitting(false)
     }
@@ -130,6 +132,12 @@ export default function Register() {
               <p className="mt-2 text-sm text-slate-400">
                 Si no lo ves, revisá la carpeta de spam.
               </p>
+
+              {roleWarning && (
+                <div className="mt-4 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[12px] text-left">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /> {roleWarning}
+                </div>
+              )}
 
               <button
                 type="button"

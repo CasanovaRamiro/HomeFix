@@ -9,4 +9,18 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+/**
+ * Extracts a user-facing message from a failed API call. The backend only
+ * ever sends a safe-to-show string in `error` (see server error.middleware.ts),
+ * so this never needs to fall back to raw error internals — just to `fallback`
+ * when there's no response at all (network error, timeout, CORS, etc).
+ */
+export const getErrorMessage = (err: unknown, fallback: string): string => {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined
+    if (typeof data?.error === 'string' && data.error !== '') return data.error
+  }
+  return fallback
+}
+
 export default api

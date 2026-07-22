@@ -9,6 +9,26 @@ import type { CreateUserInput } from '../types/user.types.js'
 
 const managedPassword = 'AUTH0_MANAGED_ACCOUNT'
 
+const ROLE_ASSIGN_WARNING = 'Tu cuenta fue creada, pero hubo un problema al configurar tus permisos. Si notás algún inconveniente al usar la plataforma, contactanos para que lo revisemos.'
+
+/**
+ * Auth0 role assignment can fail transiently (rate limits, network blips).
+ * We retry once before giving up; if it still fails, registration proceeds
+ * anyway (the local User record already has the right role) but the caller
+ * is told so it can warn the user instead of claiming a fully clean signup.
+ */
+const assignRoleWithRetry = async (auth0Id: string, roleId: string, email: string, action: string): Promise<boolean> => {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await assignAuth0Role(auth0Id, roleId)
+      return true
+    } catch (err) {
+      logger.error({ email, auth0Id, err, attempt, action }, 'Failed to assign role in Auth0')
+    }
+  }
+  return false
+}
+
 export interface RegisterInput {
   name?: string
   lastName?: string
@@ -54,13 +74,9 @@ export const registerUser = async (input: RegisterInput) => {
   const auth0User = await createAuth0User({ email, password, name, lastName })
 
   const clientRoleId = env.AUTH0_CLIENT_ROLE_ID
-  if (clientRoleId) {
-    try {
-      await assignAuth0Role(auth0User.auth0Id, clientRoleId)
-    } catch {
-      logger.error({ email, auth0Id: auth0User.auth0Id, action: 'auth.register.roleAssign' }, 'Failed to assign client role in Auth0')
-    }
-  }
+  const roleAssigned = clientRoleId
+    ? await assignRoleWithRetry(auth0User.auth0Id, clientRoleId, email, 'auth.register.roleAssign')
+    : true
 
   const userData: CreateUserInput = {
     name,
@@ -72,13 +88,14 @@ export const registerUser = async (input: RegisterInput) => {
   }
   const user = await createUser(userData)
 
-  logger.info({ userId: user.id, email, role: UserRole.Client, action: 'auth.user.registered' }, 'Client registered')
+  logger.info({ userId: user.id, email, role: UserRole.Client, roleAssigned, action: 'auth.user.registered' }, 'Client registered')
 
   return {
     userId: user.id,
     email: auth0User?.email ?? email,
     emailVerified: auth0User?.emailVerified ?? false,
-    message: 'Usuario registrado exitosamente',
+    roleAssigned,
+    message: roleAssigned ? 'Usuario registrado exitosamente' : ROLE_ASSIGN_WARNING,
   }
 }
 
@@ -99,13 +116,9 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
   const auth0User = await createAuth0User({ email, password, name, lastName })
 
   const workerRoleId = env.AUTH0_WORKER_ROLE_ID
-  if (workerRoleId) {
-    try {
-      await assignAuth0Role(auth0User.auth0Id, workerRoleId)
-    } catch {
-      logger.error({ email, auth0Id: auth0User.auth0Id, action: 'auth.register.roleAssign' }, 'Failed to assign worker role in Auth0')
-    }
-  }
+  const roleAssigned = workerRoleId
+    ? await assignRoleWithRetry(auth0User.auth0Id, workerRoleId, email, 'auth.register.roleAssign')
+    : true
 
   const user = await createUser({
     name: lastName ? `${name} ${lastName}` : name,
@@ -124,13 +137,14 @@ export const registerWorker = async (input: RegisterWorkerInput) => {
 
   await addUserCategories(user.id, categoryIds)
 
-  logger.info({ userId: user.id, email, role: UserRole.Worker, categories: input.categories, action: 'auth.user.registered' }, 'Worker registered')
+  logger.info({ userId: user.id, email, role: UserRole.Worker, categories: input.categories, roleAssigned, action: 'auth.user.registered' }, 'Worker registered')
 
   return {
     userId: user.id,
     email: auth0User?.email ?? email,
     emailVerified: auth0User?.emailVerified ?? false,
-    message: 'Trabajador registrado exitosamente',
+    roleAssigned,
+    message: roleAssigned ? 'Trabajador registrado exitosamente' : ROLE_ASSIGN_WARNING,
   }
 }
 
@@ -138,8 +152,8 @@ export const loginUser = async (input: LoginInput) => {
   const email = input.email?.trim().toLowerCase()
   const password = input.password
 
-  if (!email) throw createHttpError(400, 'Email is required')
-  if (!password) throw createHttpError(400, 'Password is required')
+  if (!email) throw createHttpError(400, 'El correo electrónico es obligatorio')
+  if (!password) throw createHttpError(400, 'La contraseña es obligatoria')
 
   const tokenData = await loginWithAuth0(email, password)
   const profile = await getAuth0UserInfo(tokenData.access_token)
