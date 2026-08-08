@@ -15,10 +15,12 @@ import type { LocationFilter } from '../components/worker/types'
 import TrabajoCard from '../components/worker/TrabajoCard'
 import TrabajoDetail from '../components/worker/TrabajoDetail'
 import ApplyModal, { type ApplicationFormData } from '../components/worker/ApplyModal'
+import KycRequiredModal from '../components/worker/KycRequiredModal'
 import FilterBar from '../components/worker/FilterBar'
 import LocationFilterModal from '../components/post/LocationFilterModal'
 import { Briefcase, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, XCircle, CheckCircle } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
+import { fetchKycStatus, type KycStatus } from '../services/kyc'
 
 const PAGE_SIZE = 10
 const POLL_INTERVAL = 30000
@@ -69,6 +71,8 @@ export default function AvailableJobs(): JSX.Element {
   const [locationFilter, setLocationFilter] = useState<LocationFilter | null>(loadStoredFilter)
   const [defaultCoords, setDefaultCoords] = useState<{ lat: number; lng: number }>({ lat: -34.6037, lng: -58.3816 })
   const [page, setPage] = useState(1)
+  const [kycStatus, setKycStatus] = useState<KycStatus>('NOT_STARTED')
+  const [showKycRequired, setShowKycRequired] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadPostulaciones = useCallback(async (): Promise<void> => {
@@ -165,6 +169,12 @@ export default function AvailableJobs(): JSX.Element {
     }
   }, [user?.id])
 
+  useEffect(() => {
+    fetchKycStatus()
+      .then(({ kycStatus: status }) => setKycStatus(status))
+      .catch(() => {})
+  }, [])
+
   const filtradosYOrdenados = useMemo((): (TrabajoView & { lat?: number | null; lng?: number | null })[] => {
     let resultado = trabajos
     if (category === '' && workerCategories.length > 0) {
@@ -194,6 +204,10 @@ export default function AvailableJobs(): JSX.Element {
 
   const handlePostular = async (formData: ApplicationFormData): Promise<void> => {
     if (!selected) return
+    if (kycStatus !== 'APPROVED') {
+      setShowKycRequired(true)
+      return
+    }
     setEnviando(true)
     try {
       await applyToPost({
@@ -494,11 +508,21 @@ export default function AvailableJobs(): JSX.Element {
               selected={selected}
               yaPostulado={yaPostulado(selected.id)}
               esPropio={selected.userId === user?.id}
-              onClose={() => setShowDetailModal(false)}
-              onPostular={() => { setShowDetailModal(false); setShowModal(true) }}
+              onClose={() => setSelected(null)}
+              onPostular={() => {
+                if (kycStatus !== 'APPROVED') {
+                  setShowKycRequired(true)
+                  return
+                }
+                setShowModal(true)
+              }}
             />
           </div>
         </div>
+      )}
+
+      {showKycRequired && (
+        <KycRequiredModal isOpen onClose={() => setShowKycRequired(false)} />
       )}
 
       {showModal && selected !== null && (
