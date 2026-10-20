@@ -12,6 +12,7 @@ import {
   clearStartToken,
   setTokenValidated,
   resetRejectedApplications,
+  findBiddingApplications,
 } from '../../infrastructure/database/application.database.js'
 import prisma from '../../lib/prisma.js'
 import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
@@ -37,6 +38,15 @@ export const getMyApplications = async (workerId: string): Promise<DomainMyAppli
     const rating = app.clientId ? await getClientRating(app.clientId) : { averageRating: 0, reviewCount: 0 }
     return { ...app, clientRating: rating.averageRating }
   }))
+}
+
+export const getBiddingApplications = async (clientId: string, biddingId: string) => {
+  const post = await findPostById(biddingId)
+  if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
+  if (!post.isBidding || post.userId !== clientId) {
+    throw Object.assign(new Error('Forbidden'), { status: 403 })
+  }
+  return findBiddingApplications(biddingId)
 }
 
 export const cancelApplication = async (workerId: string, applicationId: string) => {

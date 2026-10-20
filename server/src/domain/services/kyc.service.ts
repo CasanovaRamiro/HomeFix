@@ -181,6 +181,13 @@ export const getKycDecision = async (sessionId: string): Promise<KycDecision> =>
   }
 }
 
+export const getKycDecisionForUser = async (email: string, sessionId: string): Promise<KycDecision> => {
+  const user = await findByEmail(email)
+  if (!user) throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
+  if (user.diditVerificationId !== sessionId) throw createHttpError(403, 'Forbidden')
+  return getKycDecision(sessionId)
+}
+
 export interface WebhookPayload {
   event_id: string
   webhook_type: string

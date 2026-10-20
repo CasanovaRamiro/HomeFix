@@ -295,6 +295,10 @@ router.post('/create', async (req, res, next) => {
       return
     }
     const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Client) {
+      res.status(403).json({ error: 'Client access required' })
+      return
+    }
     const result = await createPost({ ...req.body, userId: user.id })
     res.status(201).json(toPostDTO(result))
   } catch (error) {
@@ -408,6 +412,10 @@ router.post('/create-subcontract', validateCreateSubcontractBody, async (req, re
   try {
     const claims = req.auth?.payload as Auth0Claims | undefined
     const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
     const body = req.body as CreateSubcontractRequest
     const results = await createSubContract({
       ...body,

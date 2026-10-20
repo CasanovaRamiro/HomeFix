@@ -457,21 +457,36 @@ describe('GET /posts/:id', () => {
 
 describe('POST /posts/create', () => {
   it('creates a new post', async () => {
+    const client = await createUser('create-client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: client.id, email: 'create-client@test.com' })
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
       .send(postInput())
+    resetMockPayload()
     expect(res.status).toBe(201)
     expect(res.body).toHaveProperty('id')
     expect(res.body.title).toBe('Test Post')
   })
 
   it('returns 400 for empty title', async () => {
+    const client = await createUser('create-client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: client.id, email: 'create-client@test.com' })
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
       .send(postInput({ title: '' }))
+    resetMockPayload()
     expect(res.status).toBe(400)
+  })
+
+  it('returns 403 when a worker tries to create a client post', async () => {
+    const res = await request(app)
+      .post('/posts/create')
+      .set('Authorization', `Bearer ${token}`)
+      .send(postInput())
+
+    expect(res.status).toBe(403)
   })
 
   it('returns 401 without token', async () => {
@@ -1139,6 +1154,19 @@ describe('POST /posts/create-subcontract', () => {
     expect(res.body[0].title).toBe('Subcontratación: Arreglo de cocina - Albañilería general')
     expect(res.body[1].parentPostId).toBe(parentPostId)
     expect(res.body[1].title).toBe('Subcontratación: Arreglo de cocina - Instalación eléctrica')
+  })
+
+  it('returns 403 when a client tries to create a subcontract', async () => {
+    const client = await createUser('subcontract-client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: client.id, email: 'subcontract-client@test.com' })
+
+    const res = await request(app)
+      .post('/posts/create-subcontract')
+      .set('Authorization', 'Bearer test-token')
+      .send(validPayload())
+
+    resetMockPayload()
+    expect(res.status).toBe(403)
   })
 
   it('returns 401 without token', async () => {

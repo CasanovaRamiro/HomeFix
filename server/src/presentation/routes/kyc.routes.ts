@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { logger } from '../../lib/logger.js'
-import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from '../../domain/services/kyc.service.js'
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecisionForUser, handleKycWebhook } from '../../domain/services/kyc.service.js'
 import { env } from '../../lib/envConfig.js'
 import { verifySignatureV2, verifySignatureSimple } from '../../infrastructure/webhooks/didit-signature.js'
 
@@ -98,7 +98,14 @@ router.get('/decision/:sessionId', async (req, res, next) => {
       throw err
     }
 
-    const result = await getKycDecision(sessionId)
+    const email = getEmail(req)
+    if (!email) {
+      const err = new Error('Token autenticado sin email') as Error & { status?: number }
+      err.status = 400
+      throw err
+    }
+
+    const result = await getKycDecisionForUser(email, sessionId)
     res.json(result)
   } catch (e) {
     const err = e as Error & { status?: number }

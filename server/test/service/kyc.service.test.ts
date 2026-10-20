@@ -19,7 +19,7 @@ vi.mock("../../src/infrastructure/providers/didit.provider.js", () => ({
   getDecision: mockGetDecision,
 }))
 
-import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, handleKycWebhook } from "../../src/domain/services/kyc.service.js"
+import { startKycVerification, confirmKyc, getKycStatus, getKycDecision, getKycDecisionForUser, handleKycWebhook } from "../../src/domain/services/kyc.service.js"
 
 describe("startKycVerification", () => {
   beforeEach(() => {
@@ -492,6 +492,38 @@ describe("getKycDecision", () => {
     mockGetDecision.mockRejectedValue(err)
 
     await expect(getKycDecision("sess-1")).rejects.toMatchObject({ status: 502 })
+  })
+})
+
+describe("getKycDecisionForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("returns the decision when the session belongs to the user", async () => {
+    mockFindByEmail.mockResolvedValue({ email: "foo@bar.com", diditVerificationId: "sess-owned" })
+    mockGetDecision.mockResolvedValue({
+      sessionId: "sess-owned",
+      status: "Approved",
+      sessionKind: "user",
+      vendorData: null,
+      idVerifications: [],
+      livenessChecks: [],
+      faceMatches: [],
+      amlScreenings: [],
+    })
+
+    const result = await getKycDecisionForUser("foo@bar.com", "sess-owned")
+
+    expect(result.sessionId).toBe("sess-owned")
+    expect(mockGetDecision).toHaveBeenCalledWith("sess-owned")
+  })
+
+  it("rejects a session that belongs to another user", async () => {
+    mockFindByEmail.mockResolvedValue({ email: "foo@bar.com", diditVerificationId: "sess-owned" })
+
+    await expect(getKycDecisionForUser("foo@bar.com", "sess-other")).rejects.toMatchObject({ status: 403 })
+    expect(mockGetDecision).not.toHaveBeenCalled()
   })
 })
 
