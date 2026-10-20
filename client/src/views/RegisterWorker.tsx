@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Briefcase,
   AlertCircle, ArrowRight, ArrowLeft, Shield, Check,
@@ -50,6 +50,7 @@ export default function RegisterWorker() {
     password: '',
     confirmPassword: '',
   })
+  const phoneRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [kycMethod, setKycMethod] = useState<'automatic' | 'manual'>('automatic')
   const [sessionUrl, setSessionUrl] = useState<string | null>(null)
@@ -82,7 +83,7 @@ export default function RegisterWorker() {
     if (!form.lastName.trim()) e.lastName = 'El apellido es requerido'
     if (!form.email.trim()) e.email = 'El email es requerido'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email inválido'
-    if (!form.phone.trim()) e.phone = 'El teléfono es requerido'
+    if (!form.phone.trim()) e.phone = 'Ingresá tu número de celular para continuar'
     else if (!/^\d{10,}$/.test(form.phone.replace(/\D/g, ''))) e.phone = 'Teléfono inválido (mín 10 dígitos)'
     if (!form.password) e.password = 'La contraseña es requerida'
     else if (!passwordRegex.test(form.password)) e.password = 'Mín 8 caracteres, mayúscula, minúscula, número y símbolo'
@@ -91,8 +92,14 @@ export default function RegisterWorker() {
     return Object.keys(e).length === 0
   }
 
-  const handleNext = () => {
-    if (validateStep1()) setStep(2)
+  const handleNext = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const isValid = validateStep1()
+    if (!isValid) {
+      if (!form.phone.trim()) phoneRef.current?.focus()
+      return
+    }
+    setStep(2)
   }
 
   const handleFinalSubmit = async () => {
@@ -341,7 +348,7 @@ export default function RegisterWorker() {
                     <label className="block text-[12px] font-semibold text-slate-700 mb-1">Teléfono</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type="tel" placeholder="+54 11 1234-5678" value={form.phone} onChange={handleChange('phone')}
+                         <input ref={phoneRef} type="tel" placeholder="+54 11 1234-5678" value={form.phone} onChange={handleChange('phone')}
                         className={`${inputBase} pl-9 ${errors.phone ? 'border-red-400' : 'border-slate-200'}`} />
                     </div>
                     {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}

@@ -12,9 +12,10 @@ import {
   generateStartToken,
   validateStartToken,
   applyToBidding,
+  getBiddingApplications,
 } from '../../domain/services/application.service.js'
-import { findBiddingApplications } from '../../infrastructure/database/application.database.js'
 import { toMyApplicationDTO, toStartTokenDTO, toStartTokenValidatedDTO } from '../transformers/application.transformer.js'
+import { UserRole } from '../../domain/types/userRole.js'
 
 const router = Router()
 
@@ -55,6 +56,10 @@ router.post('/', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
     const { postId, message, availableDays, availableTimeFrom, availableTimeTo, chargesVisit, visitCost } = req.body
 
     if (!postId || typeof postId !== 'string') {
@@ -97,6 +102,10 @@ router.post('/subcontract', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
     const { postId, categoryId, message, availableDays, availableTimeFrom, availableTimeTo, visitCost } = req.body
     const chargesVisit = typeof req.body.chargesVisit === 'boolean' ? req.body.chargesVisit : false
 
@@ -195,8 +204,12 @@ router.post('/:applicationId/validate-start-token', async (req, res, next) => {
 router.get('/bidding/:biddingId', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
-    await syncAuth0User(claims)
-    const applications = await findBiddingApplications(req.params.biddingId)
+    const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Client) {
+      res.status(403).json({ error: 'Client access required' })
+      return
+    }
+    const applications = await getBiddingApplications(user.id, req.params.biddingId)
     res.json(applications)
   } catch (err) {
     next(err)
@@ -207,6 +220,10 @@ router.post('/bidding', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
+    if (user.role !== UserRole.Worker) {
+      res.status(403).json({ error: 'Worker access required' })
+      return
+    }
     const { postId, offeredCost, offeredDuration, offeredStartDate, message } = req.body
     if (!postId || offeredCost == null) {
       res.status(400).json({ error: 'postId y offeredCost son requeridos' })

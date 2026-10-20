@@ -92,6 +92,16 @@ describe('POST /applications', () => {
     expect(res.body.message).toBe('Application successful')
   })
 
+  it('retorna 403 si un cliente intenta postularse', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send(validApplicationBody(post.id))
+
+    expect(res.status).toBe(403)
+  })
+
   it('persiste todos los campos de disponibilidad y visita en la base de datos', async () => {
     const post = await createActivePost()
     const res = await request(app)
@@ -244,6 +254,16 @@ describe('POST /applications/subcontract', () => {
     expect(res.body.message).toBe('Postulación a subcontrato exitosa')
   })
 
+  it('retorna 403 si un cliente intenta postularse a un subcontract', async () => {
+    const { postId, postCategoryId } = await createActiveSubcontract()
+    const res = await request(app)
+      .post('/applications/subcontract')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId })
+
+    expect(res.status).toBe(403)
+  })
+
   it('persiste los campos en la base de datos', async () => {
     const { postId, postCategoryId } = await createActiveSubcontract()
     const res = await request(app)
@@ -360,6 +380,80 @@ describe('GET /applications/my-applications', () => {
     expect(res.body).toHaveLength(2)
     expect(res.body[0]).toHaveProperty('clientRating', 0)
     expect(res.body[1]).toHaveProperty('clientRating', 0)
+  })
+})
+
+describe('GET /applications/bidding/:biddingId', () => {
+  const createBidding = (ownerId: string) =>
+    prisma.post.create({
+      data: {
+        userId: ownerId,
+        title: 'Licitación de prueba',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        isBidding: true,
+        categories: { create: { categoryId } },
+      },
+    })
+
+  it('permite al cliente propietario consultar postulaciones', async () => {
+    const post = await createBidding(clientId)
+    await prisma.application.create({ data: { workerId, postId: post.id, status: 'Pending' } })
+
+    const res = await request(app)
+      .get(`/applications/bidding/${post.id}`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+  })
+
+  it('retorna 403 a un worker aunque conozca la licitación', async () => {
+    const post = await createBidding(clientId)
+
+    const res = await request(app)
+      .get(`/applications/bidding/${post.id}`)
+      .set('Authorization', `Bearer ${workerToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('retorna 403 a un cliente que no es propietario', async () => {
+    const post = await createBidding(workerId)
+
+    const res = await request(app)
+      .get(`/applications/bidding/${post.id}`)
+      .set('Authorization', `Bearer ${clientToken}`)
+
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('POST /applications/bidding', () => {
+  it('retorna 403 si un cliente intenta postularse a una licitación', async () => {
+    const post = await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Licitación de prueba',
+        description: 'Test',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        isBidding: true,
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .post('/applications/bidding')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ postId: post.id, offeredCost: 1000 })
+
+    expect(res.status).toBe(403)
   })
 })
 
