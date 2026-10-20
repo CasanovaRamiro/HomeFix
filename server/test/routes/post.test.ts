@@ -413,10 +413,13 @@ describe('GET /posts/:id', () => {
   let postId: string
 
   beforeEach(async () => {
+    const client = await createUser('post-detail-client@test.com', 'Client', 'hashed', { role: UserRole.Client })
+    setMockPayload({ sub: client.id, email: 'post-detail-client@test.com' })
     const res = await request(app)
       .post('/posts/create')
       .set('Authorization', `Bearer ${token}`)
-      .send(postInput())
+      .send(postInput({ userId: client.id }))
+    resetMockPayload()
     postId = res.body.id
   })
 
