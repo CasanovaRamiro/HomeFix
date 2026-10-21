@@ -139,8 +139,8 @@ describe('auth.service - syncAuth0User', () => {
     )
   })
 
-  it('updates role when existing user has role "user"', async () => {
-    const userWithRole = { ...mockUser, role: 'user' }
+  it('updates role when existing user has default client role', async () => {
+    const userWithRole = { ...mockUser, role: 'client' }
     vi.mocked(userData.findByEmail).mockResolvedValue(userWithRole)
     vi.mocked(userData.updateUserByEmail).mockResolvedValue({ ...userWithRole, role: 'worker' })
 
@@ -150,6 +150,24 @@ describe('auth.service - syncAuth0User', () => {
       'jane@test.com',
       expect.objectContaining({ role: 'worker' })
     )
+  })
+
+  it('does not change role when existing user already has a non-default role', async () => {
+    const workerUser = { ...mockUser, role: 'worker' }
+    vi.mocked(userData.findByEmail).mockResolvedValue(workerUser)
+
+    await syncAuth0User({ sub: 'auth0|abc123', email: 'jane@test.com', role: 'client' })
+
+    expect(userData.updateUserByEmail).not.toHaveBeenCalled()
+  })
+
+  it('ignores an unknown role claim', async () => {
+    const clientUser = { ...mockUser, role: 'client' }
+    vi.mocked(userData.findByEmail).mockResolvedValue(clientUser)
+
+    await syncAuth0User({ sub: 'auth0|abc123', email: 'jane@test.com', role: 'admin' })
+
+    expect(userData.updateUserByEmail).not.toHaveBeenCalled()
   })
 
   it('updates name when existing user name equals the sub claim', async () => {
