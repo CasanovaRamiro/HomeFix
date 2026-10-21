@@ -255,6 +255,46 @@ describe("AI Suggestion Service", () => {
     });
   });
 
+  describe("possibleIssue style", () => {
+    it("should instruct the model to write an impersonal technical summary", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"question","text":"¿Dónde ocurre?"}',
+        },
+      });
+
+      await suggestPost({
+        messages: [{ role: "user", text: "Tengo humedad" }],
+      });
+
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      const instructions = callArg.systemInstruction.parts[0].text;
+
+      expect(instructions).toContain("Posible problema de ...");
+      expect(instructions).toContain("NO es una respuesta de chat");
+      expect(instructions).toContain("Ejemplo correcto");
+      expect(instructions).toContain("Ejemplo incorrecto");
+    });
+
+    it("should not instruct the model to use the old chat-style openers", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"question","text":"¿Dónde ocurre?"}',
+        },
+      });
+
+      await suggestPost({
+        messages: [{ role: "user", text: "Tengo humedad" }],
+      });
+
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      const instructions = callArg.systemInstruction.parts[0].text;
+
+      expect(instructions).not.toContain('Usa: "Posiblemente..."');
+      expect(instructions).not.toContain("Esto podria deberse a...");
+    });
+  });
+
   describe("conversation handling", () => {
     it("should throw if no messages are provided", async () => {
       await expect(suggestPost({ messages: [] })).rejects.toThrow(

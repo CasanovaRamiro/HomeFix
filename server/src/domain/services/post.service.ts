@@ -104,6 +104,7 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
     endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
     emergencyExpiresAt,
+    aiGenerated: input.aiGenerated === true,
   })
 
   if (input.isEmergency) {

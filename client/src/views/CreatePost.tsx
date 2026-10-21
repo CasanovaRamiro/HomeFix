@@ -161,9 +161,13 @@ export default function CreatePost() {
                 />
               </div>
 
+              <p style={{ fontSize: '13px', color: theme.muted, margin: '0 0 12px' }}>
+                Seleccioná el rango de días en que podés recibir visitas
+              </p>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                  <div>
-                   <label style={s.formLabel}>Fecha de inicio</label>
+                   <label style={s.formLabel}>Desde</label>
                    <input
                      type="date"
                      value={form.startDate}
@@ -176,7 +180,7 @@ export default function CreatePost() {
                    />
                  </div>
                  <div>
-                   <label style={s.formLabel}>Fecha de finalización</label>
+                   <label style={s.formLabel}>Hasta</label>
                    <input
                      type="date"
                      value={form.endDate}

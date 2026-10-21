@@ -73,6 +73,7 @@ model Post {
   isEmergency     Boolean          @default(false)
   emergencyExpiresAt DateTime?
   allowsSubcontracting Boolean    @default(true)
+  aiGenerated     Boolean          @default(false)
   isBidding           Boolean    @default(false)
   bidWeights          String?    @db.Text
   materialResponsibility String? @default("to_agree")

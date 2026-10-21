@@ -19,6 +19,7 @@ export interface DomainPost {
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
   allowsSubcontracting?: boolean
+  aiGenerated?: boolean
   categories: ({ id: string; categoryId?: string; name: string } & {
     quantity?: number
     filledCount?: number
@@ -68,6 +69,7 @@ export interface CreatePostInput {
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
   allowsSubcontracting?: boolean
+  aiGenerated?: boolean
 }
 
 export interface UpdatePostInput {

@@ -30,6 +30,7 @@ export interface PostDTO {
   isEmergency: boolean
   emergencyExpiresAt: string | null
   allowsSubcontracting: boolean
+  aiGenerated?: boolean
   categories: PostCategoryDTO[]
   user: {
     id: string
@@ -170,4 +171,5 @@ export interface TrabajoView {
   isEmergency: boolean
   emergencyExpiresAt: string | null
   allowsSubcontracting: boolean
+  aiGenerated: boolean
 }

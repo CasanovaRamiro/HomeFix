@@ -22,6 +22,7 @@ type _CreatePostRecordInput = {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   allowsSubcontracting?: boolean
+  aiGenerated?: boolean
   isBidding?: boolean
   bidWeights?: string
   materialResponsibility?: string
@@ -52,6 +53,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
       allowsSubcontracting: data.allowsSubcontracting ?? true,
+      aiGenerated: data.aiGenerated ?? false,
       isBidding: data.isBidding ?? false,
       bidWeights: data.bidWeights ?? null,
       materialResponsibility: data.materialResponsibility ?? null,
@@ -85,6 +87,7 @@ const postFields = {
   isEmergency: true,
   emergencyExpiresAt: true,
   allowsSubcontracting: true,
+  aiGenerated: true,
   isBidding: true,
   bidWeights: true,
   materialResponsibility: true,
@@ -134,6 +137,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
       ? new Date(Date.now() + EMERGENCY_DURATION_MS)
       : (data.emergencyExpiresAt ?? null),
     allowsSubcontracting: data.allowsSubcontracting ?? true,
+    aiGenerated: data.aiGenerated ?? false,
     images: data.images,
     categories: [{ categoryId: data.categoryId }],
   })
