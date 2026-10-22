@@ -105,7 +105,7 @@ export default function App(): ReactNode {
         <Route path="/kyc" element={<PrivateRoute><KycVerify /></PrivateRoute>} />
         <Route path="/dashboard" element={<ClientRoute><ClientDashboard /></ClientRoute>} />
         <Route path="/client/history" element={<ClientRoute><ClientHistory /></ClientRoute>} />
-        <Route path="/users" element={<Users />} />
+        <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
         <Route path="/diagnosis" element={<PrivateRoute><AiDiagnosis /></PrivateRoute>} />
         <Route path="/manual-post" element={<ClientRoute><CreatePost /></ClientRoute>} />
         <Route path="/post-options" element={<ClientRoute><PostOptions /></ClientRoute>} />

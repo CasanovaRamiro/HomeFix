@@ -29,7 +29,12 @@ const userinfoCache = new Map<string, CachedUserInfo>()
 const CACHE_TTL_MS = 5 * 60 * 1000
 
 export const jwtCheck = (req: Request, res: Response, next: NextFunction): void => {
-  getJwtCheck()(req, res, async () => {
+  getJwtCheck()(req, res, async (error: unknown) => {
+    if (error) {
+      next(error)
+      return
+    }
+
     const header = req.headers.authorization
     if (header?.startsWith('Bearer ')) {
       const sub = req.auth?.payload?.sub
