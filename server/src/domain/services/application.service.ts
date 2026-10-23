@@ -168,7 +168,13 @@ export const acceptApplication = async (clientId: string, applicationId: string,
       if (application.post.type === PostType.SubContract) {
         await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
       } else {
-        await updatePostStatus(application.postId, PostStatus.InProgress)
+        const moved = await tx.post.updateMany({
+          where: { id: application.postId, status: PostStatus.Active },
+          data: { status: PostStatus.InProgress },
+        })
+        if (moved.count === 0) {
+          throw Object.assign(new Error('El puesto ya fue cubierto'), { status: 400 })
+        }
       }
     })
   } catch (err: unknown) {

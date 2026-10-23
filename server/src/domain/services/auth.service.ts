@@ -229,7 +229,12 @@ export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistrat
   if (existing) {
     const { password: _, ...safeUser } = existing
     const updates: Record<string, string> = {}
-    if (claims.role && safeUser.role === 'user') updates.role = claims.role
+    if (
+      (claims.role === UserRole.Worker || claims.role === UserRole.Client) &&
+      safeUser.role === UserRole.Client
+    ) {
+      updates.role = claims.role
+    }
     const goodName = claims.name ?? claims.nickname
     if (goodName && safeUser.name === claims.sub) updates.name = goodName
 

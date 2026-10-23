@@ -50,11 +50,14 @@ vi.mock("../../src/domain/services/notification.service.js", () => ({
 
 const mockPrisma = vi.hoisted(() => {
   const fn = vi.fn()
+  const postUpdateMany = vi.fn().mockResolvedValue({ count: 1 })
   return {
     fn_updateMany: fn,
     application: { updateMany: fn },
-    $transaction: vi.fn(<T>(cb: (tx: { application: { updateMany: typeof fn } }) => T): T => cb({
+    postUpdateMany,
+    $transaction: vi.fn(<T>(cb: (tx: { application: { updateMany: typeof fn }; post: { updateMany: typeof postUpdateMany } }) => T): T => cb({
       application: { updateMany: fn },
+      post: { updateMany: postUpdateMany },
     })),
   }
 })
@@ -97,7 +100,6 @@ const mockApplication = {
 describe("acceptApplication", () => {
   it("returns accepted application when valid", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
-    vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
     mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
 
     const result = await acceptApplication("client-1", "app-1")
@@ -107,13 +109,23 @@ describe("acceptApplication", () => {
       where: { id: "app-1", status: "Pending" },
       data: { status: "Accepted", scheduledDate: null, requiresStartToken: false },
     })
-    expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "In progress")
+    expect(mockPrisma.postUpdateMany).toHaveBeenCalledWith({
+      where: { id: "post-1", status: "Active" },
+      data: { status: "In progress" },
+    })
+  })
+
+  it("throws 400 when the post was already filled (another concurrent acceptance won)", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+    mockPrisma.postUpdateMany.mockResolvedValueOnce({ count: 0 })
+
+    await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
 
   it("snapshots requiresStartToken=true when the client has the setting enabled", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
     vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(true)
-    vi.mocked(postData.updatePostStatus).mockResolvedValue({} as never)
     mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
 
     await acceptApplication("client-1", "app-1")
