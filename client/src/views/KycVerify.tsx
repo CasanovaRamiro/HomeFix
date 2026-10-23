@@ -37,6 +37,13 @@ const STATUS_COPY: Record<string, StatusCopy> = {
     description:
       'Tu verificación fue aprobada. Ya podés empezar a recibir trabajos.',
   },
+  APPROVED: {
+    icon: CheckCircle2,
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    title: 'Identidad validada',
+    description: 'Tu verificación fue aprobada. Ya podés empezar a recibir trabajos.',
+  },
   'In Review': {
     icon: Clock,
     iconBg: 'bg-amber-100',
@@ -68,7 +75,21 @@ const STATUS_COPY: Record<string, StatusCopy> = {
     title: 'No pudimos validar tu identidad',
     description: 'Podés volver a intentarlo desde el botón de abajo.',
   },
+  DECLINED: {
+    icon: XCircle,
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
+    title: 'No pudimos validar tu identidad',
+    description: 'Podés volver a intentarlo desde el botón de abajo.',
+  },
   Expired: {
+    icon: XCircle,
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
+    title: 'La verificación expiró',
+    description: 'Volvé a iniciar el proceso para validarte cuando quieras.',
+  },
+  EXPIRED: {
     icon: XCircle,
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-600',
@@ -227,24 +248,18 @@ export default function KycVerify() {
     await handleStart()
   }
 
-  const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
+  const handleModalComplete = useCallback(async (sessionId: string, _status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
-    const email = user?.email
-    if (!email) {
-      setErrorMessage('No se pudo identificar tu usuario')
-      setState('error')
-      return
-    }
     try {
-      const res = await confirmKycSession(sessionId, email, status)
+      const res = await confirmKycSession(sessionId)
       setCurrentStatus(res.status)
     } catch (e) {
       const err = e as { response?: { data?: { error?: string } } }
       setErrorMessage(err.response?.data?.error ?? 'Error al confirmar la verificación')
       setState('error')
     }
-  }, [user?.email])
+  }, [])
 
   const handleModalCancelled = () => {
     setIsModalOpen(false)

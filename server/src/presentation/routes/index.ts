@@ -14,7 +14,7 @@ import uploadRoutes from './upload.routes.js'
 import botRoutes from './bot.routes.js'
 import clientRoutes from './client.routes.js'
 import clientProfileRoutes from './clientProfile.routes.js'
-import kycRoutes, { confirmRouter, webhookRouter } from './kyc.routes.js'
+import kycRoutes, { webhookRouter } from './kyc.routes.js'
 
 export function registerRoutes(app: Express): void {
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
@@ -33,9 +33,7 @@ export function registerRoutes(app: Express): void {
   app.use('/client', jwtCheck, clientRoutes)
   app.use('/client-profiles', jwtCheck, clientProfileRoutes)
 
-  // KYC spans three auth contexts: public webhook, public (rate-limited)
-  // confirm, and authenticated session/status endpoints.
+  // Didit signs the public webhook; all user-facing KYC endpoints require JWT.
   app.use('/kyc', webhookRouter)
-  app.use('/kyc', confirmRouter)
   app.use('/kyc', jwtCheck, kycRoutes)
 }
