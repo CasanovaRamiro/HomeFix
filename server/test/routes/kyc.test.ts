@@ -113,9 +113,15 @@ describe("POST /kyc/session", () => {
 })
 
 describe("POST /kyc/confirm", () => {
-  it("returns 400 when sessionId or email is missing", async () => {
+  it("returns 401 without a JWT even with a sessionId and email", async () => {
     const res = await request(app).post("/kyc/confirm").send({ sessionId: "sess-1" })
 
+    expect(res.status).toBe(401)
+    expect(confirmKyc).not.toHaveBeenCalled()
+  })
+
+  it("returns 400 when sessionId is missing", async () => {
+    const res = await request(app).post("/kyc/confirm").set("Authorization", `Bearer ${token}`).send({})
     expect(res.status).toBe(400)
     expect(confirmKyc).not.toHaveBeenCalled()
   })
@@ -128,11 +134,12 @@ describe("POST /kyc/confirm", () => {
 
     const res = await request(app)
       .post("/kyc/confirm")
-      .send({ sessionId: "sess-abc", email: "test@test.com" })
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-abc", email: "other@test.com", status: "Declined" })
 
     expect(res.status).toBe(200)
     expect(res.body).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
-    expect(confirmKyc).toHaveBeenCalledWith("test@test.com", "sess-abc", undefined)
+    expect(confirmKyc).toHaveBeenCalledWith("test@test.com", "sess-abc")
   })
 
   it("returns 404 when the user is not found", async () => {
@@ -144,7 +151,8 @@ describe("POST /kyc/confirm", () => {
 
     const res = await request(app)
       .post("/kyc/confirm")
-      .send({ sessionId: "sess-1", email: "test@test.com" })
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-1" })
 
     expect(res.status).toBe(404)
   })
@@ -158,7 +166,8 @@ describe("POST /kyc/confirm", () => {
 
     const res = await request(app)
       .post("/kyc/confirm")
-      .send({ sessionId: "sess-1", email: "test@test.com" })
+      .set("Authorization", `Bearer ${token}`)
+      .send({ sessionId: "sess-1" })
 
     expect(res.status).toBe(502)
   })

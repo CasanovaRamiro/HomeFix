@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const { mockFindByEmail, mockUpdateUserKycStatus, mockCreateDiditSession, mockGetSessionStatus, mockGetDecision } = vi.hoisted(() => ({
+const { mockFindByEmail, mockUpdateUserDiditVerificationId, mockUpdateUserKycStatus, mockCreateDiditSession, mockGetSessionStatus, mockGetDecision } = vi.hoisted(() => ({
   mockFindByEmail: vi.fn(),
+  mockUpdateUserDiditVerificationId: vi.fn(),
   mockUpdateUserKycStatus: vi.fn(),
   mockCreateDiditSession: vi.fn(),
   mockGetSessionStatus: vi.fn(),
@@ -10,6 +11,7 @@ const { mockFindByEmail, mockUpdateUserKycStatus, mockCreateDiditSession, mockGe
 
 vi.mock("../../src/infrastructure/database/user.database.js", () => ({
   findByEmail: mockFindByEmail,
+  updateUserDiditVerificationId: mockUpdateUserDiditVerificationId,
   updateUserKycStatus: mockUpdateUserKycStatus,
 }))
 
@@ -41,6 +43,7 @@ describe("startKycVerification", () => {
     expect(mockFindByEmail).toHaveBeenCalledWith("foo@bar.com")
     expect(mockCreateDiditSession).toHaveBeenCalledWith("foo@bar.com")
     expect(mockCreateDiditSession).toHaveBeenCalledTimes(1)
+    expect(mockUpdateUserDiditVerificationId).toHaveBeenCalledWith("foo@bar.com", "sess-abc")
     expect(result).toEqual({
       sessionUrl: "https://verification.didit.me/session/abc",
       sessionId: "sess-abc",
@@ -135,97 +138,51 @@ describe("confirmKyc", () => {
     email: "foo@bar.com",
     kycStatus: null,
     kycVerifiedAt: null,
-    diditVerificationId: null,
+    diditVerificationId: "sess-abc",
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it("verifies the session against Didit and updates the DB to APPROVED", async () => {
+  it("verifies the stored session and provider identity before approving", async () => {
     mockFindByEmail.mockResolvedValue(user)
-    mockGetSessionStatus.mockResolvedValue({
-      sessionId: "sess-abc",
-      status: "Approved",
-      url: "https://verify.didit.me/session/sess-abc",
-    })
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-abc", status: "Approved", vendorData: "foo@bar.com" })
 
-    const result = await confirmKyc("foo@bar.com", "sess-abc")
-
-    expect(mockGetSessionStatus).toHaveBeenCalledWith("sess-abc")
+    expect(await confirmKyc("foo@bar.com", "sess-abc")).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
+    expect(mockGetDecision).toHaveBeenCalledWith("sess-abc")
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "APPROVED",
-      kycVerifiedAt: expect.any(Date),
-      diditVerificationId: "sess-abc",
-    })
-    expect(result).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
-  })
-
-  it("maps Declined from Didit and sets kycVerifiedAt", async () => {
-    mockFindByEmail.mockResolvedValue(user)
-    mockGetSessionStatus.mockResolvedValue({
-      sessionId: "sess-declined",
-      status: "Declined",
-      url: "",
-    })
-
-    await confirmKyc("foo@bar.com", "sess-declined")
-
-    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "DECLINED",
-      kycVerifiedAt: expect.any(Date),
-      diditVerificationId: "sess-declined",
+      kycStatus: "APPROVED", kycVerifiedAt: expect.any(Date), diditVerificationId: "sess-abc",
     })
   })
 
-  it("maps in-progress statuses to IN_REVIEW (no kycVerifiedAt)", async () => {
+  it("rejects a session other than the user's active session", async () => {
     mockFindByEmail.mockResolvedValue(user)
-    mockGetSessionStatus.mockResolvedValue({
-      sessionId: "sess-review",
-      status: "In Review",
-      url: "",
-    })
-
-    await confirmKyc("foo@bar.com", "sess-review")
-
-    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "IN_REVIEW",
-      kycVerifiedAt: null,
-      diditVerificationId: "sess-review",
-    })
+    await expect(confirmKyc("foo@bar.com", "sess-other")).rejects.toMatchObject({ status: 403 })
+    expect(mockGetDecision).not.toHaveBeenCalled()
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 
-  it("maps Abandoned to EXPIRED", async () => {
+  it("rejects a provider decision for another session", async () => {
     mockFindByEmail.mockResolvedValue(user)
-    mockGetSessionStatus.mockResolvedValue({
-      sessionId: "sess-abandoned",
-      status: "Abandoned",
-      url: "",
-    })
-
-    await confirmKyc("foo@bar.com", "sess-abandoned")
-
-    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "EXPIRED",
-      kycVerifiedAt: expect.any(Date),
-      diditVerificationId: "sess-abandoned",
-    })
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-other", status: "Approved", vendorData: "foo@bar.com" })
+    await expect(confirmKyc("foo@bar.com", "sess-abc")).rejects.toMatchObject({ status: 502 })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 
-  it("maps unknown Didit statuses to IN_REVIEW", async () => {
+  it("rejects a provider decision belonging to another user", async () => {
     mockFindByEmail.mockResolvedValue(user)
-    mockGetSessionStatus.mockResolvedValue({
-      sessionId: "sess-weird",
-      status: "Something Strange",
-      url: "",
-    })
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-abc", status: "Approved", vendorData: "other@bar.com" })
+    await expect(confirmKyc("foo@bar.com", "sess-abc")).rejects.toMatchObject({ status: 403 })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
 
-    await confirmKyc("foo@bar.com", "sess-weird")
-
+  it("maps non-approved provider decisions without trusting SDK status", async () => {
+    mockFindByEmail.mockResolvedValue(user)
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-abc", status: "In Review", vendorData: "foo@bar.com" })
+    expect(await confirmKyc("foo@bar.com", "sess-abc")).toEqual({ status: "IN_REVIEW", sessionId: "sess-abc" })
     expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "IN_REVIEW",
-      kycVerifiedAt: null,
-      diditVerificationId: "sess-weird",
+      kycStatus: "IN_REVIEW", kycVerifiedAt: null, diditVerificationId: "sess-abc",
     })
   })
 
@@ -236,38 +193,21 @@ describe("confirmKyc", () => {
       status: 404,
       message: "Usuario autenticado no encontrado en la base de datos",
     })
-    expect(mockGetSessionStatus).not.toHaveBeenCalled()
+    expect(mockGetDecision).not.toHaveBeenCalled()
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 
-  it("throws 404 when the session does not exist in Didit and no sdkStatus provided", async () => {
+  it("does not update when the provider cannot find the session", async () => {
     mockFindByEmail.mockResolvedValue(user)
     const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
     err.status = 404
     mockGetDecision.mockRejectedValue(err)
-    mockGetSessionStatus.mockRejectedValue(err)
 
-    await expect(confirmKyc("foo@bar.com", "sess-nonexistent")).rejects.toMatchObject({
+    await expect(confirmKyc("foo@bar.com", "sess-abc")).rejects.toMatchObject({
       status: 404,
       message: "La sesión de verificación no existe",
     })
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
-  })
-
-  it("falls back to sdkStatus when Didit returns 404", async () => {
-    mockFindByEmail.mockResolvedValue(user)
-    const err = new Error("La sesión de verificación no existe") as Error & { status?: number }
-    err.status = 404
-    mockGetSessionStatus.mockRejectedValue(err)
-
-    const result = await confirmKyc("foo@bar.com", "sess-fallback", "Approved")
-
-    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "APPROVED",
-      kycVerifiedAt: expect.any(Date),
-      diditVerificationId: "sess-fallback",
-    })
-    expect(result).toEqual({ status: "APPROVED", sessionId: "sess-fallback" })
   })
 
   it("propagates provider 502 errors", async () => {
@@ -277,28 +217,18 @@ describe("confirmKyc", () => {
     }
     err.status = 502
     mockGetDecision.mockRejectedValue(err)
-    mockGetSessionStatus.mockRejectedValue(err)
 
-    await expect(confirmKyc("foo@bar.com", "sess-1")).rejects.toMatchObject({
+    await expect(confirmKyc("foo@bar.com", "sess-abc")).rejects.toMatchObject({
       status: 502,
     })
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 
-  it("uses getDecision directly when it succeeds (happy path)", async () => {
-    mockFindByEmail.mockResolvedValue(user)
-    mockGetDecision.mockResolvedValue({ status: "Approved", sessionId: "sess-abc" })
-
-    const result = await confirmKyc("foo@bar.com", "sess-abc")
-
-    expect(mockGetDecision).toHaveBeenCalledWith("sess-abc")
-    expect(mockGetSessionStatus).not.toHaveBeenCalled()
-    expect(mockUpdateUserKycStatus).toHaveBeenCalledWith("foo@bar.com", {
-      kycStatus: "APPROVED",
-      kycVerifiedAt: expect.any(Date),
-      diditVerificationId: "sess-abc",
-    })
-    expect(result).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
+  it("does not downgrade an approved identity", async () => {
+    mockFindByEmail.mockResolvedValue({ ...user, kycStatus: "APPROVED" })
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-abc", status: "In Review", vendorData: "foo@bar.com" })
+    expect(await confirmKyc("foo@bar.com", "sess-abc")).toEqual({ status: "APPROVED", sessionId: "sess-abc" })
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 })
 
@@ -360,7 +290,7 @@ describe("getKycStatus", () => {
       kycVerifiedAt: null,
       diditVerificationId: "sess-abc",
     })
-    mockGetDecision.mockResolvedValue({ status: "Approved" })
+    mockGetDecision.mockResolvedValue({ sessionId: "sess-abc", vendorData: "foo@bar.com", status: "Approved" })
     mockUpdateUserKycStatus.mockResolvedValue({})
 
     const result = await getKycStatus("foo@bar.com")
@@ -537,6 +467,7 @@ describe("handleKycWebhook", () => {
       id: "user-1",
       email: "foo@bar.com",
       kycStatus: "IN_REVIEW",
+      diditVerificationId: "sess-abc",
     })
 
     const result = await handleKycWebhook({
@@ -561,6 +492,7 @@ describe("handleKycWebhook", () => {
       id: "user-1",
       email: "foo@bar.com",
       kycStatus: "APPROVED",
+      diditVerificationId: "sess-abc",
     })
 
     const result = await handleKycWebhook({
@@ -595,6 +527,7 @@ describe("handleKycWebhook", () => {
       id: "user-1",
       email: "foo@bar.com",
       kycStatus: "NOT_STARTED",
+      diditVerificationId: "sess-abc",
     })
 
     const result = await handleKycWebhook({
@@ -625,6 +558,16 @@ describe("handleKycWebhook", () => {
 
     expect(result).toEqual({ processed: false })
     expect(mockFindByEmail).not.toHaveBeenCalled()
+    expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
+  })
+
+  it("ignores a webhook for an old or foreign session", async () => {
+    mockFindByEmail.mockResolvedValue({ email: "foo@bar.com", kycStatus: "IN_REVIEW", diditVerificationId: "sess-current" })
+    const result = await handleKycWebhook({
+      event_id: "evt-old", webhook_type: "status.updated", timestamp: 1,
+      session_id: "sess-old", status: "Approved", vendor_data: "foo@bar.com",
+    })
+    expect(result).toEqual({ processed: false })
     expect(mockUpdateUserKycStatus).not.toHaveBeenCalled()
   })
 

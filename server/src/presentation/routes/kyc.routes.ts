@@ -21,7 +21,6 @@ function rateLimitConfirm(ip: string): boolean {
 }
 
 const router = Router()
-const confirmRouter = Router()
 const webhookRouter = Router()
 
 function getEmail(req: import('express').Request): string | undefined {
@@ -47,22 +46,28 @@ router.post('/session', async (req, res, next) => {
   }
 })
 
-confirmRouter.post('/confirm', async (req, res, next) => {
+router.post('/confirm', async (req, res, next) => {
   try {
+    const email = getEmail(req)
+    if (!email) {
+      const err = new Error('Token autenticado sin email') as Error & { status?: number }
+      err.status = 400
+      throw err
+    }
     const ip = (req.ip ?? req.socket.remoteAddress ?? 'unknown').replace('::ffff:', '')
     if (!rateLimitConfirm(ip)) {
       res.status(429).json({ error: 'Demasiadas solicitudes, intentá de nuevo en un minuto' })
       return
     }
 
-    const { sessionId, email, status: sdkStatus } = req.body as { sessionId?: string; email?: string; status?: string }
-    if (!sessionId || !email) {
-      const err = new Error('sessionId y email son requeridos') as Error & { status?: number }
+    const { sessionId } = (req.body ?? {}) as { sessionId?: unknown }
+    if (typeof sessionId !== 'string' || !sessionId.trim()) {
+      const err = new Error('sessionId es requerido') as Error & { status?: number }
       err.status = 400
       throw err
     }
 
-    const result = await confirmKyc(email, sessionId, sdkStatus)
+    const result = await confirmKyc(email, sessionId)
     res.json(result)
   } catch (e) {
     const err = e as Error & { status?: number }
@@ -154,4 +159,4 @@ webhookRouter.post('/webhook', async (req, res) => {
 })
 
 export default router
-export { confirmRouter, webhookRouter }
+export { webhookRouter }

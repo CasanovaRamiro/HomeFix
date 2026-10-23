@@ -1,5 +1,5 @@
 import { logger } from '../../lib/logger.js'
-import { findByEmail, updateUserKycStatus } from '../../infrastructure/database/user.database.js'
+import { findByEmail, updateUserDiditVerificationId, updateUserKycStatus } from '../../infrastructure/database/user.database.js'
 import { createDiditSession, getSessionStatus, getDecision } from '../../infrastructure/providers/didit.provider.js'
 import { createHttpError } from '../../lib/errors.js'
 
@@ -56,6 +56,7 @@ export const startKycVerification = async (
     throw createHttpError(409, 'Ya tenés una verificación en curso')
   }
   const session = await createDiditSession(user.email)
+  await updateUserDiditVerificationId(user.email, session.sessionId)
   logger.info({ email: user.email, sessionId: session.sessionId, action: 'kyc.verificationStarted' }, 'KYC verification started')
   return session
 }
@@ -63,35 +64,28 @@ export const startKycVerification = async (
 export const confirmKyc = async (
   email: string,
   sessionId: string,
-  sdkStatus?: string,
 ): Promise<{ status: KycStatus; sessionId: string }> => {
   const user = await findByEmail(email)
   if (!user) {
     throw createHttpError(404, 'Usuario autenticado no encontrado en la base de datos')
   }
 
-  let diditStatus: string
-  let lastError: (Error & { status?: number }) | null = null
-  try {
-    const decision = await getDecision(sessionId)
-    diditStatus = decision.status
-  } catch (e) {
-    lastError = e as Error & { status?: number }
-    if (sdkStatus) {
-      diditStatus = sdkStatus
-    } else {
-      try {
-        const session = await getSessionStatus(sessionId)
-        diditStatus = session.status
-      } catch {
-        throw lastError.status === 404
-          ? createHttpError(404, 'La sesión de verificación no existe')
-          : createHttpError(502, 'No se pudo obtener el estado de la verificación')
-      }
-    }
+  if (user.diditVerificationId !== sessionId) {
+    throw createHttpError(403, 'La sesión de verificación no pertenece al usuario')
   }
 
-  const mappedStatus = mapDiditStatus(diditStatus)
+  const decision = await getDecision(sessionId)
+  if (decision.sessionId !== sessionId) {
+    throw createHttpError(502, 'Respuesta inválida del servicio de verificación')
+  }
+  if (decision.vendorData !== user.email) {
+    throw createHttpError(403, 'La sesión de verificación no pertenece al usuario')
+  }
+
+  const mappedStatus = mapDiditStatus(decision.status)
+  if (user.kycStatus === 'APPROVED' && mappedStatus !== 'APPROVED') {
+    return { status: 'APPROVED', sessionId }
+  }
 
   const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
     ? new Date()
@@ -125,7 +119,9 @@ export const getKycStatus = async (
 
     try {
       const decision = await getDecision(user.diditVerificationId)
-      diditStatus = decision.status
+      if (decision.sessionId === user.diditVerificationId && decision.vendorData === user.email) {
+        diditStatus = decision.status
+      }
     } catch {
       try {
         const session = await getSessionStatus(user.diditVerificationId)
@@ -137,7 +133,7 @@ export const getKycStatus = async (
 
     if (diditStatus) {
       const mappedStatus = mapDiditStatus(diditStatus)
-      if (mappedStatus !== kycStatus) {
+      if (mappedStatus !== kycStatus && !(kycStatus === 'APPROVED' && mappedStatus !== 'APPROVED')) {
         logger.info({ email, from: kycStatus, to: mappedStatus, action: 'kyc.statusChanged' }, `KYC status changed for ${email}`)
         const now = mappedStatus === 'APPROVED' || mappedStatus === 'DECLINED' || mappedStatus === 'EXPIRED'
           ? new Date()
@@ -205,7 +201,7 @@ export const handleKycWebhook = async (
   }
 
   const email = payload.vendor_data
-  if (!email) {
+  if (!email || !payload.session_id) {
     logger.warn({ eventId: payload.event_id, action: 'kyc.webhook' }, 'Webhook missing vendor_data, ignoring')
     return { processed: false }
   }
@@ -216,7 +212,16 @@ export const handleKycWebhook = async (
     return { processed: false }
   }
 
+  if (user.diditVerificationId !== payload.session_id) {
+    logger.warn({ email, sessionId: payload.session_id, action: 'kyc.webhook' }, 'Webhook session does not belong to user')
+    return { processed: false }
+  }
+
   const mappedStatus = mapDiditStatus(payload.status)
+
+  if (user.kycStatus === 'APPROVED' && mappedStatus !== 'APPROVED') {
+    return { processed: false }
+  }
 
   if (user.kycStatus === mappedStatus) {
     return { processed: false }
