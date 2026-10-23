@@ -131,6 +131,15 @@ export const createClientReview = async (
     throw Object.assign(new Error('Forbidden'), { status: 403 })
   }
 
+  const isEligibleHire =
+    application.status === ApplicationStatus.Accepted || application.status === ApplicationStatus.Completed
+
+  if (!isEligibleHire) {
+    throw Object.assign(new Error('Application must be an accepted or completed hire to review the client'), {
+      status: 400,
+    })
+  }
+
   if (application.post.status !== PostStatus.Completed) {
     throw Object.assign(new Error('Post must be completed before reviewing'), { status: 400 })
   }
