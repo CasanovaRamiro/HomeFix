@@ -111,6 +111,7 @@ export default function Navbar(): React.ReactElement | null {
 
   const isLanding = !isLoggedIn && pathname === '/'
   const isWorkerLanding = !isLoggedIn && pathname.toLowerCase() === '/workerlanding'
+  const isPublicLanding = isLanding || isWorkerLanding
 
   const navLinks =
     user?.role === UserRole.Worker ? WORKER_LINKS :
@@ -140,7 +141,7 @@ export default function Navbar(): React.ReactElement | null {
   }
 
   return (
-    <nav style={{ background: theme.card, borderBottom: `1px solid ${theme.border}` }}
+    <nav style={{ background: isPublicLanding ? theme.accent : theme.card, borderBottom: `1px solid ${isPublicLanding ? theme.accentHover : theme.border}` }}
       className="sticky top-0 z-50 backdrop-blur-md">
       <div style={{ maxWidth: '90rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
@@ -267,14 +268,14 @@ export default function Navbar(): React.ReactElement | null {
             {!isLoggedIn ? (
               <>
                 <Link to="/login"
-                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...((isWorkerLanding || isLanding) ? { background: theme.primaryDark, color: '#fff' } : { color: theme.muted }) }}
+                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...(isPublicLanding ? { background: '#fff', color: theme.accentHover } : { color: theme.muted }) }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
                 >
                   Iniciar Sesión
                 </Link>
                 <Link to="/signup"
-                  style={{ display: 'block', width: '130px', textAlign: 'center', background: theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s' }}
+                  style={{ display: 'block', width: '130px', textAlign: 'center', background: isPublicLanding ? theme.primaryDark : theme.accent, color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
                 >
