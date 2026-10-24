@@ -1,24 +1,37 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../../src/lib/prisma.js";
+import { assertTestDbIdentity } from "./testDbSafety.js";
 
 export { prisma };
 
-export const cleanDb = async () => {
-  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`;
-  await prisma.workerReview.deleteMany();
-  await prisma.clientReview.deleteMany();
-
-  await prisma.userCategory.deleteMany();
-  await prisma.postCategory.deleteMany();
-  await prisma.post.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.nationalIdType.deleteMany();
-  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
+export const cleanDb = async (): Promise<void> => {
+  await assertTestDbIdentity(prisma);
+  await prisma.$transaction(async (tx) => {
+    // Recheck on the transaction's actual connection before its first write.
+    await assertTestDbIdentity(tx);
+    await tx.$executeRaw`SET FOREIGN_KEY_CHECKS = 0`;
+    try {
+      await tx.workerReview.deleteMany();
+      await tx.clientReview.deleteMany();
+      await tx.application.deleteMany();
+      await tx.jobApplication.deleteMany();
+      await tx.postImage.deleteMany();
+      await tx.telegramLinkCode.deleteMany();
+      await tx.userCategory.deleteMany();
+      await tx.postCategory.deleteMany();
+      await tx.post.deleteMany();
+      await tx.category.deleteMany();
+      await tx.user.deleteMany();
+      await tx.address.deleteMany();
+      await tx.nationalIdType.deleteMany();
+    } finally {
+      await tx.$executeRaw`SET FOREIGN_KEY_CHECKS = 1`;
+    }
+  });
 };
 
 const createUserDependencies = async () => {
+  await assertTestDbIdentity(prisma);
   const nationalIdType = await prisma.nationalIdType.create({
     data: { description: `DNI-${Date.now()}-${Math.random()}` },
   });
@@ -57,6 +70,7 @@ export const createUser = async (
 };
 
 export const createCategory = async (name: string) => {
+  await assertTestDbIdentity(prisma);
   return await prisma.category.create({
     data: { name },
   });

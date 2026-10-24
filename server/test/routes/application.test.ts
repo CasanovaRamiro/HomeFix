@@ -611,6 +611,7 @@ describe('PATCH /applications/:applicationId/accept — requiresStartToken', () 
         status: 'Active',
         type: 'emergency',
         isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
         categories: { create: { categoryId: cat.id } },
       },
     })

@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma.js'
 import { UserRole } from '../../domain/types/userRole.js'
+import { availablePostWhere } from './postAvailability.js'
 import type { DomainWorkerProfile } from '../../domain/types/workerDashboard.types.js'
 
 export const findWorkerProfile = async (workerId: string): Promise<DomainWorkerProfile | null> => {
@@ -68,7 +69,7 @@ export const countNewJobsForWorker = async (workerCategoryIds: string[]) => {
   if (workerCategoryIds.length === 0) return 0
   return prisma.post.count({
     where: {
-      status: 'Active',
+      ...availablePostWhere(),
       categories: {
         some: { categoryId: { in: workerCategoryIds } },
       },

@@ -12,6 +12,8 @@
     "docker-be": "node scripts/compose.mjs up --build be",
     "docker-fe": "node scripts/compose.mjs up --build fe",
     "test": "pnpm --prefix server run test",
+    "test:unit": "pnpm --prefix server run test:unit",
+    "test:db": "pnpm --prefix server run test:db",
     "log:coverage": "pnpm --prefix server run log:coverage",
     "test:lint:semantics": "pnpm --prefix server run test:lint:semantics"
   }

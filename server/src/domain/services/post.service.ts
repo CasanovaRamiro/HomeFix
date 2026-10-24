@@ -6,6 +6,7 @@ import {
   findPostById,
   findPostsByUser,
   updatePostStatus,
+  activateEmergencyPost,
   updatePost as updatePostData,
   findAvailablePosts,
   findAvailableSubcontracts as findAvailableSubcontractsData,
@@ -31,6 +32,7 @@ import { PostStatus } from '../types/postStatus.js'
 import { getWorkerRating, getClientRating, getUserRating } from './user.service.js'
 import { EMERGENCY_DURATION_MS } from '../constants.js'
 import { PostType } from '../types/postType.js'
+import { isExpiredEmergency } from './emergency-expiration.js'
 import type { CreatePostInput, CreateBiddingInput, CreateSubcontractCommand, UpdatePostInput, DomainPost, DomainUserPost } from '../types/post.types.js'
 import crypto from 'node:crypto'
 
@@ -484,6 +486,10 @@ export const pausePost = async (postId: string, userId: string) => {
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
 
+  if (post.status === PostStatus.Paused && isExpiredEmergency(post)) {
+    throw Object.assign(new Error('La urgencia vencida no puede reactivarse'), { status: 400 })
+  }
+
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
     const newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
@@ -500,6 +506,9 @@ export const pausePost = async (postId: string, userId: string) => {
   }
   const _newStatus = post.status === PostStatus.Active ? PostStatus.Paused : PostStatus.Active
   logger.info({ postId, userId, newStatus: _newStatus, action: 'post.toggledPause' }, `Post ${_newStatus === PostStatus.Paused ? 'paused' : 'unpaused'}`)
+  if (post.status === PostStatus.Paused && (post.type === PostType.Emergency || post.isEmergency === true)) {
+    return activateEmergencyPost(postId, PostStatus.Paused)
+  }
   return updatePostStatus(postId, _newStatus)
 }
 
@@ -650,6 +659,10 @@ export const reopenPost = async (postId: string, userId: string) => {
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
 
+  if (isExpiredEmergency(post)) {
+    throw Object.assign(new Error('La urgencia vencida no puede reabrirse'), { status: 400 })
+  }
+
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
     for (const p of groupPosts) {
@@ -666,6 +679,9 @@ export const reopenPost = async (postId: string, userId: string) => {
 
   if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
+  }
+  if (post.type === PostType.Emergency || post.isEmergency === true) {
+    return activateEmergencyPost(postId, PostStatus.InProgress, true)
   }
   const accepted = await findAcceptedApplications(postId)
   for (const app of accepted) {
@@ -718,18 +734,25 @@ export const updatePost = async (postId: string, userId: string, input: Omit<Upd
     throw Object.assign(new Error(`Post cannot be edited in its current state (${post.status})`), { status: 400 })
   }
 
-  validatePostInput({ ...input, userId })
-  const now = new Date()
-  const emergencyExpiresAt = input.isEmergency === true
-    ? new Date(now.getTime() + EMERGENCY_DURATION_MS)
-    : null
+  const editable = {
+    userId,
+    title: input.title,
+    description: input.description,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    address: input.address,
+    categoryId: input.categoryId,
+  }
+  validatePostInput(editable)
 
   logger.info({ postId, userId, action: 'post.updated' }, 'Post updated')
   return updatePostData(postId, {
-    ...input,
     userId,
-    startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
-    endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
-    emergencyExpiresAt,
+    title: input.title,
+    description: input.description,
+    startDate: new Date(input.startDate as Date | string),
+    endDate: new Date(input.endDate as Date | string),
+    address: input.address,
+    categoryId: input.categoryId,
   })
 }

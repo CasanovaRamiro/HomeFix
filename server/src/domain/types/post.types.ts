@@ -78,8 +78,6 @@ export interface UpdatePostInput {
   endDate?: Date | string | null
   address: string
   categoryId: string
-  isEmergency?: boolean
-  emergencyExpiresAt?: Date | null
 }
 
 export interface CreateBiddingInput {

@@ -81,15 +81,20 @@ jobs:
   test:
     needs: lint
     runs-on: ubuntu-latest
+    env:
+      HF_TEST_DB_URL: mysql://hf_test_runner:${{ github.run_id }}@127.0.0.1:3306/ofix_hf_tests
+      HF_TEST_DB_TARGET: 127.0.0.1:3306
+      HF_TEST_DB_PRINCIPAL: hf_test_runner@%
+      HF_TEST_DB_CONFIRM: I_AUTHORIZE_DISPOSABLE_HF_TESTS
 
     services:
       mysql:
         image: mysql:8
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: ofix_test
-          MYSQL_USER: ofix
-          MYSQL_PASSWORD: ofix123
+          MYSQL_DATABASE: ofix_hf_tests
+          MYSQL_USER: hf_test_runner
+          MYSQL_PASSWORD: ${{ github.run_id }}
         ports:
           - 3306:3306
         options: >-
@@ -122,7 +127,7 @@ jobs:
         working-directory: server
         run: pnpm run typecheck
         env:
-          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
+          DATABASE_URL: mysql://blocked:blocked@127.0.0.1:1/unavailable
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder
@@ -130,11 +135,14 @@ jobs:
           CLOUDINARY_API_KEY: ci-placeholder
           CLOUDINARY_API_SECRET: ci-placeholder
 
-      - name: Apply migrations to test DB
+      - name: Pin ephemeral test MySQL instance
+        working-directory: server
+        run: echo "HF_TEST_DB_SERVER_UUID=$(pnpm exec tsx scripts/read-test-db-id.ts)" >> "$GITHUB_ENV"
+
+      - name: Apply schema to disposable test DB
         working-directory: server
         run: pnpm run db:migrate:test
         env:
-          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder
@@ -142,11 +150,21 @@ jobs:
           CLOUDINARY_API_KEY: ci-placeholder
           CLOUDINARY_API_SECRET: ci-placeholder
 
-      - name: Run tests
+      - name: Run unit tests
         working-directory: server
         run: pnpm test
         env:
-          DATABASE_URL: mysql://ofix:ofix123@127.0.0.1:3306/ofix_test
+          AUTH0_AUDIENCE: ci-placeholder
+          AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
+          GEMINI_API_KEY: ci-placeholder
+          CLOUDINARY_CLOUD_NAME: ci-placeholder
+          CLOUDINARY_API_KEY: ci-placeholder
+          CLOUDINARY_API_SECRET: ci-placeholder
+
+      - name: Run database and route tests
+        working-directory: server
+        run: pnpm run test:db
+        env:
           AUTH0_AUDIENCE: ci-placeholder
           AUTH0_ISSUER_BASE_URL: https://ci-placeholder.auth0.com
           GEMINI_API_KEY: ci-placeholder

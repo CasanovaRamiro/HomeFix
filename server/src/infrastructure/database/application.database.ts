@@ -3,6 +3,8 @@ import prisma from '../../lib/prisma.js'
 import { toDomainMyApplication, toDomainPostApplication } from '../transformers/application.transformer.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
 import type { Prisma } from '@prisma/client'
+import { PostStatus } from '../../domain/types/postStatus.js'
+import { isExpiredEmergency } from '../../domain/services/emergency-expiration.js'
 
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
@@ -38,7 +40,7 @@ export const findApplicationById = (id: string) =>
   prisma.application.findUnique({
     where: { id },
     include: {
-      post: { select: { userId: true, title: true, status: true, type: true, isBidding: true, subcontractGroupId: true } },
+      post: { select: { userId: true, title: true, status: true, type: true, isEmergency: true, emergencyExpiresAt: true, isBidding: true, subcontractGroupId: true } },
       category: { select: { id: true, quantity: true, filledCount: true } },
     },
   })
@@ -86,9 +88,8 @@ export const resetRejectedApplications = (postId: string) =>
     data: { status: ApplicationStatus.Pending },
   })
 
-export const createApplication = (workerId: string, input: CreateApplicationInput) =>
-  prisma.application.create({
-    data: {
+export const createApplication = (workerId: string, input: CreateApplicationInput, checkEmergencyExpiry = false) => {
+  const data = {
       workerId,
       postId: input.postId,
       categoryId: input.categoryId ?? null,
@@ -102,8 +103,26 @@ export const createApplication = (workerId: string, input: CreateApplicationInpu
       visitCost: input.visitCost ?? null,
       offeredDuration: input.offeredDuration ?? null,
       scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
-    },
+  }
+  if (!checkEmergencyExpiry) return prisma.application.create({ data })
+
+  return prisma.$transaction(async (tx) => {
+    // Lock the post until the insert finishes so a concurrent status/expiry update cannot
+    // slip between the final availability check and creation of an emergency application.
+    const rows = await tx.$queryRaw<Array<{
+      type: string; isEmergency: boolean | number; emergencyExpiresAt: Date | null; status: string
+    }>>`SELECT type, isEmergency, emergencyExpiresAt, status FROM Post WHERE id = ${input.postId} FOR UPDATE`
+    const post = rows[0]
+    if (!post || post.status !== PostStatus.Active || isExpiredEmergency({
+      type: post.type,
+      isEmergency: post.isEmergency === true || post.isEmergency === 1,
+      emergencyExpiresAt: post.emergencyExpiresAt,
+    })) {
+      throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
+    }
+    return tx.application.create({ data })
   })
+}
 
 export const deleteApplication = (workerId: string, applicationId: string) =>
   prisma.application.deleteMany({
