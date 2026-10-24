@@ -91,6 +91,24 @@ describe('worker.service - getWorker', () => {
 })
 
 describe('worker.service - updateWorkerProfile', () => {
+  it.each([null, undefined, false, 123, 'profile'])('rejects a non-object body before any side effects: %j', async (body) => {
+    await expect(updateWorkerProfile('uuid-worker-1', body)).rejects.toMatchObject({ status: 400 })
+
+    expect(workerData.findWorkerById).not.toHaveBeenCalled()
+    expect(workerData.updateWorker).not.toHaveBeenCalled()
+    expect(cloudinary.deleteImage).not.toHaveBeenCalled()
+  })
+
+  it('rejects privileged fields before deleting a photo or updating persistence', async () => {
+    await expect(updateWorkerProfile('uuid-worker-1', {
+      photo: null, bio: 'Updated bio', role: 'client', kycStatus: 'APPROVED',
+    })).rejects.toMatchObject({ status: 400 })
+
+    expect(workerData.findWorkerById).not.toHaveBeenCalled()
+    expect(workerData.updateWorker).not.toHaveBeenCalled()
+    expect(cloudinary.deleteImage).not.toHaveBeenCalled()
+  })
+
   it('updates worker without touching photo when photo is not in input', async () => {
     vi.mocked(workerData.updateWorker).mockResolvedValue({ ...mockWorker, bio: 'Updated bio' })
 
