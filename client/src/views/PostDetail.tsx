@@ -15,6 +15,7 @@ import ViewReviewModal from '../components/review/ViewReviewModal'
 import { useCategories } from '../hooks/useCategories'
 import { useTheme } from '../hooks/useTheme'
 import type { Post } from '../types/post'
+import { isExpiredEmergency } from '../utils/emergency'
 
 type SortKey = 'rating' | 'jobs' | 'recent'
 
@@ -71,6 +72,7 @@ export default function PostDetail() {
 
   const accepted = applicants.find((a) => a.status === ApplicationStatus.Accepted)
   const anyHired = !!accepted
+  const emergencyExpired = post ? isExpiredEmergency(post) : false
 
   const anyFilter = fVerified || fNoVisit || fMinRating > 0
   const clearFilters = () => { setFVerified(false); setFNoVisit(false); setFMinRating(0) }
@@ -288,6 +290,7 @@ export default function PostDetail() {
                     postTitle={post.title}
                     hireLocked={anyHired}
                     isEmergency={post.isEmergency}
+                    isEmergencyExpired={emergencyExpired}
                     onHire={refresh}
                     onTokenValidated={refresh}
                     onDismiss={() => navigate('/review', {

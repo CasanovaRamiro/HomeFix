@@ -6,6 +6,7 @@ import {
 import { getCategoryMeta } from '../../views/categoryMeta'
 import ImageModal from '../ui/ImageModal'
 import type { Post } from '../../types/post'
+import { getEmergencyTimeLeft, isEmergencyPost, isExpiredEmergency } from '../../utils/emergency'
 
 interface PostCardProps {
   post: Post
@@ -28,25 +29,20 @@ const STATUS_MAP: Record<string, { label: string; cls: string; Icon: typeof Circ
   Completed:     { label: 'Completada',    cls: 'pd-badge--completed', Icon: Check },
 }
 
-function getEmergencyTimeLeft(expiresAt: string | null): string | null {
-  if (!expiresAt) return null
-  const diff = new Date(expiresAt).getTime() - Date.now()
-  if (diff <= 0) return null
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  if (hours > 0) return `${hours}h ${mins}m restantes`
-  return `${mins}m restantes`
-}
-
 const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
 
 export default function PostCard({
   post, hasAcceptedWorker, scheduledDate, onComplete, onPause, onCancel, onEdit,
 }: PostCardProps) {
-  const status = STATUS_MAP[post.status] ?? { label: post.status, cls: 'pd-badge--completed', Icon: CircleDot }
+  const emergency = isEmergencyPost(post)
+  const emergencyExpired = isExpiredEmergency(post)
+  const emergencyUnavailable = emergencyExpired && (post.status === 'Active' || post.status === 'Paused')
+  const status = emergencyUnavailable
+    ? { label: 'Vencida', cls: 'pd-badge--expired', Icon: AlertTriangle }
+    : STATUS_MAP[post.status] ?? { label: post.status, cls: 'pd-badge--completed', Icon: CircleDot }
   const StatusIcon = status.Icon
-  const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
+  const timeLeft = emergency && !emergencyExpired ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
   const tradeName = post.categories[0]?.name ?? ''
   const meta = getCategoryMeta(tradeName)
@@ -58,11 +54,13 @@ export default function PostCard({
 
   return (
     <aside className="post-card">
-      {post.isEmergency && (
-        <div className="post-emergency">
+      {emergency && (
+        <div className={`post-emergency${emergencyExpired ? ' post-emergency--expired' : ''}`}>
           <AlertTriangle size={15} />
-          <span>Publicación de emergencia</span>
-          {timeLeft && <span className="ml-auto">{timeLeft}</span>}
+          <span>{emergencyExpired ? 'Urgencia vencida' : 'Publicación de emergencia'}</span>
+          {emergencyExpired ? (
+            <span className="ml-auto">No recibe nuevas contrataciones</span>
+          ) : timeLeft !== null && <span className="ml-auto">{timeLeft}</span>}
         </div>
       )}
 
@@ -147,12 +145,16 @@ export default function PostCard({
 
         {!closed && !hasAcceptedWorker && (
           <div className="pc-manage">
-            <button className="pd-btn pd-btn--outline" style={{ flex: 1 }} onClick={() => onEdit?.(post.id)}>
-              <Pencil size={16} />Editar
-            </button>
-            <button className="pd-btn pd-btn--warning" style={{ flex: 1 }} onClick={() => onPause?.(post.id)}>
-              {post.status === 'Paused' ? <><Play size={16} />Activar</> : <><Pause size={16} />Pausar</>}
-            </button>
+            {!emergencyExpired && (
+              <>
+                <button className="pd-btn pd-btn--outline" style={{ flex: 1 }} onClick={() => onEdit?.(post.id)}>
+                  <Pencil size={16} />Editar
+                </button>
+                <button className="pd-btn pd-btn--warning" style={{ flex: 1 }} onClick={() => onPause?.(post.id)}>
+                  {post.status === 'Paused' ? <><Play size={16} />Activar</> : <><Pause size={16} />Pausar</>}
+                </button>
+              </>
+            )}
             <button className="pd-btn pd-btn--danger" style={{ flex: 1 }} onClick={() => onCancel?.(post.id)}>
               <Trash2 size={16} />Cancelar
             </button>

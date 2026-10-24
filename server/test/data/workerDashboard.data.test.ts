@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { cleanDb, createUser, createCategory, prisma } from '../helpers/db.js'
 import { UserRole } from '../../src/domain/types/userRole.js'
+import { PostType } from '../../src/domain/types/postType.js'
 import {
   findWorkerProfile,
   countWorkerReviews,
@@ -162,6 +163,7 @@ describe('countNewJobsForWorker', () => {
     await prisma.post.create({
       data: {
         userId: clientId,
+        type: PostType.Post,
         title: 'Active Post',
         description: 'Desc',
         address: 'Calle 123',
@@ -187,6 +189,7 @@ describe('countNewJobsForWorker', () => {
     await prisma.post.create({
       data: {
         userId: clientId,
+        type: PostType.Post,
         title: 'Inactive Post',
         description: 'Desc',
         address: 'Calle 123',
@@ -199,6 +202,50 @@ describe('countNewJobsForWorker', () => {
 
     const result = await countNewJobsForWorker([category.id])
     expect(result).toBe(0)
+  })
+
+  it('excludes expired emergencies from new jobs', async () => {
+    const category = await createCategory('Expired Emergency')
+    await prisma.post.create({
+      data: {
+        userId: clientId,
+        type: PostType.Emergency,
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        title: 'Expired Emergency',
+        description: 'Desc',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId: category.id } },
+      },
+    })
+
+    const result = await countNewJobsForWorker([category.id])
+    expect(result).toBe(0)
+  })
+
+  it('counts current emergencies matching the worker categories', async () => {
+    const category = await createCategory('Current Emergency')
+    await prisma.post.create({
+      data: {
+        userId: clientId,
+        type: PostType.Emergency,
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() + 3_600_000),
+        title: 'Current Emergency',
+        description: 'Desc',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId: category.id } },
+      },
+    })
+
+    const result = await countNewJobsForWorker([category.id])
+    expect(result).toBe(1)
   })
 })
 

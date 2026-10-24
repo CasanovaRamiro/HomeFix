@@ -468,6 +468,8 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   background: var(--color-danger); color: #fff; font-size: 12.5px; font-weight: 700; padding: 9px 22px;
 }
 .post-emergency .ml-auto { margin-left: auto; font-weight: 600; color: #FECACA; font-size: 11.5px; }
+.post-emergency--expired { background: #64748B; }
+.post-emergency--expired .ml-auto { color: #E2E8F0; }
 
 .pc-trade { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 800; letter-spacing: -.01em; min-width: 0; }
 .pc-trade-ic { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -497,6 +499,7 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 .pd-badge--paused   { background: #FEF3C7; color: #B45309; }
 .pd-badge--completed{ background: #E2E8F0; color: #334155; }
 .pd-badge--cancelled{ background: #FEE2E2; color: #DC2626; }
+.pd-badge--expired  { background: #F1F5F9; color: #475569; }
 
 /* ---------- buttons ---------- */
 .pd-btn {

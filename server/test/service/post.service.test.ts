@@ -422,6 +422,19 @@ describe('post.service - pausePost', () => {
     expect(result.status).toBe('Active')
   })
 
+  it('no reactiva una urgencia vencida pausada', async () => {
+    vi.mocked(findPostById).mockResolvedValue({
+      ...activePost,
+      status: 'Paused',
+      type: PostType.Emergency,
+      isEmergency: true,
+      emergencyExpiresAt: new Date(Date.now() - 60_000),
+    })
+
+    await expect(postService.pausePost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+    expect(updatePostStatus).not.toHaveBeenCalled()
+  })
+
   it('lanza 404 si el post no existe', async () => {
     vi.mocked(findPostById).mockResolvedValue(null)
 
@@ -912,6 +925,19 @@ describe('post.service - reopenPost', () => {
     await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
   })
 
+  it('no reabre una urgencia contratada y vencida ni modifica su postulación', async () => {
+    vi.mocked(findPostById).mockResolvedValue({
+      ...mockInProgress,
+      type: PostType.Emergency,
+      isEmergency: true,
+      emergencyExpiresAt: new Date(Date.now() - 60_000),
+    } as never)
+
+    await expect(postService.reopenPost('uuid-1', 'user-uuid-1')).rejects.toMatchObject({ status: 400 })
+    expect(updateApplicationStatus).not.toHaveBeenCalled()
+    expect(updatePostStatus).not.toHaveBeenCalled()
+  })
+
   it('reactiva todos los posts In progress de un grupo SubContract', async () => {
     const subcontractPost = {
       ...mockInProgress,
@@ -983,13 +1009,58 @@ describe('post.service - updatePost', () => {
     categoryId: 'uuid-category-1',
   }
 
+  it('preserves the expiration of a current emergency when editing', async () => {
+    const expiresAt = new Date(Date.now() + 3_600_000)
+    const emergency = { ...activePost, type: PostType.Emergency, isEmergency: true, emergencyExpiresAt: expiresAt }
+    vi.mocked(findPostById).mockResolvedValue(emergency)
+    vi.mocked(updatePostData).mockResolvedValue({ ...emergency, title: 'Updated emergency' })
+
+    const result = await postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, title: 'Updated emergency' })
+
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput, title: 'Updated emergency' })
+    expect(result.emergencyExpiresAt).toEqual(expiresAt)
+    expect(result.isEmergency).toBe(true)
+    expect(result.type).toBe(PostType.Emergency)
+  })
+
+  it('does not reactivate an expired emergency when editing', async () => {
+    const expiresAt = new Date(Date.now() - 60_000)
+    const emergency = { ...activePost, type: PostType.Emergency, isEmergency: true, emergencyExpiresAt: expiresAt }
+    vi.mocked(findPostById).mockResolvedValue(emergency)
+    vi.mocked(updatePostData).mockResolvedValue({ ...emergency, title: 'Updated emergency' })
+
+    const result = await postService.updatePost('uuid-1', 'user-uuid-1', { ...updateInput, title: 'Updated emergency' })
+
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput, title: 'Updated emergency' })
+    expect(result.emergencyExpiresAt).toEqual(expiresAt)
+    expect(result.isEmergency).toBe(true)
+    expect(result.type).toBe(PostType.Emergency)
+  })
+
+  it('ignores attempts to modify isEmergency, type or emergencyExpiresAt through the generic update', async () => {
+    const expiresAt = new Date(Date.now() + 3_600_000)
+    const emergency = { ...activePost, type: PostType.Emergency, isEmergency: true, emergencyExpiresAt: expiresAt }
+    vi.mocked(findPostById).mockResolvedValue(emergency)
+    vi.mocked(updatePostData).mockResolvedValue(emergency)
+
+    const maliciousInput = {
+      ...updateInput,
+      isEmergency: false,
+      type: PostType.Post,
+      emergencyExpiresAt: new Date(Date.now() - 86_400_000),
+    }
+    await postService.updatePost('uuid-1', 'user-uuid-1', maliciousInput as unknown as Parameters<typeof postService.updatePost>[2])
+
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput })
+  })
+
   it('edita un post activo', async () => {
     vi.mocked(findPostById).mockResolvedValue(activePost)
     vi.mocked(updatePostData).mockResolvedValue({ ...activePost, title: 'TÃ­tulo editado' })
 
     const result = await postService.updatePost('uuid-1', 'user-uuid-1', updateInput)
 
-    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput, emergencyExpiresAt: null })
+    expect(updatePostData).toHaveBeenCalledWith('uuid-1', { userId: 'user-uuid-1', ...updateInput })
     expect(result.title).toBe('TÃ­tulo editado')
   })
 

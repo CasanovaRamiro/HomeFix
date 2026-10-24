@@ -26,6 +26,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
 vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findPostById: vi.fn(),
   updatePostStatus: vi.fn(),
+  releaseEmergencyPost: vi.fn(),
   createPost: vi.fn(),
   findPostsByUser: vi.fn(),
   findAvailablePosts: vi.fn(),
@@ -93,7 +94,7 @@ const mockApplication = {
   startTokenExpiresAt: null,
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false },
+  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
   category: null,
 }
 
@@ -140,7 +141,7 @@ describe("acceptApplication", () => {
   it("forces requiresStartToken=false for subcontracts even when the client enabled it", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1" },
+      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1", isBidding: false, isEmergency: false, emergencyExpiresAt: null },
       category: { id: "cat-1", filledCount: 0, quantity: 3 },
     } as never)
     vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(true)
@@ -175,7 +176,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is not Active", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -184,16 +185,45 @@ describe("acceptApplication", () => {
   it("throws 400 if post is Paused", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
 
+  it("rejects accepting a pending application on an expired emergency", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      post: {
+        userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false,
+        isEmergency: true, emergencyExpiresAt: new Date(Date.now() - 60_000),
+      },
+    })
+
+    await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+    expect(mockPrisma.application.updateMany).not.toHaveBeenCalled()
+    expect(mockPrisma.postUpdateMany).not.toHaveBeenCalled()
+  })
+
+  it("rechecks the emergency deadline when moving the post to in progress", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      post: { ...mockApplication.post, isEmergency: true, emergencyExpiresAt: new Date(Date.now() + 60_000) },
+    })
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+
+    await acceptApplication("client-1", "app-1")
+
+    expect(mockPrisma.postUpdateMany).toHaveBeenCalledWith({
+      where: { id: "post-1", status: "Active", emergencyExpiresAt: { gt: expect.any(Date) } },
+      data: { status: "In progress" },
+    })
+  })
+
   it("throws 400 when application already accepted in another position of the same subcontract group", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
       category: { id: "cat-1", quantity: 2, filledCount: 0 },
     })
     mockPrisma.application.updateMany.mockRejectedValue(
@@ -249,6 +279,30 @@ describe("applyToPost", () => {
   it("lanza 400 si el post no estÃ¡ Active", async () => {
     vi.mocked(postData.findPostById).mockResolvedValue({ ...mockPost, status: "Completed" })
     await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("rechaza una postulación directa a una urgencia vencida sin crear registros", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockPost,
+      type: PostType.Emergency,
+      isEmergency: true,
+      emergencyExpiresAt: new Date(Date.now() - 60_000),
+    })
+
+    await expect(applyToPost("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
+    expect(applicationData.createApplication).not.toHaveBeenCalled()
+  })
+
+  it("mantiene la postulación a una urgencia vigente", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockPost,
+      type: PostType.Emergency,
+      isEmergency: true,
+      emergencyExpiresAt: new Date(Date.now() + 60_000),
+    })
+
+    expect(await applyToPost("worker-1", validInput)).toMatchObject({ status: "Pending" })
+    expect(applicationData.createApplication).toHaveBeenCalledOnce()
   })
 
   it("lanza 409 si el worker ya se postulÃ³ al post", async () => {
@@ -585,7 +639,7 @@ describe("dismissWorker", () => {
   const acceptedApplication = {
     ...mockApplication,
     status: "Accepted",
-    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
+    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
   }
 
   it("dismisses the worker and reopens the post when valid", async () => {
@@ -598,6 +652,20 @@ describe("dismissWorker", () => {
     expect(result.status).toBe("Dismissed")
     expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Dismissed")
     expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "Active")
+  })
+
+  it("does not reactivate an expired emergency when dismissing the worker", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...acceptedApplication,
+      post: { ...acceptedApplication.post, isEmergency: true, emergencyExpiresAt: new Date(Date.now() - 60_000) },
+    })
+    vi.mocked(applicationData.updateApplicationStatus).mockResolvedValue({ ...acceptedApplication, status: "Dismissed" })
+    vi.mocked(postData.releaseEmergencyPost).mockResolvedValue(undefined)
+
+    await dismissWorker("client-1", "app-1")
+
+    expect(postData.releaseEmergencyPost).toHaveBeenCalledWith("post-1")
+    expect(postData.updatePostStatus).not.toHaveBeenCalled()
   })
 
   it("throws 404 if application does not exist", async () => {
@@ -625,7 +693,7 @@ describe("dismissWorker", () => {
   it("throws 400 if post is not In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedApplication,
-      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
     })
 
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -656,7 +724,7 @@ describe("dismissWorker - bidding path", () => {
     startTokenExpiresAt: null,
     startTokenAttempts: 0,
     tokenValidatedAt: null,
-    post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true },
+    post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true, isEmergency: false, emergencyExpiresAt: null },
     category: null,
   }
 
@@ -692,7 +760,7 @@ describe("dismissWorker - bidding path", () => {
   it("lanza 400 si el post no está In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedBiddingApp,
-      post: { userId: "client-1", title: "Licitación test", status: "Evaluating", type: "Post", subcontractGroupId: null, isBidding: true },
+      post: { userId: "client-1", title: "Licitación test", status: "Evaluating", type: "Post", subcontractGroupId: null, isBidding: true, isEmergency: false, emergencyExpiresAt: null },
     })
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
@@ -835,7 +903,7 @@ const eligibleApp = {
   startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false },
+  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false, isEmergency: false, emergencyExpiresAt: null },
 }
 
 describe("generateStartToken", () => {

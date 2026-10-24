@@ -2,6 +2,7 @@ import { Calendar, Eye, Users, AlertTriangle, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { UserPost } from '../../services/posts'
 import { PostStatus } from '../../types/post'
+import { getEmergencyTimeLeft, isEmergencyPost, isExpiredEmergency } from '../../utils/emergency'
 
 const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
   [PostStatus.Active]:     { label: 'Activa',       className: 'bg-green-100 text-green-700' },
@@ -15,20 +16,15 @@ const STATUS_MAP: Record<PostStatus, { label: string; className: string }> = {
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-function getEmergencyTimeLeft(expiresAt: string | null): string | null {
-  if (!expiresAt) return null
-  const diff = new Date(expiresAt).getTime() - Date.now()
-  if (diff <= 0) return null
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  if (hours > 0) return `${hours}h ${mins}m restantes`
-  return `${mins}m restantes`
-}
-
 export default function TurnoCard({ post }: { post: UserPost }) {
   const navigate = useNavigate()
-  const st = STATUS_MAP[post.status] ?? STATUS_MAP.Active
-  const timeLeft = post.isEmergency ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
+  const emergency = isEmergencyPost(post)
+  const emergencyExpired = isExpiredEmergency(post)
+  const emergencyUnavailable = emergencyExpired && (post.status === PostStatus.Active || post.status === PostStatus.Paused)
+  const st = emergencyUnavailable
+    ? { label: 'Vencida', className: 'bg-slate-100 text-slate-600' }
+    : STATUS_MAP[post.status] ?? STATUS_MAP.Active
+  const timeLeft = emergency && !emergencyExpired ? getEmergencyTimeLeft(post.emergencyExpiresAt) : null
 
   // Reviewable when completed, or when a hired contract was cancelled (worker present, not yet reviewed).
   const needsReview = !post.hasReview && post.worker != null &&
@@ -61,11 +57,13 @@ export default function TurnoCard({ post }: { post: UserPost }) {
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-md">
 
       {/* Emergency banner */}
-      {post.isEmergency && (
-        <div className="flex items-center gap-2 bg-red-500 px-4 py-2 text-white text-sm font-bold">
+      {emergency && (
+        <div className={`flex items-center gap-2 px-4 py-2 text-sm font-bold text-white ${emergencyExpired ? 'bg-slate-500' : 'bg-red-500'}`}>
           <AlertTriangle size={16} />
-          <span>Urgente</span>
-          {timeLeft && (
+          <span>{emergencyExpired ? 'Urgencia vencida' : 'Urgente'}</span>
+          {emergencyExpired ? (
+            <span className="ml-auto text-slate-200 text-xs font-medium">No disponible</span>
+          ) : timeLeft !== null && (
             <span className="ml-auto text-red-100 text-xs font-medium">{timeLeft}</span>
           )}
         </div>
@@ -91,7 +89,7 @@ export default function TurnoCard({ post }: { post: UserPost }) {
       <hr className="border-slate-100 my-4" />
 
       {/* Postulantes */}
-      {post.status === PostStatus.Active && (
+      {post.status === PostStatus.Active && !emergencyExpired && (
         <div className="flex items-center gap-2 mb-3">
           <Users size={14} className="text-slate-400" />
           {post.applicantCount > 0 ? (

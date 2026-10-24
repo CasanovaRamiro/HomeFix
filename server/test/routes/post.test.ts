@@ -1014,6 +1014,85 @@ describe('PATCH /posts/:id (update)', () => {
     expect(res.body.title).toBe('Título editado')
   })
 
+  it('keeps emergency identity and expiration when the payload tries to change them', async () => {
+    const expiresAt = new Date(Date.now() + 3_600_000)
+    const emergency = await prisma.post.create({
+      data: {
+        userId,
+        type: 'emergency',
+        isEmergency: true,
+        emergencyExpiresAt: expiresAt,
+        title: 'Emergency post',
+        description: 'Original description',
+        address: 'Calle original 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${emergency.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Título editado',
+        description: 'Descripción editada',
+        startDate: '2026-06-01',
+        endDate: '2026-06-20',
+        address: 'Nueva dirección 456',
+        categoryId,
+        isEmergency: false,
+        type: 'post',
+        emergencyExpiresAt: new Date(Date.now() - 86_400_000).toISOString(),
+      })
+
+    expect(res.status).toBe(200)
+    const stored = await prisma.post.findUnique({ where: { id: emergency.id } })
+    expect(stored?.type).toBe('emergency')
+    expect(stored?.isEmergency).toBe(true)
+    expect(stored?.emergencyExpiresAt?.toISOString()).toBe(expiresAt.toISOString())
+    expect(stored?.title).toBe('Título editado')
+  })
+
+  it('keeps an expired emergency expired after editing its fields', async () => {
+    const expiresAt = new Date(Date.now() - 60_000)
+    const emergency = await prisma.post.create({
+      data: {
+        userId,
+        type: 'emergency',
+        isEmergency: true,
+        emergencyExpiresAt: expiresAt,
+        title: 'Expired emergency',
+        description: 'Original description',
+        address: 'Calle original 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        categories: { create: { categoryId } },
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/posts/${emergency.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Título editado',
+        description: 'Descripción editada',
+        startDate: '2026-06-01',
+        endDate: '2026-06-20',
+        address: 'Nueva dirección 456',
+        categoryId,
+      })
+
+    expect(res.status).toBe(200)
+    const stored = await prisma.post.findUnique({ where: { id: emergency.id } })
+    expect(stored?.status).toBe('Active')
+    expect(stored?.isEmergency).toBe(true)
+    expect(stored?.type).toBe('emergency')
+    expect(stored?.emergencyExpiresAt?.toISOString()).toBe(expiresAt.toISOString())
+  })
+
   it('returns 400 si el post está In progress', async () => {
     await prisma.post.update({ where: { id: postId }, data: { status: 'In progress' } })
 

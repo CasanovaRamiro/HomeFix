@@ -9,6 +9,7 @@ import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 import EmergencyCard from '../components/dashboard/EmergencyCard'
 import EmergencyModal from '../components/dashboard/EmergencyModal'
 import { PostStatus } from '../types/post'
+import { countActivePublications, countCurrentEmergencies, filterCurrentEmergencies } from '../utils/clientDashboard'
 
 export default function ClientDashboard() {
   const navigate = useNavigate()
@@ -25,9 +26,10 @@ export default function ClientDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activos     = posts.filter(p => p.status === PostStatus.Active || p.status === PostStatus.InProgress || p.status === PostStatus.Paused).length
+  const now = new Date()
+  const activos     = countActivePublications(posts, now)
   const completados = posts.filter(p => p.status === PostStatus.Completed).length
-  const emergencyCount = posts.filter(p => p.isEmergency && p.status !== PostStatus.Completed && p.status !== PostStatus.Cancelled).length
+  const emergencyCount = countCurrentEmergencies(posts, now)
 
   // Identidad Cliente = verde. Cada métrica conserva su color semántico.
   const stats = [
@@ -48,7 +50,7 @@ export default function ClientDashboard() {
   const ordered         = [...inProgressPosts, ...rest]
 
   const displayedPosts = showEmergencies
-    ? ordered.filter(p => p.isEmergency)
+    ? filterCurrentEmergencies(ordered, now)
     : ordered
 
   return (
@@ -119,7 +121,7 @@ export default function ClientDashboard() {
 
                 {showEmergencies && (
                   <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-                    Mostrando solo publicaciones de emergencia
+                    Mostrando solo urgencias vigentes
                   </div>
                 )}
 

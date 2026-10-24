@@ -1,6 +1,7 @@
 import prisma from '../../lib/prisma.js'
 import type { CreatePostInput, CreateBiddingInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import { PostType } from '../../domain/types/postType.js'
+import { availablePostWhere } from './postAvailability.js'
 import type { PrismaPostFull } from '../types/post.types.js'
 import { toDomainPost } from '../transformers/post.transformer.js'
 import { PostStatus } from '../../domain/types/postStatus.js'
@@ -198,35 +199,10 @@ export const createSubPost = async (data: {
     })),
   })
 
-const availablePostWhere = (category?: string) => ({
-  status: 'Active',
-  type: { in: [PostType.Post, PostType.Emergency] },
-  ...(category?.trim()
-    ? {
-        categories: {
-          some: {
-            category: {
-              name: category.trim(),
-            },
-          },
-        },
-      }
-    : {}),
-})
-
 export interface PaginationParams {
   page: number
   limit: number
   sortOrder: 'asc' | 'desc'
-}
-
-const deleteExpiredEmergencyPosts = async (): Promise<void> => {
-  await prisma.post.deleteMany({
-    where: {
-      isEmergency: true,
-      emergencyExpiresAt: { lte: new Date() },
-    },
-  })
 }
 
 export interface PaginatedPosts {
@@ -238,7 +214,6 @@ export const findAvailablePosts = async (
   category?: string,
   pagination?: PaginationParams,
 ): Promise<PaginatedPosts> => {
-  await deleteExpiredEmergencyPosts()
   const where = availablePostWhere(category)
   const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
 
@@ -292,7 +267,6 @@ export const findPostsByGroupId = async (groupId: string): Promise<DomainPost[]>
 }
 
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
-  await deleteExpiredEmergencyPosts()
   const raw = await prisma.post.findMany({
     where: {
       status: 'Active',
@@ -382,6 +356,41 @@ export const updatePostStatus = (id: string, status: string): Promise<{ id: stri
     select: { id: true, status: true },
   })
 
+// A conditional UPDATE rechecks the deadline at the write boundary. Never
+// reactivate an expired emergency, even if an earlier read saw it as current.
+export const activateEmergencyPost = (id: string, fromStatus: PostStatus, resetApplications = false) =>
+  prisma.$transaction(async (tx) => {
+    const moved = await tx.post.updateMany({
+      where: { id, status: fromStatus, emergencyExpiresAt: { gt: new Date() } },
+      data: { status: PostStatus.Active },
+    })
+    if (moved.count !== 1) throw Object.assign(new Error('La urgencia vencida no puede reactivarse'), { status: 400 })
+    if (resetApplications) {
+      await tx.application.updateMany({
+        where: { postId: id, status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] } },
+        data: { status: ApplicationStatus.Pending },
+      })
+    }
+    return { id, status: PostStatus.Active }
+  })
+
+// Dismissal of an accepted worker can reopen only a still-current emergency.
+// If it expired, keep the post and its history while making it Paused.
+export const releaseEmergencyPost = async (id: string): Promise<void> => {
+  await prisma.$transaction(async (tx) => {
+    const reopened = await tx.post.updateMany({
+      where: { id, status: PostStatus.InProgress, emergencyExpiresAt: { gt: new Date() } },
+      data: { status: PostStatus.Active },
+    })
+    if (reopened.count === 0) {
+      await tx.post.updateMany({
+        where: { id, status: PostStatus.InProgress },
+        data: { status: PostStatus.Paused },
+      })
+    }
+  })
+}
+
 export const selectBiddingWinner = (
   biddingId: string,
   applicationId: string,
@@ -413,9 +422,8 @@ export const deletePostImages = (postId: string) =>
   prisma.postImage.deleteMany({ where: { postId } })
 
 export const updatePost = async (id: string, data: UpdatePostInput): Promise<DomainPost> => {
-  const now = new Date()
-  const startDate = data.startDate ? new Date(data.startDate) : now
-  const endDate = data.endDate ? new Date(data.endDate) : new Date(now.getTime() + EMERGENCY_DURATION_MS)
+  const startDate = data.startDate ? new Date(data.startDate) : undefined
+  const endDate = data.endDate ? new Date(data.endDate) : undefined
   const raw = await prisma.$transaction(async (tx) => {
     await tx.postCategory.deleteMany({ where: { postId: id } })
     await tx.postCategory.create({ data: { postId: id, categoryId: data.categoryId } })
@@ -427,10 +435,6 @@ export const updatePost = async (id: string, data: UpdatePostInput): Promise<Dom
         startDate,
         endDate,
         address: data.address,
-        isEmergency: data.isEmergency ?? undefined,
-    emergencyExpiresAt: data.isEmergency
-      ? new Date(Date.now() + EMERGENCY_DURATION_MS)
-      : (data.emergencyExpiresAt ?? null),
       },
       select: postFields,
     })
@@ -444,7 +448,6 @@ export const searchByDistance = async (
   radiusKm: number,
   category?: string,
 ): Promise<LocationSearchResult[]> => {
-  await deleteExpiredEmergencyPosts()
   const hasCategory = !!category?.trim()
 
   const categoryFilter = hasCategory
@@ -464,7 +467,8 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
-      AND (p.type = 'Post' OR p.type = 'Emergency')
+      AND (p.type = ? OR p.type = ?)
+      AND ((p.type = ? AND p.isEmergency = 0) OR p.emergencyExpiresAt > ?)
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}
@@ -472,7 +476,7 @@ export const searchByDistance = async (
     ORDER BY distance
   `
 
-  const params: (string | number)[] = [lat, lng, lat]
+  const params: (string | number | Date)[] = [lat, lng, lat, PostType.Post, PostType.Emergency, PostType.Post, new Date()]
   if (hasCategory) {
     params.push(category!.trim())
   }

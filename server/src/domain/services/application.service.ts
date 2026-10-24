@@ -15,7 +15,7 @@ import {
   findBiddingApplications,
 } from '../../infrastructure/database/application.database.js'
 import prisma from '../../lib/prisma.js'
-import { findPostById, updatePostStatus, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
+import { findPostById, updatePostStatus, releaseEmergencyPost, incrementPostFilledCount, decrementPostFilledCount, findPostCategories } from '../../infrastructure/database/post.database.js'
 import { findUserById, getRequiresStartToken } from '../../infrastructure/database/user.database.js'
 import { getClientRating } from './user.service.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
@@ -23,6 +23,7 @@ import { notifyUser } from './notification.service.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { PostType } from '../types/postType.js'
+import { isExpiredEmergency } from './emergency-expiration.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication, DomainStartToken, DomainStartTokenValidation } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
@@ -60,7 +61,8 @@ export const cancelApplication = async (workerId: string, applicationId: string)
 export const applyToPost = async (workerId: string, input: CreateApplicationInput) => {
   const post = await findPostById(input.postId)
   if (!post) throw Object.assign(new Error('Post not found'), { status: 404 })
-  if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
+  if (post.status !== PostStatus.Active || isExpiredEmergency(post))
+    throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
   if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propio trabajo'), { status: 400 })
 
   if (input.availableDays && input.availableDays.length > 0) {
@@ -81,7 +83,10 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
     throw Object.assign(new Error('visitCost must be a positive number when chargesVisit is true'), { status: 400 })
 
-  const created = await createApplication(workerId, input)
+  const isEmergencyPost = post.type === PostType.Emergency || post.isEmergency === true
+  const created = isEmergencyPost
+    ? await createApplication(workerId, input, true)
+    : await createApplication(workerId, input)
 
   logger.info({ applicationId: created.id, postId: input.postId, workerId, action: 'application.submitted' }, 'Worker applied to post')
 
@@ -140,6 +145,11 @@ export const acceptApplication = async (clientId: string, applicationId: string,
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
   if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
 
+  const isEmergency = application.post.type === PostType.Emergency || application.post.isEmergency === true
+  if (isEmergency && isExpiredEmergency(application.post)) {
+    throw Object.assign(new Error('La urgencia ya venció'), { status: 400 })
+  }
+
   if (application.post.type === PostType.SubContract) {
     if (!application.category || application.category.filledCount >= application.category.quantity) {
       throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400 })
@@ -169,7 +179,11 @@ export const acceptApplication = async (clientId: string, applicationId: string,
         await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
       } else {
         const moved = await tx.post.updateMany({
-          where: { id: application.postId, status: PostStatus.Active },
+          where: {
+            id: application.postId,
+            status: PostStatus.Active,
+            ...(isEmergency ? { emergencyExpiresAt: { gt: new Date() } } : {}),
+          },
           data: { status: PostStatus.InProgress },
         })
         if (moved.count === 0) {
@@ -251,7 +265,11 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
       await updatePostStatus(application.postId, PostStatus.Active)
     }
   } else {
-    await updatePostStatus(application.postId, PostStatus.Active)
+    if (application.post.type === PostType.Emergency || application.post.isEmergency === true) {
+      await releaseEmergencyPost(application.postId)
+    } else {
+      await updatePostStatus(application.postId, PostStatus.Active)
+    }
   }
 
   logger.info({ applicationId, workerId: application.workerId, clientId, postId: application.postId, action: 'application.workerDismissed' }, 'Worker dismissed from application')

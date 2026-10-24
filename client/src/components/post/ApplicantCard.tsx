@@ -41,6 +41,7 @@ interface ApplicantCardProps {
   /** Disables the hire button once someone else is already hired. */
   hireLocked?: boolean
   isEmergency?: boolean
+  isEmergencyExpired?: boolean
   onHire?: () => void | Promise<void>
   onDismiss?: () => void
   onReview?: () => void
@@ -238,7 +239,7 @@ function StartTokenValidateBox({ applicationId, onValidated }: { applicationId: 
 }
 
 export default function ApplicantCard({
-  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, isEmergency, onHire, onDismiss, onReview, onViewReview, onTokenValidated,
+  applicant, applicationId, applicationStatus, postStatus, postTitle, hireLocked, isEmergency, isEmergencyExpired, onHire, onDismiss, onReview, onViewReview, onTokenValidated,
 }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
@@ -250,7 +251,7 @@ export default function ApplicantCard({
 
   const isHired = applicationStatus === 'Accepted' || applicationStatus === 'Completed'
   const isOut = applicationStatus === 'Dismissed'
-  const canHire = postStatus === 'Active' && applicationStatus === 'Pending' && !hireLocked
+  const canHire = postStatus === 'Active' && applicationStatus === 'Pending' && !hireLocked && isEmergencyExpired !== true
   const canReviewOrView = (postStatus === 'Completed' || postStatus === 'Cancelled') && isHired && (
     (!applicant.hasReview && !!onReview) || (applicant.hasReview && !!onViewReview)
   )
@@ -389,7 +390,7 @@ export default function ApplicantCard({
         ) : isOut ? null : (
           <>
             <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire || loading} onClick={isEmergency ? handleEmergencyHire : () => setHireModalOpen(true)}>
-              {loading ? 'Contratando...' : <><UserCheck size={16} />Contratar</>}
+              {loading ? 'Contratando...' : isEmergencyExpired === true ? <><UserCheck size={16} />Urgencia vencida</> : <><UserCheck size={16} />Contratar</>}
             </button>
             {!isEmergency && (
               <HireModal
