@@ -43,7 +43,7 @@ export const findWorkerById = async (id: string): Promise<DomainWorker | null> =
 }
 
 export const updateWorker = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
-  const { categoryIds, availability, certificates, gallery, ...data } = input
+  const { name, phone, bio, photo, matriculaUrl, emergenciesEnabled, categoryIds, availability, certificates, gallery } = input
   const serialized: Record<string, string> = {}
   if (availability !== undefined) serialized.availability = JSON.stringify(availability)
   if (certificates !== undefined) serialized.certificates = JSON.stringify(certificates)
@@ -51,7 +51,13 @@ export const updateWorker = async (id: string, input: UpdateWorkerInput): Promis
   const raw = await prisma.user.update({
     where: { id },
     data: {
-      ...data,
+      // Never spread caller-controlled properties into a Prisma update.
+      name,
+      phone,
+      bio,
+      photo,
+      matriculaUrl,
+      emergenciesEnabled,
       ...serialized,
       ...(categoryIds
         ? {

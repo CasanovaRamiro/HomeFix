@@ -3,7 +3,8 @@ import { findReviewsByWorkerId } from '../../infrastructure/database/review.data
 import { countCompletedJobs, countDismissedJobs } from '../../infrastructure/database/workerDashboard.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { getUserRating } from './user.service.js'
-import type { DomainWorker, DomainWorkerReview, UpdateWorkerInput } from '../types/worker.types.js'
+import type { DomainWorker, DomainWorkerReview } from '../types/worker.types.js'
+import { parseWorkerProfileUpdate } from '../validation/workerProfile.validation.js'
 import { logger } from '../../lib/logger.js'
 
 export interface WorkerStats {
@@ -47,7 +48,8 @@ export const getWorkerStats = async (id: string): Promise<WorkerStats> => {
   }
 }
 
-export const updateWorkerProfile = async (id: string, input: UpdateWorkerInput): Promise<DomainWorker> => {
+export const updateWorkerProfile = async (id: string, body: unknown): Promise<DomainWorker> => {
+  const input = parseWorkerProfileUpdate(body)
   if (input.photo !== undefined || input.matriculaUrl !== undefined) {
     const current = await findWorkerById(id)
     if (current?.photo && input.photo !== undefined && current.photo !== input.photo && CLOUDINARY_URL_RE.test(current.photo)) {
