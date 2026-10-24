@@ -388,25 +388,45 @@ export const selectBiddingWinner = (
   currentStatus: string,
 ): Promise<{ id: string; status: string }> =>
   prisma.$transaction(async (tx) => {
-    if (currentStatus === PostStatus.Active) {
-      await tx.post.update({
-        where: { id: biddingId },
-        data: { status: PostStatus.Evaluating },
-      })
+    const claimed = await tx.post.updateMany({
+      where: {
+        id: biddingId,
+        isBidding: true,
+        status: currentStatus,
+      },
+      data: { status: PostStatus.InProgress },
+    })
+    if (claimed.count === 0) {
+      throw Object.assign(
+        new Error('La licitación debe estar activa o en evaluación para seleccionar ganador'),
+        { status: 400 },
+      )
     }
-    await tx.application.update({
-      where: { id: applicationId },
+
+    const accepted = await tx.application.updateMany({
+      where: {
+        id: applicationId,
+        postId: biddingId,
+        status: ApplicationStatus.Pending,
+      },
       data: { status: ApplicationStatus.Accepted },
     })
+    if (accepted.count === 0) {
+      const application = await tx.application.findUnique({
+        where: { id: applicationId },
+        select: { postId: true },
+      })
+      if (!application || application.postId !== biddingId) {
+        throw Object.assign(new Error('La postulación no pertenece a esta licitación'), { status: 400 })
+      }
+      throw Object.assign(new Error('La postulación no está pendiente'), { status: 400 })
+    }
+
     await tx.application.updateMany({
       where: { postId: biddingId, status: ApplicationStatus.Pending, id: { not: applicationId } },
       data: { status: ApplicationStatus.Rejected },
     })
-    return tx.post.update({
-      where: { id: biddingId },
-      data: { status: PostStatus.InProgress },
-      select: { id: true, status: true },
-    })
+    return { id: biddingId, status: PostStatus.InProgress }
   })
 
 export const deletePostImages = (postId: string) =>
