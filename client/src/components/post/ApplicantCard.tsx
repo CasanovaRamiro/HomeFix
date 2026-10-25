@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Star, BadgeCheck, Briefcase, Clock, Banknote, Check, User,
-  MessageCircle, UserX, UserCheck, CalendarCheck, KeyRound, CheckCircle, Flag,
+  MessageCircle, UserX, UserCheck, CalendarCheck, KeyRound, CheckCircle,
 } from 'lucide-react'
 import ConfirmModal from '../ui/ConfirmModal'
 import { acceptApplication, dismissWorker, validateStartToken } from '../../services/applications'
@@ -370,9 +370,6 @@ export default function ApplicantCard({
               <>
                 <button className="pd-btn pd-btn--danger" onClick={() => setDismissModalOpen(true)}>
                   <UserX size={16} />Despedir
-                </button>
-                <button className="pd-btn pd-btn--outline" onClick={() => {}}>
-                  <Flag size={16} />Reportar
                 </button>
                 <ConfirmModal
                   open={dismissModalOpen}
