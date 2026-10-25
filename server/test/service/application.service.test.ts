@@ -13,6 +13,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   createApplication: vi.fn(),
   findApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn(),
+  updateApplicationStatusIf: vi.fn(() => Promise.resolve({ count: 1 })),
   acceptApplicationWithDate: vi.fn(),
   deleteApplication: vi.fn(),
   findApplicationsByPost: vi.fn(),
@@ -30,8 +31,8 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findPostsByUser: vi.fn(),
   findAvailablePosts: vi.fn(),
   searchByDistance: vi.fn(),
-  incrementPostFilledCount: vi.fn(),
-  decrementPostFilledCount: vi.fn(),
+  incrementPostFilledCount: vi.fn(() => Promise.resolve({ count: 1 })),
+  decrementPostFilledCount: vi.fn(() => Promise.resolve({ count: 1 })),
   findPostCategories: vi.fn(),
 }))
 
@@ -152,6 +153,20 @@ describe("acceptApplication", () => {
       where: { id: "app-1", status: "Pending" },
       data: { status: "Accepted", scheduledDate: null, requiresStartToken: false },
     })
+  })
+
+  it("rolls back acceptance when the atomic vacancy update reports no available slot", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      categoryId: "cat-1",
+      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1" },
+      category: { id: "cat-1", filledCount: 0, quantity: 1 },
+    } as never)
+    vi.mocked(postData.incrementPostFilledCount).mockResolvedValue({ count: 0 })
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+
+    await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
+    expect(postData.incrementPostFilledCount).toHaveBeenCalledWith("post-1", "cat-1", expect.anything())
   })
 
   it("throws 404 if application does not exist", async () => {
@@ -596,8 +611,8 @@ describe("dismissWorker", () => {
     const result = await dismissWorker("client-1", "app-1")
 
     expect(result.status).toBe("Dismissed")
-    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Dismissed")
-    expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "Active")
+    expect(applicationData.updateApplicationStatusIf).toHaveBeenCalledWith("app-1", "Accepted", "Dismissed", expect.anything())
+    expect(postData.updatePostStatus).toHaveBeenCalledWith("post-1", "Active", expect.anything())
   })
 
   it("throws 404 if application does not exist", async () => {
@@ -669,9 +684,9 @@ describe("dismissWorker - bidding path", () => {
 
     expect(result.status).toBe("Dismissed")
     expect(result.postId).toBe("bidding-1")
-    expect(applicationData.updateApplicationStatus).toHaveBeenCalledWith("app-1", "Dismissed")
-    expect(applicationData.resetRejectedApplications).toHaveBeenCalledWith("bidding-1")
-    expect(postData.updatePostStatus).toHaveBeenCalledWith("bidding-1", "Evaluating")
+    expect(applicationData.updateApplicationStatusIf).toHaveBeenCalledWith("app-1", "Accepted", "Dismissed", expect.anything())
+    expect(applicationData.resetRejectedApplications).toHaveBeenCalledWith("bidding-1", expect.anything())
+    expect(postData.updatePostStatus).toHaveBeenCalledWith("bidding-1", "Evaluating", expect.anything())
   })
 
   it("lanza 404 si la aplicación no existe", async () => {

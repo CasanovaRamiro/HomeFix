@@ -4,6 +4,8 @@ import { toDomainMyApplication, toDomainPostApplication } from '../transformers/
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication } from '../../domain/types/application.types.js'
 import type { Prisma } from '@prisma/client'
 
+type ApplicationDatabaseClient = typeof prisma | Prisma.TransactionClient
+
 export const findApplicationsByWorker = async (workerId: string): Promise<DomainMyApplication[]> => {
   const raw = await prisma.application.findMany({
     where: { workerId, status: { notIn: [ApplicationStatus.Rejected, ApplicationStatus.Dismissed] } },
@@ -43,10 +45,21 @@ export const findApplicationById = (id: string) =>
     },
   })
 
-export const updateApplicationStatus = (id: string, status: string) =>
-  prisma.application.update({
+export const updateApplicationStatus = (id: string, status: string, client: ApplicationDatabaseClient = prisma) =>
+  client.application.update({
     where: { id },
     data: { status },
+  })
+
+export const updateApplicationStatusIf = (
+  id: string,
+  currentStatus: string,
+  nextStatus: string,
+  client: ApplicationDatabaseClient = prisma,
+) =>
+  client.application.updateMany({
+    where: { id, status: currentStatus },
+    data: { status: nextStatus },
   })
 
 export const setStartToken = (id: string, token: string, expiresAt: Date) =>
@@ -80,8 +93,8 @@ export const rejectPendingApplications = (postId: string) =>
     data: { status: ApplicationStatus.Rejected },
   })
 
-export const resetRejectedApplications = (postId: string) =>
-  prisma.application.updateMany({
+export const resetRejectedApplications = (postId: string, client: ApplicationDatabaseClient = prisma) =>
+  client.application.updateMany({
     where: { postId, status: ApplicationStatus.Rejected },
     data: { status: ApplicationStatus.Pending },
   })
