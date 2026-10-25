@@ -3,7 +3,7 @@ import ImageViewer from '../components/ImageViewer'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/workers'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { ArrowLeft, Star, Briefcase, XCircle, Flag, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Star, Briefcase, XCircle, CheckCircle2 } from 'lucide-react'
 import WorkerReviews from '../components/worker/WorkerReviews'
 
 export default function PublicWorkerProfile() {
@@ -158,7 +158,6 @@ export default function PublicWorkerProfile() {
                   { icon: Briefcase, label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
                   { icon: Star, label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
                   { icon: XCircle, label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
-                  { icon: Flag, label: 'Reportes', value: stats ? String(stats.reports) : '—' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} style={{ background: '#F3F4F6', borderRadius: 10, padding: 10 }}>
                     <div style={{ height: 26, display: 'flex', alignItems: 'flex-start' }}>
@@ -243,12 +242,11 @@ export default function PublicWorkerProfile() {
 
             {/* Desktop quick info */}
             {!isMobile && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
                   { label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
                   { label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
                   { label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
-                  { label: 'Reportes', value: stats ? String(stats.reports) : '—' },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', padding: 16 }}>
                     <div style={{ height: 26, display: 'flex', alignItems: 'flex-start' }}>
@@ -326,7 +324,6 @@ export default function PublicWorkerProfile() {
                     { label: 'Trabajos Completados', value: stats ? String(stats.totalJobs) : '—' },
                     { label: 'Calificación', value: avgRating > 0 ? avgRating.toFixed(1) : '—' },
                     { label: 'Trabajos Cancelados', value: stats ? String(stats.cancelledJobs) : '—' },
-                    { label: 'Reportes', value: stats ? String(stats.reports) : '—' },
                     { label: 'Ubicación', value: worker.location ?? '—' },
                     { label: 'Miembro desde', value: memberSince },
                   ].map(({ label, value }) => (
