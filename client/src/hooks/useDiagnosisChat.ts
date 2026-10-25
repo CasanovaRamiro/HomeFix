@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { sendMessage, type AiMessage, type AiSuggestionData } from '../services/ai'
+import {
+  isAiPayloadTooLargeError,
+  MAX_DIAGNOSIS_IMAGE_BYTES,
+  sendMessage,
+  type AiMessage,
+  type AiSuggestionData,
+} from '../services/ai'
 
 function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
@@ -53,6 +59,13 @@ export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void
     let imageBase64: string | undefined
     let mimeType: string | undefined
     if (imageFile) {
+      if (imageFile.size > MAX_DIAGNOSIS_IMAGE_BYTES) {
+        setMessages(p => [...p, {
+          role: 'model',
+          text: 'La imagen es demasiado grande. Elegí una imagen de hasta 3 MB.',
+        }])
+        return
+      }
       const result = await fileToBase64(imageFile)
       imageBase64 = result.base64
       mimeType = result.mimeType
@@ -77,8 +90,11 @@ export function useDiagnosisChat(onSuggestion?: (data: AiSuggestionData) => void
         setConversationDone(true)
         onSuggestion?.(res.data)
       }
-    } catch {
-      setMessages(p => [...p, { role: 'model', text: 'Lo siento, hubo un error. Intentá de nuevo.' }])
+    } catch (error) {
+      const text = isAiPayloadTooLargeError(error)
+        ? 'La imagen o el historial del diagnóstico supera el límite permitido. Elegí una imagen más pequeña.'
+        : 'Lo siento, hubo un error. Intentá de nuevo.'
+      setMessages(p => [...p, { role: 'model', text }])
     } finally {
       setLoading(false)
     }
