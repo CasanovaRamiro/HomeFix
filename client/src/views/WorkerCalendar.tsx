@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, MapPin, ArrowLeft, Clock, CheckCircle } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -360,22 +360,36 @@ export default function WorkerCalendar() {
   const [selectedYmd, setSelected] = useState(toYMD(today))
   const [apps, setApps]           = useState<CalendarApplication[]>([])
   const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
+  const requestActiveRef = useRef(false)
+  const requestIdRef = useRef(0)
+  const hasLoadedRef = useRef(false)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get<CalendarApplication[]>('/applications/my-applications')
-        setApps(res.data.filter((a) =>
-          a.status === ApplicationStatus.Accepted || a.status === ApplicationStatus.Completed
-        ))
-      } catch {
-        // silently fail
-      } finally {
-        setLoading(false)
-      }
+  const loadApplications = useCallback(async (): Promise<void> => {
+    if (requestActiveRef.current) return
+    requestActiveRef.current = true
+    const requestId = ++requestIdRef.current
+    if (!hasLoadedRef.current) setLoading(true)
+    setError(null)
+
+    try {
+      const res = await api.get<CalendarApplication[]>('/applications/my-applications')
+      if (requestId !== requestIdRef.current) return
+      setApps(res.data.filter((a) =>
+        a.status === ApplicationStatus.Accepted || a.status === ApplicationStatus.Completed
+      ))
+      setError(null)
+      hasLoadedRef.current = true
+    } catch {
+      if (requestId !== requestIdRef.current) return
+      setError('No pudimos cargar tu agenda. Revisá tu conexión e intentá nuevamente.')
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false)
+      requestActiveRef.current = false
     }
-    void load()
   }, [])
+
+  useEffect(() => { void loadApplications() }, [loadApplications])
 
   const prevMonth = () => month === 0 ? (setYear((y) => y - 1), setMonth(11)) : setMonth((m) => m - 1)
   const nextMonth = () => month === 11 ? (setYear((y) => y + 1), setMonth(0)) : setMonth((m) => m + 1)
@@ -430,6 +444,19 @@ export default function WorkerCalendar() {
 
       {/* Main content */}
       <div className="hf-container" style={{ margin: '36px auto', padding: '0 32px 60px' }}>
+        {error !== null && (
+          <div style={{ marginBottom: 20, border: '1px solid #FECACA', borderRadius: 16, background: '#FEF2F2', padding: '24px', textAlign: 'center' }}>
+            <p style={{ color: '#B91C1C', fontSize: 14, margin: '0 0 16px' }}>{error}{apps.length > 0 ? ' Mostramos los datos anteriores, que podrían estar desactualizados.' : ''}</p>
+            <button
+              type="button"
+              onClick={() => { void loadApplications() }}
+              style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
             <div style={{
@@ -438,7 +465,7 @@ export default function WorkerCalendar() {
               borderRadius: '50%', animation: 'spin 0.7s linear infinite',
             }} />
           </div>
-        ) : (
+        ) : error === null || apps.length > 0 ? (
           <div className="wc-layout">
             {/* Left: calendar */}
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '28px 28px 24px' }}>
@@ -478,7 +505,7 @@ export default function WorkerCalendar() {
               <DayPanel selectedYmd={selectedYmd} apps={apps} />
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       <LandingFooter />

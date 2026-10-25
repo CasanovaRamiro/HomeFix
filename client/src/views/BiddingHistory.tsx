@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gavel, CheckCircle, XCircle, Calendar, ArrowLeft } from 'lucide-react'
 import { fetchClientBiddings } from '../services/client'
@@ -27,17 +27,36 @@ export default function BiddingHistory() {
   const navigate = useNavigate()
   const [biddings, setBiddings] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<HistoryTab>('Todas')
+  const requestActiveRef = useRef(false)
+  const requestIdRef = useRef(0)
+  const hasLoadedRef = useRef(false)
 
-  useEffect(() => {
-    fetchClientBiddings()
-      .then((res) => {
-        const all = res.data.biddings || []
-        setBiddings(all.filter((b) => b.status === PostStatus.Completed || b.status === PostStatus.Cancelled))
-      })
-      .catch(() => setBiddings([]))
-      .finally(() => setLoading(false))
+  const loadBiddings = useCallback(async (): Promise<void> => {
+    if (requestActiveRef.current) return
+    requestActiveRef.current = true
+    const requestId = ++requestIdRef.current
+    if (!hasLoadedRef.current) setLoading(true)
+    setError(null)
+
+    try {
+      const res = await fetchClientBiddings()
+      if (requestId !== requestIdRef.current) return
+      const all = res.data.biddings || []
+      setBiddings(all.filter((b) => b.status === PostStatus.Completed || b.status === PostStatus.Cancelled))
+      setError(null)
+      hasLoadedRef.current = true
+    } catch {
+      if (requestId !== requestIdRef.current) return
+      setError('No pudimos cargar el historial de licitaciones. Revisá tu conexión e intentá nuevamente.')
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false)
+      requestActiveRef.current = false
+    }
   }, [])
+
+  useEffect(() => { void loadBiddings() }, [loadBiddings])
 
   const filtered = biddings.filter((b) => {
     if (filter === 'Completed') return b.status === PostStatus.Completed
@@ -64,16 +83,29 @@ export default function BiddingHistory() {
       </div>
 
       <div className="hf-container-md px-6 -mt-5">
+        {error !== null && (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-6 py-6 text-center shadow-md">
+            <p className="mb-4 text-sm text-red-700">{error}{biddings.length > 0 ? ' Mostramos los datos anteriores, que podrían estar desactualizados.' : ''}</p>
+            <button
+              type="button"
+              onClick={() => { void loadBiddings() }}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="spinner" />
           </div>
-        ) : biddings.length === 0 && filtered.length === 0 ? (
+        ) : error === null && biddings.length === 0 && filtered.length === 0 ? (
           <div className="mt-10 rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
             <Gavel size={40} className="mx-auto mb-4 text-slate-300" />
             <p className="text-sm text-slate-500">No hay licitaciones finalizadas todavía.</p>
           </div>
-        ) : (
+        ) : error === null || biddings.length > 0 ? (
           <>
             <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
               <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
@@ -163,7 +195,7 @@ export default function BiddingHistory() {
               )}
             </section>
           </>
-        )}
+        ) : null}
       </div>
 
       <style>{`
