@@ -327,11 +327,9 @@ const swaggerDocument: OpenAPIV3.Document = {
       },
       KycConfirmRequest: {
         type: 'object',
-        required: ['sessionId', 'email'],
+        required: ['sessionId'],
         properties: {
           sessionId: { type: 'string' },
-          email: { type: 'string', format: 'email' },
-          status: { type: 'string' },
         },
       },
       KycStatusResponse: {
@@ -2380,7 +2378,7 @@ const swaggerDocument: OpenAPIV3.Document = {
       post: {
         tags: ['KYC'],
         summary: 'Confirm KYC verification',
-        description: 'Confirms a KYC verification session. Rate limited to 10 requests per minute per IP. No authentication required.',
+        description: 'Confirms a KYC verification session. Requires the authenticated user and is rate limited to 10 requests per minute per IP.',
         requestBody: {
           required: true,
           content: {
@@ -2399,11 +2397,11 @@ const swaggerDocument: OpenAPIV3.Document = {
             },
           },
           '400': {
-            description: 'Bad request - missing sessionId or email',
+            description: 'Bad request - missing sessionId or authenticated user email',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
-                example: { error: 'sessionId y email son requeridos' },
+                example: { error: 'sessionId y usuario autenticado son requeridos' },
               },
             },
           },

@@ -183,7 +183,7 @@ describe('KycVerify', () => {
   })
 
   describe('confirmación desde el modal', () => {
-    it('confirma con sessionId, email y sdkStatus y muestra el resultado', async () => {
+    it('confirma únicamente con sessionId y muestra el resultado', async () => {
       vi.mocked(kycService.startKycVerification).mockResolvedValue({
         sessionUrl: 'https://verify.didit.me/session/sess-modal',
         sessionId: 'sess-modal',
@@ -198,7 +198,7 @@ describe('KycVerify', () => {
       await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
       await user.click(screen.getByRole('button', { name: /completar verificación/i }))
 
-      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-modal', 'test@test.com', 'Approved')
+      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-modal')
       expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
     })
 
