@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { isVideoUrl } from '../../lib/post'
 
 interface ImageModalProps {
   src: string
@@ -10,7 +12,16 @@ interface ImageModalProps {
   onNext?: () => void
 }
 
-export default function ImageModal({ src, alt, type = 'image', onClose, onPrev, onNext }: ImageModalProps) {
+export default function ImageModal({ src, alt, type, onClose, onPrev, onNext }: ImageModalProps) {
+  const resolvedType = type ?? (isVideoUrl(src) ? 'video' : 'image')
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    document.querySelectorAll('video').forEach((v) => {
+      if (v !== videoRef.current) v.pause()
+    })
+  }, [src])
+
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     const handler = (e: KeyboardEvent) => {
@@ -25,7 +36,7 @@ export default function ImageModal({ src, alt, type = 'image', onClose, onPrev, 
     }
   }, [onClose, onPrev, onNext])
 
-  return (
+  return createPortal(
     <div className="img-modal-backdrop" onClick={onClose}>
       <button className="img-modal-close" onClick={onClose} aria-label="Cerrar">
         <X size={20} />
@@ -37,13 +48,19 @@ export default function ImageModal({ src, alt, type = 'image', onClose, onPrev, 
         </button>
       )}
 
-      {type === 'video' ? (
+      {resolvedType === 'video' ? (
         <video
+          ref={videoRef}
           className="img-modal-img"
           src={src}
-          alt={alt ?? 'Video'}
+          aria-label={alt ?? 'Video'}
           controls
+          autoPlay
+          playsInline
+          onClick={(e) => e.stopPropagation()}
           style={{
+            display: 'block',
+            margin: 'auto',
             maxWidth: '90vw',
             maxHeight: '90vh',
             borderRadius: 12,
@@ -64,6 +81,7 @@ export default function ImageModal({ src, alt, type = 'image', onClose, onPrev, 
           <ChevronRight size={28} />
         </button>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

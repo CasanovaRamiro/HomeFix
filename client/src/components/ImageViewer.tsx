@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { isVideoUrl } from '../lib/post'
 
 interface Props {
   src: string
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function ImageViewer({ src, alt, onClose }: Props) {
+  const isVideo = isVideoUrl(src)
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
@@ -40,16 +43,31 @@ export default function ImageViewer({ src, alt, onClose }: Props) {
       >
         <X size={22} />
       </button>
-      <img
-        src={src}
-        alt={alt}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: '100%', maxHeight: '100%',
-          borderRadius: 12, objectFit: 'contain',
-          cursor: 'default', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
-        }}
-      />
+      {isVideo ? (
+        <video
+          src={src}
+          controls
+          autoPlay
+          playsInline
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '100%', maxHeight: '100%',
+            borderRadius: 12, objectFit: 'contain',
+            cursor: 'default', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}
+        />
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '100%', maxHeight: '100%',
+            borderRadius: 12, objectFit: 'contain',
+            cursor: 'default', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}
+        />
+      )}
     </div>
   )
 }

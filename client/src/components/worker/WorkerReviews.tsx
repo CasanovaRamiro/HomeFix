@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Star, ChevronDown } from 'lucide-react'
 import type { WorkerReview } from '../../services/workers'
 import ViewReviewModal from '../review/ViewReviewModal'
+import { isVideoUrl } from '../../lib/post'
 
 interface Props {
   reviews: WorkerReview[]
@@ -206,7 +207,11 @@ export default function WorkerReviews({ reviews, loading, workerName }: Props) {
                             key={idx}
                             className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0"
                           >
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            {isVideoUrl(url) ? (
+                              <video src={url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                            )}
                           </div>
                         ))}
                         {images.length > 3 && (

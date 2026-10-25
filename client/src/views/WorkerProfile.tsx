@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
+import { isVideoUrl } from '../lib/post'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, updateWorkerProfile, getWorkerReviews, type Worker, type WorkerReview } from '../services/workers'
 import { uploadImages, downloadMatricula } from '../services/upload'
@@ -751,7 +752,11 @@ export default function WorkerProfile() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
                   {worker.gallery.map((img) => (
                     <div key={img.id} style={{ position: 'relative' }}>
-                      <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      {isVideoUrl(img.imageUrl) ? (
+                        <video src={img.imageUrl} muted playsInline preload="metadata" onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer', background: '#000' }} />
+                      ) : (
+                        <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      )}
                       {img.caption && <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{img.caption}</p>}
                       {isEditing && (
                         <button onClick={() => removeGal(img.id)} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: '#fff', fontSize: 11, fontWeight: 600 }}>
@@ -771,25 +776,32 @@ export default function WorkerProfile() {
                       cursor: 'pointer', background: '#F9FAFB',
                     }}>
                       <Plus size={24} color="#9CA3AF" />
-                      <input type="file" accept="image/*" multiple onChange={handleGalFiles} style={{ display: 'none' }} />
+                      <input type="file" accept="image/*,video/*" multiple onChange={handleGalFiles} style={{ display: 'none' }} />
                     </label>
-                    {galPreviews.map((preview, i) => (
-                      <div key={preview} style={{ position: 'relative', width: 80, height: 80 }}>
-                        <img src={preview} alt="" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover' }} />
-                        <button onClick={() => removeGalFile(i)} style={{
-                          position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%',
-                          background: '#EF4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                        }}>×</button>
-                      </div>
-                    ))}
+                    {galPreviews.map((preview, i) => {
+                      const isVid = galFiles[i]?.type?.startsWith('video/')
+                      return (
+                        <div key={preview} style={{ position: 'relative', width: 80, height: 80 }}>
+                          {isVid ? (
+                            <video src={preview} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover', background: '#000' }} />
+                          ) : (
+                            <img src={preview} alt="" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover' }} />
+                          )}
+                          <button onClick={() => removeGalFile(i)} style={{
+                            position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%',
+                            background: '#EF4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                          }}>×</button>
+                        </div>
+                      )
+                    })}
                   </div>
                   {galFiles.length > 0 && (
                     <button onClick={uploadGal} disabled={galSaving} style={{
                       alignSelf: 'flex-start', padding: '8px 20px', background: '#10B981', color: '#fff',
                       border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: galSaving ? 'not-allowed' : 'pointer', opacity: galSaving ? 0.6 : 1,
                     }}>
-                      {galSaving ? 'Subiendo...' : `Subir ${galFiles.length} imagen${galFiles.length > 1 ? 'es' : ''}`}
+                      {galSaving ? 'Subiendo...' : `Subir ${galFiles.length} archivo${galFiles.length > 1 ? 's' : ''}`}
                     </button>
                   )}
                 </div>

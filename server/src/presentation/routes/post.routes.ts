@@ -318,7 +318,7 @@ router.post('/create-bidding', async (req, res, next) => {
       return
     }
 
-    const { title, description, categoryIds, endDate, budgetMax, address, latitude, longitude, materialResponsibility, imageUrls, bidWeights } = req.body
+    const { title, description, categoryIds, endDate, budgetMax, address, latitude, longitude, materialResponsibility, imageUrls, images, bidWeights } = req.body
 
     if (!title || !categoryIds || !categoryIds.length || !endDate || !address || !materialResponsibility || !bidWeights) {
       res.status(400).json({ error: 'Campos obligatorios faltantes' })
@@ -337,6 +337,7 @@ router.post('/create-bidding', async (req, res, next) => {
       longitude: longitude ?? null,
       materialResponsibility,
       imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+      ...(Array.isArray(images) ? { images } : {}),
       bidWeights,
     })
 

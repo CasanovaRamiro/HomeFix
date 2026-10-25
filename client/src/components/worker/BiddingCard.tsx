@@ -57,7 +57,11 @@ export default function BiddingCard({ bidding, onClick, onOfertar, style }: Prop
 
         {firstImage && (
           <div className="bidding-card-images">
-            <img src={firstImage} alt="" className="bidding-thumb" />
+            {bidding.images?.[0]?.type === 'video' || firstImage.includes('/video/upload/') || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(firstImage) ? (
+              <video src={firstImage} muted playsInline preload="metadata" className="bidding-thumb" style={{ background: '#000' }} />
+            ) : (
+              <img src={firstImage} alt="" className="bidding-thumb" />
+            )}
             {bidding.images.length > 1 && (
               <span className="bidding-more-images">+{bidding.images.length - 1}</span>
             )}

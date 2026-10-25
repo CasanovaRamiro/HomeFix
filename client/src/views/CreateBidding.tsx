@@ -73,8 +73,13 @@ export default function CreateBidding() {
     setSubmitting(true)
     try {
       let imageUrls: string[] = []
+      let images: { url: string; type: string }[] = []
       if (files.length > 0) {
         imageUrls = await uploadImages(files)
+        images = imageUrls.map((url, i) => ({
+          url,
+          type: files[i]?.type.startsWith('video/') ? 'video' : 'image',
+        }))
       }
 
       await createBidding({
@@ -88,6 +93,7 @@ export default function CreateBidding() {
         longitude,
         materialResponsibility,
         imageUrls,
+        images,
         bidWeights: JSON.stringify(weights.map(w => w.key)),
       })
       setSuccess(true)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import ImageViewer from '../components/ImageViewer'
+import { isVideoUrl } from '../lib/post'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getWorker, getWorkerReviews, getWorkerStats, type Worker, type WorkerReview, type WorkerStats } from '../services/workers'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -289,7 +290,11 @@ export default function PublicWorkerProfile() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {worker.gallery.map((img) => (
                     <div key={img.id}>
-                      <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      {isVideoUrl(img.imageUrl) ? (
+                        <video src={img.imageUrl} muted playsInline preload="metadata" onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer', background: '#000' }} />
+                      ) : (
+                        <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
+                      )}
                       {img.caption && <p style={{ fontSize: 11, color: '#6B7280', margin: '4px 0 0' }}>{img.caption}</p>}
                     </div>
                   ))}

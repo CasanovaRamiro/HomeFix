@@ -79,6 +79,7 @@ export interface CreateBiddingInput {
   longitude: number | null
   materialResponsibility: string
   imageUrls: string[]
+  images?: { url: string; type?: string }[]
   bidWeights: string
 }
 
@@ -98,7 +99,7 @@ export interface AvailableBiddingDTO {
   address: string
   budgetMax: number | null
   materialResponsibility: string | null
-  images: { id: string; url: string }[]
+  images: { id: string; url: string; type?: string }[]
   latitude: number | null
   longitude: number | null
   categories: { id: string; name: string }[]

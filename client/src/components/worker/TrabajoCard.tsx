@@ -122,7 +122,11 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
           </div>
           {trabajo.photo && (
             <div style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
-              <img src={trabajo.photo} alt={trabajo.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {trabajo.photo.includes('/video/upload/') || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(trabajo.photo) ? (
+                <video src={trabajo.photo} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
+              ) : (
+                <img src={trabajo.photo} alt={trabajo.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
             </div>
           )}
         </div>

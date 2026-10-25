@@ -160,7 +160,11 @@ export default function WorkerBiddingDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {firstImage && (
             <div style={{ borderRadius: 12, overflow: 'hidden', maxHeight: 320, background: '#F1F5F9' }}>
-              <img src={firstImage} alt="" style={{ width: '100%', height: 'auto', maxHeight: 320, objectFit: 'cover', display: 'block' }} />
+              {post?.images?.[0]?.type === 'video' || firstImage.includes('/video/upload/') || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(firstImage) ? (
+                <video src={firstImage} controls playsInline preload="metadata" style={{ width: '100%', maxHeight: 320, objectFit: 'contain', display: 'block', background: '#000' }} />
+              ) : (
+                <img src={firstImage} alt="" style={{ width: '100%', height: 'auto', maxHeight: 320, objectFit: 'cover', display: 'block' }} />
+              )}
             </div>
           )}
 

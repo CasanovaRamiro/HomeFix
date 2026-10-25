@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Star, X } from 'lucide-react'
 import type { WorkerReview } from '../../services/workers'
 import ImageModal from '../ui/ImageModal'
+import { isVideoUrl } from '../../lib/post'
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-AR', {
@@ -100,15 +101,29 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
 
             {imageUrls.length > 0 && (
               <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {imageUrls.map((url, i) => (
-                  <img key={i} src={url} alt=""
-                    onClick={() => setSelectedImg(i)}
-                    style={{
-                      width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12,
-                      border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer',
-                    }}
-                  />
-                ))}
+                {imageUrls.map((url, i) =>
+                  isVideoUrl(url) ? (
+                    <video
+                      key={i}
+                      src={url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      style={{
+                        width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12,
+                        border: '1px solid #E2E8F0', background: '#000',
+                      }}
+                    />
+                  ) : (
+                    <img key={i} src={url} alt=""
+                      onClick={() => setSelectedImg(i)}
+                      style={{
+                        width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12,
+                        border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer',
+                      }}
+                    />
+                  )
+                )}
               </div>
             )}
 
@@ -138,7 +153,8 @@ export default function ViewReviewModal({ open, review, workerName, loading, onC
       {selectedImg !== null && imageUrls[selectedImg] && (
         <ImageModal
           src={imageUrls[selectedImg]}
-          alt={`Foto ${selectedImg + 1}`}
+          alt={`Archivo ${selectedImg + 1}`}
+          type={isVideoUrl(imageUrls[selectedImg]) ? 'video' : 'image'}
           onClose={() => setSelectedImg(null)}
           onPrev={selectedImg > 0 ? () => setSelectedImg(selectedImg - 1) : undefined}
           onNext={selectedImg < imageUrls.length - 1 ? () => setSelectedImg(selectedImg + 1) : undefined}

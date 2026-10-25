@@ -488,7 +488,11 @@ function ApplicationCard({ app, onCancelled, onReviewClick, onViewReviewClick }:
         {/* Image */}
         {app.image && (
           <div style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' }}>
-            <img src={app.image} alt={app.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {app.image.includes('/video/upload/') || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(app.image) ? (
+              <video src={app.image} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} />
+            ) : (
+              <img src={app.image} alt={app.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
           </div>
         )}
       </div>

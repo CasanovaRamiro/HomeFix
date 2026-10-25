@@ -26,7 +26,7 @@ type _CreatePostRecordInput = {
   bidWeights?: string
   materialResponsibility?: string
   budgetMax?: number | null
-  images?: { url: string; type: string }[]
+  images?: { url: string; type?: string }[]
   categories: {
     categoryId: string
     quantity?: number
@@ -34,6 +34,9 @@ type _CreatePostRecordInput = {
     roleDescription?: string | null
   }[]
 }
+
+const inferMediaType = (url: string, type?: string): string =>
+  type ?? (url.includes('/video/upload/') || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(url) ? 'video' : 'image')
 
 async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPost> {
   const raw = await prisma.post.create({
@@ -56,7 +59,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       bidWeights: data.bidWeights ?? null,
       materialResponsibility: data.materialResponsibility ?? null,
       budgetMax: data.budgetMax ?? null,
-      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url, type: img.type })) } : undefined,
+      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url, type: inferMediaType(img.url, img.type) })) } : undefined,
       categories: { create: data.categories },
     },
     select: postFields,
@@ -139,8 +142,9 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
   })
 }
 
-export const createBiddingPost = async (data: CreateBiddingInput): Promise<DomainPost> =>
-  _createPostRecord({
+export const createBiddingPost = async (data: CreateBiddingInput): Promise<DomainPost> => {
+  const rawImages: { url: string; type?: string }[] = data.images ?? (data.imageUrls ?? []).map(url => ({ url }))
+  return _createPostRecord({
     userId: data.userId,
     type: PostType.Post,
     parentPostId: null,
@@ -159,9 +163,10 @@ export const createBiddingPost = async (data: CreateBiddingInput): Promise<Domai
     bidWeights: data.bidWeights,
     materialResponsibility: data.materialResponsibility,
     budgetMax: data.budgetMax ?? null,
-    images: data.images.map(img => ({ url: img.url, type: img.type })),
+    images: rawImages.map(img => ({ url: img.url, type: inferMediaType(img.url, img.type) })),
     categories: data.categoryIds.map(cid => ({ categoryId: cid })),
   })
+}
 
 export const createSubPost = async (data: {
   userId: string
