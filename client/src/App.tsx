@@ -42,46 +42,39 @@ import WorkerAvailableBiddings from './views/WorkerAvailableBiddings'
 import WorkerMyBiddings from './views/WorkerMyBiddings'
 import WorkerBiddingDetail from './views/WorkerBiddingDetail'
 import { UserRole } from './types/user'
+import { useAuth } from './hooks/useAuth'
 
 
-function getStoredUser(): { role?: string } | null {
-  try {
-    const raw = localStorage.getItem('user')
-    return raw ? JSON.parse(raw) as { role?: string } : null
-  } catch {
-    return null
-  }
+const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode => {
+  const { isLoggedIn } = useAuth()
+  return isLoggedIn ? children : <Navigate to="/" replace />
 }
 
-const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
-  localStorage.getItem('token') !== null ? children : <Navigate to="/" replace />
-
 const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
-  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
-  const user = getStoredUser()
+  const { user, isLoggedIn } = useAuth()
+  if (!isLoggedIn) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Worker) return <Navigate to="/dashboard" replace />
   return children
 }
 
 const ClientRoute = ({ children }: { children: ReactNode }): ReactNode => {
-  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
-  const user = getStoredUser()
+  const { user, isLoggedIn } = useAuth()
+  if (!isLoggedIn) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Client) return <Navigate to="/worker" replace />
   return children
 }
 
 function NotFoundRedirect(): ReactNode {
-  if (!localStorage.getItem('token')) return <Navigate to="/" replace />
-  const user = getStoredUser()
+  const { user, isLoggedIn } = useAuth()
+  if (!isLoggedIn) return <Navigate to="/" replace />
   if (user?.role === UserRole.Worker) return <Navigate to="/worker" replace />
   if (user?.role === UserRole.Client) return <Navigate to="/dashboard" replace />
   return <Navigate to="/" replace />
 }
 
 function HomeRedirect(): ReactNode {
-  const token = localStorage.getItem('token')
-  if (!token) return <Landing />
-  const user = getStoredUser()
+  const { user, isLoggedIn } = useAuth()
+  if (!isLoggedIn) return <Landing />
   if (user?.role === UserRole.Worker) return <Navigate to="/worker" replace />
   if (user?.role === UserRole.Client) return <Navigate to="/dashboard" replace />
   return <Landing />

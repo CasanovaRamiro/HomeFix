@@ -13,7 +13,7 @@ import {
   Shield,
 } from 'lucide-react'
 import { login, resendVerification } from '../services/auth'
-import { emitAuthChange } from '../hooks/useAuth'
+import { consumeAuthReturnPath, emitAuthChange } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 import { loginWithGoogle } from '../lib/auth0'
 import logo from '../assets/homefix-logo.png'
@@ -29,14 +29,14 @@ const STATS = [
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [searchParams] = useSearchParams()
+  const [error, setError] = useState(() => searchParams.get('expired') === '1' ? 'Tu sesión expiró. Iniciá sesión nuevamente.' : '')
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [emailNotVerified, setEmailNotVerified] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSuccess, setResendSuccess] = useState('')
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const googleUnregistered = searchParams.get('google') === 'unregistered'
 
   const set = (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -58,7 +58,8 @@ export default function Login() {
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, email:data.user.email, role: data.user.role, photo: data.user.photo ?? null }))
       emitAuthChange()
-      const destination = data.user.role === UserRole.Worker ? '/worker' : '/dashboard'
+      const returnPath = consumeAuthReturnPath()
+      const destination = returnPath ?? (data.user.role === UserRole.Worker ? '/worker' : '/dashboard')
       setSuccess('Sesion iniciada con exito. Redirigiendo...')
       setTimeout(() => navigate(destination), 1200)
     } catch (err) {
