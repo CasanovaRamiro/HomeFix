@@ -188,6 +188,7 @@ model ClientReview {
 model PostImage {
   id     String @id @default(uuid())
   url    String
+  type   String    @default("image") // "image" | "video"
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

@@ -13,7 +13,7 @@ export interface PrismaPostFull {
   address: string
   status: string
   createdAt: Date
-  images: { url: string }[]
+  images: { url: string; type: string }[]
   latitude: number | null
   longitude: number | null
   isEmergency: boolean

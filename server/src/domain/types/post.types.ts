@@ -13,7 +13,7 @@ export interface DomainPost {
   address: string
   status: string
   createdAt: Date
-  images: { url: string }[]
+  images: { url: string; type: string }[]
   latitude: number | null
   longitude: number | null
   isEmergency?: boolean
@@ -64,7 +64,7 @@ export interface CreatePostInput {
   latitude?: number | null
   longitude?: number | null
   categoryId: string
-  images?: { url: string }[]
+  images?: { url: string; type: string }[]
   isEmergency?: boolean
   emergencyExpiresAt?: Date | null
   allowsSubcontracting?: boolean
@@ -93,7 +93,7 @@ export interface CreateBiddingInput {
   latitude?: number | null
   longitude?: number | null
   materialResponsibility: string
-  imageUrls: string[]
+  images: { url: string; type: string }[]
   bidWeights: string
 }
 

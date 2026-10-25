@@ -1,15 +1,16 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface ImageModalProps {
   src: string
   alt?: string
+  type?: 'image' | 'video'
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export default function ImageModal({ src, alt, onClose, onPrev, onNext }: ImageModalProps) {
+export default function ImageModal({ src, alt, type = 'image', onClose, onPrev, onNext }: ImageModalProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     const handler = (e: KeyboardEvent) => {
@@ -36,12 +37,27 @@ export default function ImageModal({ src, alt, onClose, onPrev, onNext }: ImageM
         </button>
       )}
 
-      <img
-        className="img-modal-img"
-        src={src}
-        alt={alt ?? 'Imagen'}
-        onClick={(e) => e.stopPropagation()}
-      />
+      {type === 'video' ? (
+        <video
+          className="img-modal-img"
+          src={src}
+          alt={alt ?? 'Video'}
+          controls
+          style={{
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            borderRadius: 12,
+            objectFit: 'contain',
+          }}
+        />
+      ) : (
+        <img
+          className="img-modal-img"
+          src={src}
+          alt={alt ?? 'Imagen'}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
 
       {onNext && (
         <button className="img-modal-arrow img-modal-arrow--next" onClick={(e) => { e.stopPropagation(); onNext() }} aria-label="Siguiente">

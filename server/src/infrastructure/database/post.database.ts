@@ -26,7 +26,7 @@ type _CreatePostRecordInput = {
   bidWeights?: string
   materialResponsibility?: string
   budgetMax?: number | null
-  images?: { url: string }[]
+  images?: { url: string; type: string }[]
   categories: {
     categoryId: string
     quantity?: number
@@ -56,7 +56,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       bidWeights: data.bidWeights ?? null,
       materialResponsibility: data.materialResponsibility ?? null,
       budgetMax: data.budgetMax ?? null,
-      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url })) } : undefined,
+      images: data.images?.length ? { create: data.images.map(img => ({ url: img.url, type: img.type })) } : undefined,
       categories: { create: data.categories },
     },
     select: postFields,
@@ -78,7 +78,7 @@ const postFields = {
   status: true,
   createdAt: true,
   images: {
-    select: { url: true },
+    select: { url: true, type: true },
   },
   latitude: true,
   longitude: true,
@@ -159,7 +159,7 @@ export const createBiddingPost = async (data: CreateBiddingInput): Promise<Domai
     bidWeights: data.bidWeights,
     materialResponsibility: data.materialResponsibility,
     budgetMax: data.budgetMax ?? null,
-    images: data.imageUrls.map(url => ({ url })),
+    images: data.images.map(img => ({ url: img.url, type: img.type })),
     categories: data.categoryIds.map(cid => ({ categoryId: cid })),
   })
 
