@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Star, ChevronDown } from 'lucide-react'
+import { Star, ChevronDown, Play } from 'lucide-react'
+import { isVideoUrl } from '../../lib/post'
 import type { WorkerReview } from '../../services/workers'
 import ViewReviewModal from '../review/ViewReviewModal'
-import { isVideoUrl } from '../../lib/post'
 
 interface Props {
   reviews: WorkerReview[]
@@ -208,7 +208,14 @@ export default function WorkerReviews({ reviews, loading, workerName }: Props) {
                             className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0"
                           >
                             {isVideoUrl(url) ? (
-                              <video src={url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                <video src={url} muted playsInline preload="metadata" className="w-full h-full object-cover" style={{ pointerEvents: 'none' }} />
+                                <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)' }}>
+                                  <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Play size={11} fill="#fff" style={{ marginLeft: 1 }} />
+                                  </span>
+                                </span>
+                              </div>
                             ) : (
                               <img src={url} alt="" className="w-full h-full object-cover" />
                             )}

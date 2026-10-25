@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, MapPin, Calendar, Clock, Tag, User,
-  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag,
+  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag, Play,
 } from 'lucide-react'
 import api from '../services/api'
 import { workerCompletePost } from '../services/posts'
@@ -108,7 +108,12 @@ function ImageGallery({ images }: { images: { url: string; type?: string }[] }) 
             const isVid = img.type === 'video' || isVideoUrl(img.url)
             const thumbStyle: React.CSSProperties = { width: 64, height: 64, objectFit: 'cover', borderRadius: 10, cursor: 'pointer', flexShrink: 0, border: i === active ? '2px solid #0F172A' : '2px solid transparent', opacity: i === active ? 1 : 0.6, transition: 'opacity 0.15s, border 0.15s', background: isVid ? '#000' : undefined }
             return isVid ? (
-              <video key={i} src={img.url} muted playsInline preload="metadata" onClick={() => setActive(i)} style={thumbStyle} />
+              <div key={i} style={{ position: 'relative', ...thumbStyle, padding: 0, overflow: 'hidden' }} onClick={() => setActive(i)}>
+                <video src={img.url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <Play size={11} fill="#fff" style={{ marginLeft: 1 }} />
+                </span>
+              </div>
             ) : (
               <img key={i} src={img.url} alt="" onClick={() => setActive(i)} style={thumbStyle} />
             )

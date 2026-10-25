@@ -11,7 +11,7 @@ import WorkerActions from '../components/worker/WorkerActions'
 import TelegramLinkCard from '../components/dashboard/TelegramLinkCard'
 import {
   ArrowLeft, Camera, Save, X, Mail, Phone, Calendar,
-  Briefcase, Star, CheckCircle, Timer, Edit3, Plus, Send,
+  Briefcase, Star, CheckCircle, Timer, Edit3, Plus, Send, Play,
 } from 'lucide-react'
 
 export default function WorkerProfile() {
@@ -753,7 +753,14 @@ export default function WorkerProfile() {
                   {worker.gallery.map((img) => (
                     <div key={img.id} style={{ position: 'relative' }}>
                       {isVideoUrl(img.imageUrl) ? (
-                        <video src={img.imageUrl} muted playsInline preload="metadata" onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer', background: '#000' }} />
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: '#000' }} onClick={() => setZoomedImage(img.imageUrl)}>
+                          <video src={img.imageUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)' }}>
+                            <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Play size={16} fill="#fff" style={{ marginLeft: 2 }} />
+                            </span>
+                          </span>
+                        </div>
                       ) : (
                         <img src={img.imageUrl} alt={img.caption ?? ''} onClick={() => setZoomedImage(img.imageUrl)} style={{ width: '100%', aspectRatio: '1', borderRadius: 10, objectFit: 'cover', cursor: 'pointer' }} />
                       )}
