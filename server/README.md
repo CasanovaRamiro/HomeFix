@@ -8,7 +8,7 @@ REST API built with Node.js, Express, Prisma and MySQL.
 - **Framework**: Express 5
 - **ORM**: Prisma 5
 - **Database**: MySQL
-- **Auth**: JWT + bcrypt
+- **Auth**: Auth0 (RS256 JWT)
 
 ## Project Structure
 
@@ -38,29 +38,31 @@ server/
 ### 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configure environment
 
-Copy or edit `.env`:
+Create `.env` using the required variables and service configuration in the [root installation guide](../README.md#2-set-up-the-server). The catalog initialization itself only needs `DATABASE_URL`; starting the API also requires the Auth0, Gemini and Cloudinary settings listed there.
 
-```env
-DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/DATABASE_NAME"
-PORT=3000
-JWT_SECRET=your_secret_here
-```
-
-### 3. Run migrations
+### 3. Apply migrations and initialize categories
 
 ```bash
-npm run db:migrate -- --name init
+pnpm run db:setup
 ```
+
+If pnpm is unavailable and dependencies are already installed, use `npm run db:setup` from this directory. Both commands use the local Prisma and tsx executables.
+
+This applies the existing migrations, then adds missing initial categories without deleting records or changing existing category IDs. On an already migrated database, `pnpm run db:seed` is sufficient. Both commands can be repeated safely.
+
+`pnpm run db:seed:demo` is a separate, destructive demo generator. It deletes application data and must only target a disposable database.
+
+Check `GET /categories` after startup: it should return the initial trades so that worker registration can select specialties.
 
 ### 4. Start the server
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ## API Reference
@@ -88,6 +90,9 @@ All user endpoints require the header: `Authorization: Bearer <token>`
 | `npm start` | Start in production mode |
 | `npm run db:migrate -- --name <name>` | Create and apply a migration |
 | `npm run db:generate` | Regenerate Prisma client after schema changes |
+| `pnpm run db:setup` | Apply existing migrations and safely initialize the category catalog |
+| `pnpm run db:seed` | Add missing categories while preserving existing data |
+| `pnpm run db:seed:demo` | Delete application data and recreate a disposable demo |
 
 ## Adding a New Migration
 

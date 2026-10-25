@@ -25,7 +25,7 @@ const strengthLabels = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Excelente']
 
 export default function RegisterWorker() {
   const navigate = useNavigate()
-  const { categories, loading: loadingCategories } = useCategories()
+  const { categories, loading: loadingCategories, error: categoriesError, retry: retryCategories } = useCategories()
 
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden'
@@ -408,12 +408,20 @@ export default function RegisterWorker() {
                 <div className="space-y-3">
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                     {errors.categorias && (
-                      <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[12px]">
+                      <div role="alert" className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-[12px]">
                         <AlertCircle className="w-4 h-4 flex-shrink-0" /> {errors.categorias}
                       </div>
                     )}
                     {loadingCategories ? (
-                      <p className="text-[12px] text-slate-500 text-center py-4">Cargando categorías…</p>
+                      <p role="status" className="text-[12px] text-slate-500 text-center py-4">Cargando categorías…</p>
+                    ) : categoriesError !== null || categories.length === 0 ? (
+                      <div role="alert" className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
+                        <p>{categoriesError ?? 'Todavía no hay especialidades disponibles. Intentá nuevamente en unos minutos. Si el problema continúa, contactá a soporte.'}</p>
+                        <button type="button" onClick={retryCategories}
+                          className="font-semibold underline underline-offset-2 hover:no-underline">
+                          Reintentar
+                        </button>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
                         {categories.map(cat => {
@@ -452,8 +460,15 @@ export default function RegisterWorker() {
                       className="flex-1 h-11 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors text-[13px]">
                       <ArrowLeft className="w-4 h-4" /> Atrás
                     </button>
-                    <button type="button" onClick={() => { if (selected.length > 0) setStep(3) }}
-                      className="flex-1 h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors text-[13px]">
+                    <button type="button" disabled={loadingCategories || categoriesError !== null || categories.length === 0}
+                      onClick={() => {
+                        if (selected.length === 0) {
+                          setErrors((prev) => ({ ...prev, categorias: 'Seleccioná al menos una especialidad para continuar.' }))
+                          return
+                        }
+                        setStep(3)
+                      }}
+                      className="flex-1 h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors text-[13px] disabled:opacity-50 disabled:cursor-not-allowed">
                       Continuar <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
