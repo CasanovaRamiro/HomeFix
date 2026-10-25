@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import RegisterWorker from './RegisterWorker'
 import { fetchCategories, type Category } from '../services/categories'
-import { registerWorker } from '../services/auth'
+import { login, registerWorker } from '../services/auth'
+import { startKycVerification } from '../services/kyc'
+import { UserRole } from '../types/user'
 
 vi.mock('../services/categories', () => ({ fetchCategories: vi.fn() }))
 vi.mock('../services/auth', () => ({ registerWorker: vi.fn(), login: vi.fn() }))
@@ -61,7 +63,7 @@ describe('RegisterWorker category catalog', () => {
     expect(screen.getByPlaceholderText('Carlos')).toHaveValue('Ana')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
-    expect(screen.getByRole('heading', { name: 'Elige tu método de verificación' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Verificación de identidad' })).toBeInTheDocument()
   })
 
   it('recovers from an empty catalog when categories become available', async () => {
@@ -71,7 +73,7 @@ describe('RegisterWorker category catalog', () => {
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
     await user.click(await screen.findByRole('button', { name: /Electricidad/ }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
-    expect(screen.getByRole('heading', { name: 'Elige tu método de verificación' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Verificación de identidad' })).toBeInTheDocument()
     expect(registerWorker).not.toHaveBeenCalled()
   })
 
@@ -93,6 +95,57 @@ describe('RegisterWorker category catalog', () => {
     await user.click(screen.getByRole('button', { name: /Electricidad/ }))
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
-    expect(screen.getByRole('heading', { name: 'Elige tu método de verificación' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Verificación de identidad' })).toBeInTheDocument()
+  })
+
+  it('muestra únicamente la verificación automática mediante Didit', async () => {
+    vi.mocked(fetchCategories).mockResolvedValue(response(catalog))
+    const user = await openSpecialties()
+
+    await user.click(screen.getByRole('button', { name: /Electricidad/ }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    expect(screen.getByText('DNI + Reconocimiento Facial')).toBeInTheDocument()
+    expect(screen.queryByText(/DNI Manual \+ Prueba de Vida/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /iniciar verificación/i })).toBeInTheDocument()
+  })
+
+  it('mantiene el payload de registro sin método de KYC', async () => {
+    vi.mocked(fetchCategories).mockResolvedValue(response(catalog))
+    vi.mocked(registerWorker).mockResolvedValue({ userId: 'user-1', email: 'ana@example.com', emailVerified: false, message: 'ok' })
+    vi.mocked(login).mockResolvedValue({
+      accessToken: 'access-token',
+      user: { id: 'user-1', name: 'Ana Pérez', email: 'ana@example.com', photo: null, role: UserRole.Worker },
+    })
+    vi.mocked(startKycVerification).mockResolvedValue({ sessionUrl: 'https://didit.test/session', sessionId: 'session-1' })
+    const user = await openSpecialties()
+
+    await user.click(screen.getByRole('button', { name: /Electricidad/ }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('button', { name: /iniciar verificación/i }))
+
+    await waitFor(() => expect(registerWorker).toHaveBeenCalledWith({
+      name: 'Ana',
+      lastName: 'Pérez',
+      email: 'ana@example.com',
+      password: 'Secure123!',
+      phone: '1112345678',
+      categories: ['Electricidad'],
+    }))
+    expect(startKycVerification).toHaveBeenCalledTimes(1)
+  })
+
+  it('conserva el bypass independiente de KYC', async () => {
+    vi.mocked(fetchCategories).mockResolvedValue(response(catalog))
+    vi.mocked(registerWorker).mockResolvedValue({ userId: 'user-1', email: 'ana@example.com', emailVerified: false, message: 'ok' })
+    const user = await openSpecialties()
+
+    await user.click(screen.getByRole('button', { name: /Electricidad/ }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('button', { name: 'Omitir KYC e iniciar sesión' }))
+
+    await waitFor(() => expect(registerWorker).toHaveBeenCalledTimes(1))
+    expect(login).not.toHaveBeenCalled()
+    expect(startKycVerification).not.toHaveBeenCalled()
   })
 })

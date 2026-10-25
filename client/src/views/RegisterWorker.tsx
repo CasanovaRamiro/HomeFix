@@ -43,7 +43,6 @@ export default function RegisterWorker() {
   })
   const phoneRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<string[]>([])
-  const [kycMethod, setKycMethod] = useState<'automatic' | 'manual'>('automatic')
   const [sessionUrl, setSessionUrl] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -105,22 +104,18 @@ export default function RegisterWorker() {
         categories: selected,
       })
 
-      if (kycMethod === 'automatic') {
-        try {
-          const loginData = await login({ email: form.email, password: form.password })
-          localStorage.setItem('token', loginData.accessToken)
-          localStorage.setItem('user', JSON.stringify({ id: loginData.user.id, name: loginData.user.name, email: loginData.user.email, role: loginData.user.role, photo: loginData.user.photo ?? null }))
-          emitAuthChange()
+      try {
+        const loginData = await login({ email: form.email, password: form.password })
+        localStorage.setItem('token', loginData.accessToken)
+        localStorage.setItem('user', JSON.stringify({ id: loginData.user.id, name: loginData.user.name, email: loginData.user.email, role: loginData.user.role, photo: loginData.user.photo ?? null }))
+        emitAuthChange()
 
-          const { sessionUrl: url } = await startKycVerification()
-          setSessionUrl(url)
-          setIsModalOpen(true)
-          setErrors({})
-          return
-        } catch {
-          setSubmitted(true)
-        }
-      } else {
+        const { sessionUrl: url } = await startKycVerification()
+        setSessionUrl(url)
+        setIsModalOpen(true)
+        setErrors({})
+        return
+      } catch {
         setSubmitted(true)
       }
     } catch (err) {
@@ -174,17 +169,9 @@ export default function RegisterWorker() {
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900">
-                {kycMethod === 'automatic'
-                  ? 'Verificá tu email para continuar'
-                  : '¡Verificá tu email!'}
-              </h1>
+              <h1 className="text-2xl font-bold text-slate-900">Verificá tu email para continuar</h1>
               <p className="mt-3 text-slate-500">
-                {kycMethod === 'automatic'
-                  ? <>Antes de poder validar tu identidad con Didit, debés verificar tu correo.</>
-                  : <>Te enviamos un email de verificación a{' '}
-                    {form.email ? <span className="font-medium text-slate-900">{form.email}</span> : 'tu correo'}.
-                    Hacé clic en el enlace para activar tu cuenta.</>}
+                Antes de poder validar tu identidad con Didit, debés verificar tu correo.
               </p>
               <p className="mt-2 text-sm text-slate-400">Si no lo ves, revisá la carpeta de spam.</p>
 
@@ -194,9 +181,7 @@ export default function RegisterWorker() {
                 <div className="text-sm">
                   <p className="font-medium text-slate-900">Después de verificar</p>
                   <p className="text-slate-500 mt-1">
-                    {kycMethod === 'automatic'
-                      ? 'Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.'
-                      : 'Deberás ingresar tu DNI manualmente y realizar la prueba de vida en video al iniciar sesión.'}
+                    Te vamos a pedir tu DNI y una selfie para validar tu identidad automáticamente.
                   </p>
                 </div>
               </div>
@@ -206,7 +191,7 @@ export default function RegisterWorker() {
                 onClick={() => navigate('/login')}
                 className="mt-6 w-full h-12 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
-                {kycMethod === 'automatic' ? 'Validar email e iniciar verificación de identidad' : 'Ir a iniciar sesión'}
+                Validar email e iniciar verificación de identidad
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -286,7 +271,7 @@ export default function RegisterWorker() {
                     <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-semibold mb-1">
                       <Shield className="w-3 h-3" /> Verificación KYC
                     </div>
-                    <h2 className="text-lg font-extrabold text-slate-900">Elige tu método de verificación</h2>
+                    <h2 className="text-lg font-extrabold text-slate-900">Verificación de identidad</h2>
                     <p className="text-[12px] text-slate-500 mt-0.5">Verificá tu identidad para comenzar a recibir trabajos.</p>
                   </>
                 ) : (
@@ -469,34 +454,25 @@ export default function RegisterWorker() {
               {/* Step 3: KYC */}
               {step === 3 && (
                 <div className="space-y-2.5">
-                  {[
-                    { key: 'automatic', icon: CreditCard, title: 'DNI + Reconocimiento Facial', desc: 'Sube fotos de tu DNI y una selfie para verificación automática.', tags: ['Rápido', 'Automático'] },
-                    { key: 'manual', icon: User, title: 'DNI Manual + Prueba de Vida', desc: 'Ingresa tu DNI manualmente y completa una prueba de vida en video.', tags: ['Alternativo', 'Seguro'] },
-                  ].map(opt => (
-                    <button key={opt.key} type="button"
-                      onClick={() => setKycMethod(opt.key as 'automatic' | 'manual')}
-                      className={`w-full relative p-3 rounded-xl border-2 text-left transition-all flex gap-3 ${kycMethod === opt.key ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/10' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                      {kycMethod === opt.key && (
-                        <div className="absolute top-2.5 right-2.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
-                      <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center ${kycMethod === opt.key ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                        <opt.icon className="w-5 h-5" />
+                  <div className="w-full relative p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/10 text-left flex gap-3">
+                    <div className="absolute top-2.5 right-2.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center bg-emerald-100 text-emerald-600">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-[13px]">DNI + Reconocimiento Facial</h3>
+                      <p className="text-slate-500 text-[11px] mt-0.5">Sube fotos de tu DNI y una selfie para verificación automática.</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {['Rápido', 'Automático'].map(t => (
+                          <span key={t} className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
+                            <Check className="w-3 h-3 stroke-[3]" /> {t}
+                          </span>
+                        ))}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-[13px]">{opt.title}</h3>
-                        <p className="text-slate-500 text-[11px] mt-0.5">{opt.desc}</p>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          {opt.tags.map(t => (
-                            <span key={t} className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                              <Check className="w-3 h-3 stroke-[3]" /> {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                    </div>
+                  </div>
 
                   <div className="flex gap-2 pt-0.5">
                     <button type="button" onClick={() => setStep(2)}
@@ -507,7 +483,7 @@ export default function RegisterWorker() {
                       className="flex-1 h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-70 text-[13px]">
                       {isSubmitting
                         ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Registrando…</>
-                        : <>{kycMethod === 'automatic' ? 'Iniciar verificación' : 'Continuar'} <ArrowRight className="w-4 h-4" /></>}
+                        : <>Iniciar verificación <ArrowRight className="w-4 h-4" /></>}
                     </button>
                   </div>
 
