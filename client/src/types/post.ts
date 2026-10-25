@@ -9,6 +9,7 @@ export enum PostStatus {
 
 export interface PostCategoryDTO {
   id: string
+  categoryId: string
   name: string
 }
 

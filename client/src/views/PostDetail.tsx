@@ -133,7 +133,7 @@ export default function PostDetail() {
 
   const openEditModal = () => {
     if (!post) return
-    const categoryId = post.categories[0]?.id ?? ''
+    const categoryId = post.categories[0]?.categoryId ?? ''
     setEditForm({ title: post.title, categoryId, description: post.description, startDate: post.startDate.slice(0, 10), endDate: post.endDate.slice(0, 10), address: post.address })
     setEditError('')
     setShowEditModal(true)
