@@ -1,44 +1,56 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { UserRole } from '../types/user'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import KycVerify from './KycVerify'
 import * as kycService from '../services/kyc'
+import type { KycStatus, KycStatusResponse } from '../services/kyc'
 
 vi.mock('../services/kyc', () => ({
   startKycVerification: vi.fn(),
   confirmKycSession: vi.fn(),
+  fetchKycStatus: vi.fn(),
+}))
+
+vi.mock('../components/DiditVerificationModal', () => ({
+  default: ({
+    isOpen,
+    onComplete,
+  }: {
+    isOpen: boolean
+    onComplete: (sessionId: string, status: string) => void
+  }): ReactNode => isOpen ? (
+    <div data-testid="didit-modal">
+      <button type="button" onClick={() => onComplete('sess-modal', 'Approved')}>
+        Completar verificación
+      </button>
+    </div>
+  ) : null,
 }))
 
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({
+  useAuth: (): {
+    user: { id: string; name: string; email: string; role: UserRole }
+    isLoggedIn: boolean
+  } => ({
     user: { id: 'user-1', name: 'Test', email: 'test@test.com', role: UserRole.Worker },
     isLoggedIn: true,
   }),
 }))
 
-vi.mock('../lib/envConfig', () => ({
-  env: { VITE_API_URL: 'http://localhost:3000' },
-}))
+const defaultStatus: KycStatusResponse = {
+  kycStatus: 'NOT_STARTED',
+  kycVerifiedAt: null,
+  diditVerificationId: null,
+}
 
-const originalLocation = window.location
+function statusResponse(kycStatus: KycStatus): KycStatusResponse {
+  return { ...defaultStatus, kycStatus }
+}
 
-beforeEach(() => {
-  Object.defineProperty(window, 'location', {
-    value: { ...originalLocation, href: '' },
-    writable: true,
-  })
-})
-
-afterEach(() => {
-  Object.defineProperty(window, 'location', {
-    value: originalLocation,
-    writable: true,
-  })
-})
-
-function renderAt(path: string) {
+function renderAt(path = '/kyc'): ReturnType<typeof render> {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -51,186 +63,186 @@ function renderAt(path: string) {
 describe('KycVerify', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(kycService.fetchKycStatus).mockResolvedValue(defaultStatus)
   })
 
-  describe('vista inicial (sin query params)', () => {
-    it('muestra el título y el botón de iniciar', () => {
-      renderAt('/kyc')
-      expect(screen.getByText('Verificá tu identidad')).toBeInTheDocument()
-      expect(
-        screen.getByRole('button', { name: /iniciar verificación/i }),
-      ).toBeInTheDocument()
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  describe('carga inicial', () => {
+    it('muestra una pantalla de carga mientras consulta el estado', () => {
+      vi.mocked(kycService.fetchKycStatus).mockImplementation(
+        () => new Promise(() => {}),
+      )
+
+      renderAt()
+
+      expect(screen.getByText('Cargando…')).toBeInTheDocument()
+      expect(kycService.fetchKycStatus).toHaveBeenCalledTimes(1)
     })
 
-    it('muestra el link para volver al panel', () => {
-      renderAt('/kyc')
-      expect(
-        screen.getByRole('link', { name: /volver a mi panel/i }),
-      ).toBeInTheDocument()
+    it('consulta el estado y muestra la vista inicial para NOT_STARTED', async () => {
+      renderAt()
+
+      expect(await screen.findByText('Verificá tu identidad')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /iniciar verificación/i })).toBeInTheDocument()
+      expect(kycService.fetchKycStatus).toHaveBeenCalledTimes(1)
     })
 
-    it('llama al servicio y redirige a la URL de Didit al click', async () => {
+    it('vuelve a la vista inicial cuando falla la consulta del estado', async () => {
+      vi.mocked(kycService.fetchKycStatus).mockRejectedValue(new Error('network error'))
+
+      renderAt()
+
+      expect(await screen.findByText('Verificá tu identidad')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /volver a mi panel/i })).toBeInTheDocument()
+    })
+  })
+
+  describe('inicio de verificación', () => {
+    it('muestra el modal después de iniciar una verificación', async () => {
       vi.mocked(kycService.startKycVerification).mockResolvedValue({
         sessionUrl: 'https://verify.didit.me/session/sess-1',
         sessionId: 'sess-1',
       })
 
       const user = userEvent.setup()
-      renderAt('/kyc')
+      renderAt()
+      await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
 
-      await user.click(
-        screen.getByRole('button', { name: /iniciar verificación/i }),
-      )
-
-      await waitFor(() => {
-        expect(window.location.href).toBe('https://verify.didit.me/session/sess-1')
-      })
+      expect(await screen.findByTestId('didit-modal')).toBeInTheDocument()
       expect(kycService.startKycVerification).toHaveBeenCalledTimes(1)
+      expect(window.location.href).not.toContain('verify.didit.me')
     })
 
-    it('muestra mensaje de error cuando la API falla', async () => {
+    it('muestra el error de la API cuando falla el inicio', async () => {
       vi.mocked(kycService.startKycVerification).mockRejectedValue({
         response: { data: { error: 'Sin créditos disponibles' } },
       })
 
       const user = userEvent.setup()
-      renderAt('/kyc')
-
-      await user.click(
-        screen.getByRole('button', { name: /iniciar verificación/i }),
-      )
+      renderAt()
+      await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
 
       expect(await screen.findByText('Sin créditos disponibles')).toBeInTheDocument()
     })
 
-    it('usa mensaje genérico cuando el error no tiene response.data.error', async () => {
+    it('usa un error genérico cuando el inicio falla sin mensaje de API', async () => {
       vi.mocked(kycService.startKycVerification).mockRejectedValue(new Error('boom'))
 
       const user = userEvent.setup()
-      renderAt('/kyc')
+      renderAt()
+      await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
 
-      await user.click(
-        screen.getByRole('button', { name: /iniciar verificación/i }),
-      )
-
-      expect(
-        await screen.findByText('No se pudo iniciar la verificación'),
-      ).toBeInTheDocument()
+      expect(await screen.findByText('No se pudo iniciar la verificación')).toBeInTheDocument()
     })
   })
 
-  describe('vista de resultado (volviendo de Didit)', () => {
-    it('muestra pantalla de carga mientras confirma con el backend', async () => {
-      vi.mocked(kycService.confirmKycSession).mockImplementation(
-        () => new Promise(() => {}),
+  describe('resultados', () => {
+    it.each([
+      ['APPROVED', 'Identidad validada', 'Aprobada'],
+      ['DECLINED', 'No pudimos validar tu identidad', 'Rechazada'],
+      ['EXPIRED', 'La verificación expiró', 'Recibida'],
+      ['IN_REVIEW', 'Verificación en revisión', 'En revisión'],
+    ] as const)('muestra el resultado %s', async (status, title, badge) => {
+      vi.mocked(kycService.fetchKycStatus).mockResolvedValue(statusResponse(status))
+
+      renderAt()
+
+      expect(await screen.findByText(title)).toBeInTheDocument()
+      expect(screen.getByText(badge)).toBeInTheDocument()
+    })
+
+    it('usa el copy y badge por defecto para un estado desconocido', async () => {
+      vi.mocked(kycService.fetchKycStatus).mockResolvedValue(
+        statusResponse('UNKNOWN' as KycStatus),
       )
 
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
-
-      expect(await screen.findByText('Confirmando tu verificación…')).toBeInTheDocument()
-    })
-
-    it('confirma con el backend y muestra el resultado', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'APPROVED',
-        sessionId: 'sess-abc',
-      })
-
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-abc')
-
-      expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
-      expect(await screen.findByText('Aprobada')).toBeInTheDocument()
-      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-abc', 'test@test.com')
-    })
-
-    it('muestra el status mapeado desde el backend', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'APPROVED',
-        sessionId: 'sess-abc',
-      })
-
-      renderAt('/kyc?status=In%20Review&verificationSessionId=sess-abc')
-
-      expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
-    })
-
-    it('muestra rechazo cuando el backend devuelve DECLINED', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'DECLINED',
-        sessionId: 'sess-1',
-      })
-
-      renderAt('/kyc?status=Declined&verificationSessionId=sess-1')
-
-      expect(await screen.findByText('No pudimos validar tu identidad')).toBeInTheDocument()
-      expect(await screen.findByText('Rechazada')).toBeInTheDocument()
-    })
-
-    it('muestra expiración cuando el backend devuelve EXPIRED', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'EXPIRED',
-        sessionId: 'sess-1',
-      })
-
-      renderAt('/kyc?status=Expired&verificationSessionId=sess-1')
-
-      expect(await screen.findByText('La verificación expiró')).toBeInTheDocument()
-    })
-
-    it('muestra incompleto cuando el backend devuelve EXPIRED (antes Abandoned)', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'EXPIRED',
-        sessionId: 'sess-1',
-      })
-
-      renderAt('/kyc?status=Abandoned&verificationSessionId=sess-1')
-
-      expect(await screen.findByText('La verificación expiró')).toBeInTheDocument()
-    })
-
-    it('cae al copy default cuando el backend devuelve un status no mapeado', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'UNKNOWN',
-        sessionId: 'sess-1',
-      })
-
-      renderAt('/kyc?status=Something&verificationSessionId=sess-1')
+      renderAt()
 
       expect(await screen.findByText('Verificación recibida')).toBeInTheDocument()
+      expect(screen.getByText('Recibida')).toBeInTheDocument()
     })
 
-    it('muestra el sessionId del query param', async () => {
+    it('muestra un botón de reintento para DECLINED', async () => {
+      vi.mocked(kycService.fetchKycStatus).mockResolvedValue(statusResponse('DECLINED'))
+
+      renderAt()
+
+      expect(await screen.findByRole('button', { name: /iniciar nueva verificación/i })).toBeInTheDocument()
+    })
+
+    it('muestra un botón de reintento para EXPIRED', async () => {
+      vi.mocked(kycService.fetchKycStatus).mockResolvedValue(statusResponse('EXPIRED'))
+
+      renderAt()
+
+      expect(await screen.findByRole('button', { name: /iniciar nueva verificación/i })).toBeInTheDocument()
+    })
+  })
+
+  describe('confirmación desde el modal', () => {
+    it('confirma con sessionId, email y sdkStatus y muestra el resultado', async () => {
+      vi.mocked(kycService.startKycVerification).mockResolvedValue({
+        sessionUrl: 'https://verify.didit.me/session/sess-modal',
+        sessionId: 'sess-modal',
+      })
       vi.mocked(kycService.confirmKycSession).mockResolvedValue({
         status: 'APPROVED',
-        sessionId: 'sess-abc',
+        sessionId: 'sess-modal',
       })
 
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-xyz-999')
+      const user = userEvent.setup()
+      renderAt()
+      await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
+      await user.click(screen.getByRole('button', { name: /completar verificación/i }))
 
-      expect(await screen.findByText(/sess-xyz-999/)).toBeInTheDocument()
+      expect(kycService.confirmKycSession).toHaveBeenCalledWith('sess-modal', 'test@test.com', 'Approved')
+      expect(await screen.findByText('Identidad validada')).toBeInTheDocument()
     })
 
-    it('muestra mensaje de error cuando falla la confirmación', async () => {
+    it('muestra el error cuando falla la confirmación', async () => {
+      vi.mocked(kycService.startKycVerification).mockResolvedValue({
+        sessionUrl: 'https://verify.didit.me/session/sess-modal',
+        sessionId: 'sess-modal',
+      })
       vi.mocked(kycService.confirmKycSession).mockRejectedValue({
         response: { data: { error: 'Sesión no encontrada' } },
       })
 
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
+      const user = userEvent.setup()
+      renderAt()
+      await user.click(await screen.findByRole('button', { name: /iniciar verificación/i }))
+      await user.click(screen.getByRole('button', { name: /completar verificación/i }))
 
       expect(await screen.findByText('Sesión no encontrada')).toBeInTheDocument()
     })
+  })
 
-    it('muestra el link para volver al panel', async () => {
-      vi.mocked(kycService.confirmKycSession).mockResolvedValue({
-        status: 'APPROVED',
-        sessionId: 'sess-1',
+  describe('polling', () => {
+    it('consulta periódicamente un estado pendiente y se detiene al volver a NOT_STARTED', async () => {
+      vi.useFakeTimers()
+      vi.mocked(kycService.fetchKycStatus)
+        .mockResolvedValueOnce(statusResponse('IN_REVIEW'))
+        .mockResolvedValueOnce(statusResponse('NOT_STARTED'))
+
+      renderAt()
+      await act(async () => { await Promise.resolve() })
+      expect(kycService.fetchKycStatus).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        vi.advanceTimersByTime(10_000)
+        await Promise.resolve()
       })
+      expect(kycService.fetchKycStatus).toHaveBeenCalledTimes(2)
+      expect(screen.getByText('Verificá tu identidad')).toBeInTheDocument()
 
-      renderAt('/kyc?status=Approved&verificationSessionId=sess-1')
-
-      expect(
-        await screen.findByRole('link', { name: /volver a mi panel/i }),
-      ).toBeInTheDocument()
+      await act(async () => {
+        vi.advanceTimersByTime(10_000)
+        await Promise.resolve()
+      })
+      expect(kycService.fetchKycStatus).toHaveBeenCalledTimes(2)
     })
   })
 })
