@@ -26,13 +26,13 @@ export const workerSteps: WorkerStep[] = [
   { n: 1, title: 'Creá tu perfil', desc: 'Cargá tus datos, tus rubros y la zona donde trabajás. Toma menos de 5 minutos.' },
   { n: 2, title: 'Verificá tu identidad', desc: 'Validamos tu DNI. Sumá tu matrícula y antecedentes para destacar entre los demás.' },
   { n: 3, title: 'Recibí solicitudes', desc: 'Te llegan pedidos de clientes de tu zona. Mirás el detalle y elegís cuáles aceptar.' },
-  { n: 4, title: 'Trabajá y cobrá', desc: 'Coordinás por chat, hacés el trabajo y sumás una reseña que te abre más puertas.', accent: true },
+  { n: 4, title: 'Trabajá y cobrá', desc: 'Coordinás por WhatsApp cuando el trabajo está confirmado, hacés el trabajo y sumás una reseña que te abre más puertas.', accent: true },
 ]
 
 export const workerFeatures: WorkerFeature[] = [
   { title: 'Solicitudes geolocalizadas', desc: 'Solo recibís pedidos dentro del radio que definas.' },
   { title: 'Agenda y disponibilidad', desc: 'Marcás cuándo estás libre y evitás superposiciones.' },
-  { title: 'Chat directo con el cliente', desc: 'Acordás detalles y presupuesto sin intermediarios.' },
+  { title: 'Contacto por WhatsApp', desc: 'Acordás los detalles con el cliente cuando el trabajo está confirmado.' },
   { title: 'Reseñas verificadas', desc: 'Tu calificación se construye con trabajos reales.' },
   { title: 'Perfil destacado', desc: 'Identidad, matrícula y antecedentes te dan más visibilidad.' },
 ]
