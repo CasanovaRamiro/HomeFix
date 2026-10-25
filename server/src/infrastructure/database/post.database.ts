@@ -1,4 +1,5 @@
 import prisma from '../../lib/prisma.js'
+import { Prisma } from '@prisma/client'
 import type { CreatePostInput, CreateBiddingInput, UpdatePostInput, DomainPost, DomainUserPost } from '../../domain/types/post.types.js'
 import { PostType } from '../../domain/types/postType.js'
 import type { PrismaPostFull } from '../types/post.types.js'
@@ -375,8 +376,14 @@ export const findPostsByUser = async (userId: string): Promise<DomainUserPost[]>
   }))
 }
 
-export const updatePostStatus = (id: string, status: string): Promise<{ id: string; status: string }> =>
-  prisma.post.update({
+type PostDatabaseClient = typeof prisma | Prisma.TransactionClient
+
+export const updatePostStatus = (
+  id: string,
+  status: string,
+  client: PostDatabaseClient = prisma,
+): Promise<{ id: string; status: string }> =>
+  client.post.update({
     where: { id },
     data: { status },
     select: { id: true, status: true },
@@ -521,20 +528,30 @@ export const searchByDistance = async (
     .sort((a, b) => a.distance - b.distance)
 }
 
-export const incrementPostFilledCount = (postId: string, categoryId?: string) =>
-  prisma.postCategory.updateMany({
-    where: { postId, ...(categoryId ? { id: categoryId } : {}) },
-    data: { filledCount: { increment: 1 } },
-  })
+export const incrementPostFilledCount = async (
+  postId: string,
+  categoryId?: string,
+  client: PostDatabaseClient = prisma,
+) => {
+  const result = await client.$executeRaw`
+    UPDATE PostCategory
+    SET filledCount = filledCount + 1
+    WHERE postId = ${postId}
+      ${categoryId ? Prisma.sql`AND id = ${categoryId}` : Prisma.empty}
+      AND filledCount < quantity
+  `
 
-export const decrementPostFilledCount = (postId: string, categoryId?: string) =>
-  prisma.postCategory.updateMany({
+  return { count: result }
+}
+
+export const decrementPostFilledCount = (postId: string, categoryId?: string, client: PostDatabaseClient = prisma) =>
+  client.postCategory.updateMany({
     where: { postId, filledCount: { gt: 0 }, ...(categoryId ? { id: categoryId } : {}) },
     data: { filledCount: { decrement: 1 } },
   })
 
-export const findPostCategories = (postId: string) =>
-  prisma.postCategory.findMany({
+export const findPostCategories = (postId: string, client: PostDatabaseClient = prisma) =>
+  client.postCategory.findMany({
     where: { postId },
   })
 

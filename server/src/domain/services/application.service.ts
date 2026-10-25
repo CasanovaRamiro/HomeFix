@@ -5,6 +5,7 @@ import {
   createApplication,
   findApplicationById,
   updateApplicationStatus,
+  updateApplicationStatusIf,
   deleteApplication,
   findApplicationsByPost,
   setStartToken,
@@ -166,7 +167,10 @@ export const acceptApplication = async (clientId: string, applicationId: string,
       }
 
       if (application.post.type === PostType.SubContract) {
-        await incrementPostFilledCount(application.postId, application.categoryId ?? undefined)
+        const occupied = await incrementPostFilledCount(application.postId, application.categoryId ?? undefined, tx)
+        if (occupied.count === 0) {
+          throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400, code: 'VACANCY_CONFLICT' })
+        }
       } else {
         const moved = await tx.post.updateMany({
           where: { id: application.postId, status: PostStatus.Active },
@@ -224,13 +228,18 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
     if (application.post.status !== PostStatus.InProgress) {
       throw Object.assign(new Error('Post is not in progress'), { status: 400 })
     }
-    const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
-    await resetRejectedApplications(application.postId)
-    await updatePostStatus(application.postId, PostStatus.Evaluating)
+    await prisma.$transaction(async (tx) => {
+      const changed = await updateApplicationStatusIf(applicationId, ApplicationStatus.Accepted, ApplicationStatus.Dismissed, tx)
+      if (changed.count === 0) {
+        throw Object.assign(new Error('Application is not accepted'), { status: 400 })
+      }
+      await resetRejectedApplications(application.postId, tx)
+      await updatePostStatus(application.postId, PostStatus.Evaluating, tx)
+    })
     notifyUser(getProvider(), application.workerId, 'worker_dismissed', {
       postTitle: application.post.title,
     })
-    return { id: dismissed.id, status: dismissed.status, postId: application.postId }
+    return { id: applicationId, status: ApplicationStatus.Dismissed, postId: application.postId }
   }
 
   if (isSubContract) {
@@ -241,18 +250,26 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
     throw Object.assign(new Error('Post is not in progress'), { status: 400 })
   }
 
-  const dismissed = await updateApplicationStatus(applicationId, ApplicationStatus.Dismissed)
-
-  if (isSubContract) {
-    await decrementPostFilledCount(application.postId, application.categoryId ?? undefined)
-    const categories = await findPostCategories(application.postId)
-    const anyFilled = categories.some((c) => c.filledCount > 0)
-    if (!anyFilled && application.post.status === PostStatus.InProgress) {
-      await updatePostStatus(application.postId, PostStatus.Active)
+  await prisma.$transaction(async (tx) => {
+    const changed = await updateApplicationStatusIf(applicationId, ApplicationStatus.Accepted, ApplicationStatus.Dismissed, tx)
+    if (changed.count === 0) {
+      throw Object.assign(new Error('Application is not accepted'), { status: 400 })
     }
-  } else {
-    await updatePostStatus(application.postId, PostStatus.Active)
-  }
+
+    if (isSubContract) {
+      const released = await decrementPostFilledCount(application.postId, application.categoryId ?? undefined, tx)
+      if (released.count === 0) {
+        throw Object.assign(new Error('El cupo de la postulación ya fue liberado'), { status: 400 })
+      }
+      const categories = await findPostCategories(application.postId, tx)
+      const anyFilled = categories.some((c) => c.filledCount > 0)
+      if (!anyFilled && application.post.status === PostStatus.InProgress) {
+        await updatePostStatus(application.postId, PostStatus.Active, tx)
+      }
+    } else {
+      await updatePostStatus(application.postId, PostStatus.Active, tx)
+    }
+  })
 
   logger.info({ applicationId, workerId: application.workerId, clientId, postId: application.postId, action: 'application.workerDismissed' }, 'Worker dismissed from application')
 
@@ -260,7 +277,7 @@ export const dismissWorker = async (clientId: string, applicationId: string) => 
     postTitle: application.post.title,
   })
 
-  return { id: dismissed.id, status: dismissed.status }
+  return { id: applicationId, status: ApplicationStatus.Dismissed }
 }
 
 const START_TOKEN_TTL_MS = 5 * 60 * 1000
