@@ -754,7 +754,7 @@ export default function WorkerProfile() {
                     <div key={img.id} style={{ position: 'relative' }}>
                       {isVideoUrl(img.imageUrl) ? (
                         <div style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: '#000' }} onClick={() => setZoomedImage(img.imageUrl)}>
-                          <video src={img.imageUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                          <video src={img.imageUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', background: '#000' }} />
                           <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)' }}>
                             <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Play size={16} fill="#fff" style={{ marginLeft: 2 }} />
@@ -790,7 +790,7 @@ export default function WorkerProfile() {
                       return (
                         <div key={preview} style={{ position: 'relative', width: 80, height: 80 }}>
                           {isVid ? (
-                            <video src={preview} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover', background: '#000' }} />
+                            <video src={preview} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'contain', background: '#000' }} />
                           ) : (
                             <img src={preview} alt="" style={{ width: '100%', height: '100%', borderRadius: 10, objectFit: 'cover' }} />
                           )}

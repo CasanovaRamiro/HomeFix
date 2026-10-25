@@ -339,7 +339,7 @@ export default function BiddingDetail() {
                 {bidding.images.map((img, i) =>
                   img.type === 'video' || /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i.test(img.url) || img.url.includes('/video/upload/') ? (
                     <video key={i} src={img.url} controls playsInline preload="metadata"
-                      style={{ width: 160, height: 100, borderRadius: 8, objectFit: 'cover', flexShrink: 0, background: '#000' }} />
+                      style={{ width: 160, height: 100, borderRadius: 8, objectFit: 'contain', flexShrink: 0, background: '#000' }} />
                   ) : (
                     <img key={i} src={img.url} alt=""
                       style={{ width: 100, height: 80, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />

@@ -60,7 +60,7 @@ export default function BiddingCard({ bidding, onClick, onOfertar, style }: Prop
           <div className="bidding-card-images" style={{ position: 'relative' }}>
             {bidding.images?.[0]?.type === 'video' || isVideoUrl(firstImage) ? (
               <>
-                <video src={firstImage} muted playsInline preload="metadata" className="bidding-thumb" style={{ background: '#000' }} />
+                <video src={firstImage} muted playsInline preload="metadata" className="bidding-thumb" style={{ background: '#000', objectFit: 'contain' }} />
                 <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <Play size={14} fill="#fff" style={{ marginLeft: 2 }} />
                 </span>

@@ -109,7 +109,7 @@ function ImageGallery({ images }: { images: { url: string; type?: string }[] }) 
             const thumbStyle: React.CSSProperties = { width: 64, height: 64, objectFit: 'cover', borderRadius: 10, cursor: 'pointer', flexShrink: 0, border: i === active ? '2px solid #0F172A' : '2px solid transparent', opacity: i === active ? 1 : 0.6, transition: 'opacity 0.15s, border 0.15s', background: isVid ? '#000' : undefined }
             return isVid ? (
               <div key={i} style={{ position: 'relative', ...thumbStyle, padding: 0, overflow: 'hidden' }} onClick={() => setActive(i)}>
-                <video src={img.url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                <video src={img.url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', background: '#000' }} />
                 <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <Play size={11} fill="#fff" style={{ marginLeft: 1 }} />
                 </span>

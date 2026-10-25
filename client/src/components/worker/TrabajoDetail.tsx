@@ -35,7 +35,7 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
                 controls
                 playsInline
                 preload="metadata"
-                style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block', borderRadius: 8, background: '#000' }}
+                style={{ width: '100%', height: 140, objectFit: 'contain', display: 'block', borderRadius: 8, background: '#000' }}
               />
             ) : (
               <button

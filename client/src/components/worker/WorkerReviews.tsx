@@ -209,7 +209,7 @@ export default function WorkerReviews({ reviews, loading, workerName }: Props) {
                           >
                             {isVideoUrl(url) ? (
                               <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                                <video src={url} muted playsInline preload="metadata" className="w-full h-full object-cover" style={{ pointerEvents: 'none' }} />
+                                <video src={url} muted playsInline preload="metadata" className="w-full h-full object-contain" style={{ pointerEvents: 'none', background: '#000' }} />
                                 <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)' }}>
                                   <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <Play size={11} fill="#fff" style={{ marginLeft: 1 }} />

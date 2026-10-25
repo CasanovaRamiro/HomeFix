@@ -675,6 +675,14 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
   object-fit: contain; border-radius: 8px;
   cursor: default; box-shadow: 0 8px 40px rgba(0,0,0,.6);
 }
+
+@media (max-width: 600px) {
+  .img-modal-backdrop { padding: 12px; }
+  .img-modal-img { max-width: 96vw; max-height: 62vh; border-radius: 10px; }
+  .img-modal-close { top: 8px; right: 8px; }
+  .img-modal-arrow { display: none; }
+  .img-viewer-media { max-height: 62vh !important; max-width: 96vw !important; }
+}
 .img-modal-close {
   position: fixed; top: 20px; right: 20px;
   width: 40px; height: 40px; border-radius: 50%;

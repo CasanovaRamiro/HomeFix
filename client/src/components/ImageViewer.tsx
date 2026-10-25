@@ -47,13 +47,17 @@ export default function ImageViewer({ src, alt, onClose }: Props) {
         <video
           src={src}
           controls
+          controlsList="nofullscreen noremoteplayback"
+          disablePictureInPicture
           autoPlay
           playsInline
           onClick={(e) => e.stopPropagation()}
+          className="img-viewer-media"
           style={{
             maxWidth: '100%', maxHeight: '100%',
             borderRadius: 12, objectFit: 'contain',
             cursor: 'default', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+            background: '#000',
           }}
         />
       ) : (
@@ -61,6 +65,7 @@ export default function ImageViewer({ src, alt, onClose }: Props) {
           src={src}
           alt={alt}
           onClick={(e) => e.stopPropagation()}
+          className="img-viewer-media"
           style={{
             maxWidth: '100%', maxHeight: '100%',
             borderRadius: 12, objectFit: 'contain',

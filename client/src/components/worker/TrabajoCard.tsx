@@ -125,7 +125,7 @@ export default function TrabajoCard({ trabajo, isSelected, isApplied, isOwnPost,
             <div style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 10, overflow: 'hidden', alignSelf: 'center', position: 'relative' }}>
               {isVideoUrl(trabajo.photo) ? (
                 <>
-                  <video src={trabajo.photo} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000', pointerEvents: 'none' }} />
+                  <video src={trabajo.photo} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000', pointerEvents: 'none' }} />
                   <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                     <Play size={13} fill="#fff" style={{ marginLeft: 2 }} />
                   </span>

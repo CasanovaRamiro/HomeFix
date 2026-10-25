@@ -55,6 +55,8 @@ export default function ImageModal({ src, alt, type, onClose, onPrev, onNext }: 
           src={src}
           aria-label={alt ?? 'Video'}
           controls
+          controlsList="nofullscreen noremoteplayback"
+          disablePictureInPicture
           autoPlay
           playsInline
           onClick={(e) => e.stopPropagation()}
@@ -65,6 +67,7 @@ export default function ImageModal({ src, alt, type, onClose, onPrev, onNext }: 
             maxHeight: '90vh',
             borderRadius: 12,
             objectFit: 'contain',
+            background: '#000',
           }}
         />
       ) : (

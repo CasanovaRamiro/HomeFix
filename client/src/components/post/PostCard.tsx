@@ -102,7 +102,7 @@ export default function PostCard({
                     muted
                     playsInline
                     preload="metadata"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none', background: '#000' }}
                   />
                   <span style={{
                     position: 'absolute', inset: 0,
