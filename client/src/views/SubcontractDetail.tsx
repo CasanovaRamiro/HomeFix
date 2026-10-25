@@ -219,7 +219,7 @@ export default function SubcontractDetail() {
             hasAcceptedWorker={hasAcceptedWorker}
             hasUnreviewedWorkers={applicants.some(a => (a.status === 'Accepted' || a.status === 'Completed') && !a.hasReview)}
             onComplete={handleComplete}
-            onMarkInProgress={handleMarkInProgress}
+            onMarkInProgress={subcontract.userId === user?.id ? handleMarkInProgress : undefined}
             onPause={handlePause}
             onCancel={handleCancel}
           >

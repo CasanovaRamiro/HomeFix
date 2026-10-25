@@ -42,7 +42,7 @@ const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
 
 export default function PostCard({
-  post, hasAcceptedWorker, scheduledDate, onComplete, onPause, onCancel, onEdit,
+  post, hasAcceptedWorker, scheduledDate, onComplete, onMarkInProgress, onPause, onCancel, onEdit, children,
 }: PostCardProps) {
   const status = STATUS_MAP[post.status] ?? { label: post.status, cls: 'pd-badge--completed', Icon: CircleDot }
   const StatusIcon = status.Icon
@@ -134,8 +134,15 @@ export default function PostCard({
           )}
         </div>
 
+        {children}
+
         {!closed && hasAcceptedWorker && (
           <div className="pc-manage">
+            {post.status === 'Active' && onMarkInProgress && (
+              <button className="pd-btn pd-btn--accent pd-btn--block" onClick={onMarkInProgress}>
+                <Play size={16} />Iniciar subcontratación
+              </button>
+            )}
             <button className="pd-btn pd-btn--accent pd-btn--block" onClick={onComplete}>
               <Flag size={16} />Marcar trabajo finalizado
             </button>
