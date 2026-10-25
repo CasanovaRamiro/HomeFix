@@ -1,105 +1,134 @@
-# HomeFix — Server
+# HomeFix - Server
 
-REST API built with Node.js, Express, Prisma and MySQL.
+API REST de HomeFix construida con Node.js, Express 5, TypeScript, Prisma 5.22 y MySQL.
 
-## Tech Stack
+## Requisitos
 
-- **Runtime**: Node.js (ESM)
-- **Framework**: Express 5
-- **ORM**: Prisma 5
-- **Database**: MySQL
-- **Auth**: Auth0 (RS256 JWT)
+- Node.js 22.12 o superior.
+- pnpm 11.
+- MySQL accesible mediante `DATABASE_URL`.
+- Auth0 para validar tokens y para los flujos de registro y login.
 
-## Project Structure
+CI usa Node.js 22 y pnpm 11. El servidor es un proyecto ESM de TypeScript y se ejecuta en desarrollo con `tsx`.
 
-```
-server/
-├── src/
-│   ├── index.js            ← Entry point, route registration
-│   ├── lib/
-│   │   └── prisma.js       ← Prisma client singleton
-│   ├── routes/             ← HTTP layer (request/response only)
-│   │   ├── auth.routes.js
-│   │   └── user.routes.js
-│   ├── services/           ← Business logic
-│   │   ├── auth.service.js
-│   │   └── user.service.js
-│   ├── data/               ← Database queries via Prisma
-│   │   └── user.data.js
-│   └── middleware/
-│       └── auth.middleware.js ← JWT verification
-└── prisma/
-    ├── schema.prisma       ← Data models
-    └── migrations/         ← SQL migration history
-```
-
-## Setup
-
-### 1. Install dependencies
+## Instalacion
 
 ```bash
+cd server
 pnpm install
 ```
 
-### 2. Configure environment
+Crear `.env` en este directorio. El backend exige estas variables al iniciar:
 
-Create `.env` using the required variables and service configuration in the [root installation guide](../README.md#2-set-up-the-server). The catalog initialization itself only needs `DATABASE_URL`; starting the API also requires the Auth0, Gemini and Cloudinary settings listed there.
+```env
+DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DATABASE_NAME
+AUTH0_AUDIENCE=https://your-api-identifier
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com/
+GEMINI_API_KEY=your-gemini-key
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-key
+CLOUDINARY_API_SECRET=your-cloudinary-secret
+```
 
-### 3. Apply migrations and initialize categories
+Para registro y login con email y contraseña también se necesitan:
+
+```env
+AUTH0_CLIENT_ID=your-auth0-client-id
+AUTH0_DB_CONNECTION=Username-Password-Authentication
+```
+
+Variables opcionales o específicas de funcionalidades:
+
+```env
+PORT=3000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+GEMINI_MODEL=gemini-2.5-flash
+FRONTEND_URL=http://localhost:5173
+API_BASE_URL=https://api.miapinode.com
+LOG_LEVEL=debug
+AUTH0_M2M_CLIENT_ID=your-m2m-client-id
+AUTH0_M2M_CLIENT_SECRET=your-m2m-client-secret
+AUTH0_CLIENT_ROLE_ID=your-client-role-id
+AUTH0_WORKER_ROLE_ID=your-worker-role-id
+DIDIT_API_KEY=your-didit-api-key
+DIDIT_WORKFLOW_ID=your-didit-workflow-id
+DIDIT_BASE_URL=https://verification.didit.me
+DIDIT_CALLBACK_URL=https://your-frontend.example/callback
+DIDIT_WEBHOOK_SECRET=your-didit-webhook-secret
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+```
+
+Las variables de Management API de Auth0 se requieren para operaciones como asignar roles, consultar usuarios o enviar verificaciones. Las variables de Didit se requieren para KYC automatico. Si no se define `TELEGRAM_BOT_TOKEN`, las notificaciones de Telegram quedan deshabilitadas. Los valores predeterminados de `PORT`, `NODE_ENV`, `GEMINI_MODEL`, `DIDIT_BASE_URL`, `FRONTEND_URL` y `API_BASE_URL` estan definidos en `src/lib/envConfig.ts`.
+
+## Prisma y catalogo de categorias
+
+Para aplicar las migraciones existentes y cargar las categorias faltantes:
 
 ```bash
 pnpm run db:setup
 ```
 
-If pnpm is unavailable and dependencies are already installed, use `npm run db:setup` from this directory. Both commands use the local Prisma and tsx executables.
+`db:setup` ejecuta `prisma migrate deploy` y `tsx prisma/seed.ts`. El seed usa un catalogo idempotente: conserva los datos existentes y no reemplaza IDs de categorias existentes.
 
-This applies the existing migrations, then adds missing initial categories without deleting records or changing existing category IDs. On an already migrated database, `pnpm run db:seed` is sufficient. Both commands can be repeated safely.
+Si la base ya esta migrada:
 
-`pnpm run db:seed:demo` is a separate, destructive demo generator. It deletes application data and must only target a disposable database.
+```bash
+pnpm run db:seed
+```
 
-Check `GET /categories` after startup: it should return the initial trades so that worker registration can select specialties.
+Este comando solo agrega categorias faltantes. No ejecutar `db:seed:demo` como parte de la instalacion: elimina datos de aplicacion y crea registros de demostracion. Usarlo unicamente con una base descartable.
 
-### 4. Start the server
+Para crear una migracion durante el desarrollo del esquema:
+
+```bash
+pnpm run db:migrate -- --name describe_your_change
+```
+
+No usar `db:migrate:test` contra una base normal: el script apunta a `ofix_test` y ejecuta Prisma con `--accept-data-loss` para el entorno de pruebas.
+
+## Desarrollo y produccion
 
 ```bash
 pnpm run dev
 ```
 
-## API Reference
+El comando usa `tsx watch src/index.ts` y expone la API en el puerto `3000` por defecto.
 
-### Auth
+Para compilar y ejecutar el servidor compilado:
 
-| Method | Endpoint | Body | Description |
-|---|---|---|---|
-| POST | `/auth/register` | `{ name, email, password, phone? }` | Create account, returns JWT |
-| POST | `/auth/login` | `{ email, password }` | Login, returns JWT |
-
-### Users
-
-All user endpoints require the header: `Authorization: Bearer <token>`
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/users` | List all users |
-
-## Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start with hot reload (nodemon) |
-| `npm start` | Start in production mode |
-| `npm run db:migrate -- --name <name>` | Create and apply a migration |
-| `npm run db:generate` | Regenerate Prisma client after schema changes |
-| `pnpm run db:setup` | Apply existing migrations and safely initialize the category catalog |
-| `pnpm run db:seed` | Add missing categories while preserving existing data |
-| `pnpm run db:seed:demo` | Delete application data and recreate a disposable demo |
-
-## Adding a New Migration
-
-1. Edit `prisma/schema.prisma` with your changes
-2. Run:
 ```bash
-npm run db:migrate -- --name describe_your_change
+pnpm run build
+pnpm start
 ```
 
-This generates a SQL file in `prisma/migrations/` and applies it.
+`build` ejecuta TypeScript con `tsconfig.build.json` y genera `dist/`. `start` ejecuta `dist/index.js`.
+
+## Autenticacion
+
+Auth0 es la autoridad de identidad. El middleware valida access tokens RS256 con `AUTH0_AUDIENCE` y `AUTH0_ISSUER_BASE_URL`. Los endpoints de registro y login delegan las credenciales en Auth0 Database Connection; HomeFix conserva el perfil y las relaciones de la aplicacion en MySQL.
+
+Los endpoints protegidos requieren `Authorization: Bearer <access-token>` y las credenciales se gestionan en Auth0.
+
+## Comandos
+
+| Comando | Descripcion |
+|---|---|
+| `pnpm run dev` | Desarrollo con `tsx watch` |
+| `pnpm run build` | Compila TypeScript a `dist/` |
+| `pnpm start` | Ejecuta el build compilado |
+| `pnpm run typecheck` | Verifica tipos sin emitir archivos |
+| `pnpm run lint` | Ejecuta ESLint |
+| `pnpm run db:setup` | Aplica migraciones existentes e inicializa categorias |
+| `pnpm run db:seed` | Agrega categorias faltantes sin borrar datos |
+| `pnpm run db:seed:demo` | Borra datos y crea una demo descartable |
+| `pnpm test` | Ejecuta Vitest |
+| `pnpm run test:coverage:service` | Pruebas de servicios con cobertura |
+| `pnpm run test:coverage:data` | Pruebas de repositories con cobertura |
+| `pnpm run test:coverage:routes` | Pruebas de rutas con cobertura |
+
+## Pruebas
+
+En CI, las pruebas usan MySQL 8 en una base `ofix_test`, ejecutan `db:migrate:test` y luego `pnpm test`. Ese flujo es exclusivo de CI/pruebas y acepta perdida de datos en la base de test.
+
+La estructura actual del servidor se encuentra bajo `src/presentation`, `src/domain`, `src/infrastructure` y `src/lib`; la aplicacion se registra desde `src/index.ts`.
