@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { notifyUser, broadcastEmergency } from '../../src/domain/services/notification.service.js'
+import type { NotificationSendResult } from '../../src/domain/types/notification.types.js'
 
 let mockCorsOrigin = 'http://localhost:5173'
 vi.mock('../../src/lib/envConfig.js', () => ({
@@ -20,7 +21,7 @@ vi.mock('../../src/infrastructure/database/bot.database.js', () => ({
 import * as userData from '../../src/infrastructure/database/user.database.js'
 import * as botData from '../../src/infrastructure/database/bot.database.js'
 
-const mockSend = vi.fn<() => Promise<boolean>>()
+const mockSend = vi.fn<() => Promise<NotificationSendResult>>()
 const mockProvider = {
   name: 'telegram',
   send: mockSend,
@@ -47,7 +48,7 @@ describe('notifyUser', () => {
 
   it('usa el template application_new', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo caño' })
     expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Nuevo postulante'),
@@ -57,7 +58,7 @@ describe('notifyUser', () => {
 
   it('usa el template application_accepted', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     await notifyUser(mockProvider, 'user-1', 'application_accepted', { postTitle: 'Arreglo caño' })
     expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Postulación aceptada'),
@@ -67,7 +68,7 @@ describe('notifyUser', () => {
 
   it('usa el template application_rejected', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     await notifyUser(mockProvider, 'user-1', 'application_rejected', { postTitle: 'Arreglo caño' })
     expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Postulación rechazada'),
@@ -77,7 +78,7 @@ describe('notifyUser', () => {
 
   it('usa el template post_completed', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     await notifyUser(mockProvider, 'user-1', 'post_completed', { postTitle: 'Arreglo caño' })
     expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Trabajo finalizado'),
@@ -87,7 +88,7 @@ describe('notifyUser', () => {
 
   it('usa el template post_cancelled', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     await notifyUser(mockProvider, 'user-1', 'post_cancelled', { postTitle: 'Arreglo caño' })
     expect(mockSend).toHaveBeenCalledWith('123456789', {
       text: expect.stringContaining('Trabajo cancelado'),
@@ -95,9 +96,18 @@ describe('notifyUser', () => {
     })
   })
 
-  it('limpia telegramChatId si el envío falla', async () => {
+  it('conserva telegramChatId si el envío falla de forma transitoria', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(false)
+    mockSend.mockResolvedValue({ ok: false, reason: 'transient' })
+
+    await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
+
+    expect(botData.clearBotLink).not.toHaveBeenCalled()
+  })
+
+  it('limpia telegramChatId si Telegram confirma un bloqueo permanente', async () => {
+    vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
+    mockSend.mockResolvedValue({ ok: false, reason: 'permanent_block' })
 
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
 
@@ -106,7 +116,7 @@ describe('notifyUser', () => {
 
   it('no limpia telegramChatId si el provider no es telegram', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    const otherProvider = { name: 'email', send: vi.fn().mockResolvedValue(false) }
+    const otherProvider = { name: 'email', send: vi.fn().mockResolvedValue({ ok: false, reason: 'transient' } as const) }
 
     await notifyUser(otherProvider, 'user-1', 'application_new', { workerName: 'Juan', postTitle: 'Arreglo' })
 
@@ -115,7 +125,7 @@ describe('notifyUser', () => {
 
   it('incluye los datos del template en el texto', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
 
     await notifyUser(mockProvider, 'user-1', 'application_new', { workerName: 'María García', postTitle: 'Cocina' })
 
@@ -127,7 +137,7 @@ describe('notifyUser', () => {
 
   it('usa el template worker_dismissed', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
 
     await notifyUser(mockProvider, 'user-1', 'worker_dismissed', { postTitle: 'Arreglo caño' })
 
@@ -139,7 +149,7 @@ describe('notifyUser', () => {
 
   it('usa el template emergency_new', async () => {
     vi.mocked(userData.findUserById).mockResolvedValue(mockUser)
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
 
     await notifyUser(mockProvider, 'user-1', 'emergency_new', { postTitle: 'Caño roto', postDescription: 'Se inundó el baño' })
 
@@ -161,7 +171,7 @@ describe('broadcastEmergency', () => {
       { id: 'worker-1', chatId: '111' },
       { id: 'worker-2', chatId: '222' },
     ])
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
 
     await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'Se rompió el caño del baño', 'cat-1')
 
@@ -173,7 +183,7 @@ describe('broadcastEmergency', () => {
     vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
       { id: 'worker-1', chatId: '111' },
     ])
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'Se rompió el caño del baño, pierde agua', 'cat-1')
 
@@ -187,7 +197,7 @@ describe('broadcastEmergency', () => {
     vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
       { id: 'worker-1', chatId: '111' },
     ])
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     mockCorsOrigin = 'http://localhost:5173'
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
@@ -204,7 +214,7 @@ describe('broadcastEmergency', () => {
     vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
       { id: 'worker-1', chatId: '111' },
     ])
-    mockSend.mockResolvedValue(true)
+    mockSend.mockResolvedValue({ ok: true })
     mockCorsOrigin = 'https://homefix.vercel.app'
 
     await broadcastEmergency(mockProvider, 'post-abc', 'Caño roto', 'desc', 'cat-1')
@@ -220,7 +230,7 @@ describe('broadcastEmergency', () => {
     vi.mocked(botData.findEmergencyWorkers).mockResolvedValue([
       { id: 'worker-1', chatId: '111' },
     ])
-    mockSend.mockResolvedValue(false)
+    mockSend.mockResolvedValue({ ok: false, reason: 'transient' })
 
     await broadcastEmergency(mockProvider, 'post-1', 'Caño roto', 'desc', 'cat-1')
 

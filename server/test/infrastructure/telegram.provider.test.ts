@@ -22,7 +22,7 @@ describe('telegram.provider', () => {
     const provider = createTelegramProvider()
     expect(provider.name).toBe('telegram')
     const result = await provider.send('123', { text: 'test' })
-    expect(result).toBe(false)
+    expect(result).toEqual({ ok: false, reason: 'transient' })
   })
 
   it('no-op provider no falla con buttons', async () => {
@@ -32,6 +32,23 @@ describe('telegram.provider', () => {
       text: 'Hola',
       buttons: [{ text: 'Ver', url: 'http://localhost:5173/posts/abc' }],
     })
-    expect(result).toBe(false)
+    expect(result).toEqual({ ok: false, reason: 'transient' })
+  })
+
+  it('reconoce solo el bloqueo explícito del usuario', async () => {
+    const { isPermanentTelegramBlock } = await import('../../src/infrastructure/providers/telegram.provider.js')
+
+    expect(isPermanentTelegramBlock({ code: 403, description: 'Forbidden: bot was blocked by the user' })).toBe(true)
+    expect(isPermanentTelegramBlock({ response: { error_code: 403, description: 'Forbidden: bot was kicked from the group' } })).toBe(false)
+    expect(isPermanentTelegramBlock({ code: 429, description: 'Too Many Requests' })).toBe(false)
+  })
+
+  it.each([
+    ['timeout', new Error('timeout')],
+    ['format error', { code: 400, description: 'Bad Request: formatting error' }],
+    ['unknown error', { message: 'network failure' }],
+  ])('clasifica %s como transitorio', async (_name, error) => {
+    const { isPermanentTelegramBlock } = await import('../../src/infrastructure/providers/telegram.provider.js')
+    expect(isPermanentTelegramBlock(error)).toBe(false)
   })
 })
