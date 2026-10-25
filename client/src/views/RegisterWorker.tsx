@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import {
@@ -26,15 +26,6 @@ const strengthLabels = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Excelente']
 export default function RegisterWorker() {
   const navigate = useNavigate()
   const { categories, loading: loadingCategories, error: categoriesError, retry: retryCategories } = useCategories()
-
-  useEffect(() => {
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-    }
-  }, [])
 
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
@@ -234,7 +225,7 @@ export default function RegisterWorker() {
 
   return (
     <>
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-50 font-sans" style={{ position: 'fixed', inset: 0 }}>
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       {/* Back button */}
       <div className="px-6 pt-4 pb-1">
         <button
@@ -246,7 +237,7 @@ export default function RegisterWorker() {
       </div>
 
       {/* Centered card */}
-      <main className="flex-1 flex items-center justify-center px-4 pb-4 min-h-0 overflow-hidden">
+      <main className="flex-1 flex items-center justify-center px-4 py-4">
         <div className="w-full max-w-[520px] space-y-3">
           {/* Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
