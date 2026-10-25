@@ -59,6 +59,7 @@ const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode =>
 const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
   if (!localStorage.getItem('token')) return <Navigate to="/" replace />
   const user = getStoredUser()
+  if (user?.role !== UserRole.Worker && user?.role !== UserRole.Client) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Worker) return <Navigate to="/dashboard" replace />
   return children
 }
@@ -66,6 +67,7 @@ const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
 const ClientRoute = ({ children }: { children: ReactNode }): ReactNode => {
   if (!localStorage.getItem('token')) return <Navigate to="/" replace />
   const user = getStoredUser()
+  if (user?.role !== UserRole.Worker && user?.role !== UserRole.Client) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Client) return <Navigate to="/worker" replace />
   return children
 }

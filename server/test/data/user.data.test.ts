@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { UserRole } from '../../src/domain/types/userRole.js'
 
 const { findUniqueMock, findManyMock, createMock, findFirstMock, upsertNationalIdMock, upsertAddressMock, clientFindManyMock, clientAggregateMock, workerFindManyMock, workerAggregateMock, userUpdateMock, userCategoryCreateManyMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn<(args: unknown) => Promise<unknown | null>>(),
@@ -119,9 +120,11 @@ describe('createUser', () => {
       email: 'jane@test.com',
       password: 'hashed',
       nationalId: 'DNI-87654321',
+      role: UserRole.Client,
     })
 
     expect(createMock).toHaveBeenCalledOnce()
+    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ role: UserRole.Client }) }))
     expect(user.id).toBeDefined()
     expect(user.email).toBe('jane@test.com')
     expect(user).not.toHaveProperty('password')

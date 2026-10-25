@@ -55,6 +55,10 @@ export default function Login() {
     try {
       setIsSubmitting(true)
       const data = await login(form)
+      if (data.user.role !== UserRole.Worker && data.user.role !== UserRole.Client) {
+        setError('No se pudo identificar el tipo de cuenta. Contactá a soporte para recuperar el acceso.')
+        return
+      }
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify({ id: data.user.id, name: data.user.name, email:data.user.email, role: data.user.role, photo: data.user.photo ?? null }))
       emitAuthChange()

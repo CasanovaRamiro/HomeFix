@@ -123,7 +123,7 @@ export const createUser = async (data: CreateUserInput) => {
       nationalId: data.nationalId ?? `${Date.now()}`,
       nationalIdTypeId: dniId,
       addressId: addrId,
-      role: data.role ?? 'user',
+      role: data.role,
     },
     select: publicFields,
   })
