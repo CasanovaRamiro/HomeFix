@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories, createBiddingPost, findBiddingPostsByUser, findAvailableBiddingPosts, findWorkerAppBiddings, selectBiddingWinner } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories, createBiddingPost, findBiddingPostsByUser, findAvailableBiddingPosts, findWorkerAppBiddings, selectBiddingWinner, reopenPosts } from "../../src/infrastructure/database/post.database.js";
 import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
 import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, findApplicationById, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
@@ -26,6 +26,7 @@ vi.mock("../../src/infrastructure/database/post.database.js", () => ({
   findAvailableBiddingPosts: vi.fn(),
   findWorkerAppBiddings: vi.fn(),
   selectBiddingWinner: vi.fn(),
+  reopenPosts: vi.fn(),
 }));
 
 vi.mock("../../src/infrastructure/database/application.database.js", () => ({
@@ -860,41 +861,22 @@ describe('post.service - reopenPost', () => {
       scheduledDate: null,
       offeredDuration: null,
     } as never])
-    vi.mocked(updateApplicationStatus).mockResolvedValue({
-      id: 'app-1',
-      status: 'Pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      workerId: 'worker-uuid',
-      postId: 'uuid-1',
-      categoryId: null,
-      subcontractGroupId: null,
-      message: null,
-      availableDays: null,
-      availableTimeFrom: null,
-      availableTimeTo: null,
-      chargesVisit: false,
-      visitCost: null,
-      scheduledDate: null,
-      offeredDuration: null,
-    } as never)
-    vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
+    vi.mocked(reopenPosts).mockResolvedValue(undefined)
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
 
-    expect(updateApplicationStatus).toHaveBeenCalledWith('app-1', 'Pending')
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(reopenPosts).toHaveBeenCalledWith(['uuid-1'])
   })
 
   it('funciona aunque no haya aplicaciÃ³n aceptada', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockInProgress as never)
     vi.mocked(findAcceptedApplications).mockResolvedValue([])
-    vi.mocked(updatePostStatus).mockResolvedValue({ id: 'uuid-1', status: 'Active' } as never)
+    vi.mocked(reopenPosts).mockResolvedValue(undefined)
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
 
     expect(updateApplicationStatus).not.toHaveBeenCalled()
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(reopenPosts).toHaveBeenCalledWith(['uuid-1'])
   })
 
   it('lanza 404 si el post no existe', async () => {
@@ -929,9 +911,7 @@ describe('post.service - reopenPost', () => {
     await postService.reopenPost('uuid-1', 'user-uuid-1')
 
     expect(findPostsByGroupId).toHaveBeenCalledWith('group-1')
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-2', 'Active')
-    expect(updatePostStatus).toHaveBeenCalledTimes(2)
+    expect(reopenPosts).toHaveBeenCalledWith(['uuid-1', 'uuid-2'])
   })
 
   it('salta posts no In progress en grupo SubContract al reabrir', async () => {
@@ -951,8 +931,7 @@ describe('post.service - reopenPost', () => {
 
     await postService.reopenPost('uuid-1', 'user-uuid-1')
 
-    expect(updatePostStatus).toHaveBeenCalledTimes(1)
-    expect(updatePostStatus).toHaveBeenCalledWith('uuid-1', 'Active')
+    expect(reopenPosts).toHaveBeenCalledWith(['uuid-1'])
   })
 })
 

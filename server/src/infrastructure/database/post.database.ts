@@ -513,6 +513,46 @@ export const decrementPostFilledCount = (postId: string, categoryId?: string) =>
     data: { filledCount: { decrement: 1 } },
   })
 
+export const reopenPosts = async (postIds: string[]): Promise<void> => {
+  if (postIds.length === 0) return
+
+  await prisma.$transaction(async (tx) => {
+    const reopened = await tx.post.updateMany({
+      where: { id: { in: postIds }, status: PostStatus.InProgress },
+      data: { status: PostStatus.Active },
+    })
+    if (reopened.count !== postIds.length) {
+      throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
+    }
+
+    const applications = await tx.application.findMany({
+      where: {
+        postId: { in: postIds },
+        status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] },
+      },
+      select: { id: true, status: true, categoryId: true },
+    })
+
+    for (const application of applications) {
+      if (application.status !== ApplicationStatus.Accepted || !application.categoryId) continue
+      const decremented = await tx.postCategory.updateMany({
+        where: { id: application.categoryId, filledCount: { gt: 0 } },
+        data: { filledCount: { decrement: 1 } },
+      })
+      if (decremented.count === 0) {
+        throw new Error('Post category filled count is inconsistent')
+      }
+    }
+
+    if (applications.length > 0) {
+      await tx.application.updateMany({
+        where: { id: { in: applications.map((application) => application.id) } },
+        data: { status: ApplicationStatus.Pending },
+      })
+    }
+  })
+}
+
 export const findPostCategories = (postId: string) =>
   prisma.postCategory.findMany({
     where: { postId },
