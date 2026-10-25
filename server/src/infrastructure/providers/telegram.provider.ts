@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf'
 import { logger } from '../../lib/logger.js'
-import type { NotificationProvider, NotificationMessage } from '../../domain/types/notification.types.js'
+import type { NotificationProvider, NotificationMessage, NotificationSendResult } from '../../domain/types/notification.types.js'
 import { env } from '../../lib/envConfig.js'
 import { createHttpError } from '../../lib/errors.js'
 
@@ -49,18 +49,29 @@ export const launchBot = (registerHandlers: (bot: Telegraf) => void): void => {
   }
 }
 
+export function isPermanentTelegramBlock(err: unknown): boolean {
+  const telegramError = err as {
+    code?: number
+    description?: string
+    response?: { error_code?: number; description?: string }
+  }
+  const code = telegramError.code ?? telegramError.response?.error_code
+  const description = telegramError.description ?? telegramError.response?.description ?? ''
+  return code === 403 && /bot was blocked by the user/i.test(description)
+}
+
 export const createTelegramProvider = (): NotificationProvider => {
   const token = env.TELEGRAM_BOT_TOKEN
   if (!token) {
     logger.warn({ action: 'telegram.init' }, 'TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled')
-    return { name: 'telegram', send: async () => false }
+    return { name: 'telegram', send: async (): Promise<NotificationSendResult> => ({ ok: false, reason: 'transient' }) }
   }
 
   const bot = getBot()
 
   return {
     name: 'telegram',
-    async send(recipient: string, message: NotificationMessage): Promise<boolean> {
+    async send(recipient: string, message: NotificationMessage): Promise<NotificationSendResult> {
       try {
         const parseMode = message.parseMode === 'HTML' ? 'HTML'
           : message.parseMode === 'Markdown' ? 'Markdown'
@@ -71,15 +82,15 @@ export const createTelegramProvider = (): NotificationProvider => {
           extra.reply_markup = { inline_keyboard: [message.buttons.map((b) => ({ text: b.text, url: b.url }))] }
         }
         await bot.telegram.sendMessage(recipient, message.text, extra)
-        return true
+        return { ok: true }
       } catch (err) {
-        const code = (err as { code?: number })?.code
-        if (code === 403) {
+        if (isPermanentTelegramBlock(err)) {
           logger.warn({ recipient, action: 'telegram.send' }, 'Bot blocked by user')
+          return { ok: false, reason: 'permanent_block' }
         } else {
           logger.error({ err, recipient, action: 'telegram.send' }, 'Telegram send error')
         }
-        return false
+        return { ok: false, reason: 'transient' }
       }
     },
   }

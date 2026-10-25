@@ -4,7 +4,11 @@ export interface NotificationMessage {
   buttons?: Array<{ text: string; url: string }>
 }
 
+export type NotificationSendResult =
+  | { ok: true }
+  | { ok: false; reason: 'transient' | 'permanent_block' }
+
 export interface NotificationProvider {
   readonly name: string
-  send(recipient: string, message: NotificationMessage): Promise<boolean>
+  send(recipient: string, message: NotificationMessage): Promise<NotificationSendResult>
 }
