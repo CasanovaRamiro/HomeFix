@@ -672,7 +672,7 @@ describe("selectBiddingWinner", () => {
     const rejected = results.filter((r) => r.status === "rejected");
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
-    expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ status: 400 });
+    expect(rejected[0].reason).toMatchObject({ status: 400 });
 
     const post = await prisma.post.findUnique({ where: { id: bidding.id } });
     const apps = await prisma.application.findMany({ where: { postId: bidding.id } });
