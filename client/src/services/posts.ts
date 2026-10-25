@@ -143,7 +143,7 @@ export interface UpdateSubcontractInput {
   address: string
   latitude?: number | null
   longitude?: number | null
-  positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+  positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
 }
 
 export const updateSubcontract = (id: string, data: UpdateSubcontractInput) =>

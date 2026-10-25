@@ -398,7 +398,7 @@ export const updateSubcontractGroup = async (
     address: string
     latitude?: number | null
     longitude?: number | null
-    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+    positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
   }
 ): Promise<DomainPost[]> => {
   let posts = await findPostsByGroupId(groupId)

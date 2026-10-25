@@ -49,6 +49,7 @@ export function useEditSubcontract(subcontractId: string) {
         })
         if (data.categories && data.categories.length > 0) {
           setPositions(data.categories.map(cat => ({
+            id: cat.id,
             categoryId: cat.categoryId,
             quantity: cat.quantity,
             roleDescription: cat.roleDescription || '',
