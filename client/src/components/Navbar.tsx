@@ -139,7 +139,7 @@ export default function Navbar(): React.ReactElement | null {
   }
 
   return (
-    <nav style={{ background: isPublicLanding ? theme.accent : theme.card, borderBottom: `1px solid ${isPublicLanding ? theme.accentHover : theme.border}` }}
+    <nav style={{ background: '#FFFFFF', borderBottom: `1px solid ${isPublicLanding ? theme.accentHover : theme.border}` }}
       className="sticky top-0 z-50 backdrop-blur-md">
       <div style={{ maxWidth: '90rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
