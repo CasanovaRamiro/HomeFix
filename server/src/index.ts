@@ -20,7 +20,16 @@ export const app = express()
 const PORT = env.PORT
 
 app.use(cors({ origin: env.CORS_ORIGIN }))
+app.use('/ai', express.json({
+  limit: '5mb',
+  verify: (req, _res, buf) => {
+    if (buf && buf.length) {
+      Object.assign(req, { rawBody: buf.toString('utf8') })
+    }
+  },
+}))
 app.use(express.json({
+  limit: '100kb',
   verify: (req, _res, buf) => {
     if (buf && buf.length) {
       Object.assign(req, { rawBody: buf.toString('utf8') })
