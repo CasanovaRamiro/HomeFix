@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPost, findPostById, findPostsByUser, updatePostStatus, updatePost as updatePostData, findAvailablePosts, findAvailableSubcontracts, findEmergencyPosts, searchByDistance, createSubPost, findPostsByGroupId, findPostCategories, createBiddingPost, findBiddingPostsByUser, findAvailableBiddingPosts, findWorkerAppBiddings, selectBiddingWinner } from "../../src/infrastructure/database/post.database.js";
 import { broadcastEmergency, notifyUser } from "../../src/domain/services/notification.service.js";
-import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
+import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, findApplicationById, updateApplicationStatus, rejectPendingApplications } from "../../src/infrastructure/database/application.database.js";
 import { getWorkerRating, getClientRating, getUserRating } from "../../src/domain/services/user.service.js";
 import * as postService from "../../src/domain/services/post.service.js";
 import { PostType } from "../../src/domain/types/postType.js";
@@ -32,6 +32,7 @@ vi.mock("../../src/infrastructure/database/application.database.js", () => ({
   findAcceptedApplication: vi.fn(),
   findAcceptedApplications: vi.fn(),
   findAcceptedApplicationByWorker: vi.fn(),
+  findApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn(),
   rejectPendingApplications: vi.fn(),
 }));
@@ -1747,8 +1748,11 @@ describe('post.service - selectWinner', () => {
     user: { id: 'client-1', name: 'Client', surname: 'Test' },
   }
 
+  const mockApplication = { id: 'app-1', postId: 'bidding-1', status: 'Pending' } as unknown as Awaited<ReturnType<typeof findApplicationById>>
+
   it('selecciona ganador cuando la licitación está Active', async () => {
     vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication)
     vi.mocked(selectBiddingWinner).mockResolvedValue({ id: 'bidding-1', status: 'InProgress' })
 
     await postService.selectWinner('bidding-1', 'client-1', 'app-1')
@@ -1758,6 +1762,7 @@ describe('post.service - selectWinner', () => {
 
   it('selecciona ganador cuando la licitación está Evaluating', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'Evaluating' })
+    vi.mocked(findApplicationById).mockResolvedValue(mockApplication)
     vi.mocked(selectBiddingWinner).mockResolvedValue({ id: 'bidding-1', status: 'InProgress' })
 
     await postService.selectWinner('bidding-1', 'client-1', 'app-1')
@@ -1777,6 +1782,24 @@ describe('post.service - selectWinner', () => {
 
   it('lanza 400 si la licitación está In progress', async () => {
     vi.mocked(findPostById).mockResolvedValue({ ...mockBidding, status: 'In progress' })
+    await expect(postService.selectWinner('bidding-1', 'client-1', 'app-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('lanza 404 si la postulación no existe', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(findApplicationById).mockResolvedValue(null)
+    await expect(postService.selectWinner('bidding-1', 'client-1', 'app-x')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('lanza 400 si la postulación pertenece a otra licitación', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, postId: 'otra-bidding' } as never)
+    await expect(postService.selectWinner('bidding-1', 'client-1', 'app-1')).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('lanza 400 si la postulación no está pendiente', async () => {
+    vi.mocked(findPostById).mockResolvedValue(mockBidding)
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, status: 'Rejected' } as never)
     await expect(postService.selectWinner('bidding-1', 'client-1', 'app-1')).rejects.toMatchObject({ status: 400 })
   })
 })

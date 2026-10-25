@@ -26,12 +26,28 @@ export const clearCategoryCache = () => {
   logger.info({ action: 'ai.categoryCacheCleared' }, 'Category cache cleared')
 }
 
+function isAiResponse(v: unknown): v is AiResponse {
+  if (!v || typeof v !== 'object') return false
+  const r = v as Record<string, unknown>
+  if (r.type === 'question') return typeof r.text === 'string'
+  if (r.type === 'suggestion') return !!r.data && typeof r.data === 'object'
+  return false
+}
+
+function parseAiResponse(raw: string): AiResponse {
+  const value: unknown = JSON.parse(raw)
+  if (!isAiResponse(value)) {
+    throw new Error('Respuesta de IA inválida')
+  }
+  return value
+}
+
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
   const categories = await getCachedCategories()
   const categoryList = categories.map((c) => `${c.id}: ${c.name}`).join('\n')
 
-  if (input.messages.length === 0) {
-    throw new Error('Se requiere al menos un mensaje para generar una sugerencia')
+  if (!Array.isArray(input?.messages) || input.messages.length === 0) {
+    throw Object.assign(new Error('Se requiere al menos un mensaje para generar una sugerencia'), { status: 400 })
   }
 
   const systemInstructions = `
@@ -75,8 +91,10 @@ FORMATO SUGGESTION:
 confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
 `
 
-  const contents: Content[] = input.messages
-    .slice(-HISTORY_LIMIT)
+  const windowed = input.messages.slice(-HISTORY_LIMIT)
+  while (windowed.length > 0 && windowed[0].role !== 'user') windowed.shift()
+
+  const contents: Content[] = windowed
     .map((msg) => ({
       role: msg.role,
       parts: [
@@ -94,16 +112,24 @@ confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
       ],
     }))
 
-  const cleaned = await generateWithRetry(contents, systemInstructions)
-  const response = JSON.parse(cleaned) as AiResponse
+  let response: AiResponse
+  try {
+    response = await generateWithRetry(contents, systemInstructions, parseAiResponse)
+  } catch (e) {
+    const err = e as Error & { status?: number }
+    err.status = 502
+    throw err
+  }
 
   logger.info({ messageCount: input.messages.length, responseType: response.type, action: 'ai.postSuggested' }, 'Post suggestion generated')
 
   if (response.type === 'suggestion') {
     const valid = categories.find((c) => c.id === response.data.suggestedCategoryId)
     if (!valid) {
-      response.data.suggestedCategoryId = categories[0]?.id ?? 1
-      response.data.suggestedCategoryName = categories[0]?.name ?? 'General'
+      const fallback = categories[0]
+      if (!fallback) throw Object.assign(new Error('No hay categorías disponibles'), { status: 400 })
+      response.data.suggestedCategoryId = fallback.id
+      response.data.suggestedCategoryName = fallback.name
     }
     response.data.startDate = null
     response.data.endDate = null

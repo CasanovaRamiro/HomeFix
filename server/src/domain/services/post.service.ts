@@ -21,7 +21,7 @@ import {
   selectBiddingWinner,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
-import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
+import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, findApplicationById, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -172,8 +172,18 @@ export const selectWinner = async (biddingId: string, userId: string, applicatio
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (!post.isBidding) throw Object.assign(new Error('El post no es una licitación'), { status: 400 })
   if (post.status !== PostStatus.Active && post.status !== PostStatus.Evaluating) {
     throw Object.assign(new Error(`La licitación debe estar activa o en evaluación para seleccionar ganador`), { status: 400 })
+  }
+
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error('Postulación no encontrada'), { status: 404 })
+  if (application.postId !== biddingId) {
+    throw Object.assign(new Error('La postulación no pertenece a esta licitación'), { status: 400 })
+  }
+  if (application.status !== ApplicationStatus.Pending) {
+    throw Object.assign(new Error('La postulación no está pendiente'), { status: 400 })
   }
 
   return selectBiddingWinner(biddingId, applicationId, post.status)
@@ -388,7 +398,7 @@ export const updateSubcontractGroup = async (
     address: string
     latitude?: number | null
     longitude?: number | null
-    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+    positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
   }
 ): Promise<DomainPost[]> => {
   let posts = await findPostsByGroupId(groupId)

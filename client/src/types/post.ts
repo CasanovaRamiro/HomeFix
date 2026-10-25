@@ -9,6 +9,7 @@ export enum PostStatus {
 
 export interface PostCategoryDTO {
   id: string
+  categoryId: string
   name: string
 }
 
@@ -66,6 +67,7 @@ export interface CreateSubcontractInput {
 // --- Subcontract types ---
 
 export interface SubcontractPosition {
+  id?: string
   categoryId: string
   quantity: number
   roleDescription: string
