@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { exchangeCodeForTokens } from '../lib/auth0'
-import { emitAuthChange } from '../hooks/useAuth'
+import { consumeAuthReturnPath, emitAuthChange } from '../hooks/useAuth'
 import { fetchMe } from '../services/auth'
 import { UserRole } from '../types/user'
 
@@ -71,7 +71,7 @@ export default function AuthCallback() {
         localStorage.setItem('user', JSON.stringify({ id: user.id, name: user.name, email: user.email,role: user.role, photo: user.photo ?? null }))
         emitAuthChange()
 
-        navigate(user.role === UserRole.Worker ? '/worker' : '/dashboard', { replace: true })
+        navigate(consumeAuthReturnPath() ?? (user.role === UserRole.Worker ? '/worker' : '/dashboard'), { replace: true })
       } catch (err) {
         console.error('Auth callback error:', err)
         if (axios.isAxiosError(err) && err.response?.status === 404) {

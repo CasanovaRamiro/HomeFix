@@ -62,9 +62,9 @@ export const notifyUser = async (
   }
 
   const message = templates[event](data)
-  const ok = await provider.send(user.telegramChatId, message)
+  const result = await provider.send(user.telegramChatId, message)
 
-  if (!ok && provider.name === 'telegram') {
+  if (!result.ok && result.reason === 'permanent_block' && provider.name === 'telegram') {
     logger.warn({ userId, event, action: 'notification.sendFailed' }, 'Failed to send notification, clearing chat ID')
     await clearBotLink(userId)
   }

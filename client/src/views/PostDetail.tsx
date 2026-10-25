@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle2, SlidersHorizontal, BadgeCheck, CircleCheck, Star, FilterX, X } from 'lucide-react'
+import { Calendar, MapPin, Users, CheckCircle2, SlidersHorizontal, BadgeCheck, CircleCheck, Star, FilterX, X } from 'lucide-react'
 import api from '../services/api'
 import { pausePost, cancelPost, updatePost, type UpdatePostData } from '../services/posts'
 import type { WorkerReview } from '../services/workers'
@@ -11,6 +11,7 @@ import PostCard from '../components/post/PostCard'
 import ApplicantCard from '../components/post/ApplicantCard'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import BackButton from '../components/ui/BackButton'
 import ViewReviewModal from '../components/review/ViewReviewModal'
 import { useCategories } from '../hooks/useCategories'
 import { useTheme } from '../hooks/useTheme'
@@ -132,7 +133,7 @@ export default function PostDetail() {
 
   const openEditModal = () => {
     if (!post) return
-    const categoryId = post.categories[0]?.id ?? ''
+    const categoryId = post.categories[0]?.categoryId ?? ''
     setEditForm({ title: post.title, categoryId, description: post.description, startDate: post.startDate.slice(0, 10), endDate: post.endDate.slice(0, 10), address: post.address })
     setEditError('')
     setShowEditModal(true)
@@ -177,7 +178,7 @@ export default function PostDetail() {
     <>
       <div className="pd-hero">
         <div className="pd-wrap">
-          <button className="pd-hero-back" onClick={() => navigate('/dashboard')}><ArrowLeft size={15} />Volver al panel</button>
+          <BackButton />
           <h1 className="pd-hero-title">Detalle de publicación</h1>
         </div>
       </div>
@@ -190,7 +191,7 @@ export default function PostDetail() {
     <>
       <div className="pd-hero">
         <div className="pd-wrap">
-          <button className="pd-hero-back" onClick={() => navigate('/dashboard')}><ArrowLeft size={15} />Volver al panel</button>
+          <BackButton />
           <div className="pd-hero-card">
             <div className="pd-hero-kicker">Tu publicación</div>
             <h1 className="pd-hero-title">{post.title}</h1>

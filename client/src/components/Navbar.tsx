@@ -4,7 +4,7 @@ import logo from '../assets/homefix-logo.png'
 import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch, Gavel, FilePlus } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
-import { useAuth, emitAuthChange } from '../hooks/useAuth'
+import { useAuth, clearAuth } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 
 interface NavLinkDef {
@@ -132,9 +132,7 @@ export default function Navbar(): React.ReactElement | null {
   const displayInitial = displayName.charAt(0).toUpperCase()
 
   const logout = (): void => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    emitAuthChange()
+    clearAuth()
     setUserMenuOpen(false)
     setMobileOpen(false)
     void navigate('/login')

@@ -172,6 +172,7 @@ export const selectWinner = async (biddingId: string, userId: string, applicatio
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (!post.isBidding) throw Object.assign(new Error('El post no es una licitación'), { status: 400 })
   if (post.status !== PostStatus.Active && post.status !== PostStatus.Evaluating) {
     throw Object.assign(new Error(`La licitación debe estar activa o en evaluación para seleccionar ganador`), { status: 400 })
   }
@@ -397,7 +398,7 @@ export const updateSubcontractGroup = async (
     address: string
     latitude?: number | null
     longitude?: number | null
-    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+    positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
   }
 ): Promise<DomainPost[]> => {
   let posts = await findPostsByGroupId(groupId)

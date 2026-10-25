@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import type { CreatePostInput } from "../../src/domain/types/post.types.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus, createSubPost, findEmergencyPosts, searchByDistance } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus, createSubPost, findEmergencyPosts, searchByDistance, selectBiddingWinner } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -579,5 +579,108 @@ describe("searchByDistance", () => {
     const results = await searchByDistance(BA_LAT, BA_LNG, 10);
     expect(results.length).toBeGreaterThanOrEqual(2);
     expect(results[0].distance).toBeLessThanOrEqual(results[1].distance);
+  });
+});
+
+describe("selectBiddingWinner", () => {
+  const makeBidding = (ownerId: string, extra: Record<string, unknown> = {}) =>
+    prisma.post.create({
+      data: {
+        userId: ownerId,
+        title: "Licitación",
+        description: "Test",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        isBidding: true,
+        ...extra,
+      },
+    });
+
+  const snapshot = async (postId: string) => {
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    const applications = await prisma.application.findMany({
+      where: { postId },
+      orderBy: { id: "asc" },
+    });
+    return { postStatus: post?.status, applications: applications.map((a) => ({ id: a.id, status: a.status })) };
+  };
+
+  it("adjudica una postulación Pending de la misma licitación", async () => {
+    const worker = await createUser("winner@test.com", "Winner", "hashed");
+    const otherWorker = await createUser("other-bidder@test.com", "Other", "hashed");
+    const bidding = await makeBidding(userId);
+    const winner = await prisma.application.create({ data: { workerId: worker.id, postId: bidding.id, status: "Pending" } });
+    const other = await prisma.application.create({ data: { workerId: otherWorker.id, postId: bidding.id, status: "Pending" } });
+
+    const result = await selectBiddingWinner(bidding.id, winner.id, "Active");
+
+    expect(result).toEqual({ id: bidding.id, status: "In progress" });
+    const post = await prisma.post.findUnique({ where: { id: bidding.id } });
+    const winnerApp = await prisma.application.findUnique({ where: { id: winner.id } });
+    const otherApp = await prisma.application.findUnique({ where: { id: other.id } });
+    expect(post?.status).toBe("In progress");
+    expect(winnerApp?.status).toBe("Accepted");
+    expect(otherApp?.status).toBe("Rejected");
+  });
+
+  it("rechaza una postulación de otra publicación sin modificar registros", async () => {
+    const worker = await createUser("foreign@test.com", "Foreign", "hashed");
+    const bidding = await makeBidding(userId);
+    const otherBidding = await makeBidding(userId, { title: "Otra licitación" });
+    const ownApp = await prisma.application.create({ data: { workerId: worker.id, postId: bidding.id, status: "Pending" } });
+    const foreignApp = await prisma.application.create({
+      data: { workerId: worker.id, postId: otherBidding.id, status: "Pending" },
+    });
+    const beforeBidding = await snapshot(bidding.id);
+    const beforeOther = await snapshot(otherBidding.id);
+
+    await expect(selectBiddingWinner(bidding.id, foreignApp.id, "Active")).rejects.toMatchObject({ status: 400 });
+
+    expect(await snapshot(bidding.id)).toEqual(beforeBidding);
+    expect(await snapshot(otherBidding.id)).toEqual(beforeOther);
+    expect(ownApp.status).toBe("Pending");
+  });
+
+  it("rechaza una postulación que no está Pending sin modificar registros", async () => {
+    const worker = await createUser("rejected-bidder@test.com", "Rejected", "hashed");
+    const bidding = await makeBidding(userId);
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: bidding.id, status: "Rejected" },
+    });
+    const before = await snapshot(bidding.id);
+
+    await expect(selectBiddingWinner(bidding.id, application.id, "Active")).rejects.toMatchObject({ status: 400 });
+
+    expect(await snapshot(bidding.id)).toEqual(before);
+  });
+
+  it("impide una adjudicación duplicada o concurrente sin escrituras parciales", async () => {
+    const workerA = await createUser("concurrent-a@test.com", "A", "hashed");
+    const workerB = await createUser("concurrent-b@test.com", "B", "hashed");
+    const bidding = await makeBidding(userId);
+    const appA = await prisma.application.create({ data: { workerId: workerA.id, postId: bidding.id, status: "Pending" } });
+    const appB = await prisma.application.create({ data: { workerId: workerB.id, postId: bidding.id, status: "Pending" } });
+
+    const results = await Promise.allSettled([
+      selectBiddingWinner(bidding.id, appA.id, "Active"),
+      selectBiddingWinner(bidding.id, appB.id, "Active"),
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].reason).toMatchObject({ status: 400 });
+
+    const post = await prisma.post.findUnique({ where: { id: bidding.id } });
+    const apps = await prisma.application.findMany({ where: { postId: bidding.id } });
+    const accepted = apps.filter((a) => a.status === "Accepted");
+    const pending = apps.filter((a) => a.status === "Pending");
+    expect(post?.status).toBe("In progress");
+    expect(accepted).toHaveLength(1);
+    expect(pending).toHaveLength(0);
+    expect(apps.every((a) => a.status === "Accepted" || a.status === "Rejected")).toBe(true);
   });
 });
