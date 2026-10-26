@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { initializeCategoryCatalog } from '../../prisma/categoryCatalog.js'
+import { initializeCategoryCatalog } from '../../src/infrastructure/database/categoryCatalog.database.js'
 import { cleanDb, createUser, prisma } from '../helpers/db.js'
 import { listCategories } from '../../src/infrastructure/database/category.database.js'
 import { UserRole } from '../../src/domain/types/userRole.js'

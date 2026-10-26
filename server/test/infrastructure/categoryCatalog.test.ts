@@ -5,7 +5,7 @@ vi.mock('../../src/lib/prisma.js', () => ({
 }))
 
 import prisma from '../../src/lib/prisma.js'
-import { initializeCategoryCatalog } from '../../prisma/categoryCatalog.js'
+import { initializeCategoryCatalog } from '../../src/infrastructure/database/categoryCatalog.database.js'
 
 beforeEach(() => vi.resetAllMocks())
 
