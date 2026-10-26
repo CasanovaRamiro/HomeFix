@@ -227,24 +227,18 @@ export default function KycVerify() {
     await handleStart()
   }
 
-  const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
+  const handleModalComplete = useCallback(async (sessionId: string, _status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
-    const email = user?.email
-    if (!email) {
-      setErrorMessage('No se pudo identificar tu usuario')
-      setState('error')
-      return
-    }
     try {
-      const res = await confirmKycSession(sessionId, email, status)
+      const res = await confirmKycSession(sessionId)
       setCurrentStatus(res.status)
     } catch (e) {
       const err = e as { response?: { data?: { error?: string } } }
       setErrorMessage(err.response?.data?.error ?? 'Error al confirmar la verificación')
       setState('error')
     }
-  }, [user?.email])
+  }, [])
 
   const handleModalCancelled = () => {
     setIsModalOpen(false)

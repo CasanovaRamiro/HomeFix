@@ -172,3 +172,10 @@ export const updateUserKycStatus = (
     data,
     select: { ...publicFields, kycStatus: true, kycVerifiedAt: true, diditVerificationId: true },
   })
+
+export const updateUserDiditVerificationId = (email: string, diditVerificationId: string) =>
+  prisma.user.update({
+    where: { email },
+    data: { diditVerificationId },
+    select: { ...publicFields, kycStatus: true, kycVerifiedAt: true, diditVerificationId: true },
+  })

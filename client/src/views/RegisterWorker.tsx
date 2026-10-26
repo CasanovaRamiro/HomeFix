@@ -128,17 +128,15 @@ export default function RegisterWorker() {
     }
   }
 
-  const handleModalComplete = useCallback(async (sessionId: string, status: string) => {
+  const handleModalComplete = useCallback(async (sessionId: string, _status: string) => {
     setIsModalOpen(false)
     setSessionUrl(null)
-    const email = form.email
-    if (!email) return
     try {
-      await confirmKycSession(sessionId, email, status)
+      await confirmKycSession(sessionId)
     } catch {
       // silent
     }
-  }, [form.email])
+  }, [])
 
   const handleModalCancelled = () => {
     setIsModalOpen(false)
