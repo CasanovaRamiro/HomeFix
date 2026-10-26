@@ -53,6 +53,7 @@ const PrivateRoute = ({ children }: { children: ReactNode }): ReactNode => {
 const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
   const { user, isLoggedIn } = useAuth()
   if (!isLoggedIn) return <Navigate to="/" replace />
+  if (user?.role !== UserRole.Worker && user?.role !== UserRole.Client) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Worker) return <Navigate to="/dashboard" replace />
   return children
 }
@@ -60,6 +61,7 @@ const WorkerRoute = ({ children }: { children: ReactNode }): ReactNode => {
 const ClientRoute = ({ children }: { children: ReactNode }): ReactNode => {
   const { user, isLoggedIn } = useAuth()
   if (!isLoggedIn) return <Navigate to="/" replace />
+  if (user?.role !== UserRole.Worker && user?.role !== UserRole.Client) return <Navigate to="/" replace />
   if (user?.role !== UserRole.Client) return <Navigate to="/worker" replace />
   return children
 }

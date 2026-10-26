@@ -328,6 +328,27 @@ describe('auth.service - loginUser', () => {
     expect(result.user.role).toBe(UserRole.Client)
   })
 
+  it('logs in and preserves a worker role from the local user', async () => {
+    vi.mocked(userData.findByEmail).mockResolvedValue({ ...mockUser, role: UserRole.Worker })
+    vi.mocked(auth0Provider.loginWithAuth0).mockResolvedValue({
+      access_token: 'access-token',
+      id_token: 'id-token',
+      token_type: 'Bearer',
+      expires_in: 86400,
+    })
+    vi.mocked(auth0Provider.getAuth0UserInfo).mockResolvedValue({
+      sub: 'auth0|1',
+      email: 'jane@test.com',
+      name: 'Jane',
+      email_verified: true,
+    })
+
+    const result = await loginUser({ email: 'jane@test.com', password: 'password123' })
+
+    expect(result.user.role).toBe(UserRole.Worker)
+    expect(userData.createUser).not.toHaveBeenCalled()
+  })
+
   it('throws 401 when credentials are invalid', async () => {
     vi.mocked(auth0Provider.loginWithAuth0).mockRejectedValue(
       Object.assign(new Error('invalid_grant'), { status: 401 })
@@ -361,9 +382,8 @@ describe('auth.service - loginUser', () => {
     await expect(loginUser({ email: 'jane@test.com' })).rejects.toMatchObject({ status: 400 })
   })
 
-  it('creates new user on first login when user does not exist in DB', async () => {
+  it('rejects a valid Auth0 login when the local user does not exist', async () => {
     vi.mocked(userData.findByEmail).mockResolvedValue(null)
-    vi.mocked(userData.createUser).mockResolvedValue(mockUser)
     vi.mocked(auth0Provider.loginWithAuth0).mockResolvedValue({
       access_token: 'access-token',
       token_type: 'Bearer',
@@ -376,10 +396,10 @@ describe('auth.service - loginUser', () => {
       email_verified: true,
     })
 
-    const result = await loginUser({ email: 'jane@test.com', password: 'password123' })
+    await expect(loginUser({ email: 'jane@test.com', password: 'password123' }))
+      .rejects.toMatchObject({ status: 404 })
 
-    expect(userData.createUser).toHaveBeenCalled()
-    expect(result.user.id).toBe('uuid-jane')
+    expect(userData.createUser).not.toHaveBeenCalled()
   })
 })
 

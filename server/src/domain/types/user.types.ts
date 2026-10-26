@@ -24,5 +24,5 @@ export interface CreateUserInput {
   phone?: string
   surname?: string
   nationalId?: string
-  role?: string
+  role: UserRole
 }
