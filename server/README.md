@@ -71,6 +71,8 @@ pnpm run db:setup
 
 `db:setup` ejecuta `prisma migrate deploy` y `tsx prisma/seed.ts`. El seed usa un catalogo idempotente: conserva los datos existentes y no reemplaza IDs de categorias existentes.
 
+Al arrancar, la API verifica las migraciones y agrega las categorias iniciales faltantes antes de aceptar peticiones. Esto tambien funciona con el servidor compilado, aunque el entorno no ejecute el seed del predeploy. Si falla la inicializacion del catalogo, el servidor no empieza a escuchar; el error debe resolverse antes de ponerlo en servicio.
+
 Si la base ya esta migrada:
 
 ```bash

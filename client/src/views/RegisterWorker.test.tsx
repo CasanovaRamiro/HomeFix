@@ -77,6 +77,27 @@ describe('RegisterWorker category catalog', () => {
     expect(registerWorker).not.toHaveBeenCalled()
   })
 
+  it('submits the recovered specialties when creating a professional', async () => {
+    vi.mocked(fetchCategories).mockResolvedValueOnce(response([])).mockResolvedValueOnce(response([
+      ...catalog, { id: 'category-2', name: 'Plomería' },
+    ]))
+    vi.mocked(registerWorker).mockResolvedValue({
+      userId: 'user-1', email: 'ana@example.com', emailVerified: false, message: 'ok',
+    })
+    const user = await openSpecialties()
+
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }))
+    await user.click(await screen.findByRole('button', { name: /Electricidad/ }))
+    await user.click(screen.getByRole('button', { name: /Plomería/ }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('button', { name: 'Omitir KYC e iniciar sesión' }))
+
+    await waitFor(() => expect(registerWorker).toHaveBeenCalledWith({
+      name: 'Ana', lastName: 'Pérez', email: 'ana@example.com', password: 'Secure123!',
+      phone: '1112345678', categories: ['Electricidad', 'Plomería'],
+    }))
+  })
+
   it('shows loading and prevents progression while the catalog is pending', async () => {
     vi.mocked(fetchCategories).mockImplementation(() => new Promise(() => undefined))
     await openSpecialties()

@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import prisma from '../src/lib/prisma.js'
 import { UserRole } from '../src/domain/types/userRole.js'
-import { CATEGORY_NAMES } from './categoryCatalog.js'
+import { CATEGORY_NAMES } from '../src/infrastructure/database/categoryCatalog.database.js'
 const MANAGED_PASSWORD = 'AUTH0_MANAGED_ACCOUNT'
 
 const JOB_IMAGES: Record<string, string[]> = {

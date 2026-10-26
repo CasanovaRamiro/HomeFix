@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import prisma from '../src/lib/prisma.js'
-import { initializeCategoryCatalog } from './categoryCatalog.js'
+import { initializeCategoryCatalog } from '../src/infrastructure/database/categoryCatalog.database.js'
 
 async function main(): Promise<void> {
   const count = await initializeCategoryCatalog(prisma)
