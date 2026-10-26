@@ -19,6 +19,7 @@ export const toPostDTO = (post: DomainPost): PostDTO => ({
   isEmergency: post.isEmergency ?? false,
   emergencyExpiresAt: post.emergencyExpiresAt?.toISOString() ?? null,
   allowsSubcontracting: post.allowsSubcontracting ?? true,
+  aiGenerated: post.aiGenerated ?? false,
   categories: post.categories,
   user: post.user,
   clientRating: post.clientRating ?? 0,

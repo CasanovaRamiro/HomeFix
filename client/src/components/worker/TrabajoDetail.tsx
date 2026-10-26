@@ -73,6 +73,9 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
         <h3>{selected.titulo}</h3>
         <p className="trabajo-meta">Publicado: {selected.fechaPublicacion}</p>
         <p className="trabajo-detail-desc">{selected.descripcion}</p>
+        {selected.aiGenerated && (
+          <p className="trabajo-detail-ai">Descripción generada por el asistente inteligente de HomeFix</p>
+        )}
         <dl className="trabajo-facts">
           <div>
             <dt>Rubro</dt>

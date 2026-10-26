@@ -302,6 +302,11 @@ export default function WorkerPostDetail() {
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '24px 28px' }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 14px' }}>Descripción</h2>
               <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>{post.description}</p>
+              {post.aiGenerated === true && (
+                <p style={{ fontSize: 11, color: '#94A3B8', margin: '10px 0 0', fontStyle: 'italic' }}>
+                  Descripción generada por el asistente inteligente de HomeFix
+                </p>
+              )}
             </div>
 
             {/* Postulación */}

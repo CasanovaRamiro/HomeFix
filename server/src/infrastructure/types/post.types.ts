@@ -19,6 +19,7 @@ export interface PrismaPostFull {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   allowsSubcontracting: boolean
+  aiGenerated: boolean
   categories: {
     id: string
     categoryId: string

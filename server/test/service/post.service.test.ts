@@ -93,9 +93,25 @@ describe("post.service - createPost", () => {
 
     expect(createPost).toHaveBeenCalledTimes(1);
 
-    expect(createPost).toHaveBeenCalledWith({ ...inputData, emergencyExpiresAt: null });
+    expect(createPost).toHaveBeenCalledWith({ ...inputData, emergencyExpiresAt: null, aiGenerated: false });
 
     expect(result).toEqual(createdPostMock);
+  });
+
+  it("should forward the aiGenerated flag when the post comes from the AI assistant", async () => {
+    vi.mocked(createPost).mockResolvedValue(createdPostMock);
+
+    await postService.createPost({ ...inputData, aiGenerated: true });
+
+    expect(createPost).toHaveBeenCalledWith({ ...inputData, emergencyExpiresAt: null, aiGenerated: true });
+  });
+
+  it("should coerce a non-boolean aiGenerated value to false", async () => {
+    vi.mocked(createPost).mockResolvedValue(createdPostMock);
+
+    await postService.createPost({ ...inputData, aiGenerated: 'true' as unknown as boolean });
+
+    expect(createPost).toHaveBeenCalledWith({ ...inputData, emergencyExpiresAt: null, aiGenerated: false });
   });
 });
 
