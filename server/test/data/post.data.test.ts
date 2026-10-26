@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanDb, createCategory, createUser, prisma } from "../helpers/db.js";
 import type { CreatePostInput } from "../../src/domain/types/post.types.js";
-import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus, createSubPost, findEmergencyPosts, searchByDistance, selectBiddingWinner } from "../../src/infrastructure/database/post.database.js";
+import { createPost, findPostById, findPostsByUser, findAvailablePosts, findAvailableSubcontracts, updatePostStatus, createSubPost, findEmergencyPosts, searchByDistance, selectBiddingWinner, reopenPosts } from "../../src/infrastructure/database/post.database.js";
 
 let userId: string;
 let categoryId: string;
@@ -682,5 +682,134 @@ describe("selectBiddingWinner", () => {
     expect(accepted).toHaveLength(1);
     expect(pending).toHaveLength(0);
     expect(apps.every((a) => a.status === "Accepted" || a.status === "Rejected")).toBe(true);
+  });
+});
+
+describe("reopenPosts", () => {
+  it("releases accepted subcontract vacancies and is idempotent", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Subcontract",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 2, roleDescription: "Worker" }],
+    });
+    const postCategory = await prisma.postCategory.findFirstOrThrow({ where: { postId: post.id } });
+    const worker = await createUser("reopen-worker@test.com", "Worker", "hashed");
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: post.id, categoryId: postCategory.id, status: "Accepted" },
+    });
+    await prisma.postCategory.update({ where: { id: postCategory.id }, data: { filledCount: 1 } });
+    await prisma.post.update({ where: { id: post.id }, data: { status: "In progress" } });
+
+    await reopenPosts([post.id]);
+
+    await expect(prisma.post.findUnique({ where: { id: post.id } })).resolves.toMatchObject({ status: "Active" });
+    await expect(prisma.application.findUnique({ where: { id: application.id } })).resolves.toMatchObject({ status: "Pending" });
+    await expect(prisma.postCategory.findUnique({ where: { id: postCategory.id } })).resolves.toMatchObject({ filledCount: 0 });
+
+    await expect(reopenPosts([post.id])).rejects.toMatchObject({ status: 400 });
+    await expect(prisma.postCategory.findUnique({ where: { id: postCategory.id } })).resolves.toMatchObject({ filledCount: 0 });
+  });
+
+  it("releases vacancies across grouped subcontract posts and categories", async () => {
+    const parent = await createPost({
+      userId,
+      title: "Parent",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      categoryId,
+    });
+    const otherCategory = await createCategory("Other Category");
+    const subcontractGroupId = "group-reopen-test";
+    const first = await createSubPost({
+      userId,
+      parentPostId: parent.id,
+      subcontractGroupId,
+      title: "Subcontract one",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+    const second = await createSubPost({
+      userId,
+      parentPostId: parent.id,
+      subcontractGroupId,
+      title: "Subcontract two",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId: otherCategory.id, quantity: 1, roleDescription: "Worker" }],
+    });
+    const firstCategory = await prisma.postCategory.findFirstOrThrow({ where: { postId: first.id } });
+    const secondCategory = await prisma.postCategory.findFirstOrThrow({ where: { postId: second.id } });
+    const worker = await createUser("group-reopen-worker@test.com", "Worker", "hashed");
+    await prisma.application.createMany({
+      data: [
+        { workerId: worker.id, postId: first.id, categoryId: firstCategory.id, status: "Accepted" },
+        { workerId: worker.id, postId: second.id, categoryId: secondCategory.id, status: "Accepted" },
+      ],
+    });
+    await prisma.postCategory.updateMany({ where: { id: { in: [firstCategory.id, secondCategory.id] } }, data: { filledCount: 1 } });
+    await prisma.post.updateMany({ where: { id: { in: [first.id, second.id] } }, data: { status: "In progress" } });
+
+    await reopenPosts([first.id, second.id]);
+
+    const posts = await prisma.post.findMany({ where: { id: { in: [first.id, second.id] } }, select: { status: true }, orderBy: { id: "asc" } });
+    const categories = await prisma.postCategory.findMany({ where: { id: { in: [firstCategory.id, secondCategory.id] } }, select: { filledCount: true }, orderBy: { id: "asc" } });
+    expect(posts.every((post) => post.status === "Active")).toBe(true);
+    expect(categories.every((category) => category.filledCount === 0)).toBe(true);
+  });
+
+  it("resets completed applications without decrementing their vacancy", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Completed subcontract",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+    const postCategory = await prisma.postCategory.findFirstOrThrow({ where: { postId: post.id } });
+    const worker = await createUser("completed-reopen-worker@test.com", "Worker", "hashed");
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: post.id, categoryId: postCategory.id, status: "Completed" },
+    });
+    await prisma.post.update({ where: { id: post.id }, data: { status: "In progress" } });
+
+    await reopenPosts([post.id]);
+
+    await expect(prisma.application.findUnique({ where: { id: application.id } })).resolves.toMatchObject({ status: "Pending" });
+    await expect(prisma.postCategory.findUnique({ where: { id: postCategory.id } })).resolves.toMatchObject({ filledCount: 0 });
+  });
+
+  it("rolls back the post and application when the counter is inconsistent", async () => {
+    const post = await createSubPost({
+      userId,
+      title: "Subcontract",
+      description: "Desc",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-15"),
+      address: "Calle 123",
+      positions: [{ categoryId, quantity: 1, roleDescription: "Worker" }],
+    });
+    const postCategory = await prisma.postCategory.findFirstOrThrow({ where: { postId: post.id } });
+    const worker = await createUser("rollback-worker@test.com", "Worker", "hashed");
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: post.id, categoryId: postCategory.id, status: "Accepted" },
+    });
+    await prisma.post.update({ where: { id: post.id }, data: { status: "In progress" } });
+
+    await expect(reopenPosts([post.id])).rejects.toThrow("Post category filled count is inconsistent");
+    await expect(prisma.post.findUnique({ where: { id: post.id } })).resolves.toMatchObject({ status: "In progress" });
+    await expect(prisma.application.findUnique({ where: { id: application.id } })).resolves.toMatchObject({ status: "Accepted" });
   });
 });

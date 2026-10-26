@@ -19,6 +19,7 @@ import {
   findAvailableBiddingPosts,
   findWorkerAppBiddings,
   selectBiddingWinner,
+  reopenPosts,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
 import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, findApplicationById, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
@@ -653,14 +654,7 @@ export const reopenPost = async (postId: string, userId: string) => {
 
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
-    for (const p of groupPosts) {
-      if (p.status !== PostStatus.InProgress) continue
-      const accepted = await findAcceptedApplications(p.id)
-      for (const app of accepted) {
-        await updateApplicationStatus(app.id, ApplicationStatus.Pending)
-      }
-      await updatePostStatus(p.id, PostStatus.Active)
-    }
+    await reopenPosts(groupPosts.filter((p) => p.status === PostStatus.InProgress).map((p) => p.id))
     logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
     return { id: post.id, status: PostStatus.Active }
   }
@@ -668,12 +662,9 @@ export const reopenPost = async (postId: string, userId: string) => {
   if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
   }
-  const accepted = await findAcceptedApplications(postId)
-  for (const app of accepted) {
-    await updateApplicationStatus(app.id, ApplicationStatus.Pending)
-  }
+  await reopenPosts([postId])
   logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
-  return updatePostStatus(postId, PostStatus.Active)
+  return { id: postId, status: PostStatus.Active }
 }
 
 export const markInProgress = async (postId: string, userId: string) => {
