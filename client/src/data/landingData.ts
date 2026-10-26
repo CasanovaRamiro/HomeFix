@@ -46,6 +46,6 @@ export const testimonials: Testimonial[] = [
   { author: 'Martín Gómez', date: '2 de marzo de 2026', rating: 5, text: 'Resolvieron una urgencia un domingo a la noche. Rápido, prolijo y muy amable. Recomiendo HomeFix totalmente.' },
   { author: 'Sofía Díaz', date: '18 de febrero de 2026', rating: 5, text: 'Saber que el profesional tiene el DNI verificado cambia todo. Contraté con total confianza.' },
   { author: 'Diego Romero', date: '9 de febrero de 2026', rating: 5, text: 'La carpintera hizo un mueble a medida hermoso. El diagnóstico me conectó con la persona indicada.' },
-  { author: 'Ana Pérez', date: '28 de enero de 2026', rating: 4, text: 'Muy buena experiencia. El chat directo me permitió coordinar todo antes de la visita.' },
+  { author: 'Ana Pérez', date: '28 de enero de 2026', rating: 4, text: 'Muy buena experiencia. Pude coordinar los detalles por WhatsApp después de confirmar el trabajo.' },
   { author: 'Javier Luna', date: '15 de enero de 2026', rating: 5, text: 'Profesional matriculado, trabajo garantizado. Es la tranquilidad que buscaba para mi casa.' },
 ]

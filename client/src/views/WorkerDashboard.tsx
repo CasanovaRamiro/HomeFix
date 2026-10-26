@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Briefcase, Send, CalendarCheck, TrendingUp, Star,
   CheckCircle, CheckCircle2, User, MapPin, AlertCircle, X, Clock, XCircle,
-  ChevronRight, Shield, MessageSquare, FileText, GitBranch,
+  ChevronRight, Shield, FileText, GitBranch,
   Navigation,
 } from 'lucide-react'
 import LandingFooter from '../components/landing/LandingFooter'
@@ -775,7 +775,6 @@ const QUICK_LINKS = [
   { label: 'Mis Validaciones',  icon: Shield,         href: '/worker' },
   { label: 'Mis Postulaciones', icon: FileText,       href: '/worker/my-applications' },
   { label: 'Gestor Subcontratos', icon: GitBranch,    href: '/worker/subcontracts' },
-  { label: 'Mensajes',          icon: MessageSquare,  href: '/worker' },
 ]
 
 const KYC_BADGE: Record<string, { icon: typeof CheckCircle2; bg: string; color: string }> = {
