@@ -205,6 +205,10 @@ export const createSubPost = async (data: {
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
   type: { in: [PostType.Post, PostType.Emergency] },
+  OR: [
+    { type: PostType.Post, isEmergency: false },
+    { type: PostType.Emergency, emergencyExpiresAt: { gt: new Date() } },
+  ],
   ...(category?.trim()
     ? {
         categories: {
@@ -224,15 +228,6 @@ export interface PaginationParams {
   sortOrder: 'asc' | 'desc'
 }
 
-const deleteExpiredEmergencyPosts = async (): Promise<void> => {
-  await prisma.post.deleteMany({
-    where: {
-      isEmergency: true,
-      emergencyExpiresAt: { lte: new Date() },
-    },
-  })
-}
-
 export interface PaginatedPosts {
   posts: DomainPost[]
   total: number
@@ -242,7 +237,6 @@ export const findAvailablePosts = async (
   category?: string,
   pagination?: PaginationParams,
 ): Promise<PaginatedPosts> => {
-  await deleteExpiredEmergencyPosts()
   const where = availablePostWhere(category)
   const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
 
@@ -296,7 +290,6 @@ export const findPostsByGroupId = async (groupId: string): Promise<DomainPost[]>
 }
 
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
-  await deleteExpiredEmergencyPosts()
   const raw = await prisma.post.findMany({
     where: {
       status: 'Active',
@@ -468,7 +461,6 @@ export const searchByDistance = async (
   radiusKm: number,
   category?: string,
 ): Promise<LocationSearchResult[]> => {
-  await deleteExpiredEmergencyPosts()
   const hasCategory = !!category?.trim()
 
   const categoryFilter = hasCategory
@@ -488,7 +480,10 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
-      AND (p.type = 'Post' OR p.type = 'Emergency')
+      AND (
+        (p.type = ? AND p.isEmergency = 0)
+        OR (p.type = ? AND p.emergencyExpiresAt > ?)
+      )
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}
@@ -496,7 +491,7 @@ export const searchByDistance = async (
     ORDER BY distance
   `
 
-  const params: (string | number)[] = [lat, lng, lat]
+  const params: (string | number | Date)[] = [lat, lng, lat, PostType.Post, PostType.Emergency, new Date()]
   if (hasCategory) {
     params.push(category!.trim())
   }

@@ -456,6 +456,50 @@ describe("findEmergencyPosts", () => {
     const posts = await findEmergencyPosts();
     expect(posts).toEqual([]);
   });
+
+  it("does not delete expired emergencies when listing available posts", async () => {
+    const expired = await prisma.post.create({
+      data: {
+        userId,
+        title: "Expired emergency",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "emergency",
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const { posts } = await findAvailablePosts();
+
+    expect(posts.some((post) => post.id === expired.id)).toBe(false);
+    await expect(prisma.post.findUnique({ where: { id: expired.id } })).resolves.not.toBeNull();
+  });
+
+  it("does not delete expired emergencies when listing emergencies", async () => {
+    const expired = await prisma.post.create({
+      data: {
+        userId,
+        title: "Expired emergency",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "emergency",
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        categories: { create: { categoryId } },
+      },
+    });
+
+    expect(await findEmergencyPosts()).toEqual([]);
+    await expect(prisma.post.findUnique({ where: { id: expired.id } })).resolves.not.toBeNull();
+  });
 });
 
 describe("createPost with images", () => {
@@ -477,6 +521,31 @@ describe("searchByDistance", () => {
   it("returns empty array when no posts are within the radius", async () => {
     const results = await searchByDistance(BA_LAT, BA_LNG, 1);
     expect(results).toEqual([]);
+  });
+
+  it("excludes expired emergencies without deleting them", async () => {
+    const expired = await prisma.post.create({
+      data: {
+        userId,
+        title: "Expired nearby emergency",
+        description: "Urgent",
+        address: "Corrientes 1000",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Active",
+        type: "emergency",
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        latitude: BA_LAT,
+        longitude: BA_LNG,
+        categories: { create: { categoryId } },
+      },
+    });
+
+    const results = await searchByDistance(BA_LAT, BA_LNG, 1);
+
+    expect(results.some((post) => post.id === expired.id)).toBe(false);
+    await expect(prisma.post.findUnique({ where: { id: expired.id } })).resolves.not.toBeNull();
   });
 
   it("returns posts within the radius with distance field", async () => {
@@ -579,6 +648,57 @@ describe("searchByDistance", () => {
     const results = await searchByDistance(BA_LAT, BA_LNG, 10);
     expect(results.length).toBeGreaterThanOrEqual(2);
     expect(results[0].distance).toBeLessThanOrEqual(results[1].distance);
+  });
+});
+
+describe("expired emergency history", () => {
+  it("preserves a completed emergency, its application, and both reviews", async () => {
+    const worker = await createUser("history-worker@test.com", "History Worker", "hashed", { role: "worker" });
+    const expired = await prisma.post.create({
+      data: {
+        userId,
+        title: "Completed expired emergency",
+        description: "Urgent",
+        address: "Calle 123",
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-06-15"),
+        status: "Completed",
+        type: "emergency",
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        categories: { create: { categoryId } },
+      },
+    });
+    const application = await prisma.application.create({
+      data: { workerId: worker.id, postId: expired.id, status: "Completed" },
+    });
+    await prisma.workerReview.create({
+      data: {
+        applicationId: application.id,
+        reviewerId: userId,
+        workerId: worker.id,
+        rating: 5,
+        description: "Good work",
+      },
+    });
+    await prisma.clientReview.create({
+      data: {
+        applicationId: application.id,
+        reviewerId: worker.id,
+        clientId: userId,
+        rating: 5,
+        description: "Good client",
+      },
+    });
+
+    const byId = await findPostById(expired.id);
+    const history = await findPostsByUser(userId);
+
+    expect(byId?.id).toBe(expired.id);
+    expect(history.some((post) => post.id === expired.id)).toBe(true);
+    await expect(prisma.application.findUnique({ where: { id: application.id } })).resolves.not.toBeNull();
+    await expect(prisma.workerReview.findUnique({ where: { applicationId: application.id } })).resolves.not.toBeNull();
+    await expect(prisma.clientReview.findUnique({ where: { applicationId: application.id } })).resolves.not.toBeNull();
   });
 });
 
