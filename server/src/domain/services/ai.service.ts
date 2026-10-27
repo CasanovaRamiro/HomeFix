@@ -26,12 +26,28 @@ export const clearCategoryCache = () => {
   logger.info({ action: 'ai.categoryCacheCleared' }, 'Category cache cleared')
 }
 
+function isAiResponse(v: unknown): v is AiResponse {
+  if (!v || typeof v !== 'object') return false
+  const r = v as Record<string, unknown>
+  if (r.type === 'question') return typeof r.text === 'string'
+  if (r.type === 'suggestion') return !!r.data && typeof r.data === 'object'
+  return false
+}
+
+function parseAiResponse(raw: string): AiResponse {
+  const value: unknown = JSON.parse(raw)
+  if (!isAiResponse(value)) {
+    throw new Error('Respuesta de IA inválida')
+  }
+  return value
+}
+
 export const suggestPost = async (input: AiSuggestRequest): Promise<AiResponse> => {
   const categories = await getCachedCategories()
   const categoryList = categories.map((c) => `${c.id}: ${c.name}`).join('\n')
 
-  if (input.messages.length === 0) {
-    throw new Error('Se requiere al menos un mensaje para generar una sugerencia')
+  if (!Array.isArray(input?.messages) || input.messages.length === 0) {
+    throw Object.assign(new Error('Se requiere al menos un mensaje para generar una sugerencia'), { status: 400 })
   }
 
   const systemInstructions = `
@@ -50,8 +66,14 @@ REGLAS:
 - Respuestas cortas (maximo 2 oraciones).
 - No preguntes detalles tecnicos irrelevantes.
 - No preguntes por fechas ni direccion, el usuario las completa despues en un formulario.
-- En possibleIssue: lenguaje simple, sin certeza absoluta, a modo de resumen de lo hablado.
-  Usa: "Posiblemente...", "Probablemente...", "Esto podria deberse a..."
+- En possibleIssue: redacta un resumen tecnico del problema, en 3ra persona e impersonal, como un informe
+  para el profesional que va a resolverlo. NO es una respuesta de chat.
+  - Empieza con "Posible problema de ..." o "Probable ...". Nunca con "Posiblemente tengas", "Tenes" o "Tu".
+  - No te dirijas al cliente: prohibi "tenas", "tu", "podes", "podrias", "avisanos", "contanos".
+  - Sin preguntas, sin coletazos ("avisame si...", "¿podrias...?") y sin markdown.
+  - Maximo 2 oraciones, idealmente 1.
+  - Ejemplo correcto: "Posible problema de cañería rota en la cocina que requiera reemplazo del tramo de tubería."
+  - Ejemplo incorrecto: "Posiblemente tengas un problema de cañería rota en la cocina que requiera reemplazo del tramo de tubería."
 - Sin markdown. SOLO JSON valido. Sin texto extra.
 
 FORMATO PREGUNTA:
@@ -75,8 +97,10 @@ FORMATO SUGGESTION:
 confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
 `
 
-  const contents: Content[] = input.messages
-    .slice(-HISTORY_LIMIT)
+  const windowed = input.messages.slice(-HISTORY_LIMIT)
+  while (windowed.length > 0 && windowed[0].role !== 'user') windowed.shift()
+
+  const contents: Content[] = windowed
     .map((msg) => ({
       role: msg.role,
       parts: [
@@ -94,16 +118,24 @@ confidence: high=muy seguro, medium=bastante seguro, low=poca seguridad.
       ],
     }))
 
-  const cleaned = await generateWithRetry(contents, systemInstructions)
-  const response = JSON.parse(cleaned) as AiResponse
+  let response: AiResponse
+  try {
+    response = await generateWithRetry(contents, systemInstructions, parseAiResponse)
+  } catch (e) {
+    const err = e as Error & { status?: number }
+    err.status = 502
+    throw err
+  }
 
   logger.info({ messageCount: input.messages.length, responseType: response.type, action: 'ai.postSuggested' }, 'Post suggestion generated')
 
   if (response.type === 'suggestion') {
     const valid = categories.find((c) => c.id === response.data.suggestedCategoryId)
     if (!valid) {
-      response.data.suggestedCategoryId = categories[0]?.id ?? 1
-      response.data.suggestedCategoryName = categories[0]?.name ?? 'General'
+      const fallback = categories[0]
+      if (!fallback) throw Object.assign(new Error('No hay categorías disponibles'), { status: 400 })
+      response.data.suggestedCategoryId = fallback.id
+      response.data.suggestedCategoryName = fallback.name
     }
     response.data.startDate = null
     response.data.endDate = null

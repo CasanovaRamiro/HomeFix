@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageSquare, CalendarDays, CheckCircle2, BellDot, AlertTriangle, X, Plus, FileText, User, Send } from 'lucide-react'
+import { CalendarDays, CheckCircle2, AlertTriangle, X, Plus, FileText, User, Send } from 'lucide-react'
 import { getUserPosts, type UserPost } from '../services/posts'
 import { useAuth } from '../hooks/useAuth'
 import StatCard from '../components/dashboard/StatCard'
@@ -15,15 +15,36 @@ export default function ClientDashboard() {
   const { user } = useAuth()
   const [posts, setPosts] = useState<UserPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showEmergencies, setShowEmergencies] = useState(false)
   const [showEmergencyModal, setShowEmergencyModal] = useState(false)
+  const requestActiveRef = useRef(false)
+  const requestIdRef = useRef(0)
+  const hasLoadedRef = useRef(false)
 
-  useEffect(() => {
-    getUserPosts()
-      .then(setPosts)
-      .catch(() => setPosts([]))
-      .finally(() => setLoading(false))
+  const loadPosts = useCallback(async (): Promise<void> => {
+    if (requestActiveRef.current) return
+    requestActiveRef.current = true
+    const requestId = ++requestIdRef.current
+    if (!hasLoadedRef.current) setLoading(true)
+    setError(null)
+
+    try {
+      const nextPosts = await getUserPosts()
+      if (requestId !== requestIdRef.current) return
+      setPosts(nextPosts)
+      setError(null)
+      hasLoadedRef.current = true
+    } catch {
+      if (requestId !== requestIdRef.current) return
+      setError('No pudimos cargar tus publicaciones. Revisá tu conexión e intentá nuevamente.')
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false)
+      requestActiveRef.current = false
+    }
   }, [])
+
+  useEffect(() => { void loadPosts() }, [loadPosts])
 
   const activos     = posts.filter(p => p.status === PostStatus.Active || p.status === PostStatus.InProgress || p.status === PostStatus.Paused).length
   const completados = posts.filter(p => p.status === PostStatus.Completed).length
@@ -31,10 +52,8 @@ export default function ClientDashboard() {
 
   // Identidad Cliente = verde. Cada métrica conserva su color semántico.
   const stats = [
-    { label: 'Publicaciones activas', value: activos,     icon: CalendarDays,  iconColor: '#10B981' },
-    { label: 'Completadas',           value: completados, icon: CheckCircle2,  iconColor: '#059669' },
-    { label: 'Mensajes',              value: 0,           icon: MessageSquare, iconColor: '#8B5CF6' },
-    { label: 'Sin leer',              value: 0,           icon: BellDot,       iconColor: '#F59E0B' },
+    { label: 'Publicaciones activas', value: activos,     icon: CalendarDays, iconColor: '#10B981' },
+    { label: 'Completadas',           value: completados, icon: CheckCircle2, iconColor: '#059669' },
   ]
 
   // Show only actionable posts. Cancelled posts surface only when a hired contract still needs a
@@ -65,7 +84,7 @@ export default function ClientDashboard() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="mt-3.5 text-4xl font-extrabold tracking-tight text-white">Mi Tablero</h1>
-              <p className="mt-1.5 text-sm text-white/80">Gestiona tus publicaciones y conversaciones</p>
+              <p className="mt-1.5 text-sm text-white/80">Gestiona tus publicaciones y coordiná los trabajos confirmados por WhatsApp</p>
             </div>
             {user?.id && (
               <button
@@ -85,16 +104,16 @@ export default function ClientDashboard() {
         <div className="hf-container">
 
           {/* Stats — superpuestas sobre el hero */}
-          <div className="relative -mt-7 mb-10 grid grid-cols-2 auto-rows-fr gap-5 lg:grid-cols-4">
+          <div className="relative -mt-7 mb-10 grid grid-cols-2 auto-rows-fr gap-5 lg:grid-cols-2">
             {stats.map((s) => (
               <StatCard key={s.label} label={s.label} value={s.value} icon={s.icon} iconColor={s.iconColor} />
             ))}
           </div>
 
-          {/* Mis publicaciones + Mensajes */}
+          {/* Mis publicaciones */}
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_340px]">
 
-            {/* Columna izquierda — Mis publicaciones + Mensajes */}
+            {/* Columna izquierda — Mis publicaciones */}
             <div className="flex flex-col gap-8">
 
               {/* Mis publicaciones */}
@@ -123,11 +142,24 @@ export default function ClientDashboard() {
                   </div>
                 )}
 
+                {error !== null && (
+                  <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-6 py-6 text-center shadow-md">
+                    <p className="mb-4 text-sm text-red-700">{error}{posts.length > 0 ? ' Mostramos los datos anteriores, que podrían estar desactualizados.' : ''}</p>
+                    <button
+                      type="button"
+                      onClick={() => { void loadPosts() }}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                )}
+
                 {loading ? (
                   <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
                     <div className="spinner mx-auto" />
                   </div>
-                ) : displayedPosts.length === 0 ? (
+                ) : error === null && displayedPosts.length === 0 ? (
                   <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-md">
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
                       <FileText size={28} className="text-emerald-500" />
@@ -147,11 +179,11 @@ export default function ClientDashboard() {
                         : 'Todavia no tenes publicaciones.'}
                     </p>
                   </div>
-                ) : (
+                ) : displayedPosts.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {displayedPosts.map((post) => <TurnoCard key={post.id} post={post} />)}
                   </div>
-                )}
+                ) : null}
               </section>
 
             </div>
@@ -176,15 +208,6 @@ export default function ClientDashboard() {
 
           </div>
 
-          {/* Mensajes — siempre al final */}
-          <section className="mt-8">
-            <h2 className="mb-4 text-xl font-bold text-slate-900">Mensajes</h2>
-            <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-md">
-              <MessageSquare size={28} className="mx-auto text-slate-300" />
-              <p className="mt-3 text-sm text-slate-400">Próximamente disponible.</p>
-            </div>
-          </section>
-
         </div>
       </div>
 
@@ -195,7 +218,7 @@ export default function ClientDashboard() {
           onClose={() => setShowEmergencyModal(false)}
           onSuccess={() => {
             setShowEmergencyModal(false)
-            getUserPosts().then(setPosts).catch(() => setPosts([]))
+            void loadPosts()
           }}
         />
       )}

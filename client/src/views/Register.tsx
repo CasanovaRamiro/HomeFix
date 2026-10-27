@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
@@ -22,15 +22,6 @@ const REQUIREMENTS = [
 
 export default function Register() {
   const navigate = useNavigate()
-
-  useEffect(() => {
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-    }
-  }, [])
 
   const [form, setForm] = useState({
     name: '',
@@ -147,7 +138,7 @@ export default function Register() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-50 font-sans" style={{ position: 'fixed', inset: 0 }}>
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       {/* Back button */}
       <div className="px-6 pt-4 pb-1">
         <button
@@ -159,7 +150,7 @@ export default function Register() {
       </div>
 
       {/* Centered card */}
-      <main className="flex-1 flex items-center justify-center px-4 pb-4 min-h-0 overflow-hidden">
+      <main className="flex-1 flex items-center justify-center px-4 py-4">
         <div className="w-full max-w-[520px] space-y-3">
           {/* Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

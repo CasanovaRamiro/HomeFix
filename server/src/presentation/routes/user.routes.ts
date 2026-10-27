@@ -1,17 +1,12 @@
 import { Router } from 'express'
-import { listUsers, getUserReviews, getUserRating, setEmergencyNotifications, setRequiresStartToken } from '../../domain/services/user.service.js'
+import { getUserReviews, getUserRating, setEmergencyNotifications, setRequiresStartToken } from '../../domain/services/user.service.js'
 import { syncAuth0User } from '../../domain/services/auth.service.js'
 import type { ReviewTarget } from '../../domain/types/user.types.js'
 
 const router = Router()
 
-router.get('/', async (_req, res, next) => {
-  try {
-    const users = await listUsers()
-    res.json(users)
-  } catch (err) {
-    next(err)
-  }
+router.get('/', (_req, res) => {
+  res.status(403).json({ error: 'Forbidden' })
 })
 
 router.get('/:id/reviews', async (req, res, next) => {

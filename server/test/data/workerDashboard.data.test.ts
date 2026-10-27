@@ -200,6 +200,29 @@ describe('countNewJobsForWorker', () => {
     const result = await countNewJobsForWorker([category.id])
     expect(result).toBe(0)
   })
+
+  it('does not count expired emergencies as new jobs', async () => {
+    const category = await createCategory('Emergency Carpentry')
+    await prisma.post.create({
+      data: {
+        userId: clientId,
+        title: 'Expired Emergency',
+        description: 'Desc',
+        address: 'Calle 123',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-15'),
+        status: 'Active',
+        type: 'emergency',
+        isEmergency: true,
+        emergencyExpiresAt: new Date(Date.now() - 60_000),
+        categories: { create: { categoryId: category.id } },
+      },
+    })
+
+    const result = await countNewJobsForWorker([category.id])
+
+    expect(result).toBe(0)
+  })
 })
 
 describe('countCompletedJobs', () => {

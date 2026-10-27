@@ -13,7 +13,11 @@ function extractJson(text: string): string {
   return (jsonMatch ? jsonMatch[1] : text).trim()
 }
 
-export async function generateWithRetry(contents: Content[], systemInstructions: string): Promise<string> {
+export async function generateWithRetry<T>(
+  contents: Content[],
+  systemInstructions: string,
+  parse?: (raw: string) => T,
+): Promise<T> {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const result = await model.generateContent(
@@ -31,7 +35,7 @@ export async function generateWithRetry(contents: Content[], systemInstructions:
       const raw = result.response.text()
       const cleaned = extractJson(raw)
       JSON.parse(cleaned)
-      return cleaned
+      return parse ? parse(cleaned) : (cleaned as T)
     } catch (e) {
       if (attempt === MAX_RETRIES) {
         logger.error({ err: e, action: 'ai.generate' }, 'AI generation failed after retries')

@@ -16,6 +16,10 @@ import { useState } from 'react'
     allowsSubcontracting?: boolean
   }
 
+  export interface CreatePostOptions {
+    aiGenerated?: boolean
+  }
+
   export function useCreatePost() {
     const { accent, border } = useTheme()
     const [form, setForm] = useState<PostFormData>({
@@ -36,7 +40,7 @@ import { useState } from 'react'
       e.target.style.boxShadow = 'none'
     }
 
-    const handleSubmit = (files: File[]) => {
+    const handleSubmit = (files: File[], options?: CreatePostOptions) => {
       return async (e: React.FormEvent) => {
         e.preventDefault()
         setFormError('')
@@ -54,7 +58,7 @@ import { useState } from 'react'
           return
         }
         if (!form.isEmergency && new Date(form.endDate) <= new Date(form.startDate)) {
-          setFormError('La fecha de fin debe ser posterior a la fecha de inicio')
+          setFormError('La fecha "Hasta" debe ser posterior a la fecha "Desde"')
           return
         }
 
@@ -76,6 +80,7 @@ import { useState } from 'react'
             categoryId: form.categoryId,
             isEmergency: form.isEmergency,
             allowsSubcontracting: form.allowsSubcontracting,
+            aiGenerated: options?.aiGenerated === true,
             images,
           })
           setFormSuccess(true)

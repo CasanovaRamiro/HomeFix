@@ -332,7 +332,7 @@ export default function AiDiagnosis() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit(files)} style={{ marginTop: '32px' }}>
+                <form onSubmit={handleSubmit(files, { aiGenerated: true })} style={{ marginTop: '32px' }}>
                   <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                     <h3 style={{ fontSize: '20px', fontWeight: 600, color: theme.primaryDark, marginBottom: '8px' }}>Completá los datos faltantes</h3>
                     <p style={{ fontSize: '14px', color: theme.muted }}>Completá la siguiente información para publicar tu solicitud</p>
@@ -340,9 +340,13 @@ export default function AiDiagnosis() {
 
                   {formError && <div style={{ ...s.errorBox, marginBottom: '16px' }}>{formError}</div>}
 
+                  <p style={{ fontSize: '13px', color: theme.muted, margin: '0 0 12px' }}>
+                    Seleccioná el rango de días en que podés recibir visitas
+                  </p>
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Fecha de inicio</label>
+                      <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Desde</label>
                       <input
                         type="date"
                         value={form.startDate}
@@ -355,7 +359,7 @@ export default function AiDiagnosis() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Fecha de finalización</label>
+                      <label style={{ fontSize: '14px', fontWeight: 500, color: theme.primaryDark, display: 'block', marginBottom: '8px' }}>Hasta</label>
                       <input
                         type="date"
                         value={form.endDate}

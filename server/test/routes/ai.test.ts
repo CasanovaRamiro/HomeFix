@@ -71,6 +71,37 @@ describe("POST /ai/suggest", () => {
     expect(res.body.data.suggestedCategoryId).toBe("1");
   });
 
+  it("should accept an AI payload under the 5 MB limit", async () => {
+    vi.mocked(suggestPost).mockResolvedValue({
+      type: "question",
+      text: "¿Qué problema presenta?",
+    });
+
+    const res = await request(app)
+      .post("/ai/suggest")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        messages: [{
+          role: "user",
+          text: "Se ve así",
+          imageBase64: "a".repeat(200 * 1024),
+          mimeType: "image/jpeg",
+        }],
+      });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("should reject an AI payload over the 5 MB limit", async () => {
+    const res = await request(app)
+      .post("/ai/suggest")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ messages: [{ role: "user", text: "a".repeat(5 * 1024 * 1024) }] });
+
+    expect(res.status).toBe(413);
+    expect(suggestPost).not.toHaveBeenCalled();
+  });
+
   it("should return 400 when service throws", async () => {
     vi.mocked(suggestPost).mockRejectedValue(new Error("messages is required"));
 

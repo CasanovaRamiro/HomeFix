@@ -150,23 +150,19 @@ export const loginUser = async (input: LoginInput) => {
 
   const profileEmail = profile.email?.toLowerCase() ?? email
   const existing = await findByEmail(profileEmail)
-  const user = existing
-    ? {
-        id: existing.id,
-        name: existing.name,
-        email: existing.email,
-        phone: existing.phone,
-        photo: existing.photo,
-        role: existing.role,
-        createdAt: existing.createdAt,
-      }
-    : await createUser({
-        email: profileEmail,
-        name: profile.name ?? profile.nickname ?? profile.sub ?? profileEmail,
-        password: managedPassword,
-        phone: profile.phone_number,
-      })
-  if (!user) throw createHttpError(500, 'Could not resolve user')
+  if (!existing) {
+    throw createHttpError(404, 'No encontramos una cuenta con este correo. Por favor registrate primero.')
+  }
+
+  const user = {
+    id: existing.id,
+    name: existing.name,
+    email: existing.email,
+    phone: existing.phone,
+    photo: existing.photo,
+    role: existing.role,
+    createdAt: existing.createdAt,
+  }
 
   logger.info({ userId: user.id, email, action: 'auth.user.loggedIn' }, 'User logged in')
 
@@ -229,7 +225,12 @@ export const syncAuth0User = async (claims: Auth0Claims | undefined, isRegistrat
   if (existing) {
     const { password: _, ...safeUser } = existing
     const updates: Record<string, string> = {}
-    if (claims.role && safeUser.role === 'user') updates.role = claims.role
+    if (
+      (claims.role === UserRole.Worker || claims.role === UserRole.Client) &&
+      safeUser.role === UserRole.Client
+    ) {
+      updates.role = claims.role
+    }
     const goodName = claims.name ?? claims.nickname
     if (goodName && safeUser.name === claims.sub) updates.name = goodName
 

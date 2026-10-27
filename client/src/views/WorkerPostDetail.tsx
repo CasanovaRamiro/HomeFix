@@ -257,7 +257,7 @@ export default function WorkerPostDetail() {
 
       {/* Header */}
       <div style={{ background: '#0F172A', width: '100%', paddingTop: 40, paddingBottom: 48 }}>
-        <div className="hf-container-md" style={{ padding: '0 32px' }}>
+        <div className="hf-container-md wpd-header" style={{ padding: '0 32px' }}>
           <button onClick={() => navigate(-1)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, fontWeight: 500, cursor: 'pointer', marginBottom: 24, padding: 0 }}>
             <ArrowLeft size={14} /> Volver
           </button>
@@ -292,16 +292,21 @@ export default function WorkerPostDetail() {
       </div>
 
       {/* Content */}
-      <div className="hf-container-md" style={{ margin: '-28px auto 60px', padding: '0 32px', position: 'relative', zIndex: 10 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
+      <div className="hf-container-md wpd-page" style={{ margin: '-28px auto 60px', position: 'relative', zIndex: 10 }}>
+        <div className="wpd-layout">
 
           {/* Left column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="wpd-column" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Descripción */}
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '24px 28px' }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '0 0 14px' }}>Descripción</h2>
               <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>{post.description}</p>
+              {post.aiGenerated === true && (
+                <p style={{ fontSize: 11, color: '#94A3B8', margin: '10px 0 0', fontStyle: 'italic' }}>
+                  Descripción generada por el asistente inteligente de HomeFix
+                </p>
+              )}
             </div>
 
             {/* Postulación */}
@@ -357,7 +362,7 @@ export default function WorkerPostDetail() {
           </div>
 
           {/* Right column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="wpd-column" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Client card */}
             <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, padding: '24px 22px' }}>
@@ -428,23 +433,6 @@ export default function WorkerPostDetail() {
                 >
                   <Star size={16} />
                   Calificar cliente
-                </button>
-              )}
-              {(application?.status === ApplicationStatus.Accepted || application?.status === ApplicationStatus.Completed) && (
-                <button
-                  onClick={() => {}}
-                  style={{
-                    marginTop: 10, width: '100%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: '#fff', border: '1.5px solid #E2E8F0', borderRadius: 10,
-                    padding: '11px 0', fontSize: 14, fontWeight: 700, color: '#0F172A',
-                    cursor: 'pointer', transition: 'opacity 0.15s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
-                >
-                  <Flag size={16} />
-                  Reportar cliente
                 </button>
               )}
               {linkedSubcontractId && (

@@ -123,7 +123,7 @@ export const createUser = async (data: CreateUserInput) => {
       nationalId: data.nationalId ?? `${Date.now()}`,
       nationalIdTypeId: dniId,
       addressId: addrId,
-      role: data.role ?? 'user',
+      role: data.role,
     },
     select: publicFields,
   })
@@ -170,5 +170,12 @@ export const updateUserKycStatus = (
   prisma.user.update({
     where: { email },
     data,
+    select: { ...publicFields, kycStatus: true, kycVerifiedAt: true, diditVerificationId: true },
+  })
+
+export const updateUserDiditVerificationId = (email: string, diditVerificationId: string) =>
+  prisma.user.update({
+    where: { email },
+    data: { diditVerificationId },
     select: { ...publicFields, kycStatus: true, kycVerifiedAt: true, diditVerificationId: true },
   })

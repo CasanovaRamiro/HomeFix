@@ -190,12 +190,43 @@ const swaggerDocument: OpenAPIV3.Document = {
       },
       UpdateWorkerRequest: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          name: { type: 'string' },
-          photo: { type: 'string' },
-          categories: { type: 'array', items: { type: 'string' } },
-          description: { type: 'string' },
-          hourlyRate: { type: 'number' },
+          name: { type: 'string', minLength: 1 },
+          phone: { type: 'string', nullable: true },
+          bio: { type: 'string', nullable: true },
+          photo: { type: 'string', nullable: true },
+          matriculaUrl: { type: 'string', nullable: true },
+          categoryIds: { type: 'array', items: { type: 'string', minLength: 1 } },
+          availability: { type: 'array', items: { type: 'string', minLength: 1 } },
+          emergenciesEnabled: { type: 'boolean' },
+          certificates: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['id', 'title', 'imageUrl'],
+              properties: {
+                id: { type: 'string', minLength: 1 },
+                title: { type: 'string', minLength: 1 },
+                imageUrl: { type: 'string', minLength: 1 },
+                issuer: { type: 'string', nullable: true },
+              },
+            },
+          },
+          gallery: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['id', 'imageUrl'],
+              properties: {
+                id: { type: 'string', minLength: 1 },
+                imageUrl: { type: 'string', minLength: 1 },
+                caption: { type: 'string', nullable: true },
+              },
+            },
+          },
         },
       },
       WorkerReview: {
@@ -296,11 +327,9 @@ const swaggerDocument: OpenAPIV3.Document = {
       },
       KycConfirmRequest: {
         type: 'object',
-        required: ['sessionId', 'email'],
+        required: ['sessionId'],
         properties: {
           sessionId: { type: 'string' },
-          email: { type: 'string', format: 'email' },
-          status: { type: 'string' },
         },
       },
       KycStatusResponse: {
@@ -1722,7 +1751,7 @@ const swaggerDocument: OpenAPIV3.Document = {
       patch: {
         tags: ['Workers'],
         summary: 'Update worker profile',
-        description: 'Updates the worker profile. Only the owner can update their own profile.',
+        description: 'Updates editable profile fields only. Unknown fields and invalid types return 400. Only the owner can update their own profile; role, KYC and internal relations cannot be changed here.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2349,7 +2378,7 @@ const swaggerDocument: OpenAPIV3.Document = {
       post: {
         tags: ['KYC'],
         summary: 'Confirm KYC verification',
-        description: 'Confirms a KYC verification session. Rate limited to 10 requests per minute per IP. No authentication required.',
+        description: 'Confirms a KYC verification session. Requires the authenticated user and is rate limited to 10 requests per minute per IP.',
         requestBody: {
           required: true,
           content: {
@@ -2368,11 +2397,11 @@ const swaggerDocument: OpenAPIV3.Document = {
             },
           },
           '400': {
-            description: 'Bad request - missing sessionId or email',
+            description: 'Bad request - missing sessionId or authenticated user email',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/Error' },
-                example: { error: 'sessionId y email son requeridos' },
+                example: { error: 'sessionId y usuario autenticado son requeridos' },
               },
             },
           },

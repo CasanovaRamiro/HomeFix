@@ -33,9 +33,8 @@ export function registerRoutes(app: Express): void {
   app.use('/client', jwtCheck, clientRoutes)
   app.use('/client-profiles', jwtCheck, clientProfileRoutes)
 
-  // KYC spans three auth contexts: public webhook, public (rate-limited)
-  // confirm, and authenticated session/status endpoints.
+  // KYC spans two auth contexts: public webhook and authenticated endpoints.
   app.use('/kyc', webhookRouter)
-  app.use('/kyc', confirmRouter)
+  app.use('/kyc', jwtCheck, confirmRouter)
   app.use('/kyc', jwtCheck, kycRoutes)
 }

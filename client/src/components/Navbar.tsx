@@ -4,7 +4,7 @@ import logo from '../assets/homefix-logo.png'
 import { Menu, X, Home, FileText, ClipboardList, Briefcase, User, Users, LogOut, ChevronDown, CalendarDays, GitBranch, Gavel, FilePlus } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useTheme } from '../hooks/useTheme'
-import { useAuth, emitAuthChange } from '../hooks/useAuth'
+import { useAuth, clearAuth } from '../hooks/useAuth'
 import { UserRole } from '../types/user'
 
 interface NavLinkDef {
@@ -132,16 +132,14 @@ export default function Navbar(): React.ReactElement | null {
   const displayInitial = displayName.charAt(0).toUpperCase()
 
   const logout = (): void => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    emitAuthChange()
+    clearAuth()
     setUserMenuOpen(false)
     setMobileOpen(false)
     void navigate('/login')
   }
 
   return (
-    <nav style={{ background: isPublicLanding ? theme.accent : theme.card, borderBottom: `1px solid ${isPublicLanding ? theme.accentHover : theme.border}` }}
+    <nav style={{ background: '#FFFFFF', borderBottom: `1px solid ${isPublicLanding ? theme.accentHover : theme.border}` }}
       className="sticky top-0 z-50 backdrop-blur-md">
       <div style={{ maxWidth: '90rem', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '72px', paddingTop: '12px', paddingBottom: '12px' }}>
@@ -268,7 +266,7 @@ export default function Navbar(): React.ReactElement | null {
             {!isLoggedIn ? (
               <>
                 <Link to="/login"
-                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...(isPublicLanding ? { background: '#fff', color: theme.accentHover } : { color: theme.muted }) }}
+                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...(isLanding ? { background: theme.accent, color: '#fff' } : isPublicLanding ? { background: '#fff', color: theme.accentHover } : { color: theme.muted }) }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
                 >

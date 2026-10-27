@@ -9,6 +9,7 @@ export enum PostStatus {
 
 export interface PostCategoryDTO {
   id: string
+  categoryId: string
   name: string
 }
 
@@ -30,6 +31,7 @@ export interface PostDTO {
   isEmergency: boolean
   emergencyExpiresAt: string | null
   allowsSubcontracting: boolean
+  aiGenerated?: boolean
   categories: PostCategoryDTO[]
   user: {
     id: string
@@ -66,6 +68,7 @@ export interface CreateSubcontractInput {
 // --- Subcontract types ---
 
 export interface SubcontractPosition {
+  id?: string
   categoryId: string
   quantity: number
   roleDescription: string
@@ -170,4 +173,5 @@ export interface TrabajoView {
   isEmergency: boolean
   emergencyExpiresAt: string | null
   allowsSubcontracting: boolean
+  aiGenerated: boolean
 }

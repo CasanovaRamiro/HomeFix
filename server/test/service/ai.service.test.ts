@@ -255,6 +255,46 @@ describe("AI Suggestion Service", () => {
     });
   });
 
+  describe("possibleIssue style", () => {
+    it("should instruct the model to write an impersonal technical summary", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"question","text":"¿Dónde ocurre?"}',
+        },
+      });
+
+      await suggestPost({
+        messages: [{ role: "user", text: "Tengo humedad" }],
+      });
+
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      const instructions = callArg.systemInstruction.parts[0].text;
+
+      expect(instructions).toContain("Posible problema de ...");
+      expect(instructions).toContain("NO es una respuesta de chat");
+      expect(instructions).toContain("Ejemplo correcto");
+      expect(instructions).toContain("Ejemplo incorrecto");
+    });
+
+    it("should not instruct the model to use the old chat-style openers", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"question","text":"¿Dónde ocurre?"}',
+        },
+      });
+
+      await suggestPost({
+        messages: [{ role: "user", text: "Tengo humedad" }],
+      });
+
+      const callArg = mockGenerateContent.mock.calls[0][0];
+      const instructions = callArg.systemInstruction.parts[0].text;
+
+      expect(instructions).not.toContain('Usa: "Posiblemente..."');
+      expect(instructions).not.toContain("Esto podria deberse a...");
+    });
+  });
+
   describe("conversation handling", () => {
     it("should throw if no messages are provided", async () => {
       await expect(suggestPost({ messages: [] })).rejects.toThrow(
@@ -287,6 +327,25 @@ describe("AI Suggestion Service", () => {
         { role: "user", parts: [{ text: "Mensaje 8" }] },
         { role: "model", parts: [{ text: "Mensaje 9" }] },
       ]);
+    });
+
+    it("should drop leading model turns so the window starts with a user turn", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"question","text":"¿Dónde ocurre?"}',
+        },
+      });
+
+      const messages: AiMessage[] = Array.from({ length: 8 }, (_, i) => ({
+        role: i % 2 === 0 ? "user" : "model",
+        text: `Mensaje ${i}`,
+      }));
+
+      await suggestPost({ messages });
+
+      const generateContentCall = mockGenerateContent.mock.calls[0][0];
+
+      expect(generateContentCall.contents[0].role).toBe("user");
     });
 
     it("should preserve latest conversation context", async () => {
@@ -438,9 +497,53 @@ describe("AI Suggestion Service", () => {
         suggestPost({
           messages: [{ role: "user", text: "Hola" }],
         }),
-      ).rejects.toThrow("Gemini API Error");
+      ).rejects.toMatchObject({ status: 502 });
 
       expect(mockGenerateContent).toHaveBeenCalledTimes(3);
+    });
+
+    it("should retry when the AI returns a well-formed JSON with invalid shape", async () => {
+      let callCount = 0;
+      mockGenerateContent.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({ response: { text: () => "null" } });
+        }
+        return Promise.resolve({
+          response: {
+            text: () => '{"type":"question","text":"¿Recuperado?"}',
+          },
+        });
+      });
+
+      const response = await suggestPost({
+        messages: [{ role: "user", text: "Hola" }],
+      });
+
+      expect(response).toMatchObject({ type: "question", text: "¿Recuperado?" });
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("should throw 502 after exhausting retries with invalid response shape", async () => {
+      mockGenerateContent.mockResolvedValue({
+        response: {
+          text: () => '{"type":"suggestion"}',
+        },
+      });
+
+      await expect(
+        suggestPost({
+          messages: [{ role: "user", text: "Hola" }],
+        }),
+      ).rejects.toMatchObject({ status: 502 });
+
+      expect(mockGenerateContent).toHaveBeenCalledTimes(3);
+    });
+
+    it("should throw 400 when messages is missing", async () => {
+      await expect(
+        suggestPost({} as never),
+      ).rejects.toMatchObject({ status: 400 });
     });
 
     it("should retry on timeout and succeed on retry", async () => {

@@ -13,7 +13,8 @@ import InfoTooltip from '../components/ui/InfoTooltip'
 export default function CreatePost() {
   const navigate = useNavigate()
   const theme = useTheme()
-  const { categories, loading: loadingCategories } = useCategories()
+  const { categories, loading: loadingCategories, error: categoriesError, retry: retryCategories } = useCategories()
+  const categoriesUnavailable = loadingCategories || Boolean(categoriesError) || categories.length === 0
   const { form, setForm, formError, formSubmitting, formSuccess, handleFocus, handleBlur, handleSubmit } = useCreatePost()
   const [files, setFiles] = useState<File[]>([])
 
@@ -84,15 +85,17 @@ export default function CreatePost() {
               </div>
 
                <div style={{ marginBottom: '24px' }}>
-                 <label style={s.formLabel}>Categoría</label>
+                 <label htmlFor="categoryId" style={s.formLabel}>Categoría</label>
                  <select
+                   id="categoryId"
                    value={form.categoryId}
                    onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
                    required
                    style={s.formSelect}
                    onFocus={handleFocus}
                    onBlur={handleBlur}
-                   disabled={loadingCategories}
+                   disabled={categoriesUnavailable}
+                   aria-describedby={!loadingCategories && categoriesUnavailable ? 'categoryError' : undefined}
                  >
                    <option value="">
                      {loadingCategories ? 'Cargando categorías...' : 'Seleccioná una categoría'}
@@ -101,6 +104,16 @@ export default function CreatePost() {
                      <option key={c.id} value={c.id}>{c.name}</option>
                    ))}
                  </select>
+                 {!loadingCategories && categoriesUnavailable && (
+                   <div id="categoryError" role="alert" style={{ ...s.errorBox, marginTop: '12px' }}>
+                     <p style={{ margin: '0 0 8px' }}>
+                       {categoriesError ?? 'No hay categorías disponibles en este momento. Volvé a intentarlo en unos minutos.'}
+                     </p>
+                     <button type="button" onClick={retryCategories} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+                       Reintentar
+                     </button>
+                   </div>
+                 )}
                </div>
 
                {/* Subcontracting toggle */}
@@ -161,9 +174,13 @@ export default function CreatePost() {
                 />
               </div>
 
+              <p style={{ fontSize: '13px', color: theme.muted, margin: '0 0 12px' }}>
+                Seleccioná el rango de días en que podés recibir visitas
+              </p>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                  <div>
-                   <label style={s.formLabel}>Fecha de inicio</label>
+                   <label style={s.formLabel}>Desde</label>
                    <input
                      type="date"
                      value={form.startDate}
@@ -176,7 +193,7 @@ export default function CreatePost() {
                    />
                  </div>
                  <div>
-                   <label style={s.formLabel}>Fecha de finalización</label>
+                   <label style={s.formLabel}>Hasta</label>
                    <input
                      type="date"
                      value={form.endDate}
@@ -210,7 +227,7 @@ export default function CreatePost() {
                 <FileUpload files={files} onFilesChange={setFiles} />
               </div>
 
-              <SubmitButton loading={formSubmitting} loadingText="Publicando...">
+              <SubmitButton loading={formSubmitting} disabled={categoriesUnavailable} loadingText="Publicando...">
                 Publicar solicitud
               </SubmitButton>
             </form>

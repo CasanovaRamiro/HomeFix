@@ -69,6 +69,10 @@ export const countNewJobsForWorker = async (workerCategoryIds: string[]) => {
   return prisma.post.count({
     where: {
       status: 'Active',
+      OR: [
+        { isEmergency: false },
+        { type: 'emergency', emergencyExpiresAt: { gt: new Date() } },
+      ],
       categories: {
         some: { categoryId: { in: workerCategoryIds } },
       },

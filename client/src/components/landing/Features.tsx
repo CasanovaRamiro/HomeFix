@@ -13,7 +13,7 @@ const features: Feature[] = [
   { icon: MapPin, title: 'Búsqueda Geolocalizada', desc: 'Profesionales cerca de ti con filtros avanzados.' },
   { icon: Zap, title: 'Diagnóstico Inteligente', desc: 'Sistema que identifica exactamente qué necesitás.' },
   { icon: Shield, title: 'Verificación Triple', desc: 'Identidad, matrículas y antecedentes verificados.' },
-  { icon: MessageSquare, title: 'Chat Directo', desc: 'Comunicación directa sin intermediarios.' },
+  { icon: MessageSquare, title: 'Contacto por WhatsApp', desc: 'Coordiná los detalles por WhatsApp cuando el trabajo esté confirmado.' },
 ]
 
 export default function Features() {
@@ -47,7 +47,7 @@ export default function Features() {
 
           <div className="mt-10">
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
               className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border-0 bg-accent px-8 text-base font-semibold text-white transition-colors hover:bg-accent-hover"
             >
               Comenzar ahora

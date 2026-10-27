@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
-import { cleanDb } from '../helpers/db.js'
+import { cleanDb, createUser } from '../helpers/db.js'
 
 vi.mock('../../src/presentation/middleware/auth0.middleware.js', async () => {
   const mock = await import('../helpers/auth0Mock.js')
@@ -130,6 +130,7 @@ describe('POST /auth/forgot-password', () => {
 
 describe('POST /auth/login', () => {
   it('returns 200 and token data when credentials are valid', async () => {
+    await createUser('test@test.com', 'Test User', 'hashed', { role: UserRole.Client })
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({
         ok: true,

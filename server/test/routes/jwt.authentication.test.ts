@@ -141,6 +141,9 @@ describe.each([
     const res = await req.send({})
 
     expect(res.status).toBe(401)
+    if (path === '/users') {
+      expect(JSON.stringify(res.body)).not.toMatch(/test@homefix\.test|phone|email/i)
+    }
     expect(userinfoRequests).toBe(0)
     expect(userService.listUsers).not.toHaveBeenCalled()
     expect(workerService.listWorkers).not.toHaveBeenCalled()
@@ -151,12 +154,29 @@ describe.each([
 })
 
 describe('valid JWTs', () => {
-  it.each(['/users', '/workers'])('allows access to %s', async (path) => {
-    const res = await request(app).get(path).set('Authorization', `Bearer ${token()}`)
+  it.each([UserRole.Client, UserRole.Worker])('denies GET /users to %s without exposing personal data', async (role) => {
+    const res = await request(app).get('/users')
+      .set('Authorization', `Bearer ${token({ sub: `auth0|${role}-1`, [ROLES_CLAIM]: role })}`)
+      .set('x-role', 'admin')
+
+    expect(res.status).toBe(403)
+    expect(res.body).toEqual({ error: 'Forbidden' })
+    expect(JSON.stringify(res.body)).not.toMatch(/test@homefix\.test|phone|email/i)
+    expect(userService.listUsers).not.toHaveBeenCalled()
+  })
+
+  it('preserves authenticated worker listing', async () => {
+    const res = await request(app).get('/workers').set('Authorization', `Bearer ${token()}`)
     expect(res.status).toBe(200)
     expect(res.body).toEqual([])
-    const service = path === '/users' ? userService.listUsers : workerService.listWorkers
-    expect(service).toHaveBeenCalledOnce()
+    expect(workerService.listWorkers).toHaveBeenCalledOnce()
+  })
+
+  it('preserves authenticated GET /auth/me', async () => {
+    const res = await request(app).get('/auth/me').set('Authorization', `Bearer ${token()}`)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ id: 'client-1', role: UserRole.Client })
+    expect(authService.syncAuth0User).toHaveBeenCalledOnce()
   })
 
   it.each([

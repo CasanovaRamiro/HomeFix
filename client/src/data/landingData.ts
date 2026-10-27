@@ -14,6 +14,8 @@ export interface LandingCategory {
   name: string
   image: string
   count: number
+  objectPosition?: string
+  objectScale?: number
 }
 
 export interface Testimonial {
@@ -31,14 +33,14 @@ export const stats: { value: string; label: string }[] = [
 ]
 
 export const categories: LandingCategory[] = [
-  { name: 'Electricidad', image: electricidad, count: 342 },
-  { name: 'Plomería', image: plomeria, count: 289 },
-  { name: 'Carpintería', image: carpinteria, count: 218 },
-  { name: 'Aire Acondicionado', image: hvac, count: 156 },
-  { name: 'Pintura', image: pintura, count: 267 },
-  { name: 'Albañilería', image: albanileria, count: 198 },
-  { name: 'Cerrajería', image: cerrajeria, count: 134 },
-  { name: 'Electrónica', image: electronica, count: 112 },
+  { name: 'Electricidad', image: electricidad, count: 342, objectPosition: '50% 15%' },
+  { name: 'Plomería', image: plomeria, count: 289, objectPosition: '50% 80%' },
+  { name: 'Carpintería', image: carpinteria, count: 218, objectPosition: '50% 20%' },
+  { name: 'Aire Acondicionado', image: hvac, count: 156, objectPosition: '50% 15%' },
+  { name: 'Pintura', image: pintura, count: 267, objectPosition: '50% 15%', objectScale: 1.15 },
+  { name: 'Albañilería', image: albanileria, count: 198, objectPosition: '50% 18%' },
+  { name: 'Cerrajería', image: cerrajeria, count: 134, objectPosition: '50% 0%' },
+  { name: 'Electrónica', image: electronica, count: 112, objectPosition: '50% 0%' },
 ]
 
 export const testimonials: Testimonial[] = [
@@ -46,6 +48,6 @@ export const testimonials: Testimonial[] = [
   { author: 'Martín Gómez', date: '2 de marzo de 2026', rating: 5, text: 'Resolvieron una urgencia un domingo a la noche. Rápido, prolijo y muy amable. Recomiendo HomeFix totalmente.' },
   { author: 'Sofía Díaz', date: '18 de febrero de 2026', rating: 5, text: 'Saber que el profesional tiene el DNI verificado cambia todo. Contraté con total confianza.' },
   { author: 'Diego Romero', date: '9 de febrero de 2026', rating: 5, text: 'La carpintera hizo un mueble a medida hermoso. El diagnóstico me conectó con la persona indicada.' },
-  { author: 'Ana Pérez', date: '28 de enero de 2026', rating: 4, text: 'Muy buena experiencia. El chat directo me permitió coordinar todo antes de la visita.' },
+  { author: 'Ana Pérez', date: '28 de enero de 2026', rating: 4, text: 'Muy buena experiencia. Pude coordinar los detalles por WhatsApp después de confirmar el trabajo.' },
   { author: 'Javier Luna', date: '15 de enero de 2026', rating: 5, text: 'Profesional matriculado, trabajo garantizado. Es la tranquilidad que buscaba para mi casa.' },
 ]

@@ -19,9 +19,10 @@ import {
   findAvailableBiddingPosts,
   findWorkerAppBiddings,
   selectBiddingWinner,
+  reopenPosts,
   type PaginationParams,
 } from '../../infrastructure/database/post.database.js'
-import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
+import { findAcceptedApplication, findAcceptedApplications, findAcceptedApplicationByWorker, findApplicationById, updateApplicationStatus, rejectPendingApplications } from '../../infrastructure/database/application.database.js'
 import { deleteImage } from '../../infrastructure/providers/cloudinary.provider.js'
 import { createTelegramProvider } from '../../infrastructure/providers/telegram.provider.js'
 import { notifyUser, broadcastEmergency } from './notification.service.js'
@@ -104,6 +105,7 @@ export const createPost = async (input: CreatePostInput): Promise<DomainPost> =>
     startDate: input.isEmergency === true ? now : new Date(input.startDate as Date | string),
     endDate: input.isEmergency === true ? new Date(now.getTime() + EMERGENCY_DURATION_MS) : new Date(input.endDate as Date | string),
     emergencyExpiresAt,
+    aiGenerated: input.aiGenerated === true,
   })
 
   if (input.isEmergency) {
@@ -172,8 +174,18 @@ export const selectWinner = async (biddingId: string, userId: string, applicatio
   const post = await findPostById(biddingId)
   if (!post) throw Object.assign(new Error('Licitación no encontrada'), { status: 404 })
   if (post.userId !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 })
+  if (!post.isBidding) throw Object.assign(new Error('El post no es una licitación'), { status: 400 })
   if (post.status !== PostStatus.Active && post.status !== PostStatus.Evaluating) {
     throw Object.assign(new Error(`La licitación debe estar activa o en evaluación para seleccionar ganador`), { status: 400 })
+  }
+
+  const application = await findApplicationById(applicationId)
+  if (!application) throw Object.assign(new Error('Postulación no encontrada'), { status: 404 })
+  if (application.postId !== biddingId) {
+    throw Object.assign(new Error('La postulación no pertenece a esta licitación'), { status: 400 })
+  }
+  if (application.status !== ApplicationStatus.Pending) {
+    throw Object.assign(new Error('La postulación no está pendiente'), { status: 400 })
   }
 
   return selectBiddingWinner(biddingId, applicationId, post.status)
@@ -388,7 +400,7 @@ export const updateSubcontractGroup = async (
     address: string
     latitude?: number | null
     longitude?: number | null
-    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+    positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
   }
 ): Promise<DomainPost[]> => {
   let posts = await findPostsByGroupId(groupId)
@@ -643,14 +655,7 @@ export const reopenPost = async (postId: string, userId: string) => {
 
   if (post.type === PostType.SubContract && post.subcontractGroupId) {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
-    for (const p of groupPosts) {
-      if (p.status !== PostStatus.InProgress) continue
-      const accepted = await findAcceptedApplications(p.id)
-      for (const app of accepted) {
-        await updateApplicationStatus(app.id, ApplicationStatus.Pending)
-      }
-      await updatePostStatus(p.id, PostStatus.Active)
-    }
+    await reopenPosts(groupPosts.filter((p) => p.status === PostStatus.InProgress).map((p) => p.id))
     logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
     return { id: post.id, status: PostStatus.Active }
   }
@@ -658,12 +663,9 @@ export const reopenPost = async (postId: string, userId: string) => {
   if (post.status !== PostStatus.InProgress) {
     throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
   }
-  const accepted = await findAcceptedApplications(postId)
-  for (const app of accepted) {
-    await updateApplicationStatus(app.id, ApplicationStatus.Pending)
-  }
+  await reopenPosts([postId])
   logger.info({ postId, userId, action: 'post.reopened' }, 'Post reopened')
-  return updatePostStatus(postId, PostStatus.Active)
+  return { id: postId, status: PostStatus.Active }
 }
 
 export const markInProgress = async (postId: string, userId: string) => {

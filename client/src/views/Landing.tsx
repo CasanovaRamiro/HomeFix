@@ -1,4 +1,5 @@
 // src/views/Landing.tsx
+import './landing-grid.css'
 import Hero from '../components/landing/Hero'
 import TrustSection from '../components/landing/TrustSection'
 import HowItWorks from '../components/landing/HowItWorks'
@@ -10,15 +11,19 @@ import LandingFooter from '../components/landing/LandingFooter'
 
 export default function Landing() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="client-landing-grid min-h-screen bg-white">
       <Hero />
       <TrustSection />
       <HowItWorks />
       <Categories />
-      <Features />
+      <div className="client-landing-features">
+        <Features />
+      </div>
       <Reviews />
-      <FinalCta />
-      <LandingFooter />
+      <div className="client-landing-final-cta">
+        <FinalCta />
+      </div>
+      <LandingFooter audience="client" />
     </main>
   )
 }

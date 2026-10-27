@@ -16,7 +16,7 @@ export default function Categories() {
             <p className="text-slate-500">Expertos verificados en todas las categorías</p>
           </div>
           <button
-            onClick={() => navigate('/register/worker')}
+            onClick={() => navigate('/workerlanding')}
             className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg border border-[#0F172A] bg-transparent px-5 text-sm font-semibold text-[#0F172A] transition-colors hover:bg-[#0F172A] hover:text-white"
           >
             ¿Buscás trabajo?
@@ -31,14 +31,21 @@ export default function Categories() {
               onClick={() => navigate('/login')}
               className="group relative h-56 overflow-hidden rounded-2xl border-0 p-0 shadow-md transition-all duration-300 hover:shadow-xl md:h-64"
             >
-              <img src={cat.image} alt={cat.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+              <img
+                src={cat.image}
+                alt={cat.name}
+                className="h-full w-full object-cover transition-transform duration-500"
+                style={{
+                  ...(cat.objectPosition !== undefined ? { objectPosition: cat.objectPosition } : {}),
+                  ...(cat.objectScale !== undefined ? { transform: `scale(${cat.objectScale})` } : {}),
+                }}
+              />
               <div
                 className="absolute inset-0 opacity-85 transition-opacity group-hover:opacity-90"
                 style={{ background: 'linear-gradient(to top, #0F172A, rgba(15,23,42,0.5) 45%, transparent)' }}
               />
               <div className="absolute inset-x-0 bottom-0 p-5 text-left">
                 <h3 className="text-lg font-bold text-white drop-shadow-md">{cat.name}</h3>
-                <p className="text-sm text-white/80">{cat.count}+ profesionales</p>
               </div>
               <div className="absolute inset-0 rounded-2xl border-2 border-transparent transition-colors group-hover:border-accent" />
             </button>

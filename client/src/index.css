@@ -607,6 +607,17 @@ tr + tr td { border-top: 1px solid #f0f0f0; }
 /* ============================================================
    responsive
    ============================================================ */
+.wpd-header, .wpd-page { padding-left: 32px; padding-right: 32px; }
+.wpd-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.wpd-column, .wpd-layout > * { min-width: 0; }
+.wpd-layout * { min-width: 0; }
+.wpd-header h1, .wpd-header p, .wpd-layout p, .wpd-layout h2, .wpd-layout h3, .wpd-layout button { overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  .wpd-header, .wpd-page { padding-left: 18px; padding-right: 18px; }
+  .wpd-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (min-width: 1000px) {
   .pd-layout { grid-template-columns: 372px minmax(0, 1fr); gap: 26px; }
   .post-card { position: sticky; top: 22px; }

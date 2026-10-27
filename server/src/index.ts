@@ -10,6 +10,8 @@ import cors from 'cors'
 import morgan from 'morgan'
 import { env } from './lib/envConfig.js'
 import { assertMigrationsApplied } from './lib/assertMigrations.js'
+import prisma from './lib/prisma.js'
+import { initializeCategoryCatalog } from './infrastructure/database/categoryCatalog.database.js'
 import { swaggerUiHandlers } from './presentation/swagger/swaggerUi.config.js'
 import { registerRoutes } from './presentation/routes/index.js'
 import { errorHandler } from './presentation/middleware/error.middleware.js'
@@ -20,7 +22,16 @@ export const app = express()
 const PORT = env.PORT
 
 app.use(cors({ origin: env.CORS_ORIGIN }))
+app.use('/ai', express.json({
+  limit: '5mb',
+  verify: (req, _res, buf) => {
+    if (buf && buf.length) {
+      Object.assign(req, { rawBody: buf.toString('utf8') })
+    }
+  },
+}))
 app.use(express.json({
+  limit: '100kb',
   verify: (req, _res, buf) => {
     if (buf && buf.length) {
       Object.assign(req, { rawBody: buf.toString('utf8') })
@@ -36,6 +47,8 @@ app.use(errorHandler)
 
 if (env.NODE_ENV !== 'test') {
   await assertMigrationsApplied()
+  const addedCategories = await initializeCategoryCatalog(prisma)
+  logger.info({ addedCategories, action: 'startup.categoryCatalog' }, 'Category catalog initialized')
   app.listen(PORT, () => {
     logger.info({ port: PORT }, `Server running on port ${PORT}`)
     if (env.TELEGRAM_BOT_TOKEN) launchBot(registerTelegramHandlers)

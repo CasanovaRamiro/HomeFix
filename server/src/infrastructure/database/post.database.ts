@@ -22,6 +22,7 @@ type _CreatePostRecordInput = {
   isEmergency: boolean
   emergencyExpiresAt: Date | null
   allowsSubcontracting?: boolean
+  aiGenerated?: boolean
   isBidding?: boolean
   bidWeights?: string
   materialResponsibility?: string
@@ -52,6 +53,7 @@ async function _createPostRecord(data: _CreatePostRecordInput): Promise<DomainPo
       isEmergency: data.isEmergency,
       emergencyExpiresAt: data.emergencyExpiresAt,
       allowsSubcontracting: data.allowsSubcontracting ?? true,
+      aiGenerated: data.aiGenerated ?? false,
       isBidding: data.isBidding ?? false,
       bidWeights: data.bidWeights ?? null,
       materialResponsibility: data.materialResponsibility ?? null,
@@ -85,6 +87,7 @@ const postFields = {
   isEmergency: true,
   emergencyExpiresAt: true,
   allowsSubcontracting: true,
+  aiGenerated: true,
   isBidding: true,
   bidWeights: true,
   materialResponsibility: true,
@@ -134,6 +137,7 @@ export const createPost = async (data: CreatePostInput): Promise<DomainPost> => 
       ? new Date(Date.now() + EMERGENCY_DURATION_MS)
       : (data.emergencyExpiresAt ?? null),
     allowsSubcontracting: data.allowsSubcontracting ?? true,
+    aiGenerated: data.aiGenerated ?? false,
     images: data.images,
     categories: [{ categoryId: data.categoryId }],
   })
@@ -201,6 +205,10 @@ export const createSubPost = async (data: {
 const availablePostWhere = (category?: string) => ({
   status: 'Active',
   type: { in: [PostType.Post, PostType.Emergency] },
+  OR: [
+    { type: PostType.Post, isEmergency: false },
+    { type: PostType.Emergency, emergencyExpiresAt: { gt: new Date() } },
+  ],
   ...(category?.trim()
     ? {
         categories: {
@@ -220,15 +228,6 @@ export interface PaginationParams {
   sortOrder: 'asc' | 'desc'
 }
 
-const deleteExpiredEmergencyPosts = async (): Promise<void> => {
-  await prisma.post.deleteMany({
-    where: {
-      isEmergency: true,
-      emergencyExpiresAt: { lte: new Date() },
-    },
-  })
-}
-
 export interface PaginatedPosts {
   posts: DomainPost[]
   total: number
@@ -238,7 +237,6 @@ export const findAvailablePosts = async (
   category?: string,
   pagination?: PaginationParams,
 ): Promise<PaginatedPosts> => {
-  await deleteExpiredEmergencyPosts()
   const where = availablePostWhere(category)
   const orderBy = { createdAt: pagination?.sortOrder ?? 'desc' }
 
@@ -292,7 +290,6 @@ export const findPostsByGroupId = async (groupId: string): Promise<DomainPost[]>
 }
 
 export const findEmergencyPosts = async (category?: string): Promise<DomainPost[]> => {
-  await deleteExpiredEmergencyPosts()
   const raw = await prisma.post.findMany({
     where: {
       status: 'Active',
@@ -388,25 +385,45 @@ export const selectBiddingWinner = (
   currentStatus: string,
 ): Promise<{ id: string; status: string }> =>
   prisma.$transaction(async (tx) => {
-    if (currentStatus === PostStatus.Active) {
-      await tx.post.update({
-        where: { id: biddingId },
-        data: { status: PostStatus.Evaluating },
-      })
+    const claimed = await tx.post.updateMany({
+      where: {
+        id: biddingId,
+        isBidding: true,
+        status: currentStatus,
+      },
+      data: { status: PostStatus.InProgress },
+    })
+    if (claimed.count === 0) {
+      throw Object.assign(
+        new Error('La licitación debe estar activa o en evaluación para seleccionar ganador'),
+        { status: 400 },
+      )
     }
-    await tx.application.update({
-      where: { id: applicationId },
+
+    const accepted = await tx.application.updateMany({
+      where: {
+        id: applicationId,
+        postId: biddingId,
+        status: ApplicationStatus.Pending,
+      },
       data: { status: ApplicationStatus.Accepted },
     })
+    if (accepted.count === 0) {
+      const application = await tx.application.findUnique({
+        where: { id: applicationId },
+        select: { postId: true },
+      })
+      if (!application || application.postId !== biddingId) {
+        throw Object.assign(new Error('La postulación no pertenece a esta licitación'), { status: 400 })
+      }
+      throw Object.assign(new Error('La postulación no está pendiente'), { status: 400 })
+    }
+
     await tx.application.updateMany({
       where: { postId: biddingId, status: ApplicationStatus.Pending, id: { not: applicationId } },
       data: { status: ApplicationStatus.Rejected },
     })
-    return tx.post.update({
-      where: { id: biddingId },
-      data: { status: PostStatus.InProgress },
-      select: { id: true, status: true },
-    })
+    return { id: biddingId, status: PostStatus.InProgress }
   })
 
 export const deletePostImages = (postId: string) =>
@@ -444,7 +461,6 @@ export const searchByDistance = async (
   radiusKm: number,
   category?: string,
 ): Promise<LocationSearchResult[]> => {
-  await deleteExpiredEmergencyPosts()
   const hasCategory = !!category?.trim()
 
   const categoryFilter = hasCategory
@@ -464,7 +480,10 @@ export const searchByDistance = async (
       , -1), 1))) AS distance
     FROM Post p
     WHERE p.status = 'Active'
-      AND (p.type = 'Post' OR p.type = 'Emergency')
+      AND (
+        (p.type = ? AND p.isEmergency = 0)
+        OR (p.type = ? AND p.emergencyExpiresAt > ?)
+      )
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
       ${categoryFilter}
@@ -472,7 +491,7 @@ export const searchByDistance = async (
     ORDER BY distance
   `
 
-  const params: (string | number)[] = [lat, lng, lat]
+  const params: (string | number | Date)[] = [lat, lng, lat, PostType.Post, PostType.Emergency, new Date()]
   if (hasCategory) {
     params.push(category!.trim())
   }
@@ -512,6 +531,47 @@ export const decrementPostFilledCount = (postId: string, categoryId?: string) =>
     where: { postId, filledCount: { gt: 0 }, ...(categoryId ? { id: categoryId } : {}) },
     data: { filledCount: { decrement: 1 } },
   })
+
+export const reopenPosts = async (postIds: string[]): Promise<void> => {
+  if (postIds.length === 0) return
+
+  await prisma.$transaction(async (tx) => {
+    const reopened = await tx.post.updateMany({
+      where: { id: { in: postIds }, status: PostStatus.InProgress },
+      data: { status: PostStatus.Active },
+    })
+    if (reopened.count !== postIds.length) {
+      throw Object.assign(new Error('Post must be in progress to be reopened'), { status: 400 })
+    }
+
+    const applications = await tx.application.findMany({
+      where: {
+        postId: { in: postIds },
+        status: { in: [ApplicationStatus.Accepted, ApplicationStatus.Completed] },
+      },
+      select: { id: true, status: true, categoryId: true },
+    })
+
+    for (const application of applications) {
+      if (application.status !== ApplicationStatus.Accepted || !application.categoryId) continue
+
+      const decremented = await tx.postCategory.updateMany({
+        where: { id: application.categoryId, postId: { in: postIds }, filledCount: { gt: 0 } },
+        data: { filledCount: { decrement: 1 } },
+      })
+      if (decremented.count === 0) {
+        throw new Error('Post category filled count is inconsistent')
+      }
+    }
+
+    if (applications.length > 0) {
+      await tx.application.updateMany({
+        where: { id: { in: applications.map((application) => application.id) } },
+        data: { status: ApplicationStatus.Pending },
+      })
+    }
+  })
+}
 
 export const findPostCategories = (postId: string) =>
   prisma.postCategory.findMany({
@@ -587,15 +647,62 @@ export const updateSubcontractGroup = async (
     address: string
     latitude?: number | null
     longitude?: number | null
-    positions?: { categoryId: string; quantity: number; roleDescription: string }[]
+    positions?: { id?: string; categoryId: string; quantity: number; roleDescription: string }[]
   }
 ): Promise<DomainPost[]> => {
-  const posts = await prisma.post.findMany({
-    where: { subcontractGroupId: groupId } as never,
-    select: { id: true },
-  })
-
   await prisma.$transaction(async (tx) => {
+    const posts = await tx.post.findMany({
+      where: { subcontractGroupId: groupId } as never,
+      select: {
+        id: true,
+        userId: true,
+        parentPostId: true,
+        applications: { select: { id: true } },
+        categories: {
+          select: {
+            id: true,
+            categoryId: true,
+            quantity: true,
+            filledCount: true,
+            roleDescription: true,
+            applications: { select: { id: true } },
+          },
+        },
+      },
+    })
+
+    const categoryById = new Map(posts.flatMap((post) => post.categories.map((category) => [category.id, { ...category, postId: post.id }])))
+    const positions = data.positions
+    const existingIds = new Set<string>()
+
+    if (positions) {
+      for (const position of positions) {
+        if (!position.categoryId || !Number.isInteger(position.quantity) || position.quantity < 1 || !position.roleDescription.trim()) {
+          throw Object.assign(new Error('Invalid subcontract position'), { status: 400 })
+        }
+        if (position.id !== undefined) {
+          if (!position.id || existingIds.has(position.id) || !categoryById.has(position.id)) {
+            throw Object.assign(new Error('Invalid or duplicate subcontract position id'), { status: 400 })
+          }
+          existingIds.add(position.id)
+          const current = categoryById.get(position.id)!
+          if (position.quantity < current.filledCount) {
+            throw Object.assign(new Error('Position quantity cannot be lower than filled positions'), { status: 400 })
+          }
+          if (current.applications.length > 0 && position.categoryId !== current.categoryId) {
+            throw Object.assign(new Error('A contracted position cannot change category'), { status: 400 })
+          }
+        }
+      }
+
+      for (const [id, current] of categoryById) {
+        if (existingIds.has(id)) continue
+        if (current.filledCount > 0 || current.applications.length > 0) {
+          throw Object.assign(new Error('A position with applications or contracts cannot be removed'), { status: 400 })
+        }
+      }
+    }
+
     for (const post of posts) {
       await tx.post.update({
         where: { id: post.id },
@@ -610,18 +717,62 @@ export const updateSubcontractGroup = async (
         },
       })
 
-      if (data.positions) {
-        await tx.postCategory.deleteMany({ where: { postId: post.id } })
-        if (data.positions.length > 0) {
-          await tx.postCategory.createMany({
-            data: data.positions.map(p => ({
-              postId: post.id,
-              categoryId: p.categoryId,
-              quantity: p.quantity,
-              roleDescription: p.roleDescription,
-            })),
+      if (positions) {
+        for (const position of positions.filter((item) => item.id && categoryById.get(item.id)?.postId === post.id)) {
+          await tx.postCategory.update({
+            where: { id: position.id },
+            data: {
+              categoryId: position.categoryId,
+              quantity: position.quantity,
+              roleDescription: position.roleDescription,
+            },
           })
         }
+
+        for (const category of post.categories) {
+          if (existingIds.has(category.id)) continue
+          await tx.postCategory.delete({ where: { id: category.id } })
+        }
+
+        const retainedCategories = post.categories.filter((category) => existingIds.has(category.id))
+        if (retainedCategories.length === 0 && post.applications.length === 0) {
+          await tx.post.delete({ where: { id: post.id } })
+        }
+      }
+    }
+
+    if (positions) {
+      const template = posts[0]
+      if (!template && positions.length > 0) {
+        throw Object.assign(new Error('Subcontract group not found'), { status: 404 })
+      }
+      for (const position of positions.filter((item) => !item.id)) {
+        await tx.post.create({
+          data: {
+            userId: template.userId,
+            type: PostType.SubContract,
+            parentPostId: template.parentPostId,
+            subcontractGroupId: groupId,
+            title: data.title,
+            description: data.description,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            address: data.address,
+            latitude: data.latitude ?? null,
+            longitude: data.longitude ?? null,
+            isEmergency: false,
+            emergencyExpiresAt: null,
+            allowsSubcontracting: true,
+            isBidding: false,
+            categories: {
+              create: {
+                categoryId: position.categoryId,
+                quantity: position.quantity,
+                roleDescription: position.roleDescription,
+              },
+            },
+          },
+        })
       }
     }
   })
