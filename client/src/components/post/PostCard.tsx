@@ -7,6 +7,11 @@ import { getCategoryMeta } from '../../views/categoryMeta'
 import ImageModal from '../ui/ImageModal'
 import type { Post } from '../../types/post'
 
+const isVideoUrl = (url: string) => {
+  const lower = url.toLowerCase()
+  return lower.includes('/video/upload/') || lower.match(/\.(mp4|webm|mov|mkv|avi|m4v|ogg)(\?|#|$)/) !== null
+}
+
 interface PostCardProps {
   post: Post
   hasAcceptedWorker?: boolean
@@ -83,7 +88,11 @@ export default function PostCard({
           <div className="pc-photos">
             {images.map((img, i) => (
               <button key={i} className="pc-photo-btn" onClick={() => setSelectedImg(i)}>
-                <img src={img.url} alt={`Foto ${i + 1}`} />
+                {isVideoUrl(img.url) ? (
+                  <video src={img.url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <img src={img.url} alt={`Foto ${i + 1}`} />
+                )}
               </button>
             ))}
           </div>

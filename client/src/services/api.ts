@@ -2,7 +2,7 @@ import { env } from '../lib/envConfig'
 import axios from 'axios'
 import { AUTH_RETURN_PATH_KEY, clearAuth } from '../hooks/useAuth'
 
-const api = axios.create({ baseURL: env.VITE_API_URL })
+const api = axios.create({ baseURL: env.VITE_API_URL, timeout: 300000 })
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')

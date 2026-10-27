@@ -3,7 +3,7 @@ import api from './api'
 export const uploadImages = async (files: File[]): Promise<string[]> => {
   const form = new FormData()
   files.forEach((f) => form.append('files', f))
-  const { data } = await api.post('/upload', form)
+  const { data } = await api.post('/upload', form, { timeout: 300000 })
   return data.urls as string[]
 }
 
