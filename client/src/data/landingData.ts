@@ -14,6 +14,8 @@ export interface LandingCategory {
   name: string
   image: string
   count: number
+  objectPosition?: string
+  objectScale?: number
 }
 
 export interface Testimonial {
@@ -31,14 +33,14 @@ export const stats: { value: string; label: string }[] = [
 ]
 
 export const categories: LandingCategory[] = [
-  { name: 'Electricidad', image: electricidad, count: 342 },
-  { name: 'Plomería', image: plomeria, count: 289 },
-  { name: 'Carpintería', image: carpinteria, count: 218 },
-  { name: 'Aire Acondicionado', image: hvac, count: 156 },
-  { name: 'Pintura', image: pintura, count: 267 },
-  { name: 'Albañilería', image: albanileria, count: 198 },
-  { name: 'Cerrajería', image: cerrajeria, count: 134 },
-  { name: 'Electrónica', image: electronica, count: 112 },
+  { name: 'Electricidad', image: electricidad, count: 342, objectPosition: '50% 15%' },
+  { name: 'Plomería', image: plomeria, count: 289, objectPosition: '50% 80%' },
+  { name: 'Carpintería', image: carpinteria, count: 218, objectPosition: '50% 20%' },
+  { name: 'Aire Acondicionado', image: hvac, count: 156, objectPosition: '50% 15%' },
+  { name: 'Pintura', image: pintura, count: 267, objectPosition: '50% 15%', objectScale: 1.15 },
+  { name: 'Albañilería', image: albanileria, count: 198, objectPosition: '50% 18%' },
+  { name: 'Cerrajería', image: cerrajeria, count: 134, objectPosition: '50% 0%' },
+  { name: 'Electrónica', image: electronica, count: 112, objectPosition: '50% 0%' },
 ]
 
 export const testimonials: Testimonial[] = [

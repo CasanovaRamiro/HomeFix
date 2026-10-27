@@ -45,7 +45,7 @@ export default function HowItWorks() {
 
         <div className="mt-16 text-center">
           <button
-            onClick={() => navigate('/diagnosis')}
+            onClick={() => navigate('/login')}
             className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border-0 bg-accent px-8 text-base font-semibold text-white transition-colors hover:bg-accent-hover"
           >
             Iniciar diagnóstico gratuito

@@ -21,14 +21,14 @@ export default function FinalCta() {
         </p>
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <button
-            onClick={() => navigate('/register')}
+            onClick={() => navigate('/login')}
             className="inline-flex h-16 items-center justify-center gap-2 rounded-lg border-0 bg-accent px-10 text-lg font-bold text-white transition-colors hover:bg-accent-hover"
           >
             Buscar profesional ahora
             <ArrowRight className="h-5 w-5" />
           </button>
           <button
-            onClick={() => navigate('/diagnosis')}
+            onClick={() => navigate('/login')}
             className="inline-flex h-16 items-center justify-center gap-2 rounded-lg border-2 border-white/30 bg-transparent px-10 text-lg font-semibold text-white transition-colors hover:bg-white/10"
           >
             <MessageSquare className="h-5 w-5" />
