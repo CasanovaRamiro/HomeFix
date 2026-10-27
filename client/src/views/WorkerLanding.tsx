@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import '../components/landing/landing.css'
 import '../components/landing/worker-landing.css'
+import LandingFooter from '../components/landing/LandingFooter'
 import {
   workerStats, benefits, workerSteps, workerFeatures, requirements, workerTestimonials,
 } from '../data/workerLandingData'
@@ -22,12 +23,6 @@ import heroPortrait from '../assets/worker-verified.jpg'
 // icon lookups keep the data files free of JSX imports
 const benefitIcons: LucideIcon[] = [TrendingUp, CalendarClock, Star]
 const featureIcons: LucideIcon[] = [MapPin, CalendarClock, MessageSquare, Star, BadgeCheck]
-
-const footerCols: { title: string; links: string[] }[] = [
-  { title: 'Para Profesionales', links: ['Registrarme', 'Cómo funciona', 'Verificación de perfil', 'Centro de ayuda'] },
-  { title: 'Empresa', links: ['Sobre Nosotros', 'Buscar Profesionales', 'Seguridad', 'Contacto'] },
-  { title: 'Legal', links: ['Términos de Servicio', 'Privacidad', 'Cookies'] },
-]
 
 export default function WorkerLanding() {
   const navigate = useNavigate()
@@ -134,7 +129,7 @@ export default function WorkerLanding() {
               ))}
             </div>
             <div className="lp-mt">
-              <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/register/worker')}>Verificar mi perfil <ArrowRight size={16} /></button>
+              <button className="lp-btn lp-btn-lg lp-btn-primary" onClick={() => navigate('/login')}>Verificar mi perfil <ArrowRight size={16} /></button>
             </div>
           </div>
           <div className="lp-split-media">
@@ -217,31 +212,7 @@ export default function WorkerLanding() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer id="redes-sociales" className="lp-footer">
-        <div className="lp-container">
-          <div className="lp-footer-grid">
-            <div className="lp-footer-brand">
-              <img className="lp-footer-mark" src={logoNeg} alt="HomeFix" />
-              <p>La plataforma que conecta a profesionales verificados con los hogares que los necesitan. Más trabajo, menos vueltas, tu reputación siempre con vos.</p>
-              <div className="lp-footer-badges">
-                <span className="lp-fbadge accent"><CheckCircle2 size={14} /> Registro gratis</span>
-                <span className="lp-fbadge"><ShieldCheck size={14} /> Pagos protegidos</span>
-              </div>
-            </div>
-            {footerCols.map((col) => (
-              <div key={col.title} className="lp-footer-col">
-                <h4>{col.title}</h4>
-                <ul>{col.links.map((l) => <li key={l}><button onClick={() => navigate('/register/worker')}>{l}</button></li>)}</ul>
-              </div>
-            ))}
-          </div>
-          <div className="lp-footer-bottom">
-            <p>© 2026 HomeFix. Todos los derechos reservados.</p>
-            <div className="lp-footer-social"><a href="#">LinkedIn</a><a href="#">Twitter</a><a href="#">Instagram</a></div>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter audience="worker" />
     </main>
   )
 }
