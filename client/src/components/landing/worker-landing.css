@@ -73,6 +73,18 @@
 /* nav: mark the active audience link */
 .lp-root .lp-nav-link.active { color: var(--lp-navy); background: var(--lp-soft); }
 
+/* The final navy section and footer should read as one continuous CTA area. */
+.lp-root #redes-sociales-trabajador {
+  position: relative;
+  z-index: 1;
+  margin-top: -64px;
+  padding-top: 64px;
+  background: linear-gradient(to bottom, transparent 0, #0F172A 64px);
+}
+
+.lp-root #redes-sociales-trabajador .border-t {
+  border-top-color: transparent;
+}
 /* ---------- responsive ---------- */
 @media (max-width: 1000px) {
   .lp-root .lp-wstats { grid-template-columns: repeat(2, 1fr); }

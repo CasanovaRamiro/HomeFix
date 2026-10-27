@@ -23,7 +23,7 @@ export default function Landing() {
       <div className="client-landing-final-cta">
         <FinalCta />
       </div>
-      <LandingFooter />
+      <LandingFooter audience="client" />
     </main>
   )
 }

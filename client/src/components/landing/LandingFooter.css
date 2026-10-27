@@ -1,0 +1,140 @@
+/* Shared footer layout for both public landings. Content stays variant-specific. */
+.landing-footer-public {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div > .grid > .col-span-2,
+.landing-footer-public > div > .grid > :not(.col-span-2),
+.landing-footer-public > div > .border-t {
+  font-family: inherit;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 > p {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.625;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div > .grid > :not(.col-span-2) h4 {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div > .grid > :not(.col-span-2) button,
+.landing-footer-public > div > .grid > :not(.col-span-2) span {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 > div {
+  line-height: 1.5;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 > div > span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div > .border-t,
+.landing-footer-public > div > .border-t p,
+.landing-footer-public > div > .border-t > div,
+.landing-footer-public > div > .border-t a {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.landing-footer-public > div {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 2rem;
+  padding-top: 3.5rem;
+}
+
+.landing-footer-public > div > .grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(2rem, 4vw, 3.5rem);
+  row-gap: 2.5rem;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 {
+  grid-column: span 2;
+}
+
+.landing-footer-public > div > .grid > .col-span-2,
+.landing-footer-public > div > .grid > :not(.col-span-2) {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 {
+  gap: 1.5rem;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 > img {
+  width: auto;
+  height: 56px;
+  max-width: 100%;
+  aspect-ratio: 262 / 151;
+  object-fit: contain;
+  object-position: left center;
+  flex: 0 0 auto;
+}
+
+.landing-footer-public > div > .grid > .col-span-2 > p,
+.landing-footer-public > div > .grid > .col-span-2 > div,
+.landing-footer-public > div > .grid > :not(.col-span-2) > ul {
+  margin-top: 0;
+}
+
+.landing-footer-public > div > .grid > :not(.col-span-2) {
+  gap: 1rem;
+}
+
+.landing-footer-public > div > .grid > :not(.col-span-2) > ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.landing-footer-public > div > .grid > :not(.col-span-2) li + li {
+  margin-top: 0;
+}
+
+.landing-footer-public > div > .border-t {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .landing-footer-public > div > .grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .landing-footer-public > div > .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-footer-public > div > .grid > .col-span-2 {
+    grid-column: span 1;
+  }
+}
