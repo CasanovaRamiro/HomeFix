@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Shield, CheckCircle2 } from 'lucide-react'
 import logoNeg from '../../assets/homefix-logo-negative.png'
+import './LandingFooter.css'
 
 type FooterLink = {
   label: string
@@ -10,7 +11,11 @@ type FooterLink = {
   disabled?: boolean
 }
 
-const columns: { title: string; links: FooterLink[] }[] = [
+type LandingFooterProps = {
+  audience?: 'client' | 'worker'
+}
+
+const clientColumns: { title: string; links: FooterLink[] }[] = [
   {
     title: 'Plataforma',
     links: [
@@ -39,26 +44,60 @@ const columns: { title: string; links: FooterLink[] }[] = [
   },
 ]
 
-export default function LandingFooter() {
+const workerColumns: { title: string; links: FooterLink[] }[] = [
+  {
+    title: 'Para Profesionales',
+    links: [
+      { label: 'Registrarme', to: '/register/worker' },
+      { label: 'Cómo funciona', href: '/workerlanding#como-funciona' },
+      { label: 'Verificación de perfil', href: '/workerlanding#como-validarme' },
+      { label: 'Centro de ayuda', to: '/login' },
+    ],
+  },
+  {
+    title: 'Empresa',
+    links: [
+      { label: 'Sobre Nosotros', href: '/#confia-en-nosotros' },
+      { label: 'Buscar Profesionales', to: '/login' },
+      { label: 'Seguridad', href: '/#confia-en-nosotros' },
+      { label: 'Contacto', to: '/login' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'Términos de Servicio', disabled: true },
+      { label: 'Privacidad', disabled: true },
+      { label: 'Cookies', disabled: true },
+    ],
+  },
+]
+
+export default function LandingFooter({ audience }: LandingFooterProps) {
   const navigate = useNavigate()
+  const isWorker = audience === 'worker'
+  const isPublicLanding = audience !== undefined
+  const columns = isWorker ? workerColumns : clientColumns
 
   return (
-    <footer id="redes-sociales-cliente" className="bg-[#0F172A] text-white">
+    <footer id={isWorker ? 'redes-sociales-trabajador' : 'redes-sociales-cliente'} className={`${isPublicLanding ? 'landing-footer-public ' : ''}bg-[#0F172A] text-white`}>
       <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:gap-12 md:grid-cols-5">
           <div className="col-span-2 space-y-6">
             <img src={logoNeg} alt="HomeFix" className="h-14 w-auto" />
             <p className="max-w-sm text-sm leading-relaxed text-white/70">
-              Plataforma de confianza que conecta hogares con profesionales verificados. Seguridad, transparencia y calidad garantizada en cada servicio.
+              {isWorker
+                ? 'La plataforma que conecta a profesionales verificados con los hogares que los necesitan. Más trabajo, menos vueltas, tu reputación siempre con vos.'
+                : 'Plataforma de confianza que conecta hogares con profesionales verificados. Seguridad, transparencia y calidad garantizada en cada servicio.'}
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <span className="flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1.5 text-xs font-semibold text-accent">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Verificación Triple
+                {isWorker ? 'Registro gratis' : 'Verificación Triple'}
               </span>
               <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80">
                 <Shield className="h-3.5 w-3.5" />
-                Seguridad Garantizada
+                {isWorker ? 'Pagos protegidos' : 'Seguridad Garantizada'}
               </span>
             </div>
           </div>

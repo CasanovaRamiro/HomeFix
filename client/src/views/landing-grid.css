@@ -1,7 +1,6 @@
 /* Client landing layout grid. Kept local to Landing.tsx so worker and shared
    pages retain their existing containers. */
-.client-landing-grid > section > div:not(.absolute),
-.client-landing-grid > footer > div {
+.client-landing-grid > section > div:not(.absolute) {
   width: 100%;
   max-width: 90rem;
   margin-inline: auto;
@@ -35,46 +34,4 @@
 
 .client-landing-grid #redes-sociales-cliente .border-t {
   border-top-color: transparent;
-}
-
-/* Landing Cliente footer distribution. The shared footer markup stays
-   unchanged while its local layout follows the landing grid. */
-.client-landing-grid #redes-sociales-cliente > div > .grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: clamp(2rem, 4vw, 3.5rem);
-  row-gap: 2.5rem;
-}
-
-.client-landing-grid #redes-sociales-cliente > div {
-  padding-top: 3.5rem;
-}
-
-.client-landing-grid #redes-sociales-cliente > div > .border-t {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.client-landing-grid #redes-sociales-cliente > div > .grid > .col-span-2 {
-  grid-column: span 2;
-}
-
-@media (min-width: 1024px) {
-  .client-landing-grid #redes-sociales-cliente > div > .grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 639px) {
-  .client-landing-grid #redes-sociales-cliente > div > .grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .client-landing-grid #redes-sociales-cliente > div > .grid > .col-span-2 {
-    grid-column: span 1;
-  }
 }
