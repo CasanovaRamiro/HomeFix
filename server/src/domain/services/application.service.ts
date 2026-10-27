@@ -70,7 +70,9 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
   if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propio trabajo'), { status: 400 })
 
-  const availability = validateAvailabilityWindow(input.availableTimeFrom, input.availableTimeTo, true)
+  const availability = validateAvailabilityWindow(input.availableTimeFrom, input.availableTimeTo, true, {
+    isEmergency: post.isEmergency,
+  })
   validateAvailableDays(input.availableDays, post.startDate, post.endDate)
 
   const existing = await findApplication(workerId, input.postId)

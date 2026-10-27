@@ -156,7 +156,7 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
         return
       }
     }
-    if (availableTimeFrom || availableTimeTo) {
+    if (!selected.isEmergency && (availableTimeFrom || availableTimeTo)) {
       if (!availableTimeFrom || !availableTimeTo) {
         setFormError('Ingresá el horario desde y hasta juntos.')
         return
@@ -171,6 +171,15 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
       }
       if (availableTimeFrom < BUSINESS_HOURS_START || availableTimeTo > BUSINESS_HOURS_END) {
         setFormError(`El horario debe estar entre las ${BUSINESS_HOURS_START} y las ${BUSINESS_HOURS_END}.`)
+        return
+      }
+    } else if (selected.isEmergency && (availableTimeFrom || availableTimeTo)) {
+      if (!availableTimeFrom || !availableTimeTo) {
+        setFormError('Ingresá el horario desde y hasta juntos.')
+        return
+      }
+      if (!TIME_PATTERN.test(availableTimeFrom) || !TIME_PATTERN.test(availableTimeTo)) {
+        setFormError('Ingresá un horario válido en formato HH:mm.')
         return
       }
     }
@@ -370,8 +379,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
                 <input
                   type="time"
                   value={availableTimeFrom}
-                  min={BUSINESS_HOURS_START}
-                  max={BUSINESS_HOURS_END}
+                  min={selected.isEmergency ? undefined : BUSINESS_HOURS_START}
+                  max={selected.isEmergency ? undefined : BUSINESS_HOURS_END}
                   onChange={(e) => setAvailableTimeFrom(e.target.value)}
                   style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />
@@ -381,8 +390,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
                 <input
                   type="time"
                   value={availableTimeTo}
-                  min={BUSINESS_HOURS_START}
-                  max={BUSINESS_HOURS_END}
+                  min={selected.isEmergency ? undefined : BUSINESS_HOURS_START}
+                  max={selected.isEmergency ? undefined : BUSINESS_HOURS_END}
                   onChange={(e) => setAvailableTimeTo(e.target.value)}
                   style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />

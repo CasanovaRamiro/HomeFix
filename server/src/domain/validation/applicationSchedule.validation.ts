@@ -40,12 +40,15 @@ export const validateAvailabilityWindow = (
   from: unknown,
   to: unknown,
   required = false,
+  options: { isEmergency?: boolean } = {},
 ): { availableTimeFrom: string | null; availableTimeTo: string | null } => {
+  const { isEmergency = false } = options
   const hasFrom = !isAbsent(from)
   const hasTo = !isAbsent(to)
 
   if (!hasFrom && !hasTo) {
-    if (required) throw createHttpError(400, 'El horario desde y hasta es obligatorio')
+    if (required && !isEmergency) throw createHttpError(400, 'El horario desde y hasta es obligatorio')
+    if (required && isEmergency) throw createHttpError(400, 'El horario desde y hasta es obligatorio')
     return { availableTimeFrom: null, availableTimeTo: null }
   }
 
@@ -56,18 +59,20 @@ export const validateAvailabilityWindow = (
   const availableTimeFrom = parseTime(from, 'El horario desde')
   const availableTimeTo = parseTime(to, 'El horario hasta')
 
-  if (toMinutes(availableTimeFrom) >= toMinutes(availableTimeTo)) {
-    throw createHttpError(400, 'El horario desde debe ser anterior al horario hasta')
-  }
+  if (!isEmergency) {
+    if (toMinutes(availableTimeFrom) >= toMinutes(availableTimeTo)) {
+      throw createHttpError(400, 'El horario desde debe ser anterior al horario hasta')
+    }
 
-  if (
-    toMinutes(availableTimeFrom) < toMinutes(BUSINESS_HOURS_START) ||
-    toMinutes(availableTimeTo) > toMinutes(BUSINESS_HOURS_END)
-  ) {
-    throw createHttpError(
-      400,
-      `El horario debe estar entre las ${BUSINESS_HOURS_START} y las ${BUSINESS_HOURS_END}`,
-    )
+    if (
+      toMinutes(availableTimeFrom) < toMinutes(BUSINESS_HOURS_START) ||
+      toMinutes(availableTimeTo) > toMinutes(BUSINESS_HOURS_END)
+    ) {
+      throw createHttpError(
+        400,
+        `El horario debe estar entre las ${BUSINESS_HOURS_START} y las ${BUSINESS_HOURS_END}`,
+      )
+    }
   }
 
   return { availableTimeFrom, availableTimeTo }
