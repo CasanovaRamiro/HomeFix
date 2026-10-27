@@ -71,6 +71,11 @@ vi.mock("../../src/domain/services/user.service.js", () => ({
 
 beforeEach(() => vi.clearAllMocks())
 
+const mockPostDates = {
+  startDate: new Date("2030-01-01T00:00:00.000Z"),
+  endDate: new Date("2030-02-01T00:00:00.000Z"),
+}
+
 const mockApplication = {
   id: "app-1",
   workerId: "worker-1",
@@ -93,7 +98,7 @@ const mockApplication = {
   startTokenExpiresAt: null,
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false },
+  post: { userId: "client-1", title: "Test post", status: "Active", type: "Post", subcontractGroupId: null, isBidding: false, ...mockPostDates },
   category: null,
 }
 
@@ -140,7 +145,7 @@ describe("acceptApplication", () => {
   it("forces requiresStartToken=false for subcontracts even when the client enabled it", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1" },
+      post: { userId: "client-1", title: "Test post", status: "Active", type: PostType.SubContract, subcontractGroupId: "group-1", ...mockPostDates },
       category: { id: "cat-1", filledCount: 0, quantity: 3 },
     } as never)
     vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(true)
@@ -175,7 +180,7 @@ describe("acceptApplication", () => {
   it("throws 400 if post is not Active", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false, ...mockPostDates },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -184,16 +189,68 @@ describe("acceptApplication", () => {
   it("throws 400 if post is Paused", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Paused", type: "Post", subcontractGroupId: null, isBidding: false, ...mockPostDates },
     })
 
     await expect(acceptApplication("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
 
+  it("rechaza una fecha de contratación fuera del rango de la publicación", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+
+    await expect(acceptApplication("client-1", "app-1", "2040-12-31")).rejects.toMatchObject({
+      status: 400,
+      message: "La fecha de contratación debe estar dentro del rango de la publicación",
+    })
+    expect(mockPrisma.application.updateMany).not.toHaveBeenCalled()
+    expect(mockPrisma.postUpdateMany).not.toHaveBeenCalled()
+  })
+
+  it("rechaza una fecha de contratación mal formada o imposible", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue(mockApplication)
+
+    await expect(acceptApplication("client-1", "app-1", "31/12/2030")).rejects.toMatchObject({ status: 400 })
+    await expect(acceptApplication("client-1", "app-1", "2030-02-30")).rejects.toMatchObject({ status: 400 })
+    expect(mockPrisma.application.updateMany).not.toHaveBeenCalled()
+  })
+
+  it("rechaza una fecha dentro del rango que no fue ofrecida por el trabajador", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      availableDays: JSON.stringify(["2030-01-02", "2030-01-03"]),
+    })
+
+    await expect(acceptApplication("client-1", "app-1", "2030-01-04")).rejects.toMatchObject({
+      status: 400,
+      message: "La fecha de contratación debe ser uno de los días ofrecidos por el trabajador",
+    })
+    expect(mockPrisma.application.updateMany).not.toHaveBeenCalled()
+  })
+
+  it("persiste la fecha ofrecida normalizada a medianoche UTC", async () => {
+    vi.mocked(applicationData.findApplicationById).mockResolvedValue({
+      ...mockApplication,
+      availableDays: JSON.stringify(["2030-01-02", "2030-01-03"]),
+    })
+    vi.mocked(userDatabase.getRequiresStartToken).mockResolvedValue(false)
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 })
+
+    await acceptApplication("client-1", "app-1", "2030-01-02")
+
+    expect(mockPrisma.application.updateMany).toHaveBeenCalledWith({
+      where: { id: "app-1", status: "Pending" },
+      data: {
+        status: "Accepted",
+        scheduledDate: new Date("2030-01-02T00:00:00.000Z"),
+        requiresStartToken: false,
+      },
+    })
+  })
+
   it("throws 400 when application already accepted in another position of the same subcontract group", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...mockApplication,
-      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Active", type: "SubContract", subcontractGroupId: null, isBidding: false, ...mockPostDates },
       category: { id: "cat-1", quantity: 2, filledCount: 0 },
     })
     mockPrisma.application.updateMany.mockRejectedValue(
@@ -321,6 +378,39 @@ describe("applyToPost", () => {
     const input = { ...validInput, availableDays: [] }
     const result = await applyToPost("worker-1", input)
     expect(result.status).toBe("Pending")
+  })
+
+  it("rechaza horarios mal formados", async () => {
+    const input = { ...validInput, availableTimeFrom: "9:00", availableTimeTo: "18:00" }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({
+      status: 400,
+      message: "El horario desde debe tener formato HH:mm",
+    })
+    expect(applicationData.createApplication).not.toHaveBeenCalled()
+  })
+
+  it("rechaza horarios invertidos", async () => {
+    const input = { ...validInput, availableTimeFrom: "18:00", availableTimeTo: "09:00" }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({ status: 400 })
+    expect(applicationData.createApplication).not.toHaveBeenCalled()
+  })
+
+  it("rechaza horarios fuera de la ventana 08:00-22:00", async () => {
+    await expect(applyToPost("worker-1", { ...validInput, availableTimeFrom: "07:59" }))
+      .rejects.toMatchObject({ status: 400 })
+    await expect(applyToPost("worker-1", { ...validInput, availableTimeTo: "22:01" }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("acepta los límites de la ventana horaria", async () => {
+    const input = { ...validInput, availableTimeFrom: "08:00", availableTimeTo: "22:00" }
+    const result = await applyToPost("worker-1", input)
+    expect(result.status).toBe("Pending")
+  })
+
+  it("rechaza un día de disponibilidad con fecha imposible", async () => {
+    const input = { ...validInput, availableDays: ["2026-02-30"] }
+    await expect(applyToPost("worker-1", input)).rejects.toMatchObject({ status: 400 })
   })
 })
 
@@ -466,6 +556,36 @@ describe("applyToSubcontract", () => {
     })
     await expect(applyToSubcontract("worker-1", validInput)).rejects.toMatchObject({ status: 400 })
   })
+
+  it("rechaza horarios inválidos si se envían", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, availableTimeFrom: "18:00", availableTimeTo: "09:00" }))
+      .rejects.toMatchObject({ status: 400 })
+    await expect(applyToSubcontract("worker-1", { ...validInput, availableTimeFrom: "07:00" }))
+      .rejects.toMatchObject({ status: 400 })
+    expect(applicationData.createApplication).not.toHaveBeenCalled()
+  })
+
+  it("rechaza que se envíe un solo extremo horario", async () => {
+    await expect(applyToSubcontract("worker-1", { ...validInput, availableTimeTo: undefined }))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it("permite omitir la ventana horaria", async () => {
+    const input = { ...validInput, availableTimeFrom: undefined, availableTimeTo: undefined }
+    const result = await applyToSubcontract("worker-1", input)
+    expect(result.status).toBe("Pending")
+  })
+
+  it("rechaza días ISO fuera del rango del subcontract", async () => {
+    vi.mocked(postData.findPostById).mockResolvedValue({
+      ...mockSubcontract,
+      startDate: new Date("2030-01-01T00:00:00.000Z"),
+      endDate: new Date("2030-02-01T00:00:00.000Z"),
+    })
+
+    await expect(applyToSubcontract("worker-1", { ...validInput, availableDays: ["2029-12-31"] }))
+      .rejects.toMatchObject({ status: 400 })
+  })
 })
 
 describe("applyToBidding", () => {
@@ -585,7 +705,7 @@ describe("dismissWorker", () => {
   const acceptedApplication = {
     ...mockApplication,
     status: "Accepted",
-    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false },
+    post: { userId: "client-1", title: "Test post", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: false, ...mockPostDates },
   }
 
   it("dismisses the worker and reopens the post when valid", async () => {
@@ -625,7 +745,7 @@ describe("dismissWorker", () => {
   it("throws 400 if post is not In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedApplication,
-      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null, isBidding: false },
+      post: { userId: "client-1", title: "Test post", status: "Completed", type: "Post", subcontractGroupId: null, isBidding: false, ...mockPostDates },
     })
 
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
@@ -656,7 +776,7 @@ describe("dismissWorker - bidding path", () => {
     startTokenExpiresAt: null,
     startTokenAttempts: 0,
     tokenValidatedAt: null,
-    post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true },
+    post: { userId: "client-1", title: "Licitación test", status: "In progress", type: "Post", subcontractGroupId: null, isBidding: true, ...mockPostDates },
     category: null,
   }
 
@@ -692,7 +812,7 @@ describe("dismissWorker - bidding path", () => {
   it("lanza 400 si el post no está In progress", async () => {
     vi.mocked(applicationData.findApplicationById).mockResolvedValue({
       ...acceptedBiddingApp,
-      post: { userId: "client-1", title: "Licitación test", status: "Evaluating", type: "Post", subcontractGroupId: null, isBidding: true },
+      post: { userId: "client-1", title: "Licitación test", status: "Evaluating", type: "Post", subcontractGroupId: null, isBidding: true, ...mockPostDates },
     })
     await expect(dismissWorker("client-1", "app-1")).rejects.toMatchObject({ status: 400 })
   })
@@ -835,7 +955,7 @@ const eligibleApp = {
   startTokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
   startTokenAttempts: 0,
   tokenValidatedAt: null,
-  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false },
+  post: { userId: "client-1", title: "Test post", status: "In progress", type: PostType.Post, subcontractGroupId: null, isBidding: false, ...mockPostDates },
 }
 
 describe("generateStartToken", () => {

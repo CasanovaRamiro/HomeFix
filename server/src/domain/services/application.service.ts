@@ -23,6 +23,13 @@ import { notifyUser } from './notification.service.js'
 import { ApplicationStatus } from '../types/applicationStatus.js'
 import { PostStatus } from '../types/postStatus.js'
 import { PostType } from '../types/postType.js'
+import {
+  assertScheduledDateOffered,
+  assertScheduledDateWithinPost,
+  parseScheduledDate,
+  validateAvailabilityWindow,
+  validateAvailableDays,
+} from '../validation/applicationSchedule.validation.js'
 import type { CreateApplicationInput, DomainMyApplication, DomainPostApplication, DomainStartToken, DomainStartTokenValidation } from '../types/application.types.js'
 import type { NotificationProvider } from '../types/notification.types.js'
 
@@ -63,17 +70,10 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   if (post.status !== PostStatus.Active) throw Object.assign(new Error('Esta publicación ya no está disponible'), { status: 400 })
   if (post.userId === workerId) throw Object.assign(new Error('No puedes postularte a tu propio trabajo'), { status: 400 })
 
-  if (input.availableDays && input.availableDays.length > 0) {
-    const minDate = post.startDate.toISOString().split('T')[0]
-    const maxDate = post.endDate.toISOString().split('T')[0]
-    const outOfRange = input.availableDays.some((day) => day < minDate || day > maxDate)
-    if (outOfRange) {
-      throw Object.assign(
-        new Error('Las fechas seleccionadas deben estar dentro del rango de la publicación'),
-        { status: 400 }
-      )
-    }
-  }
+  const availability = validateAvailabilityWindow(input.availableTimeFrom, input.availableTimeTo, true, {
+    isEmergency: post.isEmergency,
+  })
+  validateAvailableDays(input.availableDays, post.startDate, post.endDate)
 
   const existing = await findApplication(workerId, input.postId)
   if (existing) throw Object.assign(new Error('You already applied to this post'), { status: 409 })
@@ -81,7 +81,11 @@ export const applyToPost = async (workerId: string, input: CreateApplicationInpu
   if (input.chargesVisit && (input.visitCost == null || input.visitCost <= 0))
     throw Object.assign(new Error('visitCost must be a positive number when chargesVisit is true'), { status: 400 })
 
-  const created = await createApplication(workerId, input)
+  const created = await createApplication(workerId, {
+    ...input,
+    availableTimeFrom: availability.availableTimeFrom ?? undefined,
+    availableTimeTo: availability.availableTimeTo ?? undefined,
+  })
 
   logger.info({ applicationId: created.id, postId: input.postId, workerId, action: 'application.submitted' }, 'Worker applied to post')
 
@@ -106,6 +110,9 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   const category = post.categories.find((c) => c.id === input.categoryId)
   if (!category) throw Object.assign(new Error('El rubro seleccionado no pertenece a esta subcontratación'), { status: 400 })
 
+  const availability = validateAvailabilityWindow(input.availableTimeFrom, input.availableTimeTo)
+  validateAvailableDays(input.availableDays, post.startDate, post.endDate)
+
   if ((category.quantity != null ? category.filledCount! >= category.quantity : true)) {
     throw Object.assign(new Error('No hay vacantes disponibles en este rubro'), { status: 400 })
   }
@@ -118,6 +125,8 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
 
   const created = await createApplication(workerId, {
     ...input,
+    availableTimeFrom: availability.availableTimeFrom ?? undefined,
+    availableTimeTo: availability.availableTimeTo ?? undefined,
     categoryId: category.id,
     subcontractGroupId: post.subcontractGroupId ?? undefined,
   })
@@ -133,12 +142,18 @@ export const applyToSubcontract = async (workerId: string, input: CreateApplicat
   return { id: created.id, status: created.status, message: 'Postulación a subcontrato exitosa' }
 }
 
-export const acceptApplication = async (clientId: string, applicationId: string, scheduledDate?: string) => {
+export const acceptApplication = async (clientId: string, applicationId: string, scheduledDate?: unknown) => {
   const application = await findApplicationById(applicationId)
   if (!application) throw Object.assign(new Error('Application not found'), { status: 404 })
   if (application.post.userId !== clientId) throw Object.assign(new Error('Forbidden'), { status: 403 })
   if (application.status !== ApplicationStatus.Pending) throw Object.assign(new Error('Application is not pending'), { status: 400 })
   if (application.post.status !== PostStatus.Active) throw Object.assign(new Error('Post is not active'), { status: 400 })
+
+  const scheduled = parseScheduledDate(scheduledDate)
+  if (scheduled) {
+    assertScheduledDateWithinPost(scheduled, application.post.startDate, application.post.endDate)
+    assertScheduledDateOffered(scheduled, application.availableDays)
+  }
 
   if (application.post.type === PostType.SubContract) {
     if (!application.category || application.category.filledCount >= application.category.quantity) {
@@ -157,7 +172,7 @@ export const acceptApplication = async (clientId: string, applicationId: string,
         where: { id: applicationId, status: ApplicationStatus.Pending },
         data: {
           status: ApplicationStatus.Accepted,
-          scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+          scheduledDate: scheduled,
           requiresStartToken,
         },
       })

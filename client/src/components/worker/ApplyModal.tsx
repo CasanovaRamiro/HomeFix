@@ -34,6 +34,10 @@ interface Props {
   enviando: boolean
 }
 
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
+const BUSINESS_HOURS_START = '08:00'
+const BUSINESS_HOURS_END = '22:00'
+
 function getDatesInRange(startDate: string, endDate: string): Date[] {
   const dates: Date[] = []
   const [sy, sm, sd] = startDate.split('T')[0].split('-').map(Number)
@@ -135,8 +139,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
       onEnviar({
         message: '',
         availableDays: [new Date().toISOString().split('T')[0]],
-        availableTimeFrom: '00:00',
-        availableTimeTo: '23:59',
+        availableTimeFrom: BUSINESS_HOURS_START,
+        availableTimeTo: BUSINESS_HOURS_END,
         chargesVisit,
         visitCost: chargesVisit ? Number(visitCost) : undefined,
       })
@@ -149,6 +153,33 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
       }
       if (!availableTimeFrom || !availableTimeTo) {
         setFormError('Ingresá el horario de disponibilidad.')
+        return
+      }
+    }
+    if (!selected.isEmergency && (availableTimeFrom || availableTimeTo)) {
+      if (!availableTimeFrom || !availableTimeTo) {
+        setFormError('Ingresá el horario desde y hasta juntos.')
+        return
+      }
+      if (!TIME_PATTERN.test(availableTimeFrom) || !TIME_PATTERN.test(availableTimeTo)) {
+        setFormError('Ingresá un horario válido en formato HH:mm.')
+        return
+      }
+      if (availableTimeFrom >= availableTimeTo) {
+        setFormError('El horario desde debe ser anterior al horario hasta.')
+        return
+      }
+      if (availableTimeFrom < BUSINESS_HOURS_START || availableTimeTo > BUSINESS_HOURS_END) {
+        setFormError(`El horario debe estar entre las ${BUSINESS_HOURS_START} y las ${BUSINESS_HOURS_END}.`)
+        return
+      }
+    } else if (selected.isEmergency && (availableTimeFrom || availableTimeTo)) {
+      if (!availableTimeFrom || !availableTimeTo) {
+        setFormError('Ingresá el horario desde y hasta juntos.')
+        return
+      }
+      if (!TIME_PATTERN.test(availableTimeFrom) || !TIME_PATTERN.test(availableTimeTo)) {
+        setFormError('Ingresá un horario válido en formato HH:mm.')
         return
       }
     }
@@ -348,6 +379,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
                 <input
                   type="time"
                   value={availableTimeFrom}
+                  min={selected.isEmergency ? undefined : BUSINESS_HOURS_START}
+                  max={selected.isEmergency ? undefined : BUSINESS_HOURS_END}
                   onChange={(e) => setAvailableTimeFrom(e.target.value)}
                   style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />
@@ -357,6 +390,8 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
                 <input
                   type="time"
                   value={availableTimeTo}
+                  min={selected.isEmergency ? undefined : BUSINESS_HOURS_START}
+                  max={selected.isEmergency ? undefined : BUSINESS_HOURS_END}
                   onChange={(e) => setAvailableTimeTo(e.target.value)}
                   style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />
