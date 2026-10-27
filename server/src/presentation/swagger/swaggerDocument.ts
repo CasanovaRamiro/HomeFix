@@ -248,8 +248,8 @@ const swaggerDocument: OpenAPIV3.Document = {
           status: { type: 'string', enum: ['pending', 'accepted', 'rejected', 'completed', 'cancelled'] },
           message: { type: 'string', nullable: true },
           availableDays: { type: 'array', items: { type: 'string' } },
-          availableTimeFrom: { type: 'string' },
-          availableTimeTo: { type: 'string' },
+          availableTimeFrom: { type: 'string', description: 'Hora de inicio de disponibilidad en formato HH:mm' },
+          availableTimeTo: { type: 'string', description: 'Hora de fin de disponibilidad en formato HH:mm' },
           chargesVisit: { type: 'boolean' },
           visitCost: { type: 'number', nullable: true },
         },
@@ -260,9 +260,24 @@ const swaggerDocument: OpenAPIV3.Document = {
         properties: {
           postId: { type: 'string', description: 'ID del post al que se aplica' },
           message: { type: 'string', description: 'Mensaje opcional para el cliente' },
-          availableDays: { type: 'array', items: { type: 'string' }, example: ['lunes', 'martes', 'miercoles'] },
-          availableTimeFrom: { type: 'string', example: '09:00' },
-          availableTimeTo: { type: 'string', example: '18:00' },
+          availableDays: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Fechas YYYY-MM-DD dentro del rango de la publicación (se admiten etiquetas legadas para compatibilidad)',
+            example: ['2030-01-05', '2030-01-06'],
+          },
+          availableTimeFrom: {
+            type: 'string',
+            pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+            description: 'Hora de inicio en formato HH:mm. Debe ser >= 08:00 y menor que availableTimeTo.',
+            example: '09:00',
+          },
+          availableTimeTo: {
+            type: 'string',
+            pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+            description: 'Hora de fin en formato HH:mm. Debe ser <= 22:00 y mayor que availableTimeFrom.',
+            example: '18:00',
+          },
           chargesVisit: { type: 'boolean', description: 'Si el trabajador cobra por la visita' },
           visitCost: { type: 'number', description: 'Costo de la visita si chargesVisit es true' },
         },
@@ -275,8 +290,8 @@ const swaggerDocument: OpenAPIV3.Document = {
           categoryId: { type: 'string' },
           message: { type: 'string' },
           availableDays: { type: 'array', items: { type: 'string' } },
-          availableTimeFrom: { type: 'string' },
-          availableTimeTo: { type: 'string' },
+          availableTimeFrom: { type: 'string', description: 'Opcional; si se envía, debe venir junto con availableTimeTo' },
+          availableTimeTo: { type: 'string', description: 'Opcional; si se envía, debe venir junto con availableTimeFrom' },
           chargesVisit: { type: 'boolean' },
           visitCost: { type: 'number' },
         },
@@ -2092,7 +2107,7 @@ const swaggerDocument: OpenAPIV3.Document = {
       patch: {
         tags: ['Applications'],
         summary: 'Accept an application',
-        description: 'Accepts a worker application. Only the post owner can accept.',
+        description: 'Accepts a worker application. Only the post owner can accept. When scheduledDate is provided it must be YYYY-MM-DD, fall within the post date range and be one of the availability days offered by the worker.',
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2109,7 +2124,12 @@ const swaggerDocument: OpenAPIV3.Document = {
               schema: {
                 type: 'object',
                 properties: {
-                  scheduledDate: { type: 'string', format: 'date', description: 'Scheduled date for the job' },
+                  scheduledDate: {
+                    type: 'string',
+                    format: 'date',
+                    description: 'Fecha de contratación YYYY-MM-DD; debe estar dentro de la publicación y de los días ofrecidos por el trabajador',
+                    example: '2030-01-05',
+                  },
                 },
               },
             },

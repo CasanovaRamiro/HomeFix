@@ -73,7 +73,7 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
-function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, timeTo, onConfirm, onCancel, loading }: {
+function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, timeTo, onConfirm, onCancel, loading, serverError }: {
   open: boolean
   applicantName: string
   postTitle: string
@@ -83,6 +83,7 @@ function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, ti
   onConfirm: (scheduledDate: string) => void
   onCancel: () => void
   loading: boolean
+  serverError?: string
 }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -146,6 +147,9 @@ function HireModal({ open, applicantName, postTitle, availableDays, timeFrom, ti
             )}
             {error && (
               <p style={{ fontSize: 12, color: '#EF4444', marginTop: 6 }}>{error}</p>
+            )}
+            {serverError && (
+              <p style={{ fontSize: 12, color: '#EF4444', marginTop: 6 }}>{serverError}</p>
             )}
           </div>
         )}
@@ -242,6 +246,7 @@ export default function ApplicantCard({
 }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [hireModalOpen, setHireModalOpen] = useState(false)
+  const [hireError, setHireError] = useState('')
   const [loading, setLoading] = useState(false)
   const [dismissModalOpen, setDismissModalOpen] = useState(false)
   const [dismissing, setDismissing] = useState(false)
@@ -260,6 +265,7 @@ export default function ApplicantCard({
 
   const handleConfirmHire = async (scheduledDate: string) => {
     setLoading(true)
+    setHireError('')
     try {
       await Promise.all([
         acceptApplication(applicationId, scheduledDate || undefined),
@@ -267,17 +273,22 @@ export default function ApplicantCard({
       ])
       setHireModalOpen(false)
       onHire?.()
-    } catch {
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setHireError(axiosErr.response?.data?.error ?? 'No se pudo confirmar la contratación.')
       setLoading(false)
     }
   }
 
   const handleEmergencyHire = async () => {
     setLoading(true)
+    setHireError('')
     try {
       await acceptApplication(applicationId, undefined)
       onHire?.()
-    } catch {
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setHireError(axiosErr.response?.data?.error ?? 'No se pudo confirmar la contratación.')
       setLoading(false)
     }
   }
@@ -385,9 +396,12 @@ export default function ApplicantCard({
           </>
         ) : isOut ? null : (
           <>
-            <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire || loading} onClick={isEmergency ? handleEmergencyHire : () => setHireModalOpen(true)}>
+            <button className="pd-btn pd-btn--accent pd-btn--grow" disabled={!canHire || loading} onClick={isEmergency ? handleEmergencyHire : () => { setHireError(''); setHireModalOpen(true) }}>
               {loading ? 'Contratando...' : <><UserCheck size={16} />Contratar</>}
             </button>
+            {isEmergency && hireError && (
+              <p style={{ width: '100%', fontSize: 12, color: '#EF4444', marginTop: 6 }}>{hireError}</p>
+            )}
             {!isEmergency && (
               <HireModal
                 open={hireModalOpen}
@@ -397,8 +411,9 @@ export default function ApplicantCard({
                 timeFrom={applicant.availableTimeFrom}
                 timeTo={applicant.availableTimeTo}
                 onConfirm={handleConfirmHire}
-                onCancel={() => setHireModalOpen(false)}
+                onCancel={() => { setHireError(''); setHireModalOpen(false) }}
                 loading={loading}
+                serverError={hireError}
               />
             )}
           </>
