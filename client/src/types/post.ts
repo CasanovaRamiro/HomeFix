@@ -25,7 +25,7 @@ export interface PostDTO {
   address: string
   status: string
   createdAt: string
-  images: { url: string }[]
+  images: { url: string; type?: string }[]
   latitude: number | null
   longitude: number | null
   isEmergency: boolean
@@ -113,7 +113,7 @@ export interface AvailableSubcontractDTO {
   address: string
   status: string
   createdAt: string
-  images: { url: string }[]
+  images: { url: string; type?: string }[]
   latitude: number | null
   longitude: number | null
   categories: SubcontractCategoryDTO[]
@@ -142,7 +142,7 @@ export interface SubcontractDetailDTO {
   address: string
   status: string
   createdAt: string
-  images: { url: string }[]
+  images: { url: string; type?: string }[]
   latitude: number | null
   longitude: number | null
   categories: SubcontractDetailCategory[]
@@ -165,7 +165,7 @@ export interface TrabajoView {
   startDate: string
   endDate: string
   photo: string
-  images: { url: string }[]
+  images: { url: string; type?: string }[]
   clientName: string
   clientSurname: string
   clientRating: number

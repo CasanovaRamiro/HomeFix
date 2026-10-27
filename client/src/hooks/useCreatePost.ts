@@ -64,10 +64,13 @@ import { useState } from 'react'
 
         setFormSubmitting(true)
         try {
-          let images: { url: string }[] = []
+          let images: { url: string; type: string }[] = []
           if (files.length > 0) {
             const urls = await uploadImages(files)
-            images = urls.map((url) => ({ url }))
+            images = urls.map((url, i) => ({
+              url,
+              type: files[i]?.type.startsWith('video/') ? 'video' : 'image',
+            }))
           }
           await api.post('/posts/create', {
             title: form.title,

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, MapPin, Calendar, Clock, Tag, User,
-  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag,
+  CheckCircle, AlertCircle, Loader2, ImageIcon, MessageCircle, Star, Flag, Play,
 } from 'lucide-react'
 import api from '../services/api'
 import { workerCompletePost } from '../services/posts'
@@ -12,6 +12,7 @@ import { formatWhatsAppNumber } from '../services/formatWhatsApp'
 import { fetchMySubcontractManager } from '../services/posts'
 import StartTokenWorkerCard from '../components/post/StartTokenWorkerCard'
 import ReviewModal from '../components/review/ReviewModal'
+import { isVideoUrl } from '../lib/post'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: str
   )
 }
 
-function ImageGallery({ images }: { images: { url: string }[] }) {
+function ImageGallery({ images }: { images: { url: string; type?: string }[] }) {
   const [active, setActive] = useState(0)
   const [zoom, setZoom] = useState(false)
 
@@ -85,27 +86,47 @@ function ImageGallery({ images }: { images: { url: string }[] }) {
     )
   }
 
+  const activeIsVideo = images[active]?.type === 'video' || isVideoUrl(images[active]?.url)
+
   return (
     <>
-      <div style={{ borderRadius: 16, overflow: 'hidden', cursor: 'zoom-in', position: 'relative' }} onClick={() => setZoom(true)}>
-        <img src={images[active].url} alt="" style={{ width: '100%', height: 260, objectFit: 'cover', display: 'block' }} />
+      <div style={{ borderRadius: 16, overflow: 'hidden', cursor: activeIsVideo ? 'default' : 'zoom-in', position: 'relative', background: activeIsVideo ? '#000' : undefined }} onClick={() => !activeIsVideo && setZoom(true)}>
+        {activeIsVideo ? (
+          <video src={images[active].url} controls playsInline preload="metadata" style={{ width: '100%', height: 260, objectFit: 'contain', display: 'block' }} />
+        ) : (
+          <img src={images[active].url} alt="" style={{ width: '100%', height: 260, objectFit: 'cover', display: 'block' }} />
+        )}
         {images.length > 1 && (
-          <span style={{ position: 'absolute', bottom: 10, right: 12, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+          <span style={{ position: 'absolute', top: 10, right: 12, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
             {active + 1} / {images.length}
           </span>
         )}
       </div>
       {images.length > 1 && (
         <div style={{ display: 'flex', gap: 8, marginTop: 8, overflowX: 'auto' }}>
-          {images.map((img, i) => (
-            <img key={i} src={img.url} alt="" onClick={() => setActive(i)}
-              style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, cursor: 'pointer', flexShrink: 0, border: i === active ? '2px solid #0F172A' : '2px solid transparent', opacity: i === active ? 1 : 0.6, transition: 'opacity 0.15s, border 0.15s' }} />
-          ))}
+          {images.map((img, i) => {
+            const isVid = img.type === 'video' || isVideoUrl(img.url)
+            const thumbStyle: React.CSSProperties = { width: 64, height: 64, objectFit: 'cover', borderRadius: 10, cursor: 'pointer', flexShrink: 0, border: i === active ? '2px solid #0F172A' : '2px solid transparent', opacity: i === active ? 1 : 0.6, transition: 'opacity 0.15s, border 0.15s', background: isVid ? '#000' : undefined }
+            return isVid ? (
+              <div key={i} style={{ position: 'relative', ...thumbStyle, padding: 0, overflow: 'hidden' }} onClick={() => setActive(i)}>
+                <video src={img.url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', background: '#000' }} />
+                <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <Play size={11} fill="#fff" style={{ marginLeft: 1 }} />
+                </span>
+              </div>
+            ) : (
+              <img key={i} src={img.url} alt="" onClick={() => setActive(i)} style={thumbStyle} />
+            )
+          })}
         </div>
       )}
       {zoom && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setZoom(false)}>
-          <img src={images[active].url} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12 }} />
+          {activeIsVideo ? (
+            <video src={images[active].url} controls autoPlay playsInline onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12 }} />
+          ) : (
+            <img src={images[active].url} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12 }} />
+          )}
         </div>
       )}
     </>

@@ -202,7 +202,7 @@ export const listAvailableBiddings = async (userId: string) => {
       address: p.address,
       budgetMax: p.budgetMax,
       materialResponsibility: p.materialResponsibility,
-      images: p.images.map((i: { id?: string; url: string }) => ({ id: i.id ?? '', url: i.url })),
+      images: p.images.map((i: { id?: string; url: string; type?: string }) => ({ id: i.id ?? '', url: i.url, type: i.type })),
       latitude: p.latitude,
       longitude: p.longitude,
       categories: p.categories.map((c) => ({ id: c.id ?? c.categoryId ?? '', name: c.name })),

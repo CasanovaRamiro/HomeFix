@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { getCategoryMeta } from '../../views/categoryMeta'
 import ImageModal from '../ui/ImageModal'
+import { isVideoUrl } from '../../lib/post'
 import type { Post } from '../../types/post'
 
 interface PostCardProps {
@@ -80,19 +81,58 @@ export default function PostCard({
         <p className="pc-desc">{post.description}</p>
 
         {images.length > 0 && (
-          <div className="pc-photos">
-            {images.map((img, i) => (
-              <button key={i} className="pc-photo-btn" onClick={() => setSelectedImg(i)}>
-                <img src={img.url} alt={`Foto ${i + 1}`} />
-              </button>
-            ))}
+          <div className="pc-photos" style={{ justifyContent: 'center' }}>
+            {images.map((img, i) => {
+              const isVideo = img.type === 'video' || isVideoUrl(img.url)
+              return isVideo ? (
+                <button
+                  key={i}
+                  type="button"
+                  className="pc-photo-btn"
+                  style={{
+                    position: 'relative', width: 160, height: 100,
+                    background: '#000', border: '1px solid var(--color-border)',
+                    borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                  }}
+                  onClick={() => setSelectedImg(i)}
+                  aria-label={`Reproducir video ${i + 1}`}
+                >
+                  <video
+                    src={`${img.url}#t=0.1`}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none', background: '#000' }}
+                  />
+                  <span style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.28)',
+                  }}>
+                    <span style={{
+                      width: 38, height: 38, borderRadius: '50%',
+                      background: 'rgba(0,0,0,0.65)', color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                    }}>
+                      <Play size={18} fill="#fff" style={{ marginLeft: 2 }} />
+                    </span>
+                  </span>
+                </button>
+              ) : (
+                <button key={i} className="pc-photo-btn" onClick={() => setSelectedImg(i)}>
+                  <img src={img.url} alt={`Foto ${i + 1}`} />
+                </button>
+              )
+            })}
           </div>
         )}
 
         {selectedImg !== null && (
           <ImageModal
             src={images[selectedImg].url}
-            alt={`Foto ${selectedImg + 1}`}
+            alt={`Archivo ${selectedImg + 1}`}
+            type={images[selectedImg].type === 'video' || isVideoUrl(images[selectedImg].url) ? 'video' : 'image'}
             onClose={() => setSelectedImg(null)}
             onPrev={selectedImg > 0 ? () => setSelectedImg(selectedImg - 1) : undefined}
             onNext={selectedImg < images.length - 1 ? () => setSelectedImg(selectedImg + 1) : undefined}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TrabajoView } from '../../types/post'
 import StarRating from '../ui/StarRating'
+import { isVideoUrl } from '../../lib/post'
 
 interface Props {
   selected: TrabajoView & { lat?: number | null; lng?: number | null }
@@ -25,16 +26,28 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
       </div>
       {selected.images && selected.images.length > 0 && (
         <div className="trabajo-detail-images">
-          {selected.images.map((img, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => { setSelectedImage(img.url); setZoomed(false) }}
-              style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}
-            >
-              <img src={img.url} alt={`Foto ${i + 1}`} />
-            </button>
-          ))}
+          {selected.images.map((img, i) => {
+            const isVid = img.type === 'video' || isVideoUrl(img.url)
+            return isVid ? (
+              <video
+                key={i}
+                src={img.url}
+                controls
+                playsInline
+                preload="metadata"
+                style={{ width: '100%', height: 140, objectFit: 'contain', display: 'block', borderRadius: 8, background: '#000' }}
+              />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { setSelectedImage(img.url); setZoomed(false) }}
+                style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}
+              >
+                <img src={img.url} alt={`Foto ${i + 1}`} />
+              </button>
+            )
+          })}
         </div>
       )}
       {selectedImage && (
@@ -44,19 +57,34 @@ export default function TrabajoDetail({ selected, yaPostulado, esPropio, onClose
           onClick={() => setSelectedImage(null)}
           style={{ zIndex: 9999, cursor: 'zoom-out' }}
         >
-          <img
-            src={selectedImage}
-            alt="Foto ampliada"
-            onClick={(e) => { e.stopPropagation(); setZoomed(z => !z) }}
-            style={{
-              maxWidth: '90vw', maxHeight: '90vh',
-              borderRadius: 8, boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
-              objectFit: 'contain',
-              transform: zoomed ? 'scale(2)' : 'scale(1)',
-              transition: 'transform 0.2s ease',
-              cursor: 'zoom-in',
-            }}
-          />
+          {isVideoUrl(selectedImage) ? (
+            <video
+              src={selectedImage}
+              controls
+              autoPlay
+              playsInline
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '90vw', maxHeight: '90vh',
+                borderRadius: 8, boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <img
+              src={selectedImage}
+              alt="Foto ampliada"
+              onClick={(e) => { e.stopPropagation(); setZoomed(z => !z) }}
+              style={{
+                maxWidth: '90vw', maxHeight: '90vh',
+                borderRadius: 8, boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+                objectFit: 'contain',
+                transform: zoomed ? 'scale(2)' : 'scale(1)',
+                transition: 'transform 0.2s ease',
+                cursor: 'zoom-in',
+              }}
+            />
+          )}
         </div>
       )}
       <div className="trabajos-detail-body">

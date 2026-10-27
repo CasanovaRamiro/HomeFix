@@ -3,6 +3,13 @@ import type { Post, TrabajoView } from '../types/post'
 export const WORKER_CATEGORY_KEY = 'workerCategory'
 export const DEFAULT_WORKER_CATEGORY = ''
 
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|ogg|m4v|avi|mkv)(?:$|[?#])/i
+
+export const isVideoUrl = (url?: string | null): boolean => {
+  if (url === undefined || url === null || url === '') return false
+  return url.includes('/video/upload/') || VIDEO_EXT_RE.test(url)
+}
+
 export const formatPostDate = (value: string): string => {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
