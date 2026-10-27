@@ -266,7 +266,7 @@ export default function Navbar(): React.ReactElement | null {
             {!isLoggedIn ? (
               <>
                 <Link to="/login"
-                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...(isPublicLanding ? { background: '#fff', color: theme.accentHover } : { color: theme.muted }) }}
+                  style={{ display: 'block', width: '130px', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: '600', padding: '8px 0', borderRadius: '8px', transition: 'opacity 0.15s', ...(isLanding ? { background: theme.accent, color: '#fff' } : isPublicLanding ? { background: '#fff', color: theme.accentHover } : { color: theme.muted }) }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
                 >

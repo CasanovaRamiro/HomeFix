@@ -25,7 +25,7 @@ export default function Hero() {
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
               className="flex h-14 items-center justify-center gap-2 rounded-lg border-0 bg-accent px-8 text-base font-semibold text-white transition-colors hover:bg-accent-hover"
             >
               Buscar profesional

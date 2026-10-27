@@ -47,7 +47,7 @@ export default function Features() {
 
           <div className="mt-10">
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
               className="inline-flex h-14 items-center justify-center gap-2 rounded-lg border-0 bg-accent px-8 text-base font-semibold text-white transition-colors hover:bg-accent-hover"
             >
               Comenzar ahora
