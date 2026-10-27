@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { clearAuth } from '../hooks/useAuth'
 
 interface User {
   id: string
@@ -26,7 +27,7 @@ export default function Users() {
   }, [navigate])
 
   const logout = () => {
-    localStorage.removeItem('token')
+    clearAuth()
     navigate('/login')
   }
 
