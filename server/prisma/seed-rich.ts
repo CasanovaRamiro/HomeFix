@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import prisma from '../src/lib/prisma.js'
 import { UserRole } from '../src/domain/types/userRole.js'
-import { CATEGORY_NAMES } from './categoryCatalog.js'
+import { CATEGORY_NAMES } from '../src/infrastructure/database/categoryCatalog.database.js'
 import { PostType } from '../src/domain/types/postType.js'
 import { PostStatus } from '../src/domain/types/postStatus.js'
 import { ApplicationStatus } from '../src/domain/types/applicationStatus.js'
@@ -98,11 +98,7 @@ async function main() {
 
   const passwordHash = MANAGED_PASSWORD
 
-  const dni = await prisma.nationalIdType.upsert({
-    where: { description: 'DNI' },
-    update: {},
-    create: { description: 'DNI' },
-  })
+  const dni = await prisma.nationalIdType.findFirst({ where: { description: 'DNI' } }) ?? await prisma.nationalIdType.create({ data: { description: 'DNI' } })
 
   const addressData = [
     { street: 'Av. Callao', number: '1500', city: 'Buenos Aires', state: 'CABA' },
@@ -213,7 +209,10 @@ async function main() {
   for (let i = 0; i < workerData.length; i++) {
     for (const catName of workerData[i].categories) {
       const cat = categoryByName.get(catName)
-      if (cat) await prisma.userCategory.create({ data: { userId: createdWorkers[i].id, categoryId: cat.id } })
+      if (cat) {
+        const exists = await prisma.userCategory.findFirst({ where: { userId: createdWorkers[i].id, categoryId: cat.id } })
+        if (!exists) await prisma.userCategory.create({ data: { userId: createdWorkers[i].id, categoryId: cat.id } })
+      }
     }
   }
 
