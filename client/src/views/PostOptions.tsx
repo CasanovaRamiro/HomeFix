@@ -45,7 +45,7 @@ export default function PostOptions() {
           Elegí la opción que te resulte más cómoda
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '32px' }}>
           {cards.map((card, idx) => (
             <OptionCard
               key={idx}

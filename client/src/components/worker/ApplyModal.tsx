@@ -174,7 +174,7 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
         role="dialog"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: '90vh', overflowY: 'auto', minWidth: 440, position: 'relative' }}
+        style={{ maxHeight: '90vh', overflowY: 'auto', minWidth: 0, position: 'relative' }}
       >
         <button
           type="button"
@@ -196,7 +196,7 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
             {/* Creator info */}
             {selected.creatorName && (
               <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                 padding: '8px 12px', marginBottom: 14,
                 background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
               }}>
@@ -342,23 +342,23 @@ export default function ApplyModal({ selected, subcontractMode, onEnviar, onClos
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-              <label className="modal-label" style={{ flex: 1 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+              <label className="modal-label" style={{ flex: '1 1 160px', minWidth: 0 }}>
                 Desde
                 <input
                   type="time"
                   value={availableTimeFrom}
                   onChange={(e) => setAvailableTimeFrom(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
+                  style={{ width: '100%', minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />
               </label>
-              <label className="modal-label" style={{ flex: 1 }}>
+              <label className="modal-label" style={{ flex: '1 1 160px', minWidth: 0 }}>
                 Hasta
                 <input
                   type="time"
                   value={availableTimeTo}
                   onChange={(e) => setAvailableTimeTo(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
+                  style={{ width: '100%', minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '1.5px solid #CBD5E1', fontSize: 14, marginTop: 4 }}
                 />
               </label>
             </div>
