@@ -94,49 +94,43 @@ const WORKER_PHOTOS = [
   'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=400&q=80',
 ]
 
-async function clean() {
-  await prisma.workerReview.deleteMany()
-  await prisma.clientReview.deleteMany()
-  await prisma.application.deleteMany()
-  await prisma.jobApplication.deleteMany()
-  await prisma.postImage.deleteMany()
-  await prisma.postCategory.deleteMany()
-  await prisma.userCategory.deleteMany()
-  await prisma.telegramLinkCode.deleteMany()
-  await prisma.post.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.address.deleteMany()
-  await prisma.nationalIdType.deleteMany()
-  await prisma.category.deleteMany()
-}
-
 async function main() {
-  await clean()
 
   const passwordHash = MANAGED_PASSWORD
 
-  const dni = await prisma.nationalIdType.create({ data: { description: 'DNI' } })
+  const dni = await prisma.nationalIdType.upsert({
+    where: { description: 'DNI' },
+    update: {},
+    create: { description: 'DNI' },
+  })
 
-  const addresses = await Promise.all([
-    prisma.address.create({ data: { street: 'Av. Callao', number: '1500', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Cabildo', number: '1200', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Rivadavia', number: '4500', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Acoyte', number: '300', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Santa Fe', number: '3200', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Corrientes', number: '2500', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. Pueyrredón', number: '1800', city: 'Buenos Aires', state: 'CABA' } }),
-    prisma.address.create({ data: { street: 'Av. de Mayo', number: '800', city: 'San Justo', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. Rivadavia', number: '13000', city: 'Ramos Mejía', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'San Martín', number: '500', city: 'Morón', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. de la Libertad', number: '600', city: 'Castelar', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. Mitre', number: '900', city: 'Avellaneda', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. Hipólito Yrigoyen', number: '4000', city: 'Lanús', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Manuel Castro', number: '300', city: 'Lomas de Zamora', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. Santa Fe', number: '2200', city: 'Martínez', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. del Libertador', number: '16000', city: 'San Isidro', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Av. Maipú', number: '2500', city: 'Vicente López', state: 'Buenos Aires' } }),
-    prisma.address.create({ data: { street: 'Belgrano', number: '150', city: 'Tigre', state: 'Buenos Aires' } }),
-  ])
+  const addressData = [
+    { street: 'Av. Callao', number: '1500', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Cabildo', number: '1200', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Rivadavia', number: '4500', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Acoyte', number: '300', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Santa Fe', number: '3200', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Corrientes', number: '2500', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. Pueyrredón', number: '1800', city: 'Buenos Aires', state: 'CABA' },
+    { street: 'Av. de Mayo', number: '800', city: 'San Justo', state: 'Buenos Aires' },
+    { street: 'Av. Rivadavia', number: '13000', city: 'Ramos Mejía', state: 'Buenos Aires' },
+    { street: 'San Martín', number: '500', city: 'Morón', state: 'Buenos Aires' },
+    { street: 'Av. de la Libertad', number: '600', city: 'Castelar', state: 'Buenos Aires' },
+    { street: 'Av. Mitre', number: '900', city: 'Avellaneda', state: 'Buenos Aires' },
+    { street: 'Av. Hipólito Yrigoyen', number: '4000', city: 'Lanús', state: 'Buenos Aires' },
+    { street: 'Manuel Castro', number: '300', city: 'Lomas de Zamora', state: 'Buenos Aires' },
+    { street: 'Av. Santa Fe', number: '2200', city: 'Martínez', state: 'Buenos Aires' },
+    { street: 'Av. del Libertador', number: '16000', city: 'San Isidro', state: 'Buenos Aires' },
+    { street: 'Av. Maipú', number: '2500', city: 'Vicente López', state: 'Buenos Aires' },
+    { street: 'Belgrano', number: '150', city: 'Tigre', state: 'Buenos Aires' },
+  ]
+  const addresses = await Promise.all(
+    addressData.map((a) =>
+      prisma.address.findFirst({ where: { street: a.street, number: a.number, city: a.city } }).then((existing) =>
+        existing ?? prisma.address.create({ data: a }),
+      ),
+    ),
+  )
 
   // Clientes
   const clientData = [
@@ -161,8 +155,10 @@ async function main() {
   ]
 
   const createdClients = await Promise.all(
-    clientData.map((c, idx) =>
-      prisma.user.create({
+    clientData.map(async (c, idx) => {
+      const existing = await prisma.user.findUnique({ where: { email: c.email } })
+      if (existing) return existing
+      return prisma.user.create({
         data: {
           name: c.name,
           surname: c.surname,
@@ -175,8 +171,8 @@ async function main() {
           phone: '+5411' + Math.floor(1000000000 + Math.random() * 900000000),
           photo: AVATAR_PHOTOS[idx % AVATAR_PHOTOS.length],
         },
-      }),
-    ),
+      })
+    }),
   )
 
   // Trabajadores
@@ -194,8 +190,10 @@ async function main() {
   ]
 
   const createdWorkers = await Promise.all(
-    workerData.map((w) =>
-      prisma.user.create({
+    workerData.map(async (w) => {
+      const existing = await prisma.user.findUnique({ where: { email: w.email } })
+      if (existing) return existing
+      return prisma.user.create({
         data: {
           name: w.name, surname: w.surname, email: w.email, password: passwordHash,
           nationalId: `${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -204,11 +202,12 @@ async function main() {
           photo: w.photo, bio: w.bio, availability: w.availability, certificates: w.certificates,
           gallery: w.gallery, kycStatus: w.kycStatus, emergenciesEnabled: w.emergenciesEnabled || false,
         },
-      }),
-    ),
+      })
+    }),
   )
 
-  const categories = await Promise.all(CATEGORY_NAMES.map((name) => prisma.category.create({ data: { name } })))
+  await Promise.all(CATEGORY_NAMES.map((name) => prisma.category.upsert({ where: { name }, update: {}, create: { name } })))
+  const categories = await prisma.category.findMany()
   const categoryByName = new Map(categories.map((c) => [c.name, c]))
 
   for (let i = 0; i < workerData.length; i++) {
