@@ -470,6 +470,65 @@ describe('POST /reviews/client', () => {
 
     expect(res.status).toBe(401)
   })
+
+  it('a rejected application cannot review the client on a completed post', async () => {
+    const rejectedWorker = await createUser('rejected-worker@test.com', 'Rejected', 'hashed', { role: UserRole.Worker })
+    currentUser = { sub: 'auth0|rejected123', email: 'rejected-worker@test.com', name: 'Rejected Worker' }
+
+    const rejectedApp = await prisma.application.create({
+      data: { workerId: rejectedWorker.id, postId, status: 'Rejected' },
+    })
+
+    const res = await request(app)
+      .post('/reviews/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicationId: rejectedApp.id, rating: 1, description: 'Reputación manipulada' })
+
+    expect(res.status).toBe(400)
+
+    const persisted = await prisma.clientReview.findMany({ where: { applicationId: rejectedApp.id } })
+    expect(persisted).toHaveLength(0)
+  })
+
+  it('a pending application cannot review the client', async () => {
+    const pendingWorker = await createUser('pending-worker@test.com', 'Pending', 'hashed', { role: UserRole.Worker })
+    currentUser = { sub: 'auth0|pending123', email: 'pending-worker@test.com', name: 'Pending Worker' }
+
+    const pendingApp = await prisma.application.create({
+      data: { workerId: pendingWorker.id, postId, status: 'Pending' },
+    })
+
+    const res = await request(app)
+      .post('/reviews/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicationId: pendingApp.id, rating: 1 })
+
+    expect(res.status).toBe(400)
+
+    const persisted = await prisma.clientReview.findMany({ where: { applicationId: pendingApp.id } })
+    expect(persisted).toHaveLength(0)
+  })
+
+  it('a valid completed hire can review exactly once', async () => {
+    await prisma.application.update({ where: { id: applicationId }, data: { status: 'Completed' } })
+
+    const first = await request(app)
+      .post('/reviews/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicationId, rating: 5 })
+    expect(first.status).toBe(201)
+
+    const second = await request(app)
+      .post('/reviews/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicationId, rating: 1 })
+    expect(second.status).toBe(400)
+    expect(second.body.error).toBe('A review already exists for this application')
+
+    const persisted = await prisma.clientReview.findMany({ where: { applicationId } })
+    expect(persisted).toHaveLength(1)
+    expect(persisted[0].rating).toBe(5)
+  })
 })
 
 describe('GET /reviews/application/:applicationId', () => {

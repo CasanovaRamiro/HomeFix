@@ -515,6 +515,7 @@ export const cancelPost = async (postId: string, userId: string) => {
     const groupPosts = await findPostsByGroupId(post.subcontractGroupId)
     for (const p of groupPosts) {
       if (p.status === PostStatus.Completed || p.status === PostStatus.Cancelled) continue
+      await Promise.all((p.images || []).map((img) => deleteImage(img.url).catch(() => {})))
       await deletePostImages(p.id).catch(() => {})
       await rejectPendingApplications(p.id)
       await updatePostStatus(p.id, PostStatus.Cancelled)

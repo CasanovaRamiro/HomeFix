@@ -22,14 +22,9 @@ export const uploadImage = async (file: { buffer: Buffer; mimetype: string; orig
         if (err || !result) {
           logger.error({ err, filename: file.originalname, action: 'cloudinary.uploadFailed' }, 'Image upload to Cloudinary failed')
           reject(err instanceof Error ? err : new Error('Upload failed'))
-        } else {
-          resolve(result.secure_url)
+          return
         }
-        if (err || !result) {
-          console.error('[Cloudinary upload error]', err)
-          reject(err instanceof Error ? err : new Error('Upload failed'))
-        }
-        else resolve(result.secure_url)
+        resolve(result.secure_url)
       },
     )
     uploadStream.end(file.buffer)
@@ -41,11 +36,33 @@ export const uploadImages = async (files: { buffer: Buffer; mimetype: string; or
   return Promise.all(files.map(uploadImage))
 }
 
+const getResourceTypeFromUrl = (url: string): 'image' | 'video' | 'raw' => {
+  if (url.includes('/video/upload/')) return 'video'
+  if (url.includes('/raw/upload/')) return 'raw'
+  const lower = url.toLowerCase()
+  if (lower.match(/\.(mp4|webm|mov|mkv|avi|m4v|ogg)$/)) return 'video'
+  if (lower.match(/\.(pdf|doc|docx|xls|xlsx|txt)$/)) return 'raw'
+  return 'image'
+}
+
 export const deleteImage = async (url: string): Promise<void> => {
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/)
-  if (!match) {
-    logger.warn({ url, action: 'cloudinary.deleteInvalidUrl' }, 'Invalid Cloudinary URL for deletion')
-    return
+  try {
+    const resourceType = getResourceTypeFromUrl(url)
+    let match: RegExpMatchArray | null = null
+    if (resourceType === 'raw') {
+      match = url.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/)
+    } else if (resourceType === 'video') {
+      match = url.match(/\/video\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/)
+    } else {
+      match = url.match(/\/image\/upload\/(?:v\d+\/)?(.+)\.\w+$/) || url.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/)
+    }
+    if (!match || !match[1]) {
+      logger.warn({ url, action: 'cloudinary.deleteInvalidUrl' }, 'Invalid Cloudinary URL for deletion')
+      return
+    }
+    const publicId = match[1]
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType })
+  } catch (err) {
+    logger.error({ err, url, action: 'cloudinary.deleteFailed' }, 'Failed to delete from Cloudinary')
   }
-  await cloudinary.uploader.destroy(match[1])
 }

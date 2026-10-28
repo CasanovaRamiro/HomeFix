@@ -387,6 +387,52 @@ describe('createClientReview', () => {
   })
 })
 
+describe('createClientReview (application eligibility)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const eligibleInput = { applicationId: applicationId2, rating: 4 }
+
+  it('throws 400 when the application was rejected and the post is completed', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, status: 'Rejected' } as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+
+    await expect(
+      createClientReview(applicationId2, workerId2, { ...eligibleInput, rating: 1 }),
+    ).rejects.toMatchObject({
+      status: 400,
+      message: 'Application must be an accepted or completed hire to review the client',
+    })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('throws 400 when the application is still Pending', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, status: 'Pending' } as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+
+    await expect(createClientReview(applicationId2, workerId2, eligibleInput)).rejects.toMatchObject({ status: 400 })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('throws 400 when the application was Dismissed', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, status: 'Dismissed' } as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+
+    await expect(createClientReview(applicationId2, workerId2, eligibleInput)).rejects.toMatchObject({ status: 400 })
+    expect(createClientReviewData).not.toHaveBeenCalled()
+  })
+
+  it('creates a review when the application is Completed', async () => {
+    vi.mocked(findApplicationById).mockResolvedValue({ ...mockApplication, status: 'Completed' } as never)
+    vi.mocked(findClientReviewByApplicationId).mockResolvedValue(null)
+    vi.mocked(createClientReviewData).mockResolvedValue(mockClientReview)
+
+    const result = await createClientReview(applicationId2, workerId2, eligibleInput)
+
+    expect(createClientReviewData).toHaveBeenCalled()
+    expect(result).toEqual(mockClientReview)
+  })
+})
+
 describe('findWorkerReviewByApplication', () => {
   const applicationId = 'app-uuid-1'
   const postOwnerId = 'user-uuid-1'

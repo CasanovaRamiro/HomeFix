@@ -6,7 +6,7 @@ import { uploadImages } from '../../infrastructure/providers/cloudinary.provider
 import { createHttpError } from '../../lib/errors.js'
 
 const router = Router()
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } })
 
 router.post('/', upload.array('files', 10), async (req, res, next) => {
   try {
