@@ -30,26 +30,35 @@ export default function ImageModal({ src, alt, onClose, onPrev, onNext }: ImageM
     videos.forEach((v) => {
       try {
         if (!v.paused) v.pause()
-      } catch {}
+      } catch {
+        // ignore
+      }
     })
     if (isVideo && videoRef.current) {
       try {
-        videoRef.current.play().catch(() => {})
-      } catch {}
+        void videoRef.current.play().catch(() => {
+          // ignore
+        })
+      } catch {
+        // ignore
+      }
     }
-    const handler = (e: KeyboardEvent) => {
+    const handler = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowLeft') onPrev?.()
       if (e.key === 'ArrowRight') onNext?.()
     }
     document.addEventListener('keydown', handler)
-    return () => {
+    const videoEl = videoRef.current
+    return (): void => {
       document.body.style.overflow = ''
       document.removeEventListener('keydown', handler)
-      if (videoRef.current) {
+      if (videoEl) {
         try {
-          videoRef.current.pause()
-        } catch {}
+          videoEl.pause()
+        } catch {
+          // ignore
+        }
       }
     }
   }, [onClose, onPrev, onNext, isVideo, src])
