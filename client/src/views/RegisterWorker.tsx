@@ -12,6 +12,7 @@ import { getCategoryMeta } from './categoryMeta'
 import { startKycVerification, confirmKycSession } from '../services/kyc'
 import DiditVerificationModal from '../components/DiditVerificationModal'
 import { emitAuthChange } from '../hooks/useAuth'
+import BackButton from '../components/ui/BackButton'
 
 // min 8 chars, 1 upper, 1 lower, 1 number, 1 symbol
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
@@ -211,12 +212,7 @@ export default function RegisterWorker() {
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       {/* Back button */}
       <div className="px-6 pt-4 pb-1">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-slate-400 hover:text-slate-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Volver
-        </button>
+        <BackButton>Volver</BackButton>
       </div>
 
       {/* Centered card */}

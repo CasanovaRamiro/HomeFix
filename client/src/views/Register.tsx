@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom'
 import type { FormEvent, ChangeEvent } from 'react'
 import {
   Eye, EyeOff, Mail, Lock, User, Phone,
-  AlertCircle, ArrowRight, ArrowLeft, Check, CheckCircle2, ShieldCheck, MailCheck,
+  AlertCircle, ArrowRight, Check, CheckCircle2, ShieldCheck, MailCheck,
 } from 'lucide-react'
 import { register } from '../services/auth'
 import { loginWithGoogle } from '../lib/auth0'
+import BackButton from '../components/ui/BackButton'
 
 const inputBase =
   'w-full h-10 rounded-xl border bg-white text-[13px] text-slate-900 placeholder:text-slate-400 ' +
@@ -141,12 +142,7 @@ export default function Register() {
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
       {/* Back button */}
       <div className="px-6 pt-4 pb-1">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-slate-400 hover:text-slate-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Volver
-        </button>
+        <BackButton>Volver</BackButton>
       </div>
 
       {/* Centered card */}
