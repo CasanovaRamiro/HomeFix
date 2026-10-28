@@ -164,6 +164,44 @@ describe('POST /applications', () => {
     expect(res.status).toBe(400)
   })
 
+  it('retorna 400 si el horario está invertido y no guarda la postulación', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({
+        ...validApplicationBody(post.id),
+        availableTimeFrom: '18:00',
+        availableTimeTo: '09:00',
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('El horario desde debe ser anterior al horario hasta')
+    expect(await prisma.application.count({ where: { postId: post.id } })).toBe(0)
+  })
+
+  it('retorna 400 si el horario está fuera de la ventana 08:00-22:00', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(post.id), availableTimeFrom: '07:00' })
+
+    expect(res.status).toBe(400)
+    expect(await prisma.application.count({ where: { postId: post.id } })).toBe(0)
+  })
+
+  it('retorna 400 si el horario tiene formato inválido', async () => {
+    const post = await createActivePost()
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(post.id), availableTimeTo: '18:0' })
+
+    expect(res.status).toBe(400)
+    expect(await prisma.application.count({ where: { postId: post.id } })).toBe(0)
+  })
+
   it('retorna 400 si falta chargesVisit', async () => {
     const post = await createActivePost()
     const res = await request(app)
@@ -311,6 +349,32 @@ describe('POST /applications/subcontract', () => {
       .post('/applications/subcontract')
       .set('Authorization', `Bearer ${workerToken}`)
       .send({ ...validApplicationBody(post.id), categoryId: postCategoryId })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 si el horario es inválido', async () => {
+    const { postId, postCategoryId } = await createActiveSubcontract()
+    const res = await request(app)
+      .post('/applications/subcontract')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({
+        ...validApplicationBody(postId),
+        categoryId: postCategoryId,
+        availableTimeFrom: '18:00',
+        availableTimeTo: '09:00',
+      })
+
+    expect(res.status).toBe(400)
+    expect(await prisma.application.count({ where: { postId } })).toBe(0)
+  })
+
+  it('retorna 400 si availableTimeFrom no es un string', async () => {
+    const { postId, postCategoryId } = await createActiveSubcontract()
+    const res = await request(app)
+      .post('/applications/subcontract')
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ ...validApplicationBody(postId), categoryId: postCategoryId, availableTimeFrom: 900 })
 
     expect(res.status).toBe(400)
   })
@@ -471,6 +535,80 @@ describe('PATCH /applications/:applicationId/accept', () => {
 
     const updatedPost = await prisma.post.findUnique({ where: { id: post.id } })
     expect(updatedPost!.status).toBe('In progress')
+  })
+
+  it('acepta una fecha ofrecida dentro del rango y la persiste', async () => {
+    const post = await createActivePost()
+    const application = await prisma.application.create({
+      data: {
+        workerId,
+        postId: post.id,
+        status: 'Pending',
+        availableDays: JSON.stringify(['2026-06-02', '2026-06-03']),
+        availableTimeFrom: '09:00',
+        availableTimeTo: '18:00',
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ scheduledDate: '2026-06-02' })
+
+    expect(res.status).toBe(200)
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.scheduledDate?.toISOString()).toBe('2026-06-02T00:00:00.000Z')
+  })
+
+  it('retorna 400 y no contrata si la fecha está fuera del rango del post', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ scheduledDate: '2040-12-31' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('La fecha de contratación debe estar dentro del rango de la publicación')
+    const saved = await prisma.application.findUnique({ where: { id: application.id } })
+    expect(saved?.status).toBe('Pending')
+    expect(saved?.scheduledDate).toBeNull()
+    const unchangedPost = await prisma.post.findUnique({ where: { id: post.id } })
+    expect(unchangedPost!.status).toBe('Active')
+  })
+
+  it('retorna 400 si la fecha está dentro del rango pero no fue ofrecida', async () => {
+    const post = await createActivePost()
+    const application = await prisma.application.create({
+      data: {
+        workerId,
+        postId: post.id,
+        status: 'Pending',
+        availableDays: JSON.stringify(['2026-06-02']),
+      },
+    })
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ scheduledDate: '2026-06-05' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('La fecha de contratación debe ser uno de los días ofrecidos por el trabajador')
+  })
+
+  it('retorna 400 si la fecha de contratación está mal formada', async () => {
+    const post = await createActivePost()
+    const application = await createPendingApplication(post.id)
+
+    const res = await request(app)
+      .patch(`/applications/${application.id}/accept`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ scheduledDate: '31/12/2030' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('La fecha de contratación debe tener formato YYYY-MM-DD')
   })
 
   it('no rechaza otras aplicaciones pendientes al aceptar una', async () => {
