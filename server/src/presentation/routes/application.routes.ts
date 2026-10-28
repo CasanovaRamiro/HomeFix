@@ -117,6 +117,18 @@ router.post('/subcontract', async (req, res, next) => {
       res.status(400).json({ error: 'categoryId is required' })
       return
     }
+    if (availableDays !== undefined && !Array.isArray(availableDays)) {
+      res.status(400).json({ error: 'availableDays must be an array' })
+      return
+    }
+    if (availableTimeFrom != null && typeof availableTimeFrom !== 'string') {
+      res.status(400).json({ error: 'availableTimeFrom must be a string' })
+      return
+    }
+    if (availableTimeTo != null && typeof availableTimeTo !== 'string') {
+      res.status(400).json({ error: 'availableTimeTo must be a string' })
+      return
+    }
 
     const result = await applyToSubcontract(user.id, {
       postId,
@@ -138,7 +150,7 @@ router.patch('/:applicationId/accept', async (req, res, next) => {
   try {
     const claims = req.auth?.payload as { sub?: string; email?: string; role?: string } | undefined
     const user = await syncAuth0User(claims)
-    const { scheduledDate } = (req.body ?? {}) as { scheduledDate?: string }
+    const { scheduledDate } = (req.body ?? {}) as { scheduledDate?: unknown }
     const result = await acceptApplication(user.id, req.params.applicationId, scheduledDate)
     res.json(result)
   } catch (err) {

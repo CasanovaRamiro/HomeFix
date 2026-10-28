@@ -16,6 +16,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:seed:rich": "tsx prisma/seed-rich.ts",
     "db:setup": "prisma migrate deploy && tsx prisma/seed.ts",
     "didit:create-workflow": "tsx scripts/createDiditWorkflow.ts",
     "log:coverage": "tsx scripts/log-coverage.ts",
